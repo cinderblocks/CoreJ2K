@@ -910,7 +910,7 @@ namespace CoreJ2K.j2k.entropy.decoder
 			sscanw = cblk.w + 2;
 			jstep = sscanw * StdEntropyCoderOptions.STRIPE_HEIGHT / 2 - cblk.w;
 			kstep = dscanw * StdEntropyCoderOptions.STRIPE_HEIGHT - cblk.w;
-			setmask = (3 << bp) >> 1;
+			setmask = (int)(((long)3<<bp)>>1);
 			data = (int[]) cblk.Data;
 			nstripes = (cblk.h + StdEntropyCoderOptions.STRIPE_HEIGHT - 1) / StdEntropyCoderOptions.STRIPE_HEIGHT;
 			causal = (options & StdEntropyCoderOptions.OPT_VERT_STR_CAUSAL) != 0;
@@ -1224,7 +1224,7 @@ namespace CoreJ2K.j2k.entropy.decoder
 			sscanw = cblk.w + 2;
 			jstep = sscanw * StdEntropyCoderOptions.STRIPE_HEIGHT / 2 - cblk.w;
 			kstep = dscanw * StdEntropyCoderOptions.STRIPE_HEIGHT - cblk.w;
-			setmask = (3 << bp) >> 1;
+			setmask = (int)(((long)3<<bp)>>1);
 			data = (int[]) cblk.Data;
 			nstripes = (cblk.h + StdEntropyCoderOptions.STRIPE_HEIGHT - 1) / StdEntropyCoderOptions.STRIPE_HEIGHT;
 			causal = (options & StdEntropyCoderOptions.OPT_VERT_STR_CAUSAL) != 0;
@@ -1865,7 +1865,7 @@ namespace CoreJ2K.j2k.entropy.decoder
 			sscanw = cblk.w + 2;
 			jstep = sscanw * StdEntropyCoderOptions.STRIPE_HEIGHT / 2 - cblk.w;
 			kstep = dscanw * StdEntropyCoderOptions.STRIPE_HEIGHT - cblk.w;
-			setmask = (3 << bp) >> 1;
+			setmask = (int)(((long)3<<bp)>>1);
 			data = (int[]) cblk.Data;
 			nstripes = (cblk.h + StdEntropyCoderOptions.STRIPE_HEIGHT - 1) / StdEntropyCoderOptions.STRIPE_HEIGHT;
 			causal = (options & StdEntropyCoderOptions.OPT_VERT_STR_CAUSAL) != 0;
