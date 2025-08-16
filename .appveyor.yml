@@ -38,7 +38,7 @@ deploy:
   - provider: NuGet
     name: nuget_release
     api_key:
-      secure: BZj3xCtl+WcmBskd5Z1xO3d4Wt95QrFcG/dERrH8HRSYbIKmu0pDTXj1neq7L2uj
+      secure: hydmmMe0HYHUnvulFerbDCDMbAUaYneJMtUHjuwpJKbjYikCHUEVgWcSehuWyVo6
     artifact: /.*CoreJ2K.*(\.|\.s)nupkg/
     skip_symbols: false
     draft: false
