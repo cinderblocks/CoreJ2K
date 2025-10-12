@@ -14,5 +14,6 @@
     <None Include="..\README.md" Pack="true" PackagePath="\" />
     <None Include="..\LICENSE" Pack="true" PackagePath="\" />
     <None Include="..\COPYRIGHT-JJ2000-5.1" Pack="true" PackagePath="\" />
+    <None Include="..\CoreJ2K.png" Pack="true" PackagePath="\" />
   </ItemGroup>
 </Project>

@@ -15,7 +15,7 @@ package *jj2000*, version 5.1. This is a fork of *CSJ2K* for .NET Standard 2.1 m
 
 ## Installation
 
-Apart from building the relevant class libraries from source, pre-built packages for the supported platforms can also be obtained via [NuGet](https://nuget.org/packages/CSJ2K.Skia/).
+Apart from building the relevant class libraries from source, pre-built packages for the supported platforms can also be obtained via [NuGet](https://nuget.org/packages/CoreJ2K/).
 
 ## Usage
 
@@ -50,7 +50,7 @@ public class J2kImage
 }
 ```
 
-The first overload takes an platform-specific image `object`. This is still works-in-progress, but an implementation is available for `SKBitmap` objects.
+The first overload takes a platform-specific image `object`. Implementations currently exist for `System.Drawing.Image` and `SkiaSharp`
 
 The second overload takes an *CSJ2K* specific object implementing the `BlkImgDataSrc` interface. When *Portable Graymap* (PGM), *Portable Pixelmap* (PPM) or JPEG2000 conformance testing format (PGX) objects are available as `Stream`s, 
 it is possible to create `BlkImgDataSrc` objects using either of the following methods:
@@ -66,6 +66,7 @@ For *PGM* and *PPM* images, you would normally use the single `Stream` overload,
 
 [![CoreJ2K NuGet-Release](https://img.shields.io/nuget/v/CoreJ2K.svg?label=CoreJ2K)](https://www.nuget.org/packages/CoreJ2K/) 
 [![CoreJ2K.Skia NuGet-Release](https://img.shields.io/nuget/v/CoreJ2K.Skia.svg?label=CoreJ2K.Skia)](https://www.nuget.org/packages/CoreJ2K.Skia/)  
+[![CoreJ2K.Windows NuGet-Release](https://img.shields.io/nuget/v/CoreJ2K.Windows.svg?label=CoreJ2K.Windows)](https://www.nuget.org/packages/CoreJ2K.Windows/)  
 [![NuGet Downloads](https://img.shields.io/nuget/dt/CoreJ2K?label=NuGet%20downloads)](https://www.nuget.org/packages/CoreJ2K/)  
 [![Commits per month](https://img.shields.io/github/commit-activity/m/cinderblocks/CoreJ2K/master)](https://www.github.com/cinderblocks/CoreJ2K/)  
 [![Build status](https://ci.appveyor.com/api/projects/status/9fr2467p5wxt6qxx?svg=true)](https://ci.appveyor.com/project/cinderblocks57647/corej2k)  

@@ -5,10 +5,12 @@ namespace CoreJ2K.Util
 {
     using j2k.image;
 
-    public interface IImageCreator : IDefaultable
+    public interface IImageCreator
     {
         IImage Create(int width, int height, int numComponents, byte[] bytes);
 
         BlkImgDataSrc ToPortableImageSource(object imageObject);
+
+        System.Type ImageType { get; }
     }
 }

@@ -16,8 +16,6 @@ namespace codectest
     {
         private static void Main(string[] args)
         {
-            SKBitmapImageCreator.Register();
-
             if (Directory.Exists("output"))
             {
                 var di = new DirectoryInfo("output");

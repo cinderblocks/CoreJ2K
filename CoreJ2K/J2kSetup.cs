@@ -1,6 +1,8 @@
 ﻿// Copyright (c) 2007-2016 CSJ2K contributors.
 // Licensed under the BSD 3-Clause License.
 
+using System.IO;
+
 namespace CoreJ2K
 {
     using System;
@@ -20,7 +22,7 @@ namespace CoreJ2K
         /// </summary>
         /// <typeparam name="T">(Abstract) type for which implementation is requested.</typeparam>
         /// <returns>The single instance from the platform assembly implementing the <typeparamref name="T"/> type, 
-        /// or null if no or more than one implementations are available.</returns>
+        /// or null if no or more than one implementation is available.</returns>
         /// <remarks>It is implicitly assumed that implementation class has a public, parameter-less constructor.</remarks>
         internal static T GetSinglePlatformInstance<T>()
         {
@@ -61,6 +63,24 @@ namespace CoreJ2K
             catch (Exception)
             {
                 return default(T);
+            }
+        }
+
+
+        internal static IEnumerable<Type> FindCodecs<T>() where T : IImageCreator
+        {
+            try
+            {
+                // ReSharper disable once AssignNullToNotNullAttribute
+                return Directory.GetFiles(Path.GetDirectoryName(GetCurrentAssembly().Location), 
+                        "CoreJ2K.*.dll", SearchOption.TopDirectoryOnly)
+                    .Select(Assembly.LoadFile).SelectMany(s => s.GetTypes())
+                    .Where(p => (p.IsSubclassOf(typeof(T)) 
+                                 || typeof(T).GetTypeInfo().IsAssignableFrom(p)) && !p.IsAbstract);
+            }
+            catch (Exception)
+            {
+                return null;
             }
         }
 

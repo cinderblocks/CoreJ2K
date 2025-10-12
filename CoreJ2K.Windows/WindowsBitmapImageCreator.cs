@@ -2,46 +2,24 @@
 // Copyright (c) 2024-2025 Sjofn LLC.
 // Licensed under the BSD 3-Clause License.
 
+using System.Drawing;
 using CoreJ2K.j2k.image;
-using System.Runtime.InteropServices;
+using JetBrains.Annotations;
 
 namespace CoreJ2K.Util
 {
-    public class WindowsBitmapImageCreator : IImageCreator
+    [UsedImplicitly]
+    public sealed class WindowsBitmapImageCreator : ImageCreator<Image>
     {
-        #region FIELDS
-
-        private static readonly IImageCreator Instance = new WindowsBitmapImageCreator();
-
-        #endregion
-
-        #region PROPERTIES
-
-        public bool IsDefault => false;
-
-        #endregion
 
         #region METHODS
 
-        public static void Register()
-        {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                ImageFactory.Register(Instance);
-            }
-            else
-            {
-                throw new System.ComponentModel.WarningException(
-                    "Cannot register BitmapImageCreator as a provider on non-Windows platforms");
-            }
-        }
-
-        public IImage Create(int width, int height, int numComponents, byte[] bytes)
+        public override IImage Create(int width, int height, int numComponents, byte[] bytes)
         {
             return new WindowsBitmapImage(width, height, numComponents, bytes);
         }
 
-        public BlkImgDataSrc ToPortableImageSource(object imageObject)
+        public override BlkImgDataSrc ToPortableImageSource(object imageObject)
         {
             return WindowsBitmapImageSource.Create(imageObject);
         }

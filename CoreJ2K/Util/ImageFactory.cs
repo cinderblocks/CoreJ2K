@@ -1,5 +1,11 @@
 // Copyright (c) 2007-2016 CSJ2K contributors.
+// Copyright (c) 2024-2025 Sjofn LLC.
 // Licensed under the BSD 3-Clause License.
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 
 namespace CoreJ2K.Util
 {
@@ -9,7 +15,7 @@ namespace CoreJ2K.Util
     {
         #region FIELDS
 
-        private static IImageCreator _creator;
+        private static readonly List<IImageCreator> _creators = new List<IImageCreator>();
 
         #endregion
 
@@ -17,28 +23,35 @@ namespace CoreJ2K.Util
 
         static ImageFactory()
         {
-            _creator = J2kSetup.GetDefaultPlatformInstance<IImageCreator>();
+            foreach (var creator in J2kSetup.FindCodecs<IImageCreator>())
+            {
+                _creators.Add(Activator.CreateInstance(creator) as IImageCreator);
+            }
         }
 
         #endregion
 
         #region METHODS
 
-        public static void Register(IImageCreator creator)
+        internal static IImage New<T>(int width, int height, int numComponents, byte[] bytes)
         {
-            _creator = creator;
-        }
-
-        internal static IImage New(int width, int height, int numComponents, byte[] bytes)
-        {
-            return _creator.Create(width, height, numComponents, bytes);
+            try
+            {
+                var creator = _creators.Single(c => c.ImageType.IsAssignableFrom(typeof(T)));
+                return creator.Create(width, height, numComponents, bytes);
+            }
+            catch (Exception)
+            {
+                return null;
+            }
         }
 
         internal static BlkImgDataSrc ToPortableImageSource(object imageObject)
         {
             try
             {
-                return _creator.ToPortableImageSource(imageObject);
+                var creator = _creators.Single(c => c.ImageType.IsAssignableFrom(imageObject.GetType()));
+                return creator.ToPortableImageSource(imageObject);
             }
             catch
             {
