@@ -96,7 +96,7 @@ namespace CoreJ2K.j2k.fileformat.reader
         public virtual int FirstCodeStreamLength => codeStreamLength[0];
 
         /// <summary>The random access from which the file format boxes are read </summary>
-        private RandomAccessIO in_Renamed;
+        private readonly RandomAccessIO in_Renamed;
 
         /// <summary>The positions of the codestreams in the fileformat</summary>
         private List<int> codeStreamPos;

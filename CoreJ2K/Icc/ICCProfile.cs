@@ -243,7 +243,7 @@ namespace CoreJ2K.Icc
         private class BoxType : Dictionary<int, string>
         {
 
-            private static Dictionary<int, string> map =
+            private static readonly Dictionary<int, string> map =
                 new Dictionary<int, string>();
 
             public static void put(int type, string desc)
@@ -604,7 +604,7 @@ namespace CoreJ2K.Icc
 
         private ICCTagTable tags = null;
 
-        private byte[] profile = null;
+        private readonly byte[] profile = null;
 
         //private byte[] data = null;
         private ParameterList pl = null;
@@ -806,8 +806,7 @@ namespace CoreJ2K.Icc
 
             // First look for the gray TRC tag. If the profile is indeed an input profile, and this
             // tag exists, then the profile is a Monochrome Input profile
-            ICCTag grayTag;
-            if (tags.TryGetValue(kdwGrayTRCTag, out grayTag))
+            if (tags.TryGetValue(kdwGrayTRCTag, out var grayTag))
             {
                 return RestrictedICCProfile.createInstance((ICCCurveType)grayTag);
             }

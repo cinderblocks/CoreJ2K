@@ -84,47 +84,47 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// tile. Before that, the element in 'subbTrees' is null.
         /// 
         /// </summary>
-        private SubbandAn[][] subbTrees;
+        private readonly SubbandAn[][] subbTrees;
 
         /// <summary>The source of image data </summary>
-        private BlkImgDataSrc src;
+        private readonly BlkImgDataSrc src;
 
         /// <summary>The horizontal coordinate of the code-block partition origin on the
         /// reference grid 
         /// </summary>
-        private int cb0x;
+        private readonly int cb0x;
 
         /// <summary>The vertical coordinate of the code-block partition on the reference
         /// grid 
         /// </summary>
-        private int cb0y;
+        private readonly int cb0y;
 
         /// <summary>The number of decomposition levels specification </summary>
-        private IntegerSpec dls;
+        private readonly IntegerSpec dls;
 
         /// <summary>Wavelet filters for all components and tiles </summary>
-        private AnWTFilterSpec filters;
+        private readonly AnWTFilterSpec filters;
 
         /// <summary>The code-block size specifications </summary>
-        private CBlkSizeSpec cblks;
+        private readonly CBlkSizeSpec cblks;
 
         /// <summary>The precinct partition specifications </summary>
-        private PrecinctSizeSpec pss;
+        private readonly PrecinctSizeSpec pss;
 
         /// <summary>Block storing the full band decomposition for each component. </summary>
-        private DataBlk[] decomposedComps;
+        private readonly DataBlk[] decomposedComps;
 
         /// <summary>The horizontal index of the last "sent" code-block in the current
         /// subband in each component. It should be -1 if none have been sent yet.
         /// 
         /// </summary>
-        private int[] lastn;
+        private readonly int[] lastn;
 
         /// <summary>The vertical index of the last "sent" code-block in the current
         /// subband in each component. It should be 0 if none have been sent yet.
         /// 
         /// </summary>
-        private int[] lastm;
+        private readonly int[] lastm;
 
         /// <summary>The subband being dealt with in each component </summary>
         internal SubbandAn[] currentSubband;
@@ -725,14 +725,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
             do
             {
                 //If the current subband is null then break
-                if (nextsb == null)
-                {
-                    break;
-                }
-                //If the current subband is a leaf then select the next leaf to
-                //send or go up in the decomposition tree if the leaf was a LL
-                //one.
-                else if (!nextsb.isNode)
+                if (!nextsb.isNode)
                 {
                     switch (nextsb.orientation)
                     {

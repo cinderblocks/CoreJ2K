@@ -107,10 +107,10 @@ namespace CoreJ2K.j2k.image.forwcomptransf
         public const int FORW_ICT = 2;
 
         /// <summary>The source of image data</summary>
-        private BlkImgDataSrc src;
+        private readonly BlkImgDataSrc src;
 
         /// <summary>The component transformations specifications</summary>
-        private CompTransfSpec cts;
+        private readonly CompTransfSpec cts;
 
         /// <summary>The wavelet filter specifications</summary>
         private AnWTFilterSpec wfs;
@@ -706,7 +706,7 @@ namespace CoreJ2K.j2k.image.forwcomptransf
                         //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                         outdata[k] = indata[k0];
                     }
-                    // Jump to beggining of next line in input
+                    // Jump to beginning of next line in input
                     k0 += indb.w - w;
                 }
 
@@ -714,7 +714,6 @@ namespace CoreJ2K.j2k.image.forwcomptransf
                 blk.progressive = indb.progressive;
                 blk.offset = 0;
                 blk.scanw = w;
-                return blk;
             }
             else
             {

@@ -99,7 +99,7 @@ namespace CoreJ2K.j2k.entropy.encoder
         /// </ul>
         /// 
         /// </summary>
-        private CBlkRateDistStats[][][][][] cblks;
+        private readonly CBlkRateDistStats[][][][][] cblks;
 
         /// <summary> 6D Array containing the indices of the truncation points. It actually
         /// contains the index of the element in CBlkRateDistStats.truncIdxs that
@@ -115,7 +115,7 @@ namespace CoreJ2K.j2k.entropy.encoder
         /// </ul>
         /// 
         /// </summary>
-        private int[][][][][][] truncIdxs;
+        private readonly int[][][][][][] truncIdxs;
 
         /// <summary> Number of precincts in each resolution level:
         /// 
@@ -126,7 +126,7 @@ namespace CoreJ2K.j2k.entropy.encoder
         /// </ul>
         /// 
         /// </summary>
-        private Coord[][][] numPrec;
+        private readonly Coord[][][] numPrec;
 
         /// <summary>Array containing the layers information. </summary>
         private EBCOTLayer[] layers;
@@ -171,13 +171,13 @@ namespace CoreJ2K.j2k.entropy.encoder
         /// coded length, and to obtain absolute minimums on the slope given a
         /// length.  
         /// </summary>
-        private int[] RDSlopesRates;
+        private readonly int[] RDSlopesRates;
 
         /// <summary>Packet encoder. </summary>
-        private PktEncoder pktEnc;
+        private readonly PktEncoder pktEnc;
 
         /// <summary>The layer specifications </summary>
-        private LayersInfo lyrSpec;
+        private readonly LayersInfo lyrSpec;
 
         /// <summary>The maximum slope accross all code-blocks and truncation points. </summary>
         private float maxSlope;

@@ -83,13 +83,13 @@ namespace CoreJ2K.j2k.quantization.dequantizer
     {
 
         /// <summary>The quantizer type spec </summary>
-        private QuantTypeSpec qts;
+        private readonly QuantTypeSpec qts;
 
         /// <summary>The quantizer step sizes  spec </summary>
-        private QuantStepSizeSpec qsss;
+        private readonly QuantStepSizeSpec qsss;
 
         /// <summary>The number of guard bits spec </summary>
-        private GuardBitsSpec gbs;
+        private readonly GuardBitsSpec gbs;
 
         /// <summary>The decoding parameters of the dequantizer </summary>
         //private StdDequantizerParams params_Renamed;
@@ -302,10 +302,6 @@ namespace CoreJ2K.j2k.quantization.dequantizer
                     // the data from the source and to return the dequantized data.
                     inblk = (DataBlkInt)src.getInternCodeBlock(c, m, n, sb, inblk);
                     inarr = inblk.DataInt;
-                    if (cblk == null)
-                    {
-                        cblk = new DataBlkFloat();
-                    }
                     // Copy the attributes of the CodeBlock object
                     cblk.ulx = inblk.ulx;
                     cblk.uly = inblk.uly;

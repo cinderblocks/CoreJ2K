@@ -328,10 +328,10 @@ internal class SupportClass
         private long currentPos = 0;
 
         /// Include delimiters in the results.
-        private bool includeDelims = false;
+        private readonly bool includeDelims = false;
 
         /// Char representation of the String to tokenize.
-        private char[] chars = null;
+        private readonly char[] chars = null;
 
         //The tokenizer uses the default delimiter set: the space character, the tab character, the newline character, and the carriage-return character and the form-feed character
         private string delimiters = " \t\n\r\f";
@@ -509,7 +509,7 @@ internal class SupportClass
     /// </summary>
     private class BackStringReader : System.IO.StringReader
     {
-        private char[] buffer;
+        private readonly char[] buffer;
         private int position = 1;
 
         /// <summary>
@@ -665,7 +665,7 @@ internal class SupportClass
 
         private const int STATE_DONE = 100;
 
-        private sbyte[] attribute = new sbyte[256];
+        private readonly sbyte[] attribute = new sbyte[256];
         private bool eolIsSignificant = false;
         private bool slashStarComments = false;
         private bool slashSlashComments = false;
@@ -673,9 +673,9 @@ internal class SupportClass
         private bool pushedback = false;
         private int lineno = 1;
 
-        private BackReader inReader;
-        private BackStringReader inStringReader;
-        private BackInputStream inStream;
+        private readonly BackReader inReader;
+        private readonly BackStringReader inStringReader;
+        private readonly BackInputStream inStream;
         private System.Text.StringBuilder buf;
 
 
@@ -1392,7 +1392,7 @@ internal class SupportClass
     /// </summary>
     public class BackReader : System.IO.StreamReader
     {
-        private char[] buffer;
+        private readonly char[] buffer;
         private int position = 1;
         //private int markedPosition;
 
@@ -1560,7 +1560,7 @@ internal class SupportClass
     /// </summary>
     public class BackInputStream : System.IO.BinaryReader
     {
-        private byte[] buffer;
+        private readonly byte[] buffer;
         private int position = 1;
 
         /// <summary>

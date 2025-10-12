@@ -62,7 +62,7 @@ namespace CoreJ2K.j2k.fileformat.writer
         /// <summary>The stream from which to read the codestream and to write
         /// the JP2 file
         /// </summary>
-        private Stream stream;
+        private readonly Stream stream;
 
         /// <summary>Image height </summary>
         private readonly int height;

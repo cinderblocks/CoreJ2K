@@ -92,7 +92,7 @@ namespace CoreJ2K.j2k.codestream.writer
         //private int tileIdx = 0;
 
         /// <summary>The file to write </summary>
-        private System.IO.Stream out_Renamed;
+        private readonly System.IO.Stream out_Renamed;
 
         /// <summary>The number of bytes already written to the codestream, excluding the
         /// header length, magic number and header length info. 

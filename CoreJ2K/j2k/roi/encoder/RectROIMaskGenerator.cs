@@ -80,10 +80,10 @@ namespace CoreJ2K.j2k.roi.encoder
         private int[] lrys;
 
         /// <summary>Number of ROIs </summary>
-        private int[] nrROIs;
+        private readonly int[] nrROIs;
 
         /// <summary>The tree of subbandmask. One for each component </summary>
-        private SubbandRectROIMask[] sMasks;
+        private readonly SubbandRectROIMask[] sMasks;
 
 
         /// <summary> The constructor of the mask generator. The constructor is called with

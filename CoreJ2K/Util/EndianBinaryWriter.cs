@@ -6,7 +6,7 @@ namespace CoreJ2K.Util
 {
     internal class EndianBinaryWriter : BinaryWriter
     {
-        private bool _bigEndian = false;
+        private readonly bool _bigEndian = false;
 
         //
         // Summary:

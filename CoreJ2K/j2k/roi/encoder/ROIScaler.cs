@@ -129,22 +129,22 @@ namespace CoreJ2K.j2k.roi.encoder
         private int[][] maxMagBits;
 
         /// <summary>Flag indicating the presence of ROIs </summary>
-        private bool roi;
+        private readonly bool roi;
 
         /// <summary>Flag indicating if block aligned ROIs are used </summary>
-        private bool blockAligned;
+        private readonly bool blockAligned;
 
         /// <summary>Number of resolution levels to include in ROI mask </summary>
-        private int useStartLevel;
+        private readonly int useStartLevel;
 
         /// <summary>The class generating the ROI mask </summary>
-        private ROIMaskGenerator mg;
+        private readonly ROIMaskGenerator mg;
 
         /// <summary>The ROI mask </summary>
-        private DataBlkInt roiMask;
+        private readonly DataBlkInt roiMask;
 
         /// <summary>The source of quantized wavelet transform coefficients </summary>
-        private Quantizer src;
+        private readonly Quantizer src;
 
         /// <summary> Constructor of the ROI scaler, takes a Quantizer as source of data to
         /// scale.

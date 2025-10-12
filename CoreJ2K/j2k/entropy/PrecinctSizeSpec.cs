@@ -67,7 +67,7 @@ namespace CoreJ2K.j2k.entropy
         /// <summary>Reference to wavelet number of decomposition levels for each
         /// tile-component.  
         /// </summary>
-        private IntegerSpec dls;
+        private readonly IntegerSpec dls;
 
         /// <summary> Creates a new PrecinctSizeSpec object for the specified number of tiles
         /// and components.

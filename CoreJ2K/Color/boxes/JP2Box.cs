@@ -52,7 +52,7 @@ namespace CoreJ2K.Color.Boxes
         /// </param>
         /// <exception cref="IOException,">ColorSpaceException 
         /// </exception>
-        public JP2Box(io_RandomAccessIO in_Renamed, int boxStart)
+        protected JP2Box(io_RandomAccessIO in_Renamed, int boxStart)
         {
             var boxHeader = new byte[16];
 
@@ -81,7 +81,7 @@ namespace CoreJ2K.Color.Boxes
         protected internal class BoxType : Dictionary<int, string>
         {
 
-            private static Dictionary<int, string> map = new Dictionary<int, string>();
+            private static readonly Dictionary<int, string> map = new Dictionary<int, string>();
 
             private static void put(int type, string desc)
             {

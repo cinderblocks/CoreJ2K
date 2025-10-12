@@ -85,7 +85,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// <param name="decSpec">The decoder specifications
         /// 
         /// </param>
-        public InverseWT(MultiResImgData src, DecoderSpecs decSpec)
+        protected InverseWT(MultiResImgData src, DecoderSpecs decSpec)
             : base(src, decSpec)
         {
         }

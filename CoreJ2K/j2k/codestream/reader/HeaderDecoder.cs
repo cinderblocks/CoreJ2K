@@ -262,13 +262,13 @@ namespace CoreJ2K.j2k.codestream.reader
         /// <summary>The reference to the HeaderInfo instance holding the information found
         /// in headers 
         /// </summary>
-        private HeaderInfo hi;
+        private readonly HeaderInfo hi;
 
         /// <summary>Whether or not to display general information </summary>
         //private bool verbose;
 
         /// <summary>Current header information in a string </summary>
-        private string hdStr = "";
+        private readonly string hdStr = "";
 
         /// <summary>The number of tiles within the image </summary>
         private int nTiles;

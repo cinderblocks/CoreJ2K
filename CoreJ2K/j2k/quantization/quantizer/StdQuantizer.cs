@@ -108,16 +108,16 @@ namespace CoreJ2K.j2k.quantization.quantizer
         public const int QSTEP_MAX_EXPONENT = (1 << QSTEP_EXPONENT_BITS) - 1;
 
         /// <summary>Natural log of 2, used as a convenience variable </summary>
-        private static double log2 = Math.Log(2);
+        private static readonly double log2 = Math.Log(2);
 
         /// <summary>The quantization type specifications </summary>
-        private QuantTypeSpec qts;
+        private readonly QuantTypeSpec qts;
 
         /// <summary>The quantization step size specifications </summary>
-        private QuantStepSizeSpec qsss;
+        private readonly QuantStepSizeSpec qsss;
 
         /// <summary>The guard bits specifications</summary>
-        private GuardBitsSpec gbs;
+        private readonly GuardBitsSpec gbs;
 
         /// <summary>The 'CBlkWTDataFloat' object used to request data, used when
         /// quantizing floating-point data. 

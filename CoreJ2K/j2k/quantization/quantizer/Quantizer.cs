@@ -136,7 +136,7 @@ namespace CoreJ2K.j2k.quantization.quantizer
         /// <param name="src">The source of wavelet transform coefficients.
         /// 
         /// </param>
-        public Quantizer(CBlkWTDataSrc src) : base(src)
+        protected Quantizer(CBlkWTDataSrc src) : base(src)
         {
             this.src = src;
         }

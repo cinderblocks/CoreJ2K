@@ -76,19 +76,19 @@ namespace CoreJ2K.j2k.image.output
     {
 
         /// <summary>Value used to inverse level shift. One for each component </summary>
-        private int[] levShift = new int[3];
+        private readonly int[] levShift = new int[3];
 
         /// <summary>Where to write the data </summary>
         //UPGRADE_TODO: Class 'java.io.RandomAccessFile' was converted to 'System.IO.FileStream' which has a different behavior. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1073_javaioRandomAccessFile'"
         private System.IO.Stream out_Renamed;
 
         /// <summary>The array of indexes of the components from where to get the data </summary>
-        private int[] cps = new int[3];
+        private readonly int[] cps = new int[3];
 
         /// <summary>The array of the number of fractional bits in the components of the
         /// source data 
         /// </summary>
-        private int[] fb = new int[3];
+        private readonly int[] fb = new int[3];
 
         /// <summary>A DataBlk, just used to avoid allocating a new one each time
         /// it is needed 

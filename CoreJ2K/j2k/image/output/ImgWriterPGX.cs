@@ -107,14 +107,14 @@ namespace CoreJ2K.j2k.image.output
         internal bool isSigned;
 
         /// <summary>The bit-depth of the input file (must be between 1 and 31)</summary>
-        private int bitDepth;
+        private readonly int bitDepth;
 
         /// <summary>Where to write the data </summary>
         //UPGRADE_TODO: Class 'java.io.RandomAccessFile' was converted to 'System.IO.FileStream' which has a different behavior. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1073_javaioRandomAccessFile'"
         private System.IO.Stream out_Renamed;
 
         /// <summary>The offset of the raw pixel data in the PGX file </summary>
-        private int offset;
+        private readonly int offset;
 
         /// <summary>A DataBlk, just used to avoid allocating a new one each time it is
         /// needed 
@@ -122,15 +122,15 @@ namespace CoreJ2K.j2k.image.output
         private DataBlkInt db = new DataBlkInt();
 
         /// <summary>The number of fractional bits in the source data </summary>
-        private int fb;
+        private readonly int fb;
 
         /// <summary>The index of the component from where to get the data </summary>
-        private int c;
+        private readonly int c;
 
         /// <summary>The pack length of one sample (in bytes, according to the output
         /// bit-depth 
         /// </summary>
-        private int packBytes;
+        private readonly int packBytes;
 
         /// <summary>The line buffer. </summary>
         // This makes the class not thrad safe

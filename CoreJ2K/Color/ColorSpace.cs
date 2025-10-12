@@ -73,7 +73,7 @@ namespace CoreJ2K.Color
         private ImageHeaderBox ihbox = null;
 
         /// <summary>Input image </summary>
-        private io_RandomAccessIO in_Renamed = null;
+        private readonly io_RandomAccessIO in_Renamed = null;
 
         /// <summary>Indent a String that contains newlines. </summary>
         public static string indent(string ident, System.Text.StringBuilder instr)
@@ -283,8 +283,7 @@ namespace CoreJ2K.Color
         /// </returns>
         public virtual bool debugging()
         {
-            string tmp;
-            return pl.TryGetValue("colorspace_debug", out tmp) && tmp.ToUpper().Equals("ON");
+            return pl.TryGetValue("colorspace_debug", out var tmp) && tmp.ToUpper().Equals("ON");
         }
 
 

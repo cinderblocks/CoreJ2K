@@ -65,10 +65,10 @@ namespace CoreJ2K.j2k.roi.encoder
     {
 
         /// <summary>The source of quantized wavelet transform coefficients </summary>
-        private Quantizer src;
+        private readonly Quantizer src;
 
         /// <summary>The ROI mask for the current tile for all components</summary>
-        private int[][] roiMask;
+        private readonly int[][] roiMask;
 
         /// <summary>The low frequency part of a mask line </summary>
         private int[] maskLineLow;

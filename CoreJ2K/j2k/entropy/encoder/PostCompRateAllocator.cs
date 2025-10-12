@@ -121,7 +121,7 @@ namespace CoreJ2K.j2k.entropy.encoder
         /// <param name="pt">The progressive type, as defined in 'ProgressionType'.</param>
         /// <param name="bw">The packet bit stream writer.</param>
         /// <seealso cref="ProgressionType" />
-        public PostCompRateAllocator(CodedCBlkDataSrcEnc src, int nl, CodestreamWriter bw, EncoderSpecs encSpec) : base(src)
+        protected PostCompRateAllocator(CodedCBlkDataSrcEnc src, int nl, CodestreamWriter bw, EncoderSpecs encSpec) : base(src)
         {
             this.src = src;
             this.encSpec = encSpec;

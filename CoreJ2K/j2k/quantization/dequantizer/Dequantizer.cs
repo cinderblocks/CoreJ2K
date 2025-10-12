@@ -126,10 +126,10 @@ namespace CoreJ2K.j2k.quantization.dequantizer
         protected internal int[] utrb = null;
 
         /// <summary>The inverse component transformation specifications </summary>
-        private CompTransfSpec cts;
+        private readonly CompTransfSpec cts;
 
         /// <summary>Reference to the wavelet filter specifications </summary>
-        private SynWTFilterSpec wfs;
+        private readonly SynWTFilterSpec wfs;
 
         /// <summary> Initializes the source of compressed data.
         /// 
@@ -143,7 +143,7 @@ namespace CoreJ2K.j2k.quantization.dequantizer
         /// 
         /// </param>
         /// <seealso cref="getNomRangeBits" />
-        public Dequantizer(CBlkQuantDataSrcDec src, int[] utrb, DecoderSpecs decSpec) : base(src)
+        protected Dequantizer(CBlkQuantDataSrcDec src, int[] utrb, DecoderSpecs decSpec) : base(src)
         {
             if (utrb.Length != src.NumComps)
             {

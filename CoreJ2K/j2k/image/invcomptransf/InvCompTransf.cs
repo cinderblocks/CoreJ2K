@@ -131,13 +131,13 @@ namespace CoreJ2K.j2k.image.invcomptransf
         public const int INV_ICT = 2;
 
         /// <summary>The source of image data </summary>
-        private BlkImgDataSrc src;
+        private readonly BlkImgDataSrc src;
 
         /// <summary>The component transformations specifications </summary>
-        private CompTransfSpec cts;
+        private readonly CompTransfSpec cts;
 
         /// <summary>The wavelet filter specifications </summary>
-        private SynWTFilterSpec wfs;
+        private readonly SynWTFilterSpec wfs;
 
         /// <summary>The type of the current component transformation JPEG 2000
         /// part I only support NONE, FORW_RCT and FORW_ICT types
@@ -145,7 +145,7 @@ namespace CoreJ2K.j2k.image.invcomptransf
         private int transfType = NONE;
 
         /// <summary>Buffer for each component of output data </summary>
-        private int[][] outdata = new int[3][];
+        private readonly int[][] outdata = new int[3][];
 
         /// <summary>Block used to request component 0 </summary>
         private DataBlk block0;
@@ -159,15 +159,15 @@ namespace CoreJ2K.j2k.image.invcomptransf
         /// <summary>Data block used only to store coordinates and progressiveness 
         /// of the buffered blocks 
         /// </summary>
-        private DataBlkInt dbi = new DataBlkInt();
+        private readonly DataBlkInt dbi = new DataBlkInt();
 
         /// <summary>The bit-depths of un-transformed components </summary>
-        private int[] utdepth;
+        private readonly int[] utdepth;
 
         /// <summary>Flag indicating whether the decoder should skip the component 
         /// transform
         /// </summary>
-        private bool noCompTransf = false;
+        private readonly bool noCompTransf = false;
 
         /// <summary> Constructs a new ForwCompTransf object that operates on the
         /// specified source of image data.

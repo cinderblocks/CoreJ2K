@@ -105,10 +105,10 @@ namespace CoreJ2K.j2k.util
 
         /* Tha maximum size, in bytes, of the in memory buffer. The maximum size
 		* includes the EOF. */
-        private int maxsize;
+        private readonly int maxsize;
 
         /* The increment, in bytes, for the in-memory buffer size */
-        private int inc;
+        private readonly int inc;
 
         /* The in-memory buffer to cache received data */
         private byte[] buf;

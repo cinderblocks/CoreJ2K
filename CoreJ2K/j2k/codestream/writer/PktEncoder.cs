@@ -141,10 +141,10 @@ namespace CoreJ2K.j2k.codestream.writer
         private const int INIT_LBLOCK = 3;
 
         /// <summary>The source object </summary>
-        private CodedCBlkDataSrcEnc infoSrc;
+        private readonly CodedCBlkDataSrcEnc infoSrc;
 
         /// <summary>The encoder specs </summary>
-        private EncoderSpecs encSpec;
+        private readonly EncoderSpecs encSpec;
 
         /// <summary> The tag tree for inclusion information. The indexes are outlined
         /// below. Note that the layer indexes start at 1, therefore, the layer
@@ -161,7 +161,7 @@ namespace CoreJ2K.j2k.codestream.writer
         /// </ul>
         /// 
         /// </summary>
-        private TagTreeEncoder[][][][][] ttIncl;
+        private readonly TagTreeEncoder[][][][][] ttIncl;
 
         /// <summary> The tag tree for the maximum significant bit-plane. The indexes are
         /// outlined below. Note that the layer indexes start at 1, therefore, the
@@ -178,7 +178,7 @@ namespace CoreJ2K.j2k.codestream.writer
         /// </ul>
         /// 
         /// </summary>
-        private TagTreeEncoder[][][][][] ttMaxBP;
+        private readonly TagTreeEncoder[][][][][] ttMaxBP;
 
         /// <summary> The base number of bits for sending code-block length information
         /// (referred as Lblock in the JPEG 2000 standard). The indexes are
@@ -196,7 +196,7 @@ namespace CoreJ2K.j2k.codestream.writer
         /// </ul>
         /// 
         /// </summary>
-        private int[][][][][] lblock;
+        private readonly int[][][][][] lblock;
 
         /// <summary> The last encoded truncation point for each code-block. A negative value
         /// means that no information has been included for the block, yet. The
@@ -217,7 +217,7 @@ namespace CoreJ2K.j2k.codestream.writer
         /// </ul>
         /// 
         /// </summary>
-        private int[][][][][] prevtIdxs;
+        private readonly int[][][][][] prevtIdxs;
 
         /// <summary> The saved base number of bits for sending code-block length
         /// information. It is used for restoring previous saved state by
@@ -282,7 +282,7 @@ namespace CoreJ2K.j2k.codestream.writer
         /// </ul> 
         /// 
         /// </summary>
-        private PrecInfo[][][][] ppinfo;
+        private readonly PrecInfo[][][][] ppinfo;
 
         /// <summary>Whether or not the current packet is writable </summary>
         private bool packetWritable;

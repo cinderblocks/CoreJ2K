@@ -82,16 +82,16 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         private int cblkToDecode = 0;
 
         /// <summary>the code-block buffer's source i.e. the quantizer </summary>
-        private CBlkWTDataSrcDec src;
+        private readonly CBlkWTDataSrcDec src;
 
         /// <summary>Current data type </summary>
         private int dtype;
 
         /// <summary>Block storing the reconstructed image for each component </summary>
-        private DataBlk[] reconstructedComps;
+        private readonly DataBlk[] reconstructedComps;
 
         /// <summary>Number of decomposition levels in each component </summary>
-        private int[] ndl;
+        private readonly int[] ndl;
 
         /// <summary> The reversible flag for each component in each tile. The first index is
         /// the tile index, the second one is the component index. The
@@ -99,7 +99,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// needed basis.
         /// 
         /// </summary>
-        private Dictionary<int, bool[]> reversible = new Dictionary<int, bool[]>();
+        private readonly Dictionary<int, bool[]> reversible = new Dictionary<int, bool[]>();
         //private bool[][] reversible;
 
         /// <summary> Initializes this object with the given source of wavelet

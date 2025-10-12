@@ -140,13 +140,13 @@ namespace CoreJ2K.j2k.codestream.writer
         private int deftilenr;
 
         /// <summary>The number of components in the image </summary>
-        private int nComp;
+        private readonly int nComp;
 
         /// <summary>Whether or not to write the JJ2000 COM marker segment </summary>
-        private bool enJJ2KMarkSeg = true;
+        private readonly bool enJJ2KMarkSeg = true;
 
         /// <summary>Other COM marker segments specified in the command line </summary>
-        private string otherCOMMarkSeg = null;
+        private readonly string otherCOMMarkSeg = null;
 
         /// <summary>The ByteArrayOutputStream to store header data. This handler is kept
         /// in order to use methods not accessible from a general

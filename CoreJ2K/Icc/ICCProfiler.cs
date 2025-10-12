@@ -45,10 +45,10 @@ namespace CoreJ2K.Icc
         private DataBlkInt[] tempInt; // Holds the results of the transform.
         private DataBlkFloat[] tempFloat; // Holds the results of the transform.
 
-        private object xform = null;
+        private readonly object xform = null;
 
         /// <summary>The image's ICC profile. </summary>
-        private RestrictedICCProfile iccp = null;
+        private readonly RestrictedICCProfile iccp = null;
 
         /// <summary> Factory method for creating instances of this class.</summary>
         /// <param name="src">-- source of image data

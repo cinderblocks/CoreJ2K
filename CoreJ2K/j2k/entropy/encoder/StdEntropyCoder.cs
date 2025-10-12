@@ -120,22 +120,22 @@ namespace CoreJ2K.j2k.entropy.encoder
         /// current tile have been returned. Used in multithreaded implementation
         /// only. 
         /// </summary>
-        private bool[] finishedTileComponent;
+        private readonly bool[] finishedTileComponent;
 
         /// <summary>The MQ coder used, for each thread </summary>
-        private MQCoder[] mqT;
+        private readonly MQCoder[] mqT;
 
         /// <summary>The raw bit output used, for each thread </summary>
-        private BitToByteOutput[] boutT;
+        private readonly BitToByteOutput[] boutT;
 
         /// <summary>The output stream used, for each thread </summary>
-        private ByteOutputBuffer[] outT;
+        private readonly ByteOutputBuffer[] outT;
 
         /// <summary>The code-block size specifications </summary>
-        private CBlkSizeSpec cblks;
+        private readonly CBlkSizeSpec cblks;
 
         /// <summary>The precinct partition specifications </summary>
-        private PrecinctSizeSpec pss;
+        private readonly PrecinctSizeSpec pss;
 
         /// <summary>By-pass mode specifications </summary>
         public StringSpec bms;
@@ -280,7 +280,7 @@ namespace CoreJ2K.j2k.entropy.encoder
         /// 16 bits are referred to as "row 2" ("R2").
         /// 
         /// </summary>
-        private int[][] stateT;
+        private readonly int[][] stateT;
 
         /* The separation between the upper and lower bits in the state array: 16
 		* */
@@ -546,22 +546,22 @@ namespace CoreJ2K.j2k.entropy.encoder
         /// <summary>The buffer for distortion values (avoids reallocation for each
         /// code-block), for each thread. 
         /// </summary>
-        private double[][] distbufT;
+        private readonly double[][] distbufT;
 
         /// <summary>The buffer for rate values (avoids reallocation for each
         /// code-block), for each thread. 
         /// </summary>
-        private int[][] ratebufT;
+        private readonly int[][] ratebufT;
 
         /// <summary>The buffer for indicating terminated passes (avoids reallocation for
         /// each code-block), for each thread. 
         /// </summary>
-        private bool[][] istermbufT;
+        private readonly bool[][] istermbufT;
 
         /// <summary>The source code-block to entropy code (avoids reallocation for each
         /// code-block), for each thread. 
         /// </summary>
-        private CBlkWTData[] srcblkT;
+        private readonly CBlkWTData[] srcblkT;
 
         /// <summary>Buffer for symbols to send to the MQ-coder, for each thread. Used to
         /// reduce the number of calls to the MQ coder. 
@@ -569,18 +569,18 @@ namespace CoreJ2K.j2k.entropy.encoder
         // NOTE: The symbol buffer has not prooved to be of any great improvement
         // in encoding time, but it does not hurt. It's performance should be
         // better studied under different JVMs.
-        private int[][] symbufT;
+        private readonly int[][] symbufT;
 
         /// <summary>Buffer for the contexts to use when sending buffered symbols to the
         /// MQ-coder, for each thread. Used to reduce the number of calls to the MQ
         /// coder. 
         /// </summary>
-        private int[][] ctxtbufT;
+        private readonly int[][] ctxtbufT;
 
         /// <summary>boolean used to signal if the precinct partition is used for
         /// each component and each tile.  
         /// </summary>
-        private bool[][] precinctPartition;
+        private readonly bool[][] precinctPartition;
 
         /// <summary> Instantiates a new entropy coder engine, with the specified source of
         /// data, nominal block width and height.
@@ -2723,7 +2723,7 @@ namespace CoreJ2K.j2k.entropy.encoder
                         j += sscanw;
                         csj = state[j];
                     }
-                //UPGRADE_NOTE: Label 'top_half_brk' was added. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1011'"
+                    //UPGRADE_NOTE: Label 'top_half_brk' was added. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1011'"
 
                 top_half_brk:;
                     // end of 'top_half' block

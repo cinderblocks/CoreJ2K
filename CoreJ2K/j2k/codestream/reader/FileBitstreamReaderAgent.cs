@@ -86,10 +86,10 @@ namespace CoreJ2K.j2k.codestream.reader
         private ParameterList pl;
 
         /// <summary>The RandomAccessIO where to get data from </summary>
-        private RandomAccessIO in_Renamed;
+        private readonly RandomAccessIO in_Renamed;
 
         /// <summary>Offset of the first packet in each tile-part in each tile </summary>
-        private int[][] firstPackOff;
+        private readonly int[][] firstPackOff;
 
         /// <summary> Returns the number of tile-part found for a given tile
         /// 
@@ -111,10 +111,10 @@ namespace CoreJ2K.j2k.codestream.reader
         /// is related to the tile length in the codestream whereas in truncation
         /// mode all the rate is affected to the first tiles. 
         /// </summary>
-        private int[] nBytes;
+        private readonly int[] nBytes;
 
         /// <summary>Whether or not to print information found in codestream </summary>
-        private bool printInfo = false;
+        private readonly bool printInfo = false;
 
         /// <summary> Backup of the number of bytes allocated to each tile. This array is
         /// used to restore the number of bytes to read in each tile when the
@@ -122,49 +122,49 @@ namespace CoreJ2K.j2k.codestream.reader
         /// image to three output files)
         /// 
         /// </summary>
-        private int[] baknBytes;
+        private readonly int[] baknBytes;
 
         /// <summary>Length of each tile-part (written in Psot) </summary>
-        private int[][] tilePartLen;
+        private readonly int[][] tilePartLen;
 
         /// <summary>Total length of each tile </summary>
-        private int[] totTileLen;
+        private readonly int[] totTileLen;
 
         /// <summary>Total length of tiles' header </summary>
-        private int[] totTileHeadLen;
+        private readonly int[] totTileHeadLen;
 
         /// <summary>First tile part header length</summary>
         private int firstTilePartHeadLen;
 
         /// <summary>Total length of all tile parts in all tiles </summary>
-        private double totAllTileLen;
+        private readonly double totAllTileLen;
 
         /// <summary>Length of main header </summary>
-        private int mainHeadLen;
+        private readonly int mainHeadLen;
 
         /// <summary>Length of main and tile-parts headers </summary>
-        private int headLen = 0;
+        private readonly int headLen = 0;
 
         /// <summary>Length of all tile-part headers </summary>
-        private int[][] tilePartHeadLen;
+        private readonly int[][] tilePartHeadLen;
 
         /// <summary>Length of each packet head found in the tile </summary>
         private List<int> pktHL;
 
         /// <summary>True if truncation mode is used. False if parsing mode </summary>
-        private bool isTruncMode;
+        private readonly bool isTruncMode;
 
         /// <summary>The number of tile-parts that remain to read </summary>
         private int remainingTileParts;
 
         /// <summary>The number of tile-parts read so far for each tile </summary>
-        private int[] tilePartsRead;
+        private readonly int[] tilePartsRead;
 
         /// <summary>Thetotal  number of tile-parts read so far </summary>
         private int totTilePartsRead = 0;
 
         /// <summary>The number of found tile-parts in each tile. </summary>
-        private int[] tileParts;
+        private readonly int[] tileParts;
 
         /// <summary>The current tile part being used </summary>
         private int curTilePart;
@@ -172,7 +172,7 @@ namespace CoreJ2K.j2k.codestream.reader
         /// <summary>The number of the tile-parts found in the codestream after reading the
         /// tp'th tile-part of tile t 
         /// </summary>
-        private int[][] tilePartNum;
+        private readonly int[][] tilePartNum;
 
         /// <summary>Whether or not a EOC marker has been found instead of a SOT </summary>
         private bool isEOCFound = false;
@@ -180,7 +180,7 @@ namespace CoreJ2K.j2k.codestream.reader
         /// <summary>Reference to the HeaderInfo instance (used when reading SOT marker
         /// segments) 
         /// </summary>
-        private HeaderInfo hi;
+        private readonly HeaderInfo hi;
 
         /// <summary>Array containing information for all the code-blocks:
         /// 
@@ -194,10 +194,10 @@ namespace CoreJ2K.j2k.codestream.reader
         private CBlkInfo[][][][][] cbI;
 
         /// <summary>The maximum number of layers to decode for any code-block </summary>
-        private int lQuit;
+        private readonly int lQuit;
 
         /// <summary>Whether or not to use only first progression order </summary>
-        private bool usePOCQuit = false;
+        private readonly bool usePOCQuit = false;
 
         /// <summary> Reads all tiles headers and keep offset of their first
         /// packet. Finally it calls the rate allocation method.
@@ -907,7 +907,7 @@ namespace CoreJ2K.j2k.codestream.reader
             var numLayers = ((int)decSpec.nls.getTileDef(t));
             var nPrec = 1;
             int hlen, plen;
-            var strInfo = $"Tile {TileIdx} (tile-part:{curTilePart}): offset, length, header length\n"; ;
+            var strInfo = $"Tile {TileIdx} (tile-part:{curTilePart}): offset, length, header length\n";
             var pph = false || ((bool)decSpec.pphs.getTileDef(t));
             for (var l = minlys; l < lye; l++)
             {
@@ -1058,7 +1058,7 @@ namespace CoreJ2K.j2k.codestream.reader
                 }
             }
 
-            var strInfo = $"Tile {TileIdx} (tile-part:{curTilePart}): offset, length, header length\n"; ;
+            var strInfo = $"Tile {TileIdx} (tile-part:{curTilePart}): offset, length, header length\n";
             var numLayers = ((int)decSpec.nls.getTileDef(t));
             var pph = false || ((bool)decSpec.pphs.getTileDef(t));
             var nPrec = 1;
@@ -1290,7 +1290,7 @@ namespace CoreJ2K.j2k.codestream.reader
             var status = false;
             var lastByte = firstPackOff[t][curTilePart] + tilePartLen[t][curTilePart] - 1 - tilePartHeadLen[t][curTilePart];
             var numLayers = ((int)decSpec.nls.getTileDef(t));
-            var strInfo = $"Tile {TileIdx} (tile-part:{curTilePart}): offset, length, header length\n"; ;
+            var strInfo = $"Tile {TileIdx} (tile-part:{curTilePart}): offset, length, header length\n";
             var pph = false || ((bool)decSpec.pphs.getTileDef(t));
             for (var r = ress; r < rese; r++)
             {
@@ -1541,7 +1541,7 @@ namespace CoreJ2K.j2k.codestream.reader
             var status = false;
             var lastByte = firstPackOff[t][curTilePart] + tilePartLen[t][curTilePart] - 1 - tilePartHeadLen[t][curTilePart];
             var numLayers = ((int)decSpec.nls.getTileDef(t));
-            var strInfo = $"Tile {TileIdx} (tile-part:{curTilePart}): offset, length, header length\n"; ;
+            var strInfo = $"Tile {TileIdx} (tile-part:{curTilePart}): offset, length, header length\n";
             var pph = false || ((bool)decSpec.pphs.getTileDef(t));
 
             var y = ty0;
@@ -1793,7 +1793,7 @@ namespace CoreJ2K.j2k.codestream.reader
             var status = false;
             var lastByte = firstPackOff[t][curTilePart] + tilePartLen[t][curTilePart] - 1 - tilePartHeadLen[t][curTilePart];
             var numLayers = ((int)decSpec.nls.getTileDef(t));
-            var strInfo = $"Tile {TileIdx} (tile-part:{curTilePart}): offset, length, header length\n"; ;
+            var strInfo = $"Tile {TileIdx} (tile-part:{curTilePart}): offset, length, header length\n";
             var pph = ((bool)decSpec.pphs.getTileDef(t));
 
             int x, y;

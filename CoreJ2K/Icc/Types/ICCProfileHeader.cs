@@ -56,24 +56,24 @@ namespace CoreJ2K.Icc.Types
 
         /* Offsets into ICCProfile header byte array. */
 
-        private static int offProfileSize = 0;
-        private static int offCMMTypeSignature = offProfileSize + ICCProfile.int_size;
-        private static int offProfileVersion = offCMMTypeSignature + ICCProfile.int_size;
-        private static int offProfileClass = offProfileVersion + ICCProfileVersion.size;
-        private static int offColorSpaceType = offProfileClass + ICCProfile.int_size;
-        private static int offPCSType = offColorSpaceType + ICCProfile.int_size;
-        private static int offDateTime = offPCSType + ICCProfile.int_size;
-        private static int offProfileSignature = offDateTime + ICCDateTime.size;
-        private static int offPlatformSignature = offProfileSignature + ICCProfile.int_size;
-        private static int offCMMFlags = offPlatformSignature + ICCProfile.int_size;
-        private static int offDeviceManufacturer = offCMMFlags + ICCProfile.int_size;
-        private static int offDeviceModel = offDeviceManufacturer + ICCProfile.int_size;
-        private static int offDeviceAttributes1 = offDeviceModel + ICCProfile.int_size;
-        private static int offDeviceAttributesReserved = offDeviceAttributes1 + ICCProfile.int_size;
-        private static int offRenderingIntent = offDeviceAttributesReserved + ICCProfile.int_size;
-        private static int offPCSIlluminant = offRenderingIntent + ICCProfile.int_size;
-        private static int offCreatorSig = offPCSIlluminant + XYZNumber.size;
-        private static int offReserved = offCreatorSig + ICCProfile.int_size;
+        private static readonly int offProfileSize = 0;
+        private static readonly int offCMMTypeSignature = offProfileSize + ICCProfile.int_size;
+        private static readonly int offProfileVersion = offCMMTypeSignature + ICCProfile.int_size;
+        private static readonly int offProfileClass = offProfileVersion + ICCProfileVersion.size;
+        private static readonly int offColorSpaceType = offProfileClass + ICCProfile.int_size;
+        private static readonly int offPCSType = offColorSpaceType + ICCProfile.int_size;
+        private static readonly int offDateTime = offPCSType + ICCProfile.int_size;
+        private static readonly int offProfileSignature = offDateTime + ICCDateTime.size;
+        private static readonly int offPlatformSignature = offProfileSignature + ICCProfile.int_size;
+        private static readonly int offCMMFlags = offPlatformSignature + ICCProfile.int_size;
+        private static readonly int offDeviceManufacturer = offCMMFlags + ICCProfile.int_size;
+        private static readonly int offDeviceModel = offDeviceManufacturer + ICCProfile.int_size;
+        private static readonly int offDeviceAttributes1 = offDeviceModel + ICCProfile.int_size;
+        private static readonly int offDeviceAttributesReserved = offDeviceAttributes1 + ICCProfile.int_size;
+        private static readonly int offRenderingIntent = offDeviceAttributesReserved + ICCProfile.int_size;
+        private static readonly int offPCSIlluminant = offRenderingIntent + ICCProfile.int_size;
+        private static readonly int offCreatorSig = offPCSIlluminant + XYZNumber.size;
+        private static readonly int offReserved = offCreatorSig + ICCProfile.int_size;
         /// <summary>Size of the header </summary>
         public static int size = offReserved + 44 * ICCProfile.byte_size;
 

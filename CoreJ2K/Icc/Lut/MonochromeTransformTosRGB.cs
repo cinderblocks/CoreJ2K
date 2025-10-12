@@ -45,9 +45,9 @@ namespace CoreJ2K.Icc.Lut
         /// <summary>Transform parameter. </summary>
         public const double ksRGB8ReduceAfterExp = 14.025;
 
-        private short[] lut = null;
-        private int dwInputMaxValue = 0;
-        private LookUpTableFP fLut = null;
+        private readonly short[] lut = null;
+        private readonly int dwInputMaxValue = 0;
+        private readonly LookUpTableFP fLut = null;
 
 
         /// <summary> String representation of class</summary>

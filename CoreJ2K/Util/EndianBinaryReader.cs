@@ -6,7 +6,7 @@ namespace CoreJ2K.Util
 {
     internal class EndianBinaryReader : BinaryReader
     {
-        private bool _bigEndian = false;
+        private readonly bool _bigEndian = false;
 
         // Summary:
         //     Initializes a new instance of the System.IO.BinaryReader class based on the

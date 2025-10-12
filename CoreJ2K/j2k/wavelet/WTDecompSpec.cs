@@ -122,13 +122,13 @@ namespace CoreJ2K.j2k.wavelet
         /// things are not supported yet. 
         /// </summary>
         // Use byte to save memory (no need for speed here).
-        private byte[] specValType;
+        private readonly byte[] specValType;
 
         /// <summary>The main default decomposition </summary>
-        private int mainDefDecompType;
+        private readonly int mainDefDecompType;
 
         /// <summary>The main default number of decomposition levels </summary>
-        private int mainDefLevels;
+        private readonly int mainDefLevels;
 
         /// <summary>The component main default decomposition, for each component. </summary>
         private int[] compMainDefDecompType;

@@ -48,7 +48,7 @@ namespace CoreJ2K.j2k.util
     public abstract class StreamMsgLogger : IMsgLogger
     {
         /// <summary>The 'out' stream </summary>
-        private StreamWriter out_Renamed;
+        private readonly StreamWriter out_Renamed;
 
         /// <summary>The 'err' stream </summary>
         private readonly StreamWriter err;

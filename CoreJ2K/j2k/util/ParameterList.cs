@@ -65,7 +65,7 @@ namespace CoreJ2K.j2k.util
     /// </summary>
     public class ParameterList : System.Collections.Generic.Dictionary<string, string>
     {
-        private ParameterList defaults;
+        private readonly ParameterList defaults;
 
         /// <summary> Returns the default ParameterList.</summary>
         /// <returns> Default ParameterList</returns>
@@ -238,9 +238,7 @@ namespace CoreJ2K.j2k.util
         /// parameter with the name 'pname'.</returns>
         public virtual string getParameter(string pname)
         {
-            string pval;
-
-            if (TryGetValue(pname, out pval) || defaults == null) { return pval; }
+            if (TryGetValue(pname, out var pval) || defaults == null) { return pval; }
 
             // if parameter is not there, check in default params
             return !defaults.TryGetValue(pname, out pval) ? null : pval;

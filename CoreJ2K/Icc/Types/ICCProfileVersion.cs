@@ -32,8 +32,8 @@ namespace CoreJ2K.Icc.Types
         /// </summary>
         public byte uMinor;
 
-        private byte reserved1;
-        private byte reserved2;
+        private readonly byte reserved1;
+        private readonly byte reserved2;
 
         /// <summary>Construct from constituent parts. </summary>
         public ICCProfileVersion(byte major, byte minor, byte res1, byte res2)

@@ -27,7 +27,7 @@ namespace CoreJ2K.Color.Boxes
     {
         public int NChannels { get; private set; }
 
-        private List<byte[]> map = new List<byte[]>(10);
+        private readonly List<byte[]> map = new List<byte[]>(10);
 
         /// <summary> Construct a ComponentMappingBox from an input image.</summary>
         /// <param name="in">RandomAccessIO jp2 image

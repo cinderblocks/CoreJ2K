@@ -62,13 +62,13 @@ namespace CoreJ2K.Icc.Lut
 
         // End of contant definitions:
 
-        private double[] matrix; // Matrix coefficients 
+        private readonly double[] matrix; // Matrix coefficients 
 
-        private LookUpTableFP[] fLut = new LookUpTableFP[3];
-        private LookUpTable32LinearSRGBtoSRGB lut; // Linear sRGB to sRGB LUT
+        private readonly LookUpTableFP[] fLut = new LookUpTableFP[3];
+        private readonly LookUpTable32LinearSRGBtoSRGB lut; // Linear sRGB to sRGB LUT
 
-        private int[] dwMaxValue;
-        private int[] dwShiftValue;
+        private readonly int[] dwMaxValue;
+        private readonly int[] dwShiftValue;
 
         //private int dwMaxCols = 0; // Maximum number of columns that can be processed
         //private int dwMaxRows = 0; // Maximum number of rows that can be processed

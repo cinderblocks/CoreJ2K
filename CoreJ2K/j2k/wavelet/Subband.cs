@@ -356,7 +356,7 @@ namespace CoreJ2K.j2k.wavelet
         /// with respect to the canvas is (0,0) too.
         /// 
         /// </summary>
-        public Subband()
+        protected Subband()
         {
         }
 
@@ -403,7 +403,7 @@ namespace CoreJ2K.j2k.wavelet
         /// 
         /// </param>
         /// <seealso cref="WaveletTransform" />
-        public Subband(int w, int h, int ulcx, int ulcy, int lvls, WaveletFilter[] hfilters, WaveletFilter[] vfilters)
+        protected Subband(int w, int h, int ulcx, int ulcy, int lvls, WaveletFilter[] hfilters, WaveletFilter[] vfilters)
         {
             int i, hi, vi;
             Subband cur; // The current subband

@@ -27,7 +27,7 @@ namespace CoreJ2K.Color.Boxes
     {
         public int NDefs { get; private set; }
 
-        private Dictionary<int, int[]> definitions = new Dictionary<int, int[]>();
+        private readonly Dictionary<int, int[]> definitions = new Dictionary<int, int[]>();
 
         /// <summary> Construct a ChannelDefinitionBox from an input image.</summary>
         /// <param name="in">RandomAccessIO jp2 image

@@ -62,7 +62,7 @@ namespace CoreJ2K.j2k.codestream.reader
     {
 
         /// <summary>Reference to the codestream reader agent </summary>
-        private BitstreamReaderAgent src;
+        private readonly BitstreamReaderAgent src;
 
         /// <summary>Flag indicating whether packed packet header was used for this tile </summary>
         private bool pph = false;
@@ -71,20 +71,20 @@ namespace CoreJ2K.j2k.codestream.reader
         private System.IO.MemoryStream pphbais;
 
         /// <summary>Reference to decoder specifications </summary>
-        private DecoderSpecs decSpec;
+        private readonly DecoderSpecs decSpec;
 
         /// <summary>Reference to the HeaderDecoder </summary>
-        private HeaderDecoder hd;
+        private readonly HeaderDecoder hd;
 
         /// <summary>Initial value of the state variable associated with code-block
         /// length.</summary>
-        private int INIT_LBLOCK = 3;
+        private readonly int INIT_LBLOCK = 3;
 
         /// <summary>The wrapper to read bits for the packet heads </summary>
-        private PktHeaderBitReader bin;
+        private readonly PktHeaderBitReader bin;
 
         /// <summary>Reference to the stream where to read from </summary>
-        private RandomAccessIO ehs;
+        private readonly RandomAccessIO ehs;
 
         /// <summary> Maximum number of precincts :
         /// 
@@ -174,7 +174,7 @@ namespace CoreJ2K.j2k.codestream.reader
         /// <summary>Maximum number of codeblocks to read before ncb quit condition is
         /// reached 
         /// </summary>
-        private int maxCB;
+        private readonly int maxCB;
 
         /// <summary>Flag indicating whether ncb quit condition has been reached </summary>
         private bool ncbQuit;
@@ -198,7 +198,7 @@ namespace CoreJ2K.j2k.codestream.reader
         private int yQuit;
 
         /// <summary>True if truncation mode is used. False if it is parsing mode </summary>
-        private bool isTruncMode;
+        private readonly bool isTruncMode;
 
         /// <summary> Creates an empty PktDecoder object associated with given decoder
         /// specifications and HeaderDecoder. This object must be initialized

@@ -35,19 +35,19 @@ namespace CoreJ2K.Icc.Tags
         private static readonly int offTagCount;
         private static readonly int offTags;
 
-        private System.Collections.Generic.List<Triplet> trios = new System.Collections.Generic.List<Triplet>(10);
+        private readonly System.Collections.Generic.List<Triplet> trios = new System.Collections.Generic.List<Triplet>(10);
 
-        private int tagCount;
+        private readonly int tagCount;
 
 
         private class Triplet
         {
             /// <summary>Tag identifier              </summary>
-            internal int signature;
+            internal readonly int signature;
             /// <summary>absolute offset of tag data </summary>
-            internal int offset;
+            internal readonly int offset;
             /// <summary>length of tag data          </summary>
-            internal int count;
+            internal readonly int count;
             /// <summary>size of an entry            </summary>
             public static readonly int size;
 

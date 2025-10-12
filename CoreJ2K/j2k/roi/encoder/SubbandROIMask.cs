@@ -96,7 +96,7 @@ namespace CoreJ2K.j2k.roi.encoder
         /// <param name="h">The height of corresponding subband
         /// 
         /// </param>
-        public SubbandROIMask(int ulx, int uly, int w, int h)
+        protected SubbandROIMask(int ulx, int uly, int w, int h)
         {
             this.ulx = ulx;
             this.uly = uly;

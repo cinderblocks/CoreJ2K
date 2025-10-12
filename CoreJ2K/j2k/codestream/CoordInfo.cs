@@ -85,7 +85,7 @@ namespace CoreJ2K.j2k.codestream
         /// <param name="idx">The object's index
         /// 
         /// </param>
-        public CoordInfo(int ulx, int uly, int w, int h)
+        protected CoordInfo(int ulx, int uly, int w, int h)
         {
             this.ulx = ulx;
             this.uly = uly;
@@ -93,8 +93,8 @@ namespace CoreJ2K.j2k.codestream
             this.h = h;
         }
 
-        /// <summary>Empty contructor </summary>
-        public CoordInfo()
+        /// <summary>Empty constructor </summary>
+        protected CoordInfo()
         {
         }
 

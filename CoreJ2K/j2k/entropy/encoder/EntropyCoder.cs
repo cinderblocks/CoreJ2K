@@ -120,7 +120,7 @@ namespace CoreJ2K.j2k.entropy.encoder
         /// <param name="src">The source of quantized wavelet coefficients.
         /// 
         /// </param>
-        public EntropyCoder(CBlkQuantDataSrcEnc src) : base(src)
+        protected EntropyCoder(CBlkQuantDataSrcEnc src) : base(src)
         {
             this.src = src;
         }

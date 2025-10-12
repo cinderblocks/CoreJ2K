@@ -97,7 +97,7 @@ namespace CoreJ2K.j2k.entropy.decoder
         private MQDecoder mq;
 
         /// <summary>The decoder spec </summary>
-        private DecoderSpecs decSpec;
+        private readonly DecoderSpecs decSpec;
 
         /// <summary>The options that are turned on, as flag bits. The options are
         /// 'OPT_TERM_PASS', 'OPT_RESET_MQ', 'OPT_VERT_STR_CAUSAL', 'OPT_BYPASS'
@@ -111,12 +111,12 @@ namespace CoreJ2K.j2k.entropy.decoder
         /// <summary>Flag to indicate if we should try to detect errors or just ignore any
         /// error resilient information 
         /// </summary>
-        private bool doer;
+        private readonly bool doer;
 
         /// <summary>Flag to indicate if we should be verbose about bit stream errors
         /// detected with the error resilience options 
         /// </summary>
-        private bool verber;
+        private readonly bool verber;
 
         /// <summary>Number of bits used for the Zero Coding lookup table </summary>
         private const int ZC_LUT_BITS = 8;
@@ -218,7 +218,7 @@ namespace CoreJ2K.j2k.entropy.decoder
         /// 
         /// </summary>
         //UPGRADE_NOTE: Final was removed from the declaration of 'state '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
-        private int[] state;
+        private readonly int[] state;
 
         /// <summary>The separation between the upper and lower bits in the state array: 16
         /// 
@@ -448,7 +448,7 @@ namespace CoreJ2K.j2k.entropy.decoder
         private DecLyrdCBlk srcblk;
 
         /// <summary>The maximum number of bit planes to decode for any code-block </summary>
-        private int mQuit;
+        private readonly int mQuit;
 
         /// <summary> Instantiates a new entropy decoder engine, with the specified source of
         /// data, nominal block width and height.
@@ -2127,7 +2127,7 @@ namespace CoreJ2K.j2k.entropy.decoder
                         j += sscanw;
                         csj = state[j];
                     }
-                //UPGRADE_NOTE: Label 'top_half_brk' was added. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1011'"
+                    //UPGRADE_NOTE: Label 'top_half_brk' was added. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1011'"
 
                 top_half_brk:;
                     // end of 'top_half' block

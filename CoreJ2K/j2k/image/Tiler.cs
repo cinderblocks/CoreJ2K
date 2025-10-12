@@ -142,39 +142,39 @@ namespace CoreJ2K.j2k.image
         public override int NomTileHeight => ytsiz;
 
         /// <summary>The source of image data </summary>
-        private BlkImgDataSrc src = null;
+        private readonly BlkImgDataSrc src = null;
 
         /// <summary>Horizontal coordinate of the upper left hand reference grid point.</summary>
-        private int x0siz;
+        private readonly int x0siz;
 
         /// <summary>Vertical coordinate of the upper left hand reference grid point.</summary>
-        private int y0siz;
+        private readonly int y0siz;
 
         /// <summary>The horizontal coordinate of the tiling origin in the canvas system,
         /// on the reference grid. 
         /// </summary>
-        private int xt0siz;
+        private readonly int xt0siz;
 
         /// <summary>The vertical coordinate of the tiling origin in the canvas system, on
         /// the reference grid. 
         /// </summary>
-        private int yt0siz;
+        private readonly int yt0siz;
 
         /// <summary>The nominal width of the tiles, on the reference grid. If 0 then there 
         /// is no tiling in that direction. 
         /// </summary>
-        private int xtsiz;
+        private readonly int xtsiz;
 
         /// <summary>The nominal height of the tiles, on the reference grid. If 0 then
         /// there is no tiling in that direction. 
         /// </summary>
-        private int ytsiz;
+        private readonly int ytsiz;
 
         /// <summary>The number of tiles in the horizontal direction. </summary>
-        private int ntX;
+        private readonly int ntX;
 
         /// <summary>The number of tiles in the vertical direction. </summary>
-        private int ntY;
+        private readonly int ntY;
 
         /// <summary>The component width in the current active tile, for each component </summary>
         private int[] compW = null;

@@ -112,7 +112,7 @@ namespace CoreJ2K.j2k.entropy.decoder
         /// <param name="src">From where to obtain the compressed data.
         /// 
         /// </param>
-        public EntropyDecoder(CodedCBlkDataSrcDec src) : base(src)
+        protected EntropyDecoder(CodedCBlkDataSrcDec src) : base(src)
         {
             this.src = src;
         }

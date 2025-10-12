@@ -67,7 +67,7 @@ namespace CoreJ2K.j2k.image
         private DataBlk srcBlk = new DataBlkInt();
 
         /// <summary>The source of image data </summary>
-        private BlkImgDataSrc src;
+        private readonly BlkImgDataSrc src;
 
         /// <summary>The number of fraction bits in the casted ints </summary>
         private int fp;

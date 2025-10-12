@@ -861,7 +861,7 @@ namespace CoreJ2K
 
         #region Decoder Parameters
 
-        private static string[][] decoder_pinfo =
+        private static readonly string[][] decoder_pinfo =
             {
                 new string[]
                     {
@@ -1053,7 +1053,7 @@ namespace CoreJ2K
 
         #region Encoder Parameters
 
-        private static string[][] encoder_pinfo =
+        private static readonly string[][] encoder_pinfo =
             {
                 new string[]
                     {

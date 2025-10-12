@@ -87,19 +87,19 @@ namespace CoreJ2K.j2k.io
         public virtual int ByteOrdering => byte_Ordering;
 
         /// <summary>The name of the current file </summary>
-        private string fileName;
+        private readonly string fileName;
 
         /// <summary> Whether the opened file is read only or not (defined by the constructor
         /// arguments)
         /// 
         /// </summary>
-        private bool isReadOnly = true;
+        private readonly bool isReadOnly = true;
 
         /// <summary> The RandomAccessFile associated with the buffer
         /// 
         /// </summary>
         //UPGRADE_TODO: Class 'java.io.RandomAccessFile' was converted to 'System.IO.FileStream' which has a different behavior. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1073_javaioRandomAccessFile'"
-        private Stream theFile;
+        private readonly Stream theFile;
 
         /// <summary> Buffer of bytes containing the part of the file that is currently being
         /// accessed

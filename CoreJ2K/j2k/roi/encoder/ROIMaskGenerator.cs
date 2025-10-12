@@ -87,7 +87,7 @@ namespace CoreJ2K.j2k.roi.encoder
         /// </param>
         /// <param name="nrc">The number of components
         /// </param>
-        public ROIMaskGenerator(ROI[] rois, int nrc)
+        protected ROIMaskGenerator(ROI[] rois, int nrc)
         {
             roi_array = rois;
             this.nrc = nrc;

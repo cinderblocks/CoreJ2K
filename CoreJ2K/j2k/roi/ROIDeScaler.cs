@@ -98,7 +98,7 @@ namespace CoreJ2K.j2k.roi
         /// <summary>The MaxShiftSpec containing the scaling values for all tile-components
         /// 
         /// </summary>
-        private MaxShiftSpec mss;
+        private readonly MaxShiftSpec mss;
 
         /// <summary>The prefix for ROI decoder options: 'R' </summary>
         public const char OPT_PREFIX = 'R';
@@ -112,7 +112,7 @@ namespace CoreJ2K.j2k.roi
         /// <summary>The entropy decoder from where to get the compressed data (the source)
         /// 
         /// </summary>
-        private CBlkQuantDataSrcDec src;
+        private readonly CBlkQuantDataSrcDec src;
 
         /// <summary> Constructor of the ROI descaler, takes EntropyDEcoder as source of data
         /// to de-scale.
