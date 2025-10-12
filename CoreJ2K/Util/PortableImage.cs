@@ -46,7 +46,7 @@ namespace CoreJ2K.Util
 
         public T As<T>()
         {
-            var image = ImageFactory.New<T>(Width, Height, NumberOfComponents, 
+            var image = ImageFactory.New<T>(Width, Height, NumberOfComponents,
                 ToBytes(Width, Height, NumberOfComponents, byteScaling, Data));
             return image.As<T>();
         }
@@ -79,7 +79,7 @@ namespace CoreJ2K.Util
                 rowValues.Length);
         }
 
-        private static byte[] ToBytes(int width, int height, int numberOfComponents, 
+        private static byte[] ToBytes(int width, int height, int numberOfComponents,
             IReadOnlyList<double> byteScaling, IReadOnlyList<int> data)
         {
             var count = numberOfComponents * width * height;

@@ -40,10 +40,10 @@
 * 
 * Copyright (c) 1999/2000 JJ2000 Partners.
 * */
-using System;
 using CoreJ2K.j2k.decoder;
 using CoreJ2K.j2k.util;
 using CoreJ2K.j2k.wavelet.synthesis;
+using System;
 
 namespace CoreJ2K.j2k.image.invcomptransf
 {

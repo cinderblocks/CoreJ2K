@@ -41,8 +41,8 @@
 * 
 * Copyright (c) 1999/2000 JJ2000 Partners.
 * */
-using System;
 using CoreJ2K.j2k.util;
+using System;
 
 namespace CoreJ2K.j2k.image
 {

@@ -44,43 +44,43 @@
 
 namespace CoreJ2K.j2k.codestream
 {
-	
-	/// <summary> This interface defines the identifiers for the different codestream
-	/// profiles and progression types.
-	/// 
-	/// Each progressive type has a different number: 'LY_RES_COMP_POS_PROG',
-	/// 'RES_LY_COMP_POS_PROG', 'RES_POS_COMP_LY_PROG', 'POS_COMP_RES_LY_PROG' or
-	/// 'COMP_POS_RES_LY_PROG'.  These are the same identifiers are used in the
-	/// codestream syntax.
-	/// 
-	/// This interface defines the constants only. In order to use the constants
-	/// in any other class you can either use the fully qualified name (e.g.,
-	/// <tt>ProgressionType.LY_RES_COMP_POS_PROG</tt>) or declare this interface in
-	/// the implements clause of the class and then access the identifier
-	/// directly.
-	/// 
-	/// </summary>
-	public struct ProgressionType
+
+    /// <summary> This interface defines the identifiers for the different codestream
+    /// profiles and progression types.
+    /// 
+    /// Each progressive type has a different number: 'LY_RES_COMP_POS_PROG',
+    /// 'RES_LY_COMP_POS_PROG', 'RES_POS_COMP_LY_PROG', 'POS_COMP_RES_LY_PROG' or
+    /// 'COMP_POS_RES_LY_PROG'.  These are the same identifiers are used in the
+    /// codestream syntax.
+    /// 
+    /// This interface defines the constants only. In order to use the constants
+    /// in any other class you can either use the fully qualified name (e.g.,
+    /// <tt>ProgressionType.LY_RES_COMP_POS_PROG</tt>) or declare this interface in
+    /// the implements clause of the class and then access the identifier
+    /// directly.
+    /// 
+    /// </summary>
+    public struct ProgressionType
     {
-		/// <summary>The codestream is Layer/Resolution/Component/Position progressive : 0
-		/// 
-		/// </summary>
-		public const int LY_RES_COMP_POS_PROG = 0;
-		/// <summary>The codestream is Resolution/Layer/Component/Position progressive : 1
-		/// 
-		/// </summary>
-		public const int RES_LY_COMP_POS_PROG = 1;
-		/// <summary>The codestream is Resolution/Position/Component/Layer progressive : 2
-		/// 
-		/// </summary>
-		public const int RES_POS_COMP_LY_PROG = 2;
-		/// <summary>The codestream is Position/Component/Resolution/Layer progressive : 3
-		/// 
-		/// </summary>
-		public const int POS_COMP_RES_LY_PROG = 3;
-		/// <summary>The codestream is Component/Position/Resolution/Layer progressive : 4
-		/// 
-		/// </summary>
-		public const int COMP_POS_RES_LY_PROG = 4;
-	}
+        /// <summary>The codestream is Layer/Resolution/Component/Position progressive : 0
+        /// 
+        /// </summary>
+        public const int LY_RES_COMP_POS_PROG = 0;
+        /// <summary>The codestream is Resolution/Layer/Component/Position progressive : 1
+        /// 
+        /// </summary>
+        public const int RES_LY_COMP_POS_PROG = 1;
+        /// <summary>The codestream is Resolution/Position/Component/Layer progressive : 2
+        /// 
+        /// </summary>
+        public const int RES_POS_COMP_LY_PROG = 2;
+        /// <summary>The codestream is Position/Component/Resolution/Layer progressive : 3
+        /// 
+        /// </summary>
+        public const int POS_COMP_RES_LY_PROG = 3;
+        /// <summary>The codestream is Component/Position/Resolution/Layer progressive : 4
+        /// 
+        /// </summary>
+        public const int COMP_POS_RES_LY_PROG = 4;
+    }
 }

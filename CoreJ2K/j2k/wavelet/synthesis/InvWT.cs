@@ -44,44 +44,44 @@
 
 namespace CoreJ2K.j2k.wavelet.synthesis
 {
-	
-	/// <summary> This interface extends the WaveletTransform with the specifics of inverse
-	/// wavelet transforms. Classes that implement inverse wavelet transfoms should
-	/// implement this interface.
-	/// 
-	/// This class does not define the methods to transfer data, just the
-	/// specifics to inverse wavelet transform. Different data transfer methods are
-	/// envisageable for different transforms.
-	/// 
-	/// </summary>
-	public interface InvWT:WaveletTransform
-	{
-		/// <summary> Sets the image reconstruction resolution level. A value of 0 means
-		/// reconstruction of an image with the lowest resolution (dimension)
-		/// available.
-		/// 
-		/// Note: Image resolution level indexes may differ from tile-component
-		/// resolution index. They are indeed indexed starting from the lowest
-		/// number of decomposition levels of each component of each tile.
-		/// 
-		/// Example: For an image (1 tile) with 2 components (component 0 having
-		/// 2 decomposition levels and component 1 having 3 decomposition levels),
-		/// the first (tile-) component has 3 resolution levels and the second one
-		/// has 4 resolution levels, whereas the image has only 3 resolution levels
-		/// available.
-		/// 
-		/// </summary>
-		/// <param name="rl">The image resolution level.
-		/// 
-		/// </param>
-		/// <returns> The vertical coordinate of the image origin in the canvas
-		/// system, on the reference grid.
-		/// 
-		/// </returns>
-		int ImgResLevel
-		{
-			set;
-			
-		}
-	}
+
+    /// <summary> This interface extends the WaveletTransform with the specifics of inverse
+    /// wavelet transforms. Classes that implement inverse wavelet transfoms should
+    /// implement this interface.
+    /// 
+    /// This class does not define the methods to transfer data, just the
+    /// specifics to inverse wavelet transform. Different data transfer methods are
+    /// envisageable for different transforms.
+    /// 
+    /// </summary>
+    public interface InvWT : WaveletTransform
+    {
+        /// <summary> Sets the image reconstruction resolution level. A value of 0 means
+        /// reconstruction of an image with the lowest resolution (dimension)
+        /// available.
+        /// 
+        /// Note: Image resolution level indexes may differ from tile-component
+        /// resolution index. They are indeed indexed starting from the lowest
+        /// number of decomposition levels of each component of each tile.
+        /// 
+        /// Example: For an image (1 tile) with 2 components (component 0 having
+        /// 2 decomposition levels and component 1 having 3 decomposition levels),
+        /// the first (tile-) component has 3 resolution levels and the second one
+        /// has 4 resolution levels, whereas the image has only 3 resolution levels
+        /// available.
+        /// 
+        /// </summary>
+        /// <param name="rl">The image resolution level.
+        /// 
+        /// </param>
+        /// <returns> The vertical coordinate of the image origin in the canvas
+        /// system, on the reference grid.
+        /// 
+        /// </returns>
+        int ImgResLevel
+        {
+            set;
+
+        }
+    }
 }

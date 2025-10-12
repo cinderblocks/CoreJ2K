@@ -45,73 +45,73 @@ using CoreJ2K.j2k.image;
 
 namespace CoreJ2K.j2k.wavelet.analysis
 {
-	
-	/// <summary> This is an implementation of the 'CBlkWTData' abstract class for 32 bit
-	/// floating point data (float).
-	/// 
-	/// The methods in this class are declared final, so that they can be
-	/// inlined by inlining compilers.
-	/// 
-	/// </summary>
-	/// <seealso cref="CBlkWTData" />
-	public class CBlkWTDataFloat:CBlkWTData
-	{
-		/// <summary> Returns the identifier of this data type, <tt>TYPE_FLOAT</tt>, as
-		/// defined in <tt>DataBlk</tt>.
-		/// 
-		/// </summary>
-		/// <returns> The type of data stored. Always <tt>DataBlk.TYPE_FLOAT</tt>
-		/// 
-		/// </returns>
-		/// <seealso cref="DataBlk.TYPE_FLOAT" />
-		public override int DataType => DataBlk.TYPE_FLOAT;
 
-		//UPGRADE_NOTE: Respective javadoc comments were merged.  It should be changed in order to comply with .NET documentation conventions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1199'"
-		/// <summary> Returns the array containing the data, or null if there is no data
-		/// array. The returned array is a float array.
-		/// 
-		/// </summary>
-		/// <returns> The array of data (a float[]) or null if there is no data.
-		/// 
-		/// </returns>
-		/// <summary> Sets the data array to the specified one. The provided array must be a
-		/// float array, otherwise a ClassCastException is thrown. The size of the
-		/// array is not checked for consistency with the code-block dimensions.
-		/// 
-		/// </summary>
-		/// <param name="arr">The data array to use. Must be a float array.
-		/// 
-		/// </param>
-		public override object Data
-		{
-			get => data;
+    /// <summary> This is an implementation of the 'CBlkWTData' abstract class for 32 bit
+    /// floating point data (float).
+    /// 
+    /// The methods in this class are declared final, so that they can be
+    /// inlined by inlining compilers.
+    /// 
+    /// </summary>
+    /// <seealso cref="CBlkWTData" />
+    public class CBlkWTDataFloat : CBlkWTData
+    {
+        /// <summary> Returns the identifier of this data type, <tt>TYPE_FLOAT</tt>, as
+        /// defined in <tt>DataBlk</tt>.
+        /// 
+        /// </summary>
+        /// <returns> The type of data stored. Always <tt>DataBlk.TYPE_FLOAT</tt>
+        /// 
+        /// </returns>
+        /// <seealso cref="DataBlk.TYPE_FLOAT" />
+        public override int DataType => DataBlk.TYPE_FLOAT;
 
-			set => data = (float[]) value;
-		}
-		//UPGRADE_NOTE: Respective javadoc comments were merged.  It should be changed in order to comply with .NET documentation conventions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1199'"
-		/// <summary> Returns the array containing the data, or null if there is no data
-		/// array.
-		/// 
-		/// </summary>
-		/// <returns> The array of data or null if there is no data.
-		/// 
-		/// </returns>
-		/// <summary> Sets the data array to the specified one. The size of the array is not
-		/// checked for consistency with the code-block dimensions. This method is
-		/// more efficient than 'setData()'.
-		/// 
-		/// </summary>
-		/// <param name="arr">The data array to use.
-		/// 
-		/// </param>
-		public virtual float[] DataFloat
-		{
-			get => data;
+        //UPGRADE_NOTE: Respective javadoc comments were merged.  It should be changed in order to comply with .NET documentation conventions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1199'"
+        /// <summary> Returns the array containing the data, or null if there is no data
+        /// array. The returned array is a float array.
+        /// 
+        /// </summary>
+        /// <returns> The array of data (a float[]) or null if there is no data.
+        /// 
+        /// </returns>
+        /// <summary> Sets the data array to the specified one. The provided array must be a
+        /// float array, otherwise a ClassCastException is thrown. The size of the
+        /// array is not checked for consistency with the code-block dimensions.
+        /// 
+        /// </summary>
+        /// <param name="arr">The data array to use. Must be a float array.
+        /// 
+        /// </param>
+        public override object Data
+        {
+            get => data;
 
-			set => data = value;
-		}
-		
-		/// <summary>The array where the data is stored </summary>
-		private float[] data;
-	}
+            set => data = (float[])value;
+        }
+        //UPGRADE_NOTE: Respective javadoc comments were merged.  It should be changed in order to comply with .NET documentation conventions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1199'"
+        /// <summary> Returns the array containing the data, or null if there is no data
+        /// array.
+        /// 
+        /// </summary>
+        /// <returns> The array of data or null if there is no data.
+        /// 
+        /// </returns>
+        /// <summary> Sets the data array to the specified one. The size of the array is not
+        /// checked for consistency with the code-block dimensions. This method is
+        /// more efficient than 'setData()'.
+        /// 
+        /// </summary>
+        /// <param name="arr">The data array to use.
+        /// 
+        /// </param>
+        public virtual float[] DataFloat
+        {
+            get => data;
+
+            set => data = value;
+        }
+
+        /// <summary>The array where the data is stored </summary>
+        private float[] data;
+    }
 }

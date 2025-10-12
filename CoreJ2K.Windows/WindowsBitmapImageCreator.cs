@@ -2,9 +2,9 @@
 // Copyright (c) 2024-2025 Sjofn LLC.
 // Licensed under the BSD 3-Clause License.
 
-using System.Drawing;
 using CoreJ2K.j2k.image;
 using JetBrains.Annotations;
+using System.Drawing;
 
 namespace CoreJ2K.Util
 {

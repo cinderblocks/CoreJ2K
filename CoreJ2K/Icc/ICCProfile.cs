@@ -14,18 +14,17 @@ namespace CoreJ2K.Icc
     using System.Collections.Generic;
     using System.IO;
     using System.Text;
-
-    using ParameterList = j2k.util.ParameterList;
     using ColorSpace = Color.ColorSpace;
+    using FacilityManager = j2k.util.FacilityManager;
+    using ICCCurveType = Tags.ICCCurveType;
+    using ICCDateTime = Types.ICCDateTime;
     using ICCProfileHeader = Types.ICCProfileHeader;
+    using ICCProfileVersion = Types.ICCProfileVersion;
     using ICCTag = Tags.ICCTag;
     using ICCTagTable = Tags.ICCTagTable;
-    using ICCCurveType = Tags.ICCCurveType;
     using ICCXYZType = Tags.ICCXYZType;
+    using ParameterList = j2k.util.ParameterList;
     using XYZNumber = Types.XYZNumber;
-    using ICCProfileVersion = Types.ICCProfileVersion;
-    using ICCDateTime = Types.ICCDateTime;
-    using FacilityManager = j2k.util.FacilityManager;
 
 
     /// <summary>  This class models the ICCProfile file.  This file is a binary file which is divided 

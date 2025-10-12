@@ -5,11 +5,6 @@ using System.Linq;
 
 namespace CoreJ2K
 {
-    using System;
-    using System.Collections.Generic;
-    using System.IO;
-    using System.Text;
-
     using Color;
     using j2k.codestream;
     using j2k.codestream.reader;
@@ -31,6 +26,10 @@ namespace CoreJ2K
     using j2k.util;
     using j2k.wavelet.analysis;
     using j2k.wavelet.synthesis;
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Text;
     using Util;
 
     public class J2kImage
@@ -377,7 +376,7 @@ namespace CoreJ2K
             if (pl.getParameter("file_format").Equals("on"))
             {
                 useFileFormat = true;
-                if (pl.getParameter("rate") != null 
+                if (pl.getParameter("rate") != null
                     && pl.getFloatParameter("rate") != defpl.getFloatParameter("rate"))
                 {
                     warning("Specified bit-rate applies only on the codestream but not on the whole file.");
@@ -814,7 +813,7 @@ namespace CoreJ2K
         {
             return GetDefaultDecoderParameterList(decoder_pinfo);
         }
-        
+
         public static ParameterList GetDefaultEncoderParameterList(string[][] pinfo)
         {
             var pl = new ParameterList();
@@ -857,7 +856,7 @@ namespace CoreJ2K
         {
             return GetDefaultEncoderParameterList(encoder_pinfo);
         }
-        
+
         #endregion
 
         #region Decoder Parameters

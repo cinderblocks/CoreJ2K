@@ -44,105 +44,105 @@ using System;
 
 namespace CoreJ2K.j2k.roi.encoder
 {
-	
-	/// <summary> This abstract class describes the ROI mask for a single subband. Each
-	/// object of the class contains the mask for a particular subband and also has
-	/// references to the masks of the children subbands of the subband
-	/// corresponding to this mask.  
-	/// </summary>
-	public abstract class SubbandROIMask
-	{
-		
-		/// <summary>The subband masks of the child LL </summary>
-		protected internal SubbandROIMask ll;
-		
-		/// <summary>The subband masks of the child LH </summary>
-		protected internal SubbandROIMask lh;
-		
-		/// <summary>The subband masks of the child HL </summary>
-		protected internal SubbandROIMask hl;
-		
-		/// <summary>The subband masks of the child HH </summary>
-		protected internal SubbandROIMask hh;
-		
-		/// <summary>Flag indicating whether this subband mask is a node or not </summary>
-		protected internal bool isNode;
-		
-		/// <summary>Horizontal uper-left coordinate of the subband mask </summary>
-		public int ulx;
-		
-		/// <summary>Vertical uper-left coordinate of the subband mask </summary>
-		public int uly;
-		
-		/// <summary>Width of the subband mask </summary>
-		public int w;
-		
-		/// <summary>Height of the subband mask </summary>
-		public int h;
-		
-		/// <summary> The constructor of the SubbandROIMask takes the dimensions of the
-		/// subband as parameters
-		/// 
-		/// </summary>
-		/// <param name="ulx">The upper left x coordinate of corresponding subband
-		/// 
-		/// </param>
-		/// <param name="uly">The upper left y coordinate of corresponding subband
-		/// 
-		/// </param>
-		/// <param name="w">The width of corresponding subband
-		/// 
-		/// </param>
-		/// <param name="h">The height of corresponding subband
-		/// 
-		/// </param>
-		public SubbandROIMask(int ulx, int uly, int w, int h)
-		{
-			this.ulx = ulx;
-			this.uly = uly;
-			this.w = w;
-			this.h = h;
-		}
-		
-		/// <summary> Returns a reference to the Subband mask element to which the specified
-		/// point belongs. The specified point must be inside this (i.e. the one
-		/// defined by this object) subband mask. This method searches through the
-		/// tree.
-		/// 
-		/// </summary>
-		/// <param name="x">horizontal coordinate of the specified point.
-		/// 
-		/// </param>
-		/// <param name="y">horizontal coordinate of the specified point.
-		/// 
-		/// </param>
-		public virtual SubbandROIMask getSubbandRectROIMask(int x, int y)
-		{
-			SubbandROIMask cur, hhs;
-			
-			// Check that we are inside this subband
-			if (x < ulx || y < uly || x >= ulx + w || y >= uly + h)
-			{
-				throw new ArgumentException();
-			}
-			
-			cur = this;
-			while (cur.isNode)
-			{
-				hhs = cur.hh;
-				// While we are still at a node -> continue
-				if (x < hhs.ulx)
-				{
-					// Is the result of horizontal low-pass
-					cur = y < hhs.uly ? cur.ll : cur.lh;
-				}
-				else
-				{
-					// Is the result of horizontal high-pass
-					cur = y < hhs.uly ? cur.hl : cur.hh;
-				}
-			}
-			return cur;
-		}
-	}
+
+    /// <summary> This abstract class describes the ROI mask for a single subband. Each
+    /// object of the class contains the mask for a particular subband and also has
+    /// references to the masks of the children subbands of the subband
+    /// corresponding to this mask.  
+    /// </summary>
+    public abstract class SubbandROIMask
+    {
+
+        /// <summary>The subband masks of the child LL </summary>
+        protected internal SubbandROIMask ll;
+
+        /// <summary>The subband masks of the child LH </summary>
+        protected internal SubbandROIMask lh;
+
+        /// <summary>The subband masks of the child HL </summary>
+        protected internal SubbandROIMask hl;
+
+        /// <summary>The subband masks of the child HH </summary>
+        protected internal SubbandROIMask hh;
+
+        /// <summary>Flag indicating whether this subband mask is a node or not </summary>
+        protected internal bool isNode;
+
+        /// <summary>Horizontal uper-left coordinate of the subband mask </summary>
+        public int ulx;
+
+        /// <summary>Vertical uper-left coordinate of the subband mask </summary>
+        public int uly;
+
+        /// <summary>Width of the subband mask </summary>
+        public int w;
+
+        /// <summary>Height of the subband mask </summary>
+        public int h;
+
+        /// <summary> The constructor of the SubbandROIMask takes the dimensions of the
+        /// subband as parameters
+        /// 
+        /// </summary>
+        /// <param name="ulx">The upper left x coordinate of corresponding subband
+        /// 
+        /// </param>
+        /// <param name="uly">The upper left y coordinate of corresponding subband
+        /// 
+        /// </param>
+        /// <param name="w">The width of corresponding subband
+        /// 
+        /// </param>
+        /// <param name="h">The height of corresponding subband
+        /// 
+        /// </param>
+        public SubbandROIMask(int ulx, int uly, int w, int h)
+        {
+            this.ulx = ulx;
+            this.uly = uly;
+            this.w = w;
+            this.h = h;
+        }
+
+        /// <summary> Returns a reference to the Subband mask element to which the specified
+        /// point belongs. The specified point must be inside this (i.e. the one
+        /// defined by this object) subband mask. This method searches through the
+        /// tree.
+        /// 
+        /// </summary>
+        /// <param name="x">horizontal coordinate of the specified point.
+        /// 
+        /// </param>
+        /// <param name="y">horizontal coordinate of the specified point.
+        /// 
+        /// </param>
+        public virtual SubbandROIMask getSubbandRectROIMask(int x, int y)
+        {
+            SubbandROIMask cur, hhs;
+
+            // Check that we are inside this subband
+            if (x < ulx || y < uly || x >= ulx + w || y >= uly + h)
+            {
+                throw new ArgumentException();
+            }
+
+            cur = this;
+            while (cur.isNode)
+            {
+                hhs = cur.hh;
+                // While we are still at a node -> continue
+                if (x < hhs.ulx)
+                {
+                    // Is the result of horizontal low-pass
+                    cur = y < hhs.uly ? cur.ll : cur.lh;
+                }
+                else
+                {
+                    // Is the result of horizontal high-pass
+                    cur = y < hhs.uly ? cur.hl : cur.hh;
+                }
+            }
+            return cur;
+        }
+    }
 }

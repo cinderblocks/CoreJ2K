@@ -43,66 +43,66 @@
 
 namespace CoreJ2K.j2k.codestream.reader
 {
-	
-	/// <summary> This class defines an object used to countain informations about a packet
-	/// to which the current code-block belongs.
-	/// 
-	/// </summary>
-	/// <seealso cref="CBlkInfo" />
-	public class PktInfo
-	{
-		
-		/// <summary>Index of the packet </summary>
-		public int packetIdx;
-		
-		/// <summary>The layer associated with the current code-block in this packet. </summary>
-		public int layerIdx;
-		
-		/// <summary>The code-block offset in the codestream (for this packet) </summary>
-		public int cbOff = 0;
-		
-		/// <summary>The length of the code-block in this packet (in bytes) </summary>
-		public int cbLength;
-		
-		/// <summary> The length of each terminated segment in the packet. The total is the
-		/// same as 'cbLength'. It can be null if there is only one terminated
-		/// segment, in which case 'cbLength' holds the legth of that segment 
-		/// 
-		/// </summary>
-		public int[] segLengths;
-		
-		/// <summary> The number of truncation points that appear in this packet, and all
-		/// previous packets, for this code-block. This is the number of passes
-		/// that can be decoded with the information in this packet and all
-		/// previous ones. 
-		/// 
-		/// </summary>
-		public int numTruncPnts;
-		
-		/// <summary> Classe's constructor.
-		/// 
-		/// </summary>
-		/// <param name="lyIdx">The layer index for the code-block in this packet
-		/// 
-		/// </param>
-		/// <param name="pckIdx">The packet index
-		/// 
-		/// </param>
-		public PktInfo(int lyIdx, int pckIdx)
-		{
-			layerIdx = lyIdx;
-			packetIdx = pckIdx;
-		}
-		
-		/// <summary> Object information in a string.
-		/// 
-		/// </summary>
-		/// <returns> Object information
-		/// 
-		/// </returns>
-		public override string ToString()
-		{
-			return $"packet {packetIdx} (lay:{layerIdx}, off:{cbOff}, len:{cbLength}, numTruncPnts:{numTruncPnts})\n";
-		}
-	}
+
+    /// <summary> This class defines an object used to countain informations about a packet
+    /// to which the current code-block belongs.
+    /// 
+    /// </summary>
+    /// <seealso cref="CBlkInfo" />
+    public class PktInfo
+    {
+
+        /// <summary>Index of the packet </summary>
+        public int packetIdx;
+
+        /// <summary>The layer associated with the current code-block in this packet. </summary>
+        public int layerIdx;
+
+        /// <summary>The code-block offset in the codestream (for this packet) </summary>
+        public int cbOff = 0;
+
+        /// <summary>The length of the code-block in this packet (in bytes) </summary>
+        public int cbLength;
+
+        /// <summary> The length of each terminated segment in the packet. The total is the
+        /// same as 'cbLength'. It can be null if there is only one terminated
+        /// segment, in which case 'cbLength' holds the legth of that segment 
+        /// 
+        /// </summary>
+        public int[] segLengths;
+
+        /// <summary> The number of truncation points that appear in this packet, and all
+        /// previous packets, for this code-block. This is the number of passes
+        /// that can be decoded with the information in this packet and all
+        /// previous ones. 
+        /// 
+        /// </summary>
+        public int numTruncPnts;
+
+        /// <summary> Classe's constructor.
+        /// 
+        /// </summary>
+        /// <param name="lyIdx">The layer index for the code-block in this packet
+        /// 
+        /// </param>
+        /// <param name="pckIdx">The packet index
+        /// 
+        /// </param>
+        public PktInfo(int lyIdx, int pckIdx)
+        {
+            layerIdx = lyIdx;
+            packetIdx = pckIdx;
+        }
+
+        /// <summary> Object information in a string.
+        /// 
+        /// </summary>
+        /// <returns> Object information
+        /// 
+        /// </returns>
+        public override string ToString()
+        {
+            return $"packet {packetIdx} (lay:{layerIdx}, off:{cbOff}, len:{cbLength}, numTruncPnts:{numTruncPnts})\n";
+        }
+    }
 }

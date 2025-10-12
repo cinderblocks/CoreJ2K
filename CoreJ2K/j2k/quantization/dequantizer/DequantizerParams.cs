@@ -44,24 +44,24 @@
 
 namespace CoreJ2K.j2k.quantization.dequantizer
 {
-	
-	/// <summary> This is the generic ineterface for dequantization parameters. Generally,
-	/// for each type of dequantizer, there should be a corresponding class to
-	/// store its parameters. The parameters are those that come from the bit
-	/// stream header, that concern dequantization.
-	/// 
-	/// </summary>
-	public abstract class DequantizerParams
-	{
-		/// <summary> Returns the type of the dequantizer for which the parameters are. The
-		/// types are defined in the Dequantizer class.
-		/// 
-		/// </summary>
-		/// <returns> The type of the dequantizer for which the parameters
-		/// are.
-		/// 
-		/// </returns>
-		/// <seealso cref="Dequantizer" />
-		public abstract int DequantizerType{get;}
-	}
+
+    /// <summary> This is the generic ineterface for dequantization parameters. Generally,
+    /// for each type of dequantizer, there should be a corresponding class to
+    /// store its parameters. The parameters are those that come from the bit
+    /// stream header, that concern dequantization.
+    /// 
+    /// </summary>
+    public abstract class DequantizerParams
+    {
+        /// <summary> Returns the type of the dequantizer for which the parameters are. The
+        /// types are defined in the Dequantizer class.
+        /// 
+        /// </summary>
+        /// <returns> The type of the dequantizer for which the parameters
+        /// are.
+        /// 
+        /// </returns>
+        /// <seealso cref="Dequantizer" />
+        public abstract int DequantizerType { get; }
+    }
 }

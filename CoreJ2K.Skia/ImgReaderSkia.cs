@@ -6,28 +6,28 @@
  *
  **/
 
-using System;
 using SkiaSharp;
+using System;
 
 namespace CoreJ2K.j2k.image.input
 {
-    public class ImgReaderSkia:ImgReader
+    public class ImgReaderSkia : ImgReader
     {
         /// <summary>DC offset value used when reading image</summary>
         private const int DC_OFFSET = 128;
-        
+
         /// <summary>Buffer for the components of each pixel(in the current block)</summary>
         private int[][] barr;
-	    
+
         /// <summary>Data block used only to store coordinates of the buffered blocks</summary>
         private readonly DataBlkInt dbi = new DataBlkInt();
-        
+
         /// <summary>Temporary DataBlkInt object (needed when encoder uses floating-point
         /// filters). This avoids allocating new DataBlk at each time.</summary>
         private DataBlkInt intBlk;
 
         private SKPixmap image;
-        
+
         public ImgReaderSkia(SKBitmap image)
         {
             this.image = image.PeekPixels();
@@ -43,7 +43,7 @@ namespace CoreJ2K.j2k.image.input
             h = image.Height;
             nc = GetNumberOfComponents(image.Info);
         }
-        
+
         public override void Close()
         {
             image.Dispose();
@@ -71,7 +71,7 @@ namespace CoreJ2K.j2k.image.input
             // Check component index
             if (compIndex < 0 || compIndex > this.nc)
                 throw new ArgumentOutOfRangeException(nameof(compIndex) + " is out of range");
-			
+
             switch (image.ColorType)
             {
                 case SKColorType.Alpha8:
@@ -86,27 +86,27 @@ namespace CoreJ2K.j2k.image.input
                 case SKColorType.Rgba16161616:
                     return 16;
                 case SKColorType.Rgb565:
-                {
-                    switch (compIndex)
                     {
-                        case 0:
-                            return 5;
-                        case 1:
-                            return 6;
-                        case 2:
-                            return 5;
-                        default:
-                            throw new ArgumentOutOfRangeException(nameof(compIndex) + " is out of range");
+                        switch (compIndex)
+                        {
+                            case 0:
+                                return 5;
+                            case 1:
+                                return 6;
+                            case 2:
+                                return 5;
+                            default:
+                                throw new ArgumentOutOfRangeException(nameof(compIndex) + " is out of range");
+                        }
                     }
-                }
                 case SKColorType.Rgb101010x:
                 case SKColorType.Bgr101010x:
                     return 10;
                 case SKColorType.Rgba1010102:
                 case SKColorType.Bgra1010102:
-                {
-                    return compIndex == 3 ? 2 : 10;
-                }
+                    {
+                        return compIndex == 3 ? 2 : 10;
+                    }
                 case SKColorType.AlphaF16:
                 case SKColorType.RgbaF16:
                 case SKColorType.RgbaF16Clamped:
@@ -121,7 +121,7 @@ namespace CoreJ2K.j2k.image.input
                         "Image colortype is unknown, Nominal range bits cannot be determined.");
             }
         }
-        
+
         /// <summary>
         /// Returns the position of the fixed point in the specified component
         /// (i.e. the number of fractional bits), which is always 0 for this
@@ -205,7 +205,7 @@ namespace CoreJ2K.j2k.image.input
             }
 
             // If asking a component for the first time for this block, read all the components
-            if ((barr == null) || (dbi.ulx > blk.ulx) || (dbi.uly > blk.uly) 
+            if ((barr == null) || (dbi.ulx > blk.ulx) || (dbi.uly > blk.uly)
                 || (dbi.ulx + dbi.w < blk.ulx + blk.w) || (dbi.uly + dbi.h < blk.uly + blk.h))
             {
                 barr = new int[nc][];
@@ -253,10 +253,10 @@ namespace CoreJ2K.j2k.image.input
                 var green = nc > 1 ? barr[1] : null;
                 var blue = nc > 2 ? barr[2] : null;
                 var alpha = nc > 3 ? barr[3] : null;
-                
+
                 // avoid a swizzle
-                if (image.ColorType == SKColorType.Bgra8888 
-                    || image.ColorType == SKColorType.Bgra1010102 
+                if (image.ColorType == SKColorType.Bgra8888
+                    || image.ColorType == SKColorType.Bgra1010102
                     || image.ColorType == SKColorType.Bgr101010x)
                 {
                     blue = barr[2];
@@ -264,7 +264,7 @@ namespace CoreJ2K.j2k.image.input
                 }
 
                 var pixelsAddr = image.GetPixels(blk.ulx, blk.uly);
-                
+
                 unsafe
                 {
                     var ptr = (byte*)pixelsAddr.ToPointer();
@@ -312,43 +312,43 @@ namespace CoreJ2K.j2k.image.input
             blk.progressive = false;
             return blk;
         }
-        
+
         /// <summary>
         /// Returns, in the blk argument, a block of image data containing the
-		/// specified rectangular area, in the specified component. The data is
-		/// returned, as a copy of the internal data, therefore the returned data
-		/// can be modified "in place".
-		/// 
-		/// After being read the coefficients are level shifted by subtracting
-		/// 2^(nominal bit range - 1)
-		/// 
-		/// The rectangular area to return is specified by the 'ulx', 'uly', 'w'
-		/// and 'h' members of the 'blk' argument, relative to the current
-		/// tile. These members are not modified by this method. The 'offset' of
-		/// the returned data is 0, and the 'scanw' is the same as the block's
-		/// width. See the 'DataBlk' class.
-		/// 
-		/// If the data array in 'blk' is 'null', then a new one is created. If
-		/// the data array is not 'null' then it is reused, and it must be large
-		/// enough to contain the block's data. Otherwise an 'ArrayStoreException'
-		/// or an 'IndexOutOfBoundsException' is thrown by the Java system.
-		/// 
-		/// The returned data has its 'progressive' attribute unset
-		/// (i.e. false).
-		/// 
-		/// When an I/O exception is encountered the JJ2KExceptionHandler is
-		/// used. The exception is passed to its handleException method. The action
-		/// that is taken depends on the action that has been registered in
-		/// JJ2KExceptionHandler. See JJ2KExceptionHandler for details.
-		/// </summary>
-		/// <param name="blk">Its coordinates and dimensions specify the area to
-		/// return. If it contains a non-null data array, then it must have the
-		/// correct dimensions. If it contains a null data array a new one is
-		/// created. The fields in this object are modified to return the data.</param>
-		/// <param name="c">The index of the component from which to get the data. Only
-		/// 0,1 and 2 are valid.</param>
-		/// <returns>The requested DataBlk</returns>
-		/// <seealso cref="GetInternCompData" />
+        /// specified rectangular area, in the specified component. The data is
+        /// returned, as a copy of the internal data, therefore the returned data
+        /// can be modified "in place".
+        /// 
+        /// After being read the coefficients are level shifted by subtracting
+        /// 2^(nominal bit range - 1)
+        /// 
+        /// The rectangular area to return is specified by the 'ulx', 'uly', 'w'
+        /// and 'h' members of the 'blk' argument, relative to the current
+        /// tile. These members are not modified by this method. The 'offset' of
+        /// the returned data is 0, and the 'scanw' is the same as the block's
+        /// width. See the 'DataBlk' class.
+        /// 
+        /// If the data array in 'blk' is 'null', then a new one is created. If
+        /// the data array is not 'null' then it is reused, and it must be large
+        /// enough to contain the block's data. Otherwise an 'ArrayStoreException'
+        /// or an 'IndexOutOfBoundsException' is thrown by the Java system.
+        /// 
+        /// The returned data has its 'progressive' attribute unset
+        /// (i.e. false).
+        /// 
+        /// When an I/O exception is encountered the JJ2KExceptionHandler is
+        /// used. The exception is passed to its handleException method. The action
+        /// that is taken depends on the action that has been registered in
+        /// JJ2KExceptionHandler. See JJ2KExceptionHandler for details.
+        /// </summary>
+        /// <param name="blk">Its coordinates and dimensions specify the area to
+        /// return. If it contains a non-null data array, then it must have the
+        /// correct dimensions. If it contains a null data array a new one is
+        /// created. The fields in this object are modified to return the data.</param>
+        /// <param name="c">The index of the component from which to get the data. Only
+        /// 0,1 and 2 are valid.</param>
+        /// <returns>The requested DataBlk</returns>
+        /// <seealso cref="GetInternCompData" />
         public override DataBlk GetCompData(DataBlk blk, int c)
         {
             // Check type of block provided as an argument
@@ -415,19 +415,19 @@ namespace CoreJ2K.j2k.image.input
                 case SKColorType.Gray8:
                     return 1;
                 case SKColorType.Rg88:
-                //case SKColorType.Rg1616:
+                    //case SKColorType.Rg1616:
                     return 2;
                 case SKColorType.Rgb888x:
-                //case SKColorType.Rgb565:
-                //case SKColorType.Rgb101010x:
-                //case SKColorType.Bgr101010x:
+                    //case SKColorType.Rgb565:
+                    //case SKColorType.Rgb101010x:
+                    //case SKColorType.Bgr101010x:
                     return 3;
                 //case SKColorType.Argb4444:
                 case SKColorType.Bgra8888:
                 case SKColorType.Rgba8888:
-                //case SKColorType.Rgba1010102:
-                //case SKColorType.Bgra1010102:
-                //case SKColorType.Rgba16161616:
+                    //case SKColorType.Rgba1010102:
+                    //case SKColorType.Bgra1010102:
+                    //case SKColorType.Rgba16161616:
                     return info.AlphaType > SKAlphaType.Opaque ? 4 : 3;
                 // floating point types
                 case SKColorType.RgbaF16:
@@ -443,7 +443,7 @@ namespace CoreJ2K.j2k.image.input
                         "Image colortype is unknown, number of components cannot be determined.");
             }
         }
-        
+
         /// <summary>Returns a string of information about the object, more than 1 line long.</summary>
         /// <returns> A string of information about the object.</returns>
         public override string ToString()

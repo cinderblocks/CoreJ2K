@@ -1,3 +1,5 @@
+using CoreJ2K.j2k.io;
+using CoreJ2K.j2k.util;
 /// <summary>**************************************************************************
 /// 
 /// $Id: ColorSpecificationBox.java,v 1.3 2002/08/08 14:07:53 grosbois Exp $
@@ -7,74 +9,72 @@
 /// ***************************************************************************
 /// </summary>
 using System;
-using CoreJ2K.j2k.io;
-using CoreJ2K.j2k.util;
 
 namespace CoreJ2K.Color.Boxes
 {
-	
-	/// <summary> This class models the Color Specification Box in a JP2 image.
-	/// 
-	/// </summary>
-	/// <version> 	1.0
-	/// </version>
-	/// <author> 	Bruce A. Kern
-	/// </author>
-	public sealed class ColorSpecificationBox:JP2Box
-	{
-        
-		public ColorSpace.MethodEnum Method { get; private set; }
 
-		public ColorSpace.CSEnum ColorSpace { get; private set; }
+    /// <summary> This class models the Color Specification Box in a JP2 image.
+    /// 
+    /// </summary>
+    /// <version> 	1.0
+    /// </version>
+    /// <author> 	Bruce A. Kern
+    /// </author>
+    public sealed class ColorSpecificationBox : JP2Box
+    {
 
-		public string ColorSpaceString =>
-			// Return a String representation of the colorspace. 
-			ColorSpace.ToString();
+        public ColorSpace.MethodEnum Method { get; private set; }
 
-		public string MethodString =>
-			// Return a String representation of the colorspace method. 
-			Method.ToString();
+        public ColorSpace.CSEnum ColorSpace { get; private set; }
 
-		public byte[] ICCProfile { get; private set; } = null;
+        public string ColorSpaceString =>
+            // Return a String representation of the colorspace. 
+            ColorSpace.ToString();
 
-		/// <summary> Construct a ColorSpecificationBox from an input image.</summary>
-		/// <param name="in">RandomAccessIO jp2 image
-		/// </param>
-		/// <param name="boxStart">offset to the start of the box in the image
-		/// </param>
-		/// <exception cref="IOException,">ColorSpaceException 
-		/// 
-		/// </exception>
-		public ColorSpecificationBox(RandomAccessIO in_Renamed, int boxStart):base(in_Renamed, boxStart)
-		{
-			readBox();
-		}
-		
-		/// <summary>Analyze the box content. </summary>
-		private void  readBox()
-		{
-			var boxHeader = new byte[256];
-			in_Renamed.seek(dataStart);
-			in_Renamed.readFully(boxHeader, 0, 11);
-			switch (boxHeader[0])
-			{
-				
-				case 1: 
-					Method = Color.ColorSpace.MethodEnum.ENUMERATED;
+        public string MethodString =>
+            // Return a String representation of the colorspace method. 
+            Method.ToString();
+
+        public byte[] ICCProfile { get; private set; } = null;
+
+        /// <summary> Construct a ColorSpecificationBox from an input image.</summary>
+        /// <param name="in">RandomAccessIO jp2 image
+        /// </param>
+        /// <param name="boxStart">offset to the start of the box in the image
+        /// </param>
+        /// <exception cref="IOException,">ColorSpaceException 
+        /// 
+        /// </exception>
+        public ColorSpecificationBox(RandomAccessIO in_Renamed, int boxStart) : base(in_Renamed, boxStart)
+        {
+            readBox();
+        }
+
+        /// <summary>Analyze the box content. </summary>
+        private void readBox()
+        {
+            var boxHeader = new byte[256];
+            in_Renamed.seek(dataStart);
+            in_Renamed.readFully(boxHeader, 0, 11);
+            switch (boxHeader[0])
+            {
+
+                case 1:
+                    Method = Color.ColorSpace.MethodEnum.ENUMERATED;
                     var cs = Icc.ICCProfile.getInt(boxHeader, 3);
-					switch (cs)
-					{
-						case 16: 
-							ColorSpace = Color.ColorSpace.CSEnum.sRGB;
-							break; // from switch (cs)...
-						
-						case 17: 
-							ColorSpace = Color.ColorSpace.CSEnum.GreyScale;
-							break; // from switch (cs)...
-						
-						case 18: 
-							ColorSpace = Color.ColorSpace.CSEnum.sYCC;
-							break; // from switch (cs)...
+                    switch (cs)
+                    {
+                        case 16:
+                            ColorSpace = Color.ColorSpace.CSEnum.sRGB;
+                            break; // from switch (cs)...
+
+                        case 17:
+                            ColorSpace = Color.ColorSpace.CSEnum.GreyScale;
+                            break; // from switch (cs)...
+
+                        case 18:
+                            ColorSpace = Color.ColorSpace.CSEnum.sYCC;
+                            break; // from switch (cs)...
                         case 20:
                             ColorSpace = Color.ColorSpace.CSEnum.esRGB;
                             break;
@@ -134,44 +134,44 @@ namespace CoreJ2K.Color.Boxes
                             break;
                         #endregion
 
-                        default: 
-							FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING,
-								$"Unknown enumerated colorspace ({cs}) in color specification box");
-							ColorSpace = Color.ColorSpace.CSEnum.Unknown;
-							break;
-						
-					}
-					break; // from switch (boxHeader[0])...
-				
-				case 2: 
-					Method = Color.ColorSpace.MethodEnum.ICC_PROFILED;
+                        default:
+                            FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING,
+                                $"Unknown enumerated colorspace ({cs}) in color specification box");
+                            ColorSpace = Color.ColorSpace.CSEnum.Unknown;
+                            break;
+
+                    }
+                    break; // from switch (boxHeader[0])...
+
+                case 2:
+                    Method = Color.ColorSpace.MethodEnum.ICC_PROFILED;
                     var size = Icc.ICCProfile.getInt(boxHeader, 3);
-					ICCProfile = new byte[size];
-					in_Renamed.seek(dataStart + 3);
-					in_Renamed.readFully(ICCProfile, 0, size);
-					break; // from switch (boxHeader[0])...
-				
-				default: 
-					throw new ColorSpaceException($"Bad specification method ({boxHeader[0]}) in {this}");
-           			
-			}
-		}
-		
-		/// <summary>Return a suitable String representation of the class instance. </summary>
-		public override string ToString()
-		{
-			var rep = new System.Text.StringBuilder("[ColorSpecificationBox ");
-			rep.Append("method= ").Append(Convert.ToString(Method)).Append(", ");
-			rep.Append("colorspace= ").Append(Convert.ToString(ColorSpace)).Append("]");
-			return rep.ToString();
-		}
-		
-		/* end class ColorSpecificationBox */
-		static ColorSpecificationBox()
-		{
-			{
-				type = 0x636f6c72;
-			}
-		}
-	}
+                    ICCProfile = new byte[size];
+                    in_Renamed.seek(dataStart + 3);
+                    in_Renamed.readFully(ICCProfile, 0, size);
+                    break; // from switch (boxHeader[0])...
+
+                default:
+                    throw new ColorSpaceException($"Bad specification method ({boxHeader[0]}) in {this}");
+
+            }
+        }
+
+        /// <summary>Return a suitable String representation of the class instance. </summary>
+        public override string ToString()
+        {
+            var rep = new System.Text.StringBuilder("[ColorSpecificationBox ");
+            rep.Append("method= ").Append(Convert.ToString(Method)).Append(", ");
+            rep.Append("colorspace= ").Append(Convert.ToString(ColorSpace)).Append("]");
+            return rep.ToString();
+        }
+
+        /* end class ColorSpecificationBox */
+        static ColorSpecificationBox()
+        {
+            {
+                type = 0x636f6c72;
+            }
+        }
+    }
 }

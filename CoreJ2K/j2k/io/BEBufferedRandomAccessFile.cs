@@ -44,376 +44,376 @@ using System;
 
 namespace CoreJ2K.j2k.io
 {
-	using System.IO;
+    using System.IO;
 
-	/// <summary> This class defines a Buffered Random Access File, where all I/O is
-	/// considered to be big-endian. It extends the
-	/// <tt>BufferedRandomAccessFile</tt> class.
-	/// 
-	/// </summary>
-	/// <seealso cref="RandomAccessIO" />
-	/// <seealso cref="BinaryDataOutput" />
-	/// <seealso cref="BinaryDataInput" />
-	/// <seealso cref="BufferedRandomAccessFile" />
-	public class BEBufferedRandomAccessFile:BufferedRandomAccessFile, RandomAccessIO, EndianType
-	{
-		/// <summary> Constructor. Always needs a size for the buffer.
-		/// 
-		/// </summary>
-		/// <param name="stream">The stream associated with the buffer</param>
-		/// <param name="isReadOnly">Indicates whether file is read-only or not.</param>
-		/// <param name="bufferSize">The number of bytes to buffer</param>
-		/// <exception cref="java.io.IOException">If an I/O error ocurred.
-		/// 
-		/// </exception>
-		public BEBufferedRandomAccessFile(Stream stream, bool isReadOnly, int bufferSize)
-			: base(stream, isReadOnly, bufferSize)
-		{
-			byte_Ordering = EndianType_Fields.BIG_ENDIAN;
-		}
+    /// <summary> This class defines a Buffered Random Access File, where all I/O is
+    /// considered to be big-endian. It extends the
+    /// <tt>BufferedRandomAccessFile</tt> class.
+    /// 
+    /// </summary>
+    /// <seealso cref="RandomAccessIO" />
+    /// <seealso cref="BinaryDataOutput" />
+    /// <seealso cref="BinaryDataInput" />
+    /// <seealso cref="BufferedRandomAccessFile" />
+    public class BEBufferedRandomAccessFile : BufferedRandomAccessFile, RandomAccessIO, EndianType
+    {
+        /// <summary> Constructor. Always needs a size for the buffer.
+        /// 
+        /// </summary>
+        /// <param name="stream">The stream associated with the buffer</param>
+        /// <param name="isReadOnly">Indicates whether file is read-only or not.</param>
+        /// <param name="bufferSize">The number of bytes to buffer</param>
+        /// <exception cref="java.io.IOException">If an I/O error ocurred.
+        /// 
+        /// </exception>
+        public BEBufferedRandomAccessFile(Stream stream, bool isReadOnly, int bufferSize)
+            : base(stream, isReadOnly, bufferSize)
+        {
+            byte_Ordering = EndianType_Fields.BIG_ENDIAN;
+        }
 
-		/// <summary> Constructor. Uses the default value for the byte-buffer size (512
-		/// bytes).
-		/// </summary>
-		/// <param name="stream">The stream associated with the buffer</param>
-		/// <param name="isReadOnly">Indicates whether file is read-only or not.</param>
-		/// <exception cref="java.io.IOException">If an I/O error ocurred.</exception>
-		public BEBufferedRandomAccessFile(Stream stream, bool isReadOnly)
-			: base(stream, isReadOnly)
-		{
-			byte_Ordering = EndianType_Fields.BIG_ENDIAN;
-		}
+        /// <summary> Constructor. Uses the default value for the byte-buffer size (512
+        /// bytes).
+        /// </summary>
+        /// <param name="stream">The stream associated with the buffer</param>
+        /// <param name="isReadOnly">Indicates whether file is read-only or not.</param>
+        /// <exception cref="java.io.IOException">If an I/O error ocurred.</exception>
+        public BEBufferedRandomAccessFile(Stream stream, bool isReadOnly)
+            : base(stream, isReadOnly)
+        {
+            byte_Ordering = EndianType_Fields.BIG_ENDIAN;
+        }
 
-		/// <summary> Constructor. Always needs a size for the buffer.
-		/// 
-		/// </summary>
-		/// <param name="name">The name of the file associated with the buffer
-		/// 
-		/// </param>
-		/// <param name="mode">"r" for read, "rw" or "rw+" for read and write mode ("rw+"
-		/// opens the file for update whereas "rw" removes it
-		/// before. So the 2 modes are different only if the file
-		/// already exists).
-		/// 
-		/// </param>
-		/// <param name="bufferSize">The number of bytes to buffer
-		/// 
-		/// </param>
-		/// <exception cref="java.io.IOException">If an I/O error ocurred.
-		/// 
-		/// </exception>
-		public BEBufferedRandomAccessFile(string name, string mode, int bufferSize):base(name, mode, bufferSize)
-		{
-			byte_Ordering = EndianType_Fields.BIG_ENDIAN;
-		}
-		
-		/// <summary> Constructor. Uses the default value for the byte-buffer size (512
-		/// bytes).
-		/// 
-		/// </summary>
-		/// <param name="name">The name of the file associated with the buffer
-		/// 
-		/// </param>
-		/// <param name="mode">"r" for read, "rw" or "rw+" for read and write mode ("rw+"
-		/// opens the file for update whereas "rw" removes it
-		/// before. So the 2 modes are different only if the file
-		/// already exists).
-		/// 
-		/// </param>
-		/// <exception cref="java.io.IOException">If an I/O error ocurred.
-		/// 
-		/// </exception>
-		public BEBufferedRandomAccessFile(string name, string mode):base(name, mode)
-		{
-			byte_Ordering = EndianType_Fields.BIG_ENDIAN;
-		}
-		
-		/// <summary> Writes the short value of <tt>v</tt> (i.e., 16 least significant bits)
-		/// to the output. Prior to writing, the output should be realigned at the
-		/// byte level.
-		/// 
-		/// Signed or unsigned data can be written. To write a signed value just
-		/// pass the <tt>short</tt> value as an argument. To write unsigned data
-		/// pass the <tt>int</tt> value as an argument (it will be automatically
-		/// casted, and only the 16 least significant bits will be written).
-		/// 
-		/// </summary>
-		/// <param name="v">The value to write to the output
-		/// 
-		/// </param>
-		/// <exception cref="java.io.IOException">If an I/O error ocurred.
-		/// 
-		/// </exception>
-		public override void  writeShort(int v)
-		{
-			write(SupportClass.URShift(v, 8));
-			write(v);
-		}
-		
-		/// <summary> Writes the int value of <tt>v</tt> (i.e., the 32 bits) to the
-		/// output. Prior to writing, the output should be realigned at the byte
-		/// level.
-		/// 
-		/// </summary>
-		/// <param name="v">The value to write to the output
-		/// 
-		/// </param>
-		/// <exception cref="java.io.IOException">If an I/O error ocurred.
-		/// 
-		/// </exception>
-		public override void  writeInt(int v)
-		{
-			write(SupportClass.URShift(v, 24));
-			write(SupportClass.URShift(v, 16));
-			write(SupportClass.URShift(v, 8));
-			write(v);
-		}
-		
-		/// <summary> Writes the long value of <tt>v</tt> (i.e., the 64 bits) to the
-		/// output. Prior to writing, the output should be realigned at the byte
-		/// level.
-		/// 
-		/// </summary>
-		/// <param name="v">The value to write to the output
-		/// 
-		/// </param>
-		/// <exception cref="java.io.IOException">If an I/O error ocurred.
-		/// 
-		/// </exception>
-		public override void  writeLong(long v)
-		{
-			write((int) (SupportClass.URShift(v, 56)));
-			write((int) (SupportClass.URShift(v, 48)));
-			write((int) (SupportClass.URShift(v, 40)));
-			write((int) (SupportClass.URShift(v, 32)));
-			write((int) (SupportClass.URShift(v, 24)));
-			write((int) (SupportClass.URShift(v, 16)));
-			write((int) (SupportClass.URShift(v, 8)));
-			write((int) v);
-		}
-		
-		/// <summary> Writes the IEEE float value <tt>v</tt> (i.e., 32 bits) to the
-		/// output. Prior to writing, the output should be realigned at the byte
-		/// level.
-		/// 
-		/// </summary>
-		/// <param name="v">The value to write to the output
-		/// 
-		/// </param>
-		/// <exception cref="java.io.IOException">If an I/O error ocurred.
-		/// 
-		/// </exception>
-		public override void  writeFloat(float v)
-		{
-			// CONVERSION PROBLEM? OPTIMIZE!!!
-			//byte[] floatbytes = BitConverter.GetBytes(v);
-			//for (int i = floatbytes.Length-1; i >= 0 ; i--) write(floatbytes[i]);
+        /// <summary> Constructor. Always needs a size for the buffer.
+        /// 
+        /// </summary>
+        /// <param name="name">The name of the file associated with the buffer
+        /// 
+        /// </param>
+        /// <param name="mode">"r" for read, "rw" or "rw+" for read and write mode ("rw+"
+        /// opens the file for update whereas "rw" removes it
+        /// before. So the 2 modes are different only if the file
+        /// already exists).
+        /// 
+        /// </param>
+        /// <param name="bufferSize">The number of bytes to buffer
+        /// 
+        /// </param>
+        /// <exception cref="java.io.IOException">If an I/O error ocurred.
+        /// 
+        /// </exception>
+        public BEBufferedRandomAccessFile(string name, string mode, int bufferSize) : base(name, mode, bufferSize)
+        {
+            byte_Ordering = EndianType_Fields.BIG_ENDIAN;
+        }
 
-			//UPGRADE_ISSUE: Method 'java.lang.Float.floatToIntBits' was not converted. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1000_javalangFloatfloatToIntBits_float'"
-			//int intV = Float.floatToIntBits(v);
-			var intV = BitConverter.ToInt32(BitConverter.GetBytes(v), 0);
-			write(SupportClass.URShift(intV, 24));
-			write(SupportClass.URShift(intV, 16));
-			write(SupportClass.URShift(intV, 8));
-			write(intV);
-		}
+        /// <summary> Constructor. Uses the default value for the byte-buffer size (512
+        /// bytes).
+        /// 
+        /// </summary>
+        /// <param name="name">The name of the file associated with the buffer
+        /// 
+        /// </param>
+        /// <param name="mode">"r" for read, "rw" or "rw+" for read and write mode ("rw+"
+        /// opens the file for update whereas "rw" removes it
+        /// before. So the 2 modes are different only if the file
+        /// already exists).
+        /// 
+        /// </param>
+        /// <exception cref="java.io.IOException">If an I/O error ocurred.
+        /// 
+        /// </exception>
+        public BEBufferedRandomAccessFile(string name, string mode) : base(name, mode)
+        {
+            byte_Ordering = EndianType_Fields.BIG_ENDIAN;
+        }
 
-		/// <summary> Writes the IEEE double value <tt>v</tt> (i.e., 64 bits) to the
-		/// output. Prior to writing, the output should be realigned at the byte
-		/// level.
-		/// 
-		/// </summary>
-		/// <param name="v">The value to write to the output
-		/// 
-		/// </param>
-		/// <exception cref="java.io.IOException">If an I/O error ocurred.
-		/// 
-		/// </exception>
-		public override void writeDouble(double v)
-		{
-			//byte[] doublebytes = BitConverter.GetBytes(v);
-			//for (int i = doublebytes.Length-1; i >= 0 ; i--) write(doublebytes[i]);
-		   
-			//UPGRADE_ISSUE: Method 'java.lang.Double.doubleToLongBits' was not converted. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1000_javalangDoubledoubleToLongBits_double'"
-			//long longV = Double.doubleToLongBits(v);
-			var longV = BitConverter.ToInt64(BitConverter.GetBytes(v), 0);
-			write((int) (SupportClass.URShift(longV, 56)));
-			write((int) (SupportClass.URShift(longV, 48)));
-			write((int) (SupportClass.URShift(longV, 40)));
-			write((int) (SupportClass.URShift(longV, 32)));
-			write((int) (SupportClass.URShift(longV, 24)));
-			write((int) (SupportClass.URShift(longV, 16)));
-			write((int) (SupportClass.URShift(longV, 8)));
-			write((int) (longV));
-			
-		}
+        /// <summary> Writes the short value of <tt>v</tt> (i.e., 16 least significant bits)
+        /// to the output. Prior to writing, the output should be realigned at the
+        /// byte level.
+        /// 
+        /// Signed or unsigned data can be written. To write a signed value just
+        /// pass the <tt>short</tt> value as an argument. To write unsigned data
+        /// pass the <tt>int</tt> value as an argument (it will be automatically
+        /// casted, and only the 16 least significant bits will be written).
+        /// 
+        /// </summary>
+        /// <param name="v">The value to write to the output
+        /// 
+        /// </param>
+        /// <exception cref="java.io.IOException">If an I/O error ocurred.
+        /// 
+        /// </exception>
+        public override void writeShort(int v)
+        {
+            write(SupportClass.URShift(v, 8));
+            write(v);
+        }
 
-		/// <summary> Reads a signed short (i.e. 16 bit) from the input. Prior to reading,
-		/// the input should be realigned at the byte level.
-		/// 
-		/// </summary>
-		/// <returns> The next byte-aligned signed short (16 bit) from the input.
-		/// 
-		/// </returns>
-		/// <exception cref="java.io.EOFException">If the end-of file was reached before
-		/// getting all the necessary data.
-		/// 
-		/// </exception>
-		/// <exception cref="java.io.IOException">If an I/O error ocurred.
-		/// 
-		/// </exception>
-		public override short readShort()
-		{
-			return (short) ((read() << 8) | (read()));
-		}
-		
-		/// <summary> Reads an unsigned short (i.e., 16 bit) from the input. It is returned
-		/// as an <tt>int</tt> since Java does not have an unsigned short
-		/// type. Prior to reading, the input should be realigned at the byte
-		/// level.
-		/// 
-		/// </summary>
-		/// <returns> The next byte-aligned unsigned short (16 bit) from the input,
-		/// as an <tt>int</tt>.
-		/// 
-		/// </returns>
-		/// <exception cref="java.io.EOFException">If the end-of file was reached before
-		/// getting all the necessary data.
-		/// 
-		/// </exception>
-		/// <exception cref="java.io.IOException">If an I/O error ocurred.
-		/// 
-		/// </exception>
-		public override int readUnsignedShort()
-		{
-			return ((read() << 8) | read());
-		}
-		
-		/// <summary> Reads a signed int (i.e., 32 bit) from the input. Prior to reading, the
-		/// input should be realigned at the byte level.
-		/// 
-		/// </summary>
-		/// <returns> The next byte-aligned signed int (32 bit) from the input.
-		/// 
-		/// </returns>
-		/// <exception cref="java.io.EOFException">If the end-of file was reached before
-		/// getting all the necessary data.
-		/// 
-		/// </exception>
-		/// <exception cref="java.io.IOException">If an I/O error ocurred.
-		/// 
-		/// </exception>
-		public override int readInt()
-		{
-			return ((read() << 24) | (read() << 16) | (read() << 8) | read());
-		}
-		
-		/// <summary> Reads an unsigned int (i.e., 32 bit) from the input. It is returned as
-		/// a <tt>long</tt> since Java does not have an unsigned short type. Prior
-		/// to reading, the input should be realigned at the byte level.
-		/// 
-		/// </summary>
-		/// <returns> The next byte-aligned unsigned int (32 bit) from the input, as
-		/// a <tt>long</tt>.
-		/// 
-		/// </returns>
-		/// <exception cref="java.io.EOFException">If the end-of file was reached before
-		/// getting all the necessary data.
-		/// 
-		/// </exception>
-		/// <exception cref="java.io.IOException">If an I/O error ocurred.
-		/// 
-		/// </exception>
-		public override long readUnsignedInt()
-		{
-			return (read() << 24) | (read() << 16) | (read() << 8) | read();
-		}
-		
-		/// <summary> Reads a signed long (i.e., 64 bit) from the input. Prior to reading,
-		/// the input should be realigned at the byte level.
-		/// 
-		/// </summary>
-		/// <returns> The next byte-aligned signed long (64 bit) from the input.
-		/// 
-		/// </returns>
-		/// <exception cref="java.io.EOFException">If the end-of file was reached before
-		/// getting all the necessary data.
-		/// 
-		/// </exception>
-		/// <exception cref="java.io.IOException">If an I/O error ocurred.
-		/// 
-		/// </exception>
-		public override long readLong()
-		{
-			//byte[] longbytes = new byte[8];
-			//for (int i = longbytes.Length-1; i >= 0; i--) longbytes[i] = read();
-			//return BitConverter.ToInt64(longbytes, 0);
-			return ((long)(((ulong) read() << 56) | ((ulong) read() << 48) | ((ulong) read() << 40) | ((ulong) read() << 32) | ((ulong) read() << 24) | ((ulong) read() << 16) | ((ulong) read() << 8) | read()));
-		}
-		
-		/// <summary> Reads an IEEE single precision (i.e., 32 bit) floating-point number
-		/// from the input. Prior to reading, the input should be realigned at the
-		/// byte level.
-		/// 
-		/// </summary>
-		/// <returns> The next byte-aligned IEEE float (32 bit) from the input.
-		/// 
-		/// </returns>
-		/// <exception cref="java.io.EOFException">If the end-of file was reached before
-		/// getting all the necessary data.
-		/// 
-		/// </exception>
-		/// <exception cref="java.io.IOException">If an I/O error ocurred.
-		/// 
-		/// </exception>
-		public override float readFloat()
-		{
-			// CONVERSION PROBLEM?  OPTIMIZE!!!
-			//byte[] floatbytes = new byte[4];
-			//for (int i = floatbytes.Length-1; i >= 0 ; i--) floatbytes[i] = (byte)read();
-			//return BitConverter.ToSingle(floatbytes, 0);
+        /// <summary> Writes the int value of <tt>v</tt> (i.e., the 32 bits) to the
+        /// output. Prior to writing, the output should be realigned at the byte
+        /// level.
+        /// 
+        /// </summary>
+        /// <param name="v">The value to write to the output
+        /// 
+        /// </param>
+        /// <exception cref="java.io.IOException">If an I/O error ocurred.
+        /// 
+        /// </exception>
+        public override void writeInt(int v)
+        {
+            write(SupportClass.URShift(v, 24));
+            write(SupportClass.URShift(v, 16));
+            write(SupportClass.URShift(v, 8));
+            write(v);
+        }
 
-			//UPGRADE_ISSUE: Method 'java.lang.Float.intBitsToFloat' was not converted. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1000_javalangFloatintBitsToFloat_int'"
-			//return Float.intBitsToFloat((read() << 24) | (read() << 16) | (read() << 8) | (read()));
-			return BitConverter.ToSingle(BitConverter.GetBytes((read() << 24) | (read() << 16) | (read() << 8) | (read())), 0);
+        /// <summary> Writes the long value of <tt>v</tt> (i.e., the 64 bits) to the
+        /// output. Prior to writing, the output should be realigned at the byte
+        /// level.
+        /// 
+        /// </summary>
+        /// <param name="v">The value to write to the output
+        /// 
+        /// </param>
+        /// <exception cref="java.io.IOException">If an I/O error ocurred.
+        /// 
+        /// </exception>
+        public override void writeLong(long v)
+        {
+            write((int)(SupportClass.URShift(v, 56)));
+            write((int)(SupportClass.URShift(v, 48)));
+            write((int)(SupportClass.URShift(v, 40)));
+            write((int)(SupportClass.URShift(v, 32)));
+            write((int)(SupportClass.URShift(v, 24)));
+            write((int)(SupportClass.URShift(v, 16)));
+            write((int)(SupportClass.URShift(v, 8)));
+            write((int)v);
+        }
 
-		}
-		
-		/// <summary> Reads an IEEE double precision (i.e., 64 bit) floating-point number
-		/// from the input. Prior to reading, the input should be realigned at the
-		/// byte level.
-		/// 
-		/// </summary>
-		/// <returns> The next byte-aligned IEEE double (64 bit) from the input.
-		/// 
-		/// </returns>
-		/// <exception cref="java.io.EOFException">If the end-of file was reached before
-		/// getting all the necessary data.
-		/// 
-		/// </exception>
-		/// <exception cref="java.io.IOException">If an I/O error ocurred.
-		/// 
-		/// </exception>
-		public override double readDouble()
-		{
-			// CONVERSION PROBLEM?  OPTIMIZE!!!
-			//byte[] doublebytes = new byte[8];
-			//for (int i = doublebytes.Length-1; i >=0 ; i--) doublebytes[i] = (byte)read();
-			//return BitConverter.ToDouble(doublebytes, 0);
+        /// <summary> Writes the IEEE float value <tt>v</tt> (i.e., 32 bits) to the
+        /// output. Prior to writing, the output should be realigned at the byte
+        /// level.
+        /// 
+        /// </summary>
+        /// <param name="v">The value to write to the output
+        /// 
+        /// </param>
+        /// <exception cref="java.io.IOException">If an I/O error ocurred.
+        /// 
+        /// </exception>
+        public override void writeFloat(float v)
+        {
+            // CONVERSION PROBLEM? OPTIMIZE!!!
+            //byte[] floatbytes = BitConverter.GetBytes(v);
+            //for (int i = floatbytes.Length-1; i >= 0 ; i--) write(floatbytes[i]);
 
-			//UPGRADE_ISSUE: Method 'java.lang.Double.longBitsToDouble' was not converted. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1000_javalangDoublelongBitsToDouble_long'"
-			//return Double.longBitsToDouble(((long) read() << 56) | ((long) read() << 48) | ((long) read() << 40) | ((long) read() << 32) | ((long) read() << 24) | ((long) read() << 16) | ((long) read() << 8) | ((long) read()));
-			
-			return BitConverter.ToDouble(BitConverter.GetBytes(((long) read() << 56) | ((long) read() << 48) | ((long) read() << 40) | ((long) read() << 32) | ((long) read() << 24) | ((long) read() << 16) | ((long) read() << 8) | read()), 0);
+            //UPGRADE_ISSUE: Method 'java.lang.Float.floatToIntBits' was not converted. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1000_javalangFloatfloatToIntBits_float'"
+            //int intV = Float.floatToIntBits(v);
+            var intV = BitConverter.ToInt32(BitConverter.GetBytes(v), 0);
+            write(SupportClass.URShift(intV, 24));
+            write(SupportClass.URShift(intV, 16));
+            write(SupportClass.URShift(intV, 8));
+            write(intV);
+        }
 
-		}
-		
-		/// <summary> Returns a string of information about the file and the endianess 
-		/// 
-		/// </summary>
-		public override string ToString()
-		{
-			return $"{base.ToString()}\nBig-Endian ordering";
-		}
-	}
+        /// <summary> Writes the IEEE double value <tt>v</tt> (i.e., 64 bits) to the
+        /// output. Prior to writing, the output should be realigned at the byte
+        /// level.
+        /// 
+        /// </summary>
+        /// <param name="v">The value to write to the output
+        /// 
+        /// </param>
+        /// <exception cref="java.io.IOException">If an I/O error ocurred.
+        /// 
+        /// </exception>
+        public override void writeDouble(double v)
+        {
+            //byte[] doublebytes = BitConverter.GetBytes(v);
+            //for (int i = doublebytes.Length-1; i >= 0 ; i--) write(doublebytes[i]);
+
+            //UPGRADE_ISSUE: Method 'java.lang.Double.doubleToLongBits' was not converted. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1000_javalangDoubledoubleToLongBits_double'"
+            //long longV = Double.doubleToLongBits(v);
+            var longV = BitConverter.ToInt64(BitConverter.GetBytes(v), 0);
+            write((int)(SupportClass.URShift(longV, 56)));
+            write((int)(SupportClass.URShift(longV, 48)));
+            write((int)(SupportClass.URShift(longV, 40)));
+            write((int)(SupportClass.URShift(longV, 32)));
+            write((int)(SupportClass.URShift(longV, 24)));
+            write((int)(SupportClass.URShift(longV, 16)));
+            write((int)(SupportClass.URShift(longV, 8)));
+            write((int)(longV));
+
+        }
+
+        /// <summary> Reads a signed short (i.e. 16 bit) from the input. Prior to reading,
+        /// the input should be realigned at the byte level.
+        /// 
+        /// </summary>
+        /// <returns> The next byte-aligned signed short (16 bit) from the input.
+        /// 
+        /// </returns>
+        /// <exception cref="java.io.EOFException">If the end-of file was reached before
+        /// getting all the necessary data.
+        /// 
+        /// </exception>
+        /// <exception cref="java.io.IOException">If an I/O error ocurred.
+        /// 
+        /// </exception>
+        public override short readShort()
+        {
+            return (short)((read() << 8) | (read()));
+        }
+
+        /// <summary> Reads an unsigned short (i.e., 16 bit) from the input. It is returned
+        /// as an <tt>int</tt> since Java does not have an unsigned short
+        /// type. Prior to reading, the input should be realigned at the byte
+        /// level.
+        /// 
+        /// </summary>
+        /// <returns> The next byte-aligned unsigned short (16 bit) from the input,
+        /// as an <tt>int</tt>.
+        /// 
+        /// </returns>
+        /// <exception cref="java.io.EOFException">If the end-of file was reached before
+        /// getting all the necessary data.
+        /// 
+        /// </exception>
+        /// <exception cref="java.io.IOException">If an I/O error ocurred.
+        /// 
+        /// </exception>
+        public override int readUnsignedShort()
+        {
+            return ((read() << 8) | read());
+        }
+
+        /// <summary> Reads a signed int (i.e., 32 bit) from the input. Prior to reading, the
+        /// input should be realigned at the byte level.
+        /// 
+        /// </summary>
+        /// <returns> The next byte-aligned signed int (32 bit) from the input.
+        /// 
+        /// </returns>
+        /// <exception cref="java.io.EOFException">If the end-of file was reached before
+        /// getting all the necessary data.
+        /// 
+        /// </exception>
+        /// <exception cref="java.io.IOException">If an I/O error ocurred.
+        /// 
+        /// </exception>
+        public override int readInt()
+        {
+            return ((read() << 24) | (read() << 16) | (read() << 8) | read());
+        }
+
+        /// <summary> Reads an unsigned int (i.e., 32 bit) from the input. It is returned as
+        /// a <tt>long</tt> since Java does not have an unsigned short type. Prior
+        /// to reading, the input should be realigned at the byte level.
+        /// 
+        /// </summary>
+        /// <returns> The next byte-aligned unsigned int (32 bit) from the input, as
+        /// a <tt>long</tt>.
+        /// 
+        /// </returns>
+        /// <exception cref="java.io.EOFException">If the end-of file was reached before
+        /// getting all the necessary data.
+        /// 
+        /// </exception>
+        /// <exception cref="java.io.IOException">If an I/O error ocurred.
+        /// 
+        /// </exception>
+        public override long readUnsignedInt()
+        {
+            return (read() << 24) | (read() << 16) | (read() << 8) | read();
+        }
+
+        /// <summary> Reads a signed long (i.e., 64 bit) from the input. Prior to reading,
+        /// the input should be realigned at the byte level.
+        /// 
+        /// </summary>
+        /// <returns> The next byte-aligned signed long (64 bit) from the input.
+        /// 
+        /// </returns>
+        /// <exception cref="java.io.EOFException">If the end-of file was reached before
+        /// getting all the necessary data.
+        /// 
+        /// </exception>
+        /// <exception cref="java.io.IOException">If an I/O error ocurred.
+        /// 
+        /// </exception>
+        public override long readLong()
+        {
+            //byte[] longbytes = new byte[8];
+            //for (int i = longbytes.Length-1; i >= 0; i--) longbytes[i] = read();
+            //return BitConverter.ToInt64(longbytes, 0);
+            return ((long)(((ulong)read() << 56) | ((ulong)read() << 48) | ((ulong)read() << 40) | ((ulong)read() << 32) | ((ulong)read() << 24) | ((ulong)read() << 16) | ((ulong)read() << 8) | read()));
+        }
+
+        /// <summary> Reads an IEEE single precision (i.e., 32 bit) floating-point number
+        /// from the input. Prior to reading, the input should be realigned at the
+        /// byte level.
+        /// 
+        /// </summary>
+        /// <returns> The next byte-aligned IEEE float (32 bit) from the input.
+        /// 
+        /// </returns>
+        /// <exception cref="java.io.EOFException">If the end-of file was reached before
+        /// getting all the necessary data.
+        /// 
+        /// </exception>
+        /// <exception cref="java.io.IOException">If an I/O error ocurred.
+        /// 
+        /// </exception>
+        public override float readFloat()
+        {
+            // CONVERSION PROBLEM?  OPTIMIZE!!!
+            //byte[] floatbytes = new byte[4];
+            //for (int i = floatbytes.Length-1; i >= 0 ; i--) floatbytes[i] = (byte)read();
+            //return BitConverter.ToSingle(floatbytes, 0);
+
+            //UPGRADE_ISSUE: Method 'java.lang.Float.intBitsToFloat' was not converted. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1000_javalangFloatintBitsToFloat_int'"
+            //return Float.intBitsToFloat((read() << 24) | (read() << 16) | (read() << 8) | (read()));
+            return BitConverter.ToSingle(BitConverter.GetBytes((read() << 24) | (read() << 16) | (read() << 8) | (read())), 0);
+
+        }
+
+        /// <summary> Reads an IEEE double precision (i.e., 64 bit) floating-point number
+        /// from the input. Prior to reading, the input should be realigned at the
+        /// byte level.
+        /// 
+        /// </summary>
+        /// <returns> The next byte-aligned IEEE double (64 bit) from the input.
+        /// 
+        /// </returns>
+        /// <exception cref="java.io.EOFException">If the end-of file was reached before
+        /// getting all the necessary data.
+        /// 
+        /// </exception>
+        /// <exception cref="java.io.IOException">If an I/O error ocurred.
+        /// 
+        /// </exception>
+        public override double readDouble()
+        {
+            // CONVERSION PROBLEM?  OPTIMIZE!!!
+            //byte[] doublebytes = new byte[8];
+            //for (int i = doublebytes.Length-1; i >=0 ; i--) doublebytes[i] = (byte)read();
+            //return BitConverter.ToDouble(doublebytes, 0);
+
+            //UPGRADE_ISSUE: Method 'java.lang.Double.longBitsToDouble' was not converted. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1000_javalangDoublelongBitsToDouble_long'"
+            //return Double.longBitsToDouble(((long) read() << 56) | ((long) read() << 48) | ((long) read() << 40) | ((long) read() << 32) | ((long) read() << 24) | ((long) read() << 16) | ((long) read() << 8) | ((long) read()));
+
+            return BitConverter.ToDouble(BitConverter.GetBytes(((long)read() << 56) | ((long)read() << 48) | ((long)read() << 40) | ((long)read() << 32) | ((long)read() << 24) | ((long)read() << 16) | ((long)read() << 8) | read()), 0);
+
+        }
+
+        /// <summary> Returns a string of information about the file and the endianess 
+        /// 
+        /// </summary>
+        public override string ToString()
+        {
+            return $"{base.ToString()}\nBig-Endian ordering";
+        }
+    }
 }

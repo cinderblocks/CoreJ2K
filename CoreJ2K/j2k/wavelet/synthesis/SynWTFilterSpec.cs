@@ -43,163 +43,163 @@
 
 namespace CoreJ2K.j2k.wavelet.synthesis
 {
-	
-	/// <summary> This class extends ModuleSpec class for synthesis filters specification
-	/// holding purpose.
-	/// 
-	/// </summary>
-	/// <seealso cref="ModuleSpec" />
-	public class SynWTFilterSpec:ModuleSpec
-	{
-		
-		/// <summary> Constructs a new 'SynWTFilterSpec' for the specified number of
-		/// components and tiles.
-		/// 
-		/// </summary>
-		/// <param name="nt">The number of tiles
-		/// 
-		/// </param>
-		/// <param name="nc">The number of components
-		/// 
-		/// </param>
-		/// <param name="type">the type of the specification module i.e. tile specific,
-		/// component specific or both.
-		/// 
-		/// </param>
-		public SynWTFilterSpec(int nt, int nc, byte type):base(nt, nc, type)
-		{
-		}
-		
-		/// <summary> Returns the data type used by the filters in this object, as defined in
-		/// the 'DataBlk' interface for specified tile-component.
-		/// 
-		/// </summary>
-		/// <param name="t">Tile index
-		/// 
-		/// </param>
-		/// <param name="c">Component index
-		/// 
-		/// </param>
-		/// <returns> The data type of the filters in this object
-		/// 
-		/// </returns>
-		/// <seealso cref="j2k.image.DataBlk" />
-		public virtual int getWTDataType(int t, int c)
-		{
-			var an = (SynWTFilter[][]) getSpec(t, c);
-			return an[0][0].DataType;
-		}
-		
-		/// <summary> Returns the horizontal analysis filters to be used in component 'n' and
-		/// tile 't'.
-		/// 
-		/// The horizontal analysis filters are returned in an array of
-		/// SynWTFilter. Each element contains the horizontal filter for each
-		/// resolution level starting with resolution level 1 (i.e. the analysis
-		/// filter to go from resolution level 1 to resolution level 0). If there
-		/// are less elements than the maximum resolution level, then the last
-		/// element is assumed to be repeated.
-		/// 
-		/// </summary>
-		/// <param name="t">The tile index, in raster scan order
-		/// 
-		/// </param>
-		/// <param name="c">The component index.
-		/// 
-		/// </param>
-		/// <returns> The array of horizontal analysis filters for component 'n' and
-		/// tile 't'.
-		/// 
-		/// </returns>
-		public virtual SynWTFilter[] getHFilters(int t, int c)
-		{
-			var an = (SynWTFilter[][]) getSpec(t, c);
-			return an[0];
-		}
-		
-		/// <summary> Returns the vertical analysis filters to be used in component 'n' and
-		/// tile 't'.
-		/// 
-		/// The vertical analysis filters are returned in an array of
-		/// SynWTFilter. Each element contains the vertical filter for each
-		/// resolution level starting with resolution level 1 (i.e. the analysis
-		/// filter to go from resolution level 1 to resolution level 0). If there
-		/// are less elements than the maximum resolution level, then the last
-		/// element is assumed to be repeated.
-		/// 
-		/// </summary>
-		/// <param name="t">The tile index, in raster scan order
-		/// 
-		/// </param>
-		/// <param name="c">The component index.
-		/// 
-		/// </param>
-		/// <returns> The array of horizontal analysis filters for component 'n' and
-		/// tile 't'.
-		/// 
-		/// </returns>
-		public virtual SynWTFilter[] getVFilters(int t, int c)
-		{
-			var an = (SynWTFilter[][]) getSpec(t, c);
-			return an[1];
-		}
-		
-		/// <summary>Debugging method </summary>
-		public override string ToString()
-		{
-			var str = "";
-			SynWTFilter[][] an;
-			
-			str += $"nTiles={nTiles}\nnComp={nComp}\n\n";
-			
-			for (var t = 0; t < nTiles; t++)
-			{
-				for (var c = 0; c < nComp; c++)
-				{
-					an = (SynWTFilter[][]) getSpec(t, c);
-					
-					str += $"(t:{t},c:{c})\n";
-					
-					// Horizontal filters
-					str += "\tH:";
-					for (var i = 0; i < an[0].Length; i++)
-					{
-						str += ($" {an[0][i]}");
-					}
-					// Horizontal filters
-					str += "\n\tV:";
-					for (var i = 0; i < an[1].Length; i++)
-					{
-						str += ($" {an[1][i]}");
-					}
-					str += "\n";
-				}
-			}
-			
-			return str;
-		}
-		
-		/// <summary> Check the reversibility of filters contained is the given
-		/// tile-component.
-		/// 
-		/// </summary>
-		/// <param name="t">The index of the tile
-		/// 
-		/// </param>
-		/// <param name="c">The index of the component
-		/// 
-		/// </param>
-		public virtual bool isReversible(int t, int c)
-		{
-			// Note: no need to buffer the result since this method is normally
-			// called once per tile-component.
-			SynWTFilter[] hfilter = getHFilters(t, c), vfilter = getVFilters(t, c);
-			
-			// As soon as a filter is not reversible, false can be returned
-			for (var i = hfilter.Length - 1; i >= 0; i--)
-				if (!hfilter[i].Reversible || !vfilter[i].Reversible)
-					return false;
-			return true;
-		}
-	}
+
+    /// <summary> This class extends ModuleSpec class for synthesis filters specification
+    /// holding purpose.
+    /// 
+    /// </summary>
+    /// <seealso cref="ModuleSpec" />
+    public class SynWTFilterSpec : ModuleSpec
+    {
+
+        /// <summary> Constructs a new 'SynWTFilterSpec' for the specified number of
+        /// components and tiles.
+        /// 
+        /// </summary>
+        /// <param name="nt">The number of tiles
+        /// 
+        /// </param>
+        /// <param name="nc">The number of components
+        /// 
+        /// </param>
+        /// <param name="type">the type of the specification module i.e. tile specific,
+        /// component specific or both.
+        /// 
+        /// </param>
+        public SynWTFilterSpec(int nt, int nc, byte type) : base(nt, nc, type)
+        {
+        }
+
+        /// <summary> Returns the data type used by the filters in this object, as defined in
+        /// the 'DataBlk' interface for specified tile-component.
+        /// 
+        /// </summary>
+        /// <param name="t">Tile index
+        /// 
+        /// </param>
+        /// <param name="c">Component index
+        /// 
+        /// </param>
+        /// <returns> The data type of the filters in this object
+        /// 
+        /// </returns>
+        /// <seealso cref="j2k.image.DataBlk" />
+        public virtual int getWTDataType(int t, int c)
+        {
+            var an = (SynWTFilter[][])getSpec(t, c);
+            return an[0][0].DataType;
+        }
+
+        /// <summary> Returns the horizontal analysis filters to be used in component 'n' and
+        /// tile 't'.
+        /// 
+        /// The horizontal analysis filters are returned in an array of
+        /// SynWTFilter. Each element contains the horizontal filter for each
+        /// resolution level starting with resolution level 1 (i.e. the analysis
+        /// filter to go from resolution level 1 to resolution level 0). If there
+        /// are less elements than the maximum resolution level, then the last
+        /// element is assumed to be repeated.
+        /// 
+        /// </summary>
+        /// <param name="t">The tile index, in raster scan order
+        /// 
+        /// </param>
+        /// <param name="c">The component index.
+        /// 
+        /// </param>
+        /// <returns> The array of horizontal analysis filters for component 'n' and
+        /// tile 't'.
+        /// 
+        /// </returns>
+        public virtual SynWTFilter[] getHFilters(int t, int c)
+        {
+            var an = (SynWTFilter[][])getSpec(t, c);
+            return an[0];
+        }
+
+        /// <summary> Returns the vertical analysis filters to be used in component 'n' and
+        /// tile 't'.
+        /// 
+        /// The vertical analysis filters are returned in an array of
+        /// SynWTFilter. Each element contains the vertical filter for each
+        /// resolution level starting with resolution level 1 (i.e. the analysis
+        /// filter to go from resolution level 1 to resolution level 0). If there
+        /// are less elements than the maximum resolution level, then the last
+        /// element is assumed to be repeated.
+        /// 
+        /// </summary>
+        /// <param name="t">The tile index, in raster scan order
+        /// 
+        /// </param>
+        /// <param name="c">The component index.
+        /// 
+        /// </param>
+        /// <returns> The array of horizontal analysis filters for component 'n' and
+        /// tile 't'.
+        /// 
+        /// </returns>
+        public virtual SynWTFilter[] getVFilters(int t, int c)
+        {
+            var an = (SynWTFilter[][])getSpec(t, c);
+            return an[1];
+        }
+
+        /// <summary>Debugging method </summary>
+        public override string ToString()
+        {
+            var str = "";
+            SynWTFilter[][] an;
+
+            str += $"nTiles={nTiles}\nnComp={nComp}\n\n";
+
+            for (var t = 0; t < nTiles; t++)
+            {
+                for (var c = 0; c < nComp; c++)
+                {
+                    an = (SynWTFilter[][])getSpec(t, c);
+
+                    str += $"(t:{t},c:{c})\n";
+
+                    // Horizontal filters
+                    str += "\tH:";
+                    for (var i = 0; i < an[0].Length; i++)
+                    {
+                        str += ($" {an[0][i]}");
+                    }
+                    // Horizontal filters
+                    str += "\n\tV:";
+                    for (var i = 0; i < an[1].Length; i++)
+                    {
+                        str += ($" {an[1][i]}");
+                    }
+                    str += "\n";
+                }
+            }
+
+            return str;
+        }
+
+        /// <summary> Check the reversibility of filters contained is the given
+        /// tile-component.
+        /// 
+        /// </summary>
+        /// <param name="t">The index of the tile
+        /// 
+        /// </param>
+        /// <param name="c">The index of the component
+        /// 
+        /// </param>
+        public virtual bool isReversible(int t, int c)
+        {
+            // Note: no need to buffer the result since this method is normally
+            // called once per tile-component.
+            SynWTFilter[] hfilter = getHFilters(t, c), vfilter = getVFilters(t, c);
+
+            // As soon as a filter is not reversible, false can be returned
+            for (var i = hfilter.Length - 1; i >= 0; i--)
+                if (!hfilter[i].Reversible || !vfilter[i].Reversible)
+                    return false;
+            return true;
+        }
+    }
 }

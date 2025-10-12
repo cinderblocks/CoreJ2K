@@ -43,32 +43,32 @@
 
 namespace CoreJ2K.j2k.roi
 {
-	
-	/// <summary> This class contains the maxshift scaling value for each tile-component.
-	/// The scaling values used are calculated in the ROIScaler class
-	/// 
-	/// </summary>
-	
-	public class MaxShiftSpec:ModuleSpec
-	{
-		
-		/// <summary> Constructs a 'ModuleSpec' object, initializing all the components and 
-		/// tiles to the 'SPEC_DEF' spec type, for the specified number of 
-		/// components and tiles.
-		/// 
-		/// </summary>
-		/// <param name="nt">The number of tiles
-		/// 
-		/// </param>
-		/// <param name="nc">The number of components
-		/// 
-		/// </param>
-		/// <param name="type">the type of the specification module i.e. tile specific,
-		/// component specific or both.
-		/// 
-		/// </param>
-		public MaxShiftSpec(int nt, int nc, byte type):base(nt, nc, type)
-		{
-		}
-	}
+
+    /// <summary> This class contains the maxshift scaling value for each tile-component.
+    /// The scaling values used are calculated in the ROIScaler class
+    /// 
+    /// </summary>
+
+    public class MaxShiftSpec : ModuleSpec
+    {
+
+        /// <summary> Constructs a 'ModuleSpec' object, initializing all the components and 
+        /// tiles to the 'SPEC_DEF' spec type, for the specified number of 
+        /// components and tiles.
+        /// 
+        /// </summary>
+        /// <param name="nt">The number of tiles
+        /// 
+        /// </param>
+        /// <param name="nc">The number of components
+        /// 
+        /// </param>
+        /// <param name="type">the type of the specification module i.e. tile specific,
+        /// component specific or both.
+        /// 
+        /// </param>
+        public MaxShiftSpec(int nt, int nc, byte type) : base(nt, nc, type)
+        {
+        }
+    }
 }

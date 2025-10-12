@@ -43,25 +43,26 @@
 
 namespace CoreJ2K.j2k.wavelet
 {
-	
-	/// <summary> This interface defines the identifiers for the different types of filters
-	/// that are supported.
-	/// 
-	/// The identifier values are the same as those used in the codestream
-	/// syntax, for the filters that are defined in the standard.
-	/// 
-	/// </summary>
-	public struct FilterTypes_Fields{
-		/// <summary>W7x9 filter: 0x00 </summary>
-		public const int W9X7 = 0;
-		/// <summary>W5x3 filter: 0x01 </summary>
-		public const int W5X3 = 1;
-		/// <summary>User-defined filter: -1 </summary>
-		public const int CUSTOM = - 1;
-	}
-	public interface FilterTypes
-	{
-		//UPGRADE_NOTE: Members of interface 'FilterTypes' were extracted into structure 'FilterTypes_Fields'. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1045'"
-		
-	}
+
+    /// <summary> This interface defines the identifiers for the different types of filters
+    /// that are supported.
+    /// 
+    /// The identifier values are the same as those used in the codestream
+    /// syntax, for the filters that are defined in the standard.
+    /// 
+    /// </summary>
+    public struct FilterTypes_Fields
+    {
+        /// <summary>W7x9 filter: 0x00 </summary>
+        public const int W9X7 = 0;
+        /// <summary>W5x3 filter: 0x01 </summary>
+        public const int W5X3 = 1;
+        /// <summary>User-defined filter: -1 </summary>
+        public const int CUSTOM = -1;
+    }
+    public interface FilterTypes
+    {
+        //UPGRADE_NOTE: Members of interface 'FilterTypes' were extracted into structure 'FilterTypes_Fields'. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1045'"
+
+    }
 }

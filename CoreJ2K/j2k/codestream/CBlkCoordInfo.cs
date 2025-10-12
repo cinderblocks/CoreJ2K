@@ -45,48 +45,48 @@ using CoreJ2K.j2k.image;
 
 namespace CoreJ2K.j2k.codestream
 {
-	
-	/// <summary> This class is used to store the coordinates of code-blocks.
-	/// 
-	/// </summary>
-	public class CBlkCoordInfo:CoordInfo
-	{
-		
-		/// <summary>The code-block horizontal and vertical indexes </summary>
-		public Coord idx;
-		
-		/// <summary> Constructor. Creates a CBlkCoordInfo object.
-		/// 
-		/// </summary>
-		public CBlkCoordInfo()
-		{
-			idx = new Coord();
-		}
-		
-		/// <summary> Constructor. Creates a CBlkCoordInfo object width specified code-block
-		/// vertical and horizontal indexes.
-		/// 
-		/// </summary>
-		/// <param name="m">Code-block vertical index.
-		/// 
-		/// </param>
-		/// <param name="n">Code-block horizontal index.
-		/// 
-		/// </param>
-		public CBlkCoordInfo(int m, int n)
-		{
-			idx = new Coord(n, m);
-		}
-		
-		/// <summary> Returns code-block's information in a String 
-		/// 
-		/// </summary>
-		/// <returns> String with code-block's information
-		/// 
-		/// </returns>
-		public override string ToString()
-		{
-			return $"{base.ToString()},idx={idx}";
-		}
-	}
+
+    /// <summary> This class is used to store the coordinates of code-blocks.
+    /// 
+    /// </summary>
+    public class CBlkCoordInfo : CoordInfo
+    {
+
+        /// <summary>The code-block horizontal and vertical indexes </summary>
+        public Coord idx;
+
+        /// <summary> Constructor. Creates a CBlkCoordInfo object.
+        /// 
+        /// </summary>
+        public CBlkCoordInfo()
+        {
+            idx = new Coord();
+        }
+
+        /// <summary> Constructor. Creates a CBlkCoordInfo object width specified code-block
+        /// vertical and horizontal indexes.
+        /// 
+        /// </summary>
+        /// <param name="m">Code-block vertical index.
+        /// 
+        /// </param>
+        /// <param name="n">Code-block horizontal index.
+        /// 
+        /// </param>
+        public CBlkCoordInfo(int m, int n)
+        {
+            idx = new Coord(n, m);
+        }
+
+        /// <summary> Returns code-block's information in a String 
+        /// 
+        /// </summary>
+        /// <returns> String with code-block's information
+        /// 
+        /// </returns>
+        public override string ToString()
+        {
+            return $"{base.ToString()},idx={idx}";
+        }
+    }
 }

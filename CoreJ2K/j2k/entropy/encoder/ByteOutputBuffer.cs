@@ -46,137 +46,137 @@
 using System;
 namespace CoreJ2K.j2k.entropy.encoder
 {
-	
-	/// <summary> This class provides a buffering output stream similar to
-	/// ByteArrayOutputStream, with some additional methods.
-	/// 
-	/// Once an array has been written to an output stream or to a byte array,
-	/// the object can be reused as a new stream if the reset() method is
-	/// called.
-	/// 
-	/// Unlike the ByteArrayOutputStream class, this class is not thread
-	/// safe.
-	/// 
-	/// </summary>
-	/// <seealso cref="reset" />
-	public class ByteOutputBuffer
-	{
-		
-		/// <summary>The buffer where the data is stored </summary>
-		internal byte[] buf;
-		
-		/// <summary>The number of valid bytes in the buffer </summary>
-		internal int count;
-		
-		/// <summary>The buffer increase size </summary>
-		public const int BUF_INC = 512;
-		
-		/// <summary>The default initial buffer size </summary>
-		public const int BUF_DEF_LEN = 256;
-		
-		/// <summary> Creates a new byte array output stream. The buffer capacity is
-		/// initially BUF_DEF_LEN bytes, though its size increases if necessary.
-		/// 
-		/// </summary>
-		public ByteOutputBuffer()
-		{
-			buf = new byte[BUF_DEF_LEN];
-		}
-		
-		/// <summary> Creates a new byte array output stream, with a buffer capacity of the
-		/// specified size, in bytes.
-		/// 
-		/// </summary>
-		/// <param name="size">the initial size.
-		/// 
-		/// </param>
-		public ByteOutputBuffer(int size)
-		{
-			buf = new byte[size];
-		}
-		
-		/// <summary> Writes the specified byte to this byte array output stream. The
-		/// functionality provided by this implementation is the same as for the
-		/// one in the superclass, however this method is not synchronized and
-		/// therefore not safe thread, but faster.
-		/// 
-		/// </summary>
-		/// <param name="b">The byte to write
-		/// 
-		/// </param>
-		public void  write(int b)
-		{
-			if (count == buf.Length)
-			{
-				// Resize buffer
-				var tmpbuf = buf;
-				buf = new byte[buf.Length + BUF_INC];
-				Array.Copy(tmpbuf, 0, buf, 0, count);
-			}
-			buf[count++] = (byte) b;
-		}
-		
-		/// <summary> Copies the specified part of the stream to the 'outbuf' byte array.
-		/// 
-		/// </summary>
-		/// <param name="off">The index of the first element in the stream to copy.
-		/// 
-		/// </param>
-		/// <param name="len">The number of elements of the array to copy
-		/// 
-		/// </param>
-		/// <param name="outbuf">The destination array
-		/// 
-		/// </param>
-		/// <param name="outoff">The index of the first element in 'outbuf' where to write
-		/// the data.
-		/// 
-		/// </param>
-		public virtual void  toByteArray(int off, int len, byte[] outbuf, int outoff)
-		{
-			// Copy the data
-			Array.Copy(buf, off, outbuf, outoff, len);
-		}
-		
-		/// <summary> Returns the number of valid bytes in the output buffer (count class
-		/// variable).
-		/// 
-		/// </summary>
-		/// <returns> The number of bytes written to the buffer
-		/// 
-		/// </returns>
-		public virtual int size()
-		{
-			return count;
-		}
-		
-		/// <summary> Discards all the buffered data, by resetting the counter of written
-		/// bytes to 0.
-		/// 
-		/// </summary>
-		public virtual void  reset()
-		{
-			count = 0;
-		}
-		
-		/// <summary> Returns the byte buffered at the given position in the buffer. The
-		/// position in the buffer is the index of the 'write()' method call after
-		/// the last call to 'reset()'.
-		/// 
-		/// </summary>
-		/// <param name="pos">The position of the byte to return
-		/// 
-		/// </param>
-		/// <returns> The value (betweeb 0-255) of the byte at position 'pos'.
-		/// 
-		/// </returns>
-		public virtual int getByte(int pos)
-		{
-			if (pos >= count)
-			{
-				throw new ArgumentException();
-			}
-			return buf[pos] & 0xFF;
-		}
-	}
+
+    /// <summary> This class provides a buffering output stream similar to
+    /// ByteArrayOutputStream, with some additional methods.
+    /// 
+    /// Once an array has been written to an output stream or to a byte array,
+    /// the object can be reused as a new stream if the reset() method is
+    /// called.
+    /// 
+    /// Unlike the ByteArrayOutputStream class, this class is not thread
+    /// safe.
+    /// 
+    /// </summary>
+    /// <seealso cref="reset" />
+    public class ByteOutputBuffer
+    {
+
+        /// <summary>The buffer where the data is stored </summary>
+        internal byte[] buf;
+
+        /// <summary>The number of valid bytes in the buffer </summary>
+        internal int count;
+
+        /// <summary>The buffer increase size </summary>
+        public const int BUF_INC = 512;
+
+        /// <summary>The default initial buffer size </summary>
+        public const int BUF_DEF_LEN = 256;
+
+        /// <summary> Creates a new byte array output stream. The buffer capacity is
+        /// initially BUF_DEF_LEN bytes, though its size increases if necessary.
+        /// 
+        /// </summary>
+        public ByteOutputBuffer()
+        {
+            buf = new byte[BUF_DEF_LEN];
+        }
+
+        /// <summary> Creates a new byte array output stream, with a buffer capacity of the
+        /// specified size, in bytes.
+        /// 
+        /// </summary>
+        /// <param name="size">the initial size.
+        /// 
+        /// </param>
+        public ByteOutputBuffer(int size)
+        {
+            buf = new byte[size];
+        }
+
+        /// <summary> Writes the specified byte to this byte array output stream. The
+        /// functionality provided by this implementation is the same as for the
+        /// one in the superclass, however this method is not synchronized and
+        /// therefore not safe thread, but faster.
+        /// 
+        /// </summary>
+        /// <param name="b">The byte to write
+        /// 
+        /// </param>
+        public void write(int b)
+        {
+            if (count == buf.Length)
+            {
+                // Resize buffer
+                var tmpbuf = buf;
+                buf = new byte[buf.Length + BUF_INC];
+                Array.Copy(tmpbuf, 0, buf, 0, count);
+            }
+            buf[count++] = (byte)b;
+        }
+
+        /// <summary> Copies the specified part of the stream to the 'outbuf' byte array.
+        /// 
+        /// </summary>
+        /// <param name="off">The index of the first element in the stream to copy.
+        /// 
+        /// </param>
+        /// <param name="len">The number of elements of the array to copy
+        /// 
+        /// </param>
+        /// <param name="outbuf">The destination array
+        /// 
+        /// </param>
+        /// <param name="outoff">The index of the first element in 'outbuf' where to write
+        /// the data.
+        /// 
+        /// </param>
+        public virtual void toByteArray(int off, int len, byte[] outbuf, int outoff)
+        {
+            // Copy the data
+            Array.Copy(buf, off, outbuf, outoff, len);
+        }
+
+        /// <summary> Returns the number of valid bytes in the output buffer (count class
+        /// variable).
+        /// 
+        /// </summary>
+        /// <returns> The number of bytes written to the buffer
+        /// 
+        /// </returns>
+        public virtual int size()
+        {
+            return count;
+        }
+
+        /// <summary> Discards all the buffered data, by resetting the counter of written
+        /// bytes to 0.
+        /// 
+        /// </summary>
+        public virtual void reset()
+        {
+            count = 0;
+        }
+
+        /// <summary> Returns the byte buffered at the given position in the buffer. The
+        /// position in the buffer is the index of the 'write()' method call after
+        /// the last call to 'reset()'.
+        /// 
+        /// </summary>
+        /// <param name="pos">The position of the byte to return
+        /// 
+        /// </param>
+        /// <returns> The value (betweeb 0-255) of the byte at position 'pos'.
+        /// 
+        /// </returns>
+        public virtual int getByte(int pos)
+        {
+            if (pos >= count)
+            {
+                throw new ArgumentException();
+            }
+            return buf[pos] & 0xFF;
+        }
+    }
 }

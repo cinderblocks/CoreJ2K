@@ -72,10 +72,10 @@ namespace CoreJ2K
             try
             {
                 // ReSharper disable once AssignNullToNotNullAttribute
-                return Directory.GetFiles(Path.GetDirectoryName(GetCurrentAssembly().Location), 
+                return Directory.GetFiles(Path.GetDirectoryName(GetCurrentAssembly().Location),
                         "CoreJ2K.*.dll", SearchOption.TopDirectoryOnly)
                     .Select(Assembly.LoadFile).SelectMany(s => s.GetTypes())
-                    .Where(p => (p.IsSubclassOf(typeof(T)) 
+                    .Where(p => (p.IsSubclassOf(typeof(T))
                                  || typeof(T).GetTypeInfo().IsAssignableFrom(p)) && !p.IsAbstract);
             }
             catch (Exception)

@@ -1,3 +1,6 @@
+using CoreJ2K.Icc;
+using CoreJ2K.j2k.image;
+using CoreJ2K.j2k.util;
 /// <summary>**************************************************************************
 /// 
 /// $Id: ColorSpaceMapper.java,v 1.2 2002/07/25 16:30:55 grosbois Exp $
@@ -7,9 +10,6 @@
 /// ***************************************************************************
 /// </summary>
 using System;
-using CoreJ2K.Icc;
-using CoreJ2K.j2k.image;
-using CoreJ2K.j2k.util;
 
 namespace CoreJ2K.Color
 {

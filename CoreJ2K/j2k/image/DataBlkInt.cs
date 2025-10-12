@@ -43,140 +43,140 @@
 using System;
 namespace CoreJ2K.j2k.image
 {
-	
-	/// <summary> This is an implementation of the <tt>DataBlk</tt> interface for signed 32
-	/// bit integral data.
-	/// 
-	/// The methods in this class are declared final, so that they can be
-	/// inlined by inlining compilers.
-	/// 
-	/// </summary>
-	/// <seealso cref="DataBlk" />
-	public class DataBlkInt:DataBlk
-	{
-		/// <summary> Returns the identifier of this data type, <tt>TYPE_INT</tt>, as defined
-		/// in <tt>DataBlk</tt>.
-		/// 
-		/// </summary>
-		/// <returns> The type of data stored. Always <tt>DataBlk.TYPE_INT</tt>
-		/// 
-		/// </returns>
-		/// <seealso cref="DataBlk.TYPE_INT" />
-		public override int DataType => TYPE_INT;
 
-		//UPGRADE_NOTE: Respective javadoc comments were merged.  It should be changed in order to comply with .NET documentation conventions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1199'"
-		/// <summary> Returns the array containing the data, or null if there is no data
-		/// array. The returned array is a int array.
-		/// 
-		/// </summary>
-		/// <returns> The array of data (a int[]) or null if there is no data.
-		/// 
-		/// </returns>
-		/// <summary> Sets the data array to the specified one. The provided array must be a
-		/// int array, otherwise a ClassCastException is thrown. The size of the
-		/// array is not checked for consistency with the block's dimensions.
-		/// 
-		/// </summary>
-		/// <param name="arr">The data array to use. Must be a int array.
-		/// 
-		/// </param>
-		public override object Data
-		{
-			get => data_array;
+    /// <summary> This is an implementation of the <tt>DataBlk</tt> interface for signed 32
+    /// bit integral data.
+    /// 
+    /// The methods in this class are declared final, so that they can be
+    /// inlined by inlining compilers.
+    /// 
+    /// </summary>
+    /// <seealso cref="DataBlk" />
+    public class DataBlkInt : DataBlk
+    {
+        /// <summary> Returns the identifier of this data type, <tt>TYPE_INT</tt>, as defined
+        /// in <tt>DataBlk</tt>.
+        /// 
+        /// </summary>
+        /// <returns> The type of data stored. Always <tt>DataBlk.TYPE_INT</tt>
+        /// 
+        /// </returns>
+        /// <seealso cref="DataBlk.TYPE_INT" />
+        public override int DataType => TYPE_INT;
 
-			set => data_array = (int[]) value;
-		}
-		//UPGRADE_NOTE: Respective javadoc comments were merged.  It should be changed in order to comply with .NET documentation conventions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1199'"
-		/// <summary> Returns the array containing the data, or null if there is no data
-		/// array.
-		/// 
-		/// </summary>
-		/// <returns> The array of data or null if there is no data.
-		/// 
-		/// </returns>
-		/// <summary> Sets the data array to the specified one. The size of the array is not
-		/// checked for consistency with the block's dimensions. This method is
-		/// more efficient than setData
-		/// 
-		/// </summary>
-		/// <param name="arr">The data array to use.
-		/// 
-		/// </param>
-		public virtual int[] DataInt
-		{
-			get => data_array;
+        //UPGRADE_NOTE: Respective javadoc comments were merged.  It should be changed in order to comply with .NET documentation conventions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1199'"
+        /// <summary> Returns the array containing the data, or null if there is no data
+        /// array. The returned array is a int array.
+        /// 
+        /// </summary>
+        /// <returns> The array of data (a int[]) or null if there is no data.
+        /// 
+        /// </returns>
+        /// <summary> Sets the data array to the specified one. The provided array must be a
+        /// int array, otherwise a ClassCastException is thrown. The size of the
+        /// array is not checked for consistency with the block's dimensions.
+        /// 
+        /// </summary>
+        /// <param name="arr">The data array to use. Must be a int array.
+        /// 
+        /// </param>
+        public override object Data
+        {
+            get => data_array;
 
-			set => data_array = value;
-		}
-		/// <summary>The array where the data is stored </summary>
-		public int[] data_array;
-		
-		/// <summary> Creates a DataBlkInt with 0 dimensions and no data array (i.e. data is
-		/// null).
-		/// 
-		/// </summary>
-		public DataBlkInt()
-		{
-		}
-		
-		/// <summary> Creates a DataBlkInt with the specified dimensions and position. The
-		/// data array is initialized to an array of size w*h.
-		/// 
-		/// </summary>
-		/// <param name="ulx">The horizontal coordinate of the upper-left corner of the
-		/// block
-		/// 
-		/// </param>
-		/// <param name="uly">The vertical coordinate of the upper-left corner of the
-		/// block
-		/// 
-		/// </param>
-		/// <param name="w">The width of the block (in pixels)
-		/// 
-		/// </param>
-		/// <param name="h">The height of the block (in pixels)
-		/// 
-		/// </param>
-		public DataBlkInt(int ulx, int uly, int w, int h)
-		{
-			this.ulx = ulx;
-			this.uly = uly;
-			this.w = w;
-			this.h = h;
-			offset = 0;
-			scanw = w;
-			data_array = new int[w * h];
-		}
-		
-		/// <summary> Copy constructor. Creates a DataBlkInt which is the copy of the
-		/// DataBlkInt given as paramter.
-		/// 
-		/// </summary>
-		/// <param name="DataBlkInt">the object to be copied.
-		/// 
-		/// </param>
-		public DataBlkInt(DataBlkInt src)
-		{
-			ulx = src.ulx;
-			uly = src.uly;
-			w = src.w;
-			h = src.h;
-			offset = 0;
-			scanw = w;
-			data_array = new int[w * h];
-			for (var i = 0; i < h; i++)
-				Array.Copy(src.data_array, i * src.scanw, data_array, i * scanw, w);
-		}
-		
-		/// <summary> Returns a string of information about the DataBlkInt.</summary>
-		public override string ToString()
-		{
-			var str = base.ToString();
-			if (data_array != null)
-			{
-				str += $",data={data_array.Length} bytes";
-			}
-			return str;
-		}
-	}
+            set => data_array = (int[])value;
+        }
+        //UPGRADE_NOTE: Respective javadoc comments were merged.  It should be changed in order to comply with .NET documentation conventions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1199'"
+        /// <summary> Returns the array containing the data, or null if there is no data
+        /// array.
+        /// 
+        /// </summary>
+        /// <returns> The array of data or null if there is no data.
+        /// 
+        /// </returns>
+        /// <summary> Sets the data array to the specified one. The size of the array is not
+        /// checked for consistency with the block's dimensions. This method is
+        /// more efficient than setData
+        /// 
+        /// </summary>
+        /// <param name="arr">The data array to use.
+        /// 
+        /// </param>
+        public virtual int[] DataInt
+        {
+            get => data_array;
+
+            set => data_array = value;
+        }
+        /// <summary>The array where the data is stored </summary>
+        public int[] data_array;
+
+        /// <summary> Creates a DataBlkInt with 0 dimensions and no data array (i.e. data is
+        /// null).
+        /// 
+        /// </summary>
+        public DataBlkInt()
+        {
+        }
+
+        /// <summary> Creates a DataBlkInt with the specified dimensions and position. The
+        /// data array is initialized to an array of size w*h.
+        /// 
+        /// </summary>
+        /// <param name="ulx">The horizontal coordinate of the upper-left corner of the
+        /// block
+        /// 
+        /// </param>
+        /// <param name="uly">The vertical coordinate of the upper-left corner of the
+        /// block
+        /// 
+        /// </param>
+        /// <param name="w">The width of the block (in pixels)
+        /// 
+        /// </param>
+        /// <param name="h">The height of the block (in pixels)
+        /// 
+        /// </param>
+        public DataBlkInt(int ulx, int uly, int w, int h)
+        {
+            this.ulx = ulx;
+            this.uly = uly;
+            this.w = w;
+            this.h = h;
+            offset = 0;
+            scanw = w;
+            data_array = new int[w * h];
+        }
+
+        /// <summary> Copy constructor. Creates a DataBlkInt which is the copy of the
+        /// DataBlkInt given as paramter.
+        /// 
+        /// </summary>
+        /// <param name="DataBlkInt">the object to be copied.
+        /// 
+        /// </param>
+        public DataBlkInt(DataBlkInt src)
+        {
+            ulx = src.ulx;
+            uly = src.uly;
+            w = src.w;
+            h = src.h;
+            offset = 0;
+            scanw = w;
+            data_array = new int[w * h];
+            for (var i = 0; i < h; i++)
+                Array.Copy(src.data_array, i * src.scanw, data_array, i * scanw, w);
+        }
+
+        /// <summary> Returns a string of information about the DataBlkInt.</summary>
+        public override string ToString()
+        {
+            var str = base.ToString();
+            if (data_array != null)
+            {
+                str += $",data={data_array.Length} bytes";
+            }
+            return str;
+        }
+    }
 }

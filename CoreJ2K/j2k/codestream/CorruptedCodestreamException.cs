@@ -45,32 +45,32 @@
 
 namespace CoreJ2K.j2k.codestream
 {
-	
-	/// <summary> This exception is thrown whenever an illegal value is read from a bit
-	/// stream. The cause can be either a corrupted bit stream, or a a bit stream
-	/// which is illegal.
-	/// 
-	/// </summary>
-	public class CorruptedCodestreamException:System.IO.IOException
-	{
-		
-		/// <summary> Constructs a new <tt>CorruptedCodestreamException</tt> exception with
-		/// no detail message.
-		/// 
-		/// </summary>
-		public CorruptedCodestreamException()
-		{
-		}
-		
-		/// <summary> Constructs a new <tt>CorruptedCodestreamException</tt> exception with
-		/// the specified detail message.
-		/// 
-		/// </summary>
-		/// <param name="s">The detail message.
-		/// 
-		/// </param>
-		public CorruptedCodestreamException(string s):base(s)
-		{
-		}
-	}
+
+    /// <summary> This exception is thrown whenever an illegal value is read from a bit
+    /// stream. The cause can be either a corrupted bit stream, or a a bit stream
+    /// which is illegal.
+    /// 
+    /// </summary>
+    public class CorruptedCodestreamException : System.IO.IOException
+    {
+
+        /// <summary> Constructs a new <tt>CorruptedCodestreamException</tt> exception with
+        /// no detail message.
+        /// 
+        /// </summary>
+        public CorruptedCodestreamException()
+        {
+        }
+
+        /// <summary> Constructs a new <tt>CorruptedCodestreamException</tt> exception with
+        /// the specified detail message.
+        /// 
+        /// </summary>
+        /// <param name="s">The detail message.
+        /// 
+        /// </param>
+        public CorruptedCodestreamException(string s) : base(s)
+        {
+        }
+    }
 }

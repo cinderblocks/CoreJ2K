@@ -43,9 +43,8 @@
 
 namespace CoreJ2K.j2k.image
 {
-    using System.Collections.Generic;
-
     using input;
+    using System.Collections.Generic;
 
     /// <summary> This class implements the ImgData interface and allows to obtain data from
     /// different sources. Here, one source is represented by an ImgData and a
@@ -157,29 +156,29 @@ namespace CoreJ2K.j2k.image
 
         /// <summary>The width of the image </summary>
         private readonly int w;
-        
+
         /// <summary>The height of the image </summary>
         private readonly int h;
-        
+
         /// <summary>The number of components in the image </summary>
         private readonly int nc;
-        
+
         /// <summary>The list of input ImgData </summary>
         private readonly IList<ImgReader> imageData;
-        
+
         /// <summary>The component index associated with each ImgData </summary>
         private readonly IList<int> compIdx;
-        
+
         /// <summary>The subsampling factor along the horizontal direction, for every
         /// component 
         /// </summary>
         private readonly int[] subsX;
-        
+
         /// <summary>The subsampling factor along the vertical direction, for every
         /// component 
         /// </summary>
         private readonly int[] subsY;
-        
+
         /// <summary> Class constructor. Each input BlkImgDataSrc and its component index
         /// must appear in the order wanted for the output components.<br>
         /// 
@@ -210,18 +209,18 @@ namespace CoreJ2K.j2k.image
         {
             int i;
             int maxW, maxH;
-            
+
             // Initializes
             imageData = imD;
             compIdx = cIdx;
             if (imageData.Count != compIdx.Count)
                 throw new System.ArgumentException("imD and cIdx must have the same length");
-            
+
             nc = imD.Count;
-            
+
             subsX = new int[nc];
             subsY = new int[nc];
-            
+
             // Check that no source is tiled and that the image origin is at the
             // canvas origin.
             for (i = 0; i < nc; i++)
@@ -231,17 +230,17 @@ namespace CoreJ2K.j2k.image
                     throw new System.ArgumentException("All input components must, not use tiles and must have the origin at the canvas origin");
                 }
             }
-            
+
             // Guess component subsampling factors based on the fact that the
             // ceil() operation relates the reference grid size to the component's
             // size, through the subsampling factor.
-            
+
             // Mhhh, difficult problem. For now just assume that one of the
             // subsampling factors is always 1 and that the component width is
             // always larger than its subsampling factor, which covers most of the
             // cases. We check the correctness of the solution once found to chek
             // out hypothesis.
-            
+
             // Look for max width and height.
             maxW = 0;
             maxH = 0;
@@ -255,7 +254,7 @@ namespace CoreJ2K.j2k.image
             // Set the image width and height as the maximum ones
             w = maxW;
             h = maxH;
-            
+
             // Now get the sumsampling factors and check the subsampling factors,
             // just to see if above hypothesis were correct.
             for (i = 0; i < nc; i++)
@@ -270,7 +269,7 @@ namespace CoreJ2K.j2k.image
                 }
             }
         }
-        
+
         /// <summary> Returns the component subsampling factor in the horizontal direction,
         /// for the specified component. This is, approximately, the ratio of
         /// dimensions between the reference grid and the component itself, see the
@@ -290,7 +289,7 @@ namespace CoreJ2K.j2k.image
         {
             return subsX[c];
         }
-        
+
         /// <summary> Returns the component subsampling factor in the vertical direction, for
         /// the specified component. This is, approximately, the ratio of
         /// dimensions between the reference grid and the component itself, see the
@@ -310,8 +309,8 @@ namespace CoreJ2K.j2k.image
         {
             return subsY[c];
         }
-        
-        
+
+
         /// <summary> Returns the width in pixels of the specified tile-component
         /// 
         /// </summary>
@@ -328,7 +327,7 @@ namespace CoreJ2K.j2k.image
         {
             return imageData[c].getTileCompWidth(t, compIdx[c]);
         }
-        
+
         /// <summary> Returns the height in pixels of the specified tile-component.
         /// 
         /// </summary>
@@ -346,7 +345,7 @@ namespace CoreJ2K.j2k.image
         {
             return imageData[c].getTileCompHeight(t, compIdx[c]);
         }
-        
+
         /// <summary> Returns the width in pixels of the specified component in the overall
         /// image.
         /// 
@@ -362,7 +361,7 @@ namespace CoreJ2K.j2k.image
         {
             return imageData[c].getCompImgWidth(compIdx[c]);
         }
-        
+
         /// <summary> Returns the height in pixels of the specified component in the
         /// overall image.
         /// 
@@ -380,7 +379,7 @@ namespace CoreJ2K.j2k.image
         {
             return imageData[n].getCompImgHeight(compIdx[n]);
         }
-        
+
         /// <summary> Returns the number of bits, referred to as the "range bits",
         /// corresponding to the nominal range of the data in the specified
         /// component. If this number is <i>b</b> then for unsigned data the
@@ -401,7 +400,7 @@ namespace CoreJ2K.j2k.image
         {
             return imageData[compIndex].getNomRangeBits(compIdx[compIndex]);
         }
-        
+
         /// <summary> Returns the position of the fixed point in the specified
         /// component. This is the position of the least significant integral
         /// (i.e. non-fractional) bit, which is equivalent to the number of
@@ -422,7 +421,7 @@ namespace CoreJ2K.j2k.image
         {
             return imageData[compIndex].GetFixedPoint(compIdx[compIndex]);
         }
-        
+
         /// <summary> Returns, in the blk argument, a block of image data containing the
         /// specifed rectangular area, in the specified component. The data is
         /// returned, as a reference to the internal data, if any, instead of as a
@@ -468,7 +467,7 @@ namespace CoreJ2K.j2k.image
         {
             return imageData[compIndex].GetInternCompData(blk, compIdx[compIndex]);
         }
-        
+
         /// <summary> Returns, in the blk argument, a block of image data containing the
         /// specifed rectangular area, in the specified component. The data is
         /// returned, as a copy of the internal data, therefore the returned data
@@ -555,25 +554,25 @@ namespace CoreJ2K.j2k.image
         /// <param name="y">The vertical coordinate of the new tile.
         /// 
         /// </param>
-        public virtual void  setTile(int x, int y)
+        public virtual void setTile(int x, int y)
         {
             if (x != 0 || y != 0)
             {
                 throw new System.ArgumentException();
             }
         }
-        
+
         /// <summary> Advances to the next tile, in standard scan-line order (by rows then
         /// columns). A NoNextElementException is thrown if the current tile is the
         /// last one (i.e. there is no next tile). This default implementation
         /// assumes no tiling, so NoNextElementException() is always thrown.
         /// 
         /// </summary>
-        public virtual void  nextTile()
+        public virtual void nextTile()
         {
             throw new NoNextElementException();
         }
-        
+
         /// <summary> Returns the coordinates of the current tile. This default
         /// implementation assumes no-tiling, so (0,0) is returned.
         /// 
@@ -598,7 +597,7 @@ namespace CoreJ2K.j2k.image
                 return new Coord(0, 0);
             }
         }
-        
+
         /// <summary> Returns the horizontal coordinate of the upper-left corner of the
         /// specified component in the current tile.
         /// 
@@ -610,7 +609,7 @@ namespace CoreJ2K.j2k.image
         {
             return 0;
         }
-        
+
         /// <summary> Returns the vertical coordinate of the upper-left corner of the
         /// specified component in the current tile.
         /// 
@@ -622,7 +621,7 @@ namespace CoreJ2K.j2k.image
         {
             return 0;
         }
-        
+
         /// <summary> Returns the number of tiles in the horizontal and vertical
         /// directions. This default implementation assumes no tiling, so (1,1) is
         /// always returned.
@@ -649,7 +648,7 @@ namespace CoreJ2K.j2k.image
                 return new Coord(1, 1);
             }
         }
-        
+
         /// <summary> Returns the total number of tiles in the image. This default
         /// implementation assumes no tiling, so 1 is always returned.
         /// 
@@ -661,7 +660,7 @@ namespace CoreJ2K.j2k.image
         {
             return 1;
         }
-        
+
         /// <summary> Returns a string of information about the object, more than 1 line
         /// long. The information string includes information from the several
         /// input ImgData (their toString() method are called one after the other).

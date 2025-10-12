@@ -46,101 +46,101 @@
 
 namespace CoreJ2K.j2k.wavelet
 {
-	
-	/// <summary> This is the generic class from which the ones that hold the analysis or
-	/// synthesis filters to be used in each part of the image derive. See
-	/// AnWTFilterSpec and SynWTFilterSpec.
-	/// 
-	/// The filters to use are defined by a hierarchy. The hierarchy is:
-	/// 
-	/// - Tile and component specific filters<br>
-	/// - Tile specific default filters<br>
-	/// - Component main default filters<br>
-	/// - Main default filters<br>
-	/// 
-	/// At the moment tiles are not supported by this class.
-	/// 
-	/// </summary>
-	/// <seealso cref="j2k.wavelet.analysis.AnWTFilterSpec" />
-	/// <seealso cref="j2k.wavelet.synthesis.SynWTFilterSpec" />
-	
-	public abstract class WTFilterSpec
-	{
-		/// <summary> Returns the data type used by the filters in this object, as defined in 
-		/// the 'DataBlk' interface.
-		/// 
-		/// </summary>
-		/// <returns> The data type of the filters in this object
-		/// 
-		/// </returns>
-		/// <seealso cref="j2k.image.DataBlk">
-		/// 
-		/// 
-		/// 
-		/// </seealso>
-		public abstract int WTDataType{get;}
-		
-		/// <summary>The identifier for "main default" specified filters </summary>
-		public const byte FILTER_SPEC_MAIN_DEF = 0;
-		
-		/// <summary>The identifier for "component default" specified filters </summary>
-		public const byte FILTER_SPEC_COMP_DEF = 1;
-		
-		/// <summary>The identifier for "tile specific default" specified filters </summary>
-		public const byte FILTER_SPEC_TILE_DEF = 2;
-		
-		/// <summary>The identifier for "tile and component specific" specified filters </summary>
-		public const byte FILTER_SPEC_TILE_COMP = 3;
-		
-		/// <summary>The spec type for each tile and component. The first index is the
-		/// component index, the second is the tile index. NOTE: The tile specific
-		/// things are not supported yet. 
-		/// </summary>
-		// Use byte to save memory (no need for speed here).
-		protected internal byte[] specValType;
-		
-		/// <summary> Constructs a 'WTFilterSpec' object, initializing all the components and
-		/// tiles to the 'FILTER_SPEC_MAIN_DEF' spec type, for the specified number
-		/// of components and tiles.
-		/// 
-		/// NOTE: The tile specific things are not supported yet
-		/// 
-		/// </summary>
-		/// <param name="nc">The number of components
-		/// 
-		/// </param>
-		/// <param name="nt">The number of tiles
-		/// 
-		/// 
-		/// 
-		/// </param>
-		protected internal WTFilterSpec(int nc)
-		{
-			specValType = new byte[nc];
-		}
-		
-		/// <summary> Returns the type of specification for the filters in the specified
-		/// component and tile. The specification type is one of:
-		/// 'FILTER_SPEC_MAIN_DEF', 'FILTER_SPEC_COMP_DEF', 'FILTER_SPEC_TILE_DEF',
-		/// 'FILTER_SPEC_TILE_COMP'.
-		/// 
-		/// NOTE: The tile specific things are not supported yet
-		/// 
-		/// </summary>
-		/// <param name="n">The component index
-		/// 
-		/// </param>
-		/// <param name="t">The tile index, in raster scan order.
-		/// 
-		/// </param>
-		/// <returns> The specification type for component 'n' and tile 't'.
-		/// 
-		/// 
-		/// 
-		/// </returns>
-		public virtual byte getKerSpecType(int n)
-		{
-			return specValType[n];
-		}
-	}
+
+    /// <summary> This is the generic class from which the ones that hold the analysis or
+    /// synthesis filters to be used in each part of the image derive. See
+    /// AnWTFilterSpec and SynWTFilterSpec.
+    /// 
+    /// The filters to use are defined by a hierarchy. The hierarchy is:
+    /// 
+    /// - Tile and component specific filters<br>
+    /// - Tile specific default filters<br>
+    /// - Component main default filters<br>
+    /// - Main default filters<br>
+    /// 
+    /// At the moment tiles are not supported by this class.
+    /// 
+    /// </summary>
+    /// <seealso cref="j2k.wavelet.analysis.AnWTFilterSpec" />
+    /// <seealso cref="j2k.wavelet.synthesis.SynWTFilterSpec" />
+
+    public abstract class WTFilterSpec
+    {
+        /// <summary> Returns the data type used by the filters in this object, as defined in 
+        /// the 'DataBlk' interface.
+        /// 
+        /// </summary>
+        /// <returns> The data type of the filters in this object
+        /// 
+        /// </returns>
+        /// <seealso cref="j2k.image.DataBlk">
+        /// 
+        /// 
+        /// 
+        /// </seealso>
+        public abstract int WTDataType { get; }
+
+        /// <summary>The identifier for "main default" specified filters </summary>
+        public const byte FILTER_SPEC_MAIN_DEF = 0;
+
+        /// <summary>The identifier for "component default" specified filters </summary>
+        public const byte FILTER_SPEC_COMP_DEF = 1;
+
+        /// <summary>The identifier for "tile specific default" specified filters </summary>
+        public const byte FILTER_SPEC_TILE_DEF = 2;
+
+        /// <summary>The identifier for "tile and component specific" specified filters </summary>
+        public const byte FILTER_SPEC_TILE_COMP = 3;
+
+        /// <summary>The spec type for each tile and component. The first index is the
+        /// component index, the second is the tile index. NOTE: The tile specific
+        /// things are not supported yet. 
+        /// </summary>
+        // Use byte to save memory (no need for speed here).
+        protected internal byte[] specValType;
+
+        /// <summary> Constructs a 'WTFilterSpec' object, initializing all the components and
+        /// tiles to the 'FILTER_SPEC_MAIN_DEF' spec type, for the specified number
+        /// of components and tiles.
+        /// 
+        /// NOTE: The tile specific things are not supported yet
+        /// 
+        /// </summary>
+        /// <param name="nc">The number of components
+        /// 
+        /// </param>
+        /// <param name="nt">The number of tiles
+        /// 
+        /// 
+        /// 
+        /// </param>
+        protected internal WTFilterSpec(int nc)
+        {
+            specValType = new byte[nc];
+        }
+
+        /// <summary> Returns the type of specification for the filters in the specified
+        /// component and tile. The specification type is one of:
+        /// 'FILTER_SPEC_MAIN_DEF', 'FILTER_SPEC_COMP_DEF', 'FILTER_SPEC_TILE_DEF',
+        /// 'FILTER_SPEC_TILE_COMP'.
+        /// 
+        /// NOTE: The tile specific things are not supported yet
+        /// 
+        /// </summary>
+        /// <param name="n">The component index
+        /// 
+        /// </param>
+        /// <param name="t">The tile index, in raster scan order.
+        /// 
+        /// </param>
+        /// <returns> The specification type for component 'n' and tile 't'.
+        /// 
+        /// 
+        /// 
+        /// </returns>
+        public virtual byte getKerSpecType(int n)
+        {
+            return specValType[n];
+        }
+    }
 }

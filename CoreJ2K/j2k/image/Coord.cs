@@ -43,62 +43,62 @@
 
 namespace CoreJ2K.j2k.image
 {
-	
-	/// <summary> This class represents 2-D coordinates.
-	/// 
-	/// </summary>
-	public class Coord
-	{
-		/// <summary>The horizontal coordinate </summary>
-		public int x;
-		
-		/// <summary>The vertical coordinate </summary>
-		public int y;
-		
-		/// <summary> Creates a new coordinate object given with the (0,0) coordinates
-		/// 
-		/// </summary>
-		public Coord()
-		{
-		}
-		
-		/// <summary> Creates a new coordinate object given the two coordinates.
-		/// 
-		/// </summary>
-		/// <param name="x">The horizontal coordinate.
-		/// 
-		/// </param>
-		/// <param name="y">The vertical coordinate.
-		/// 
-		/// </param>
-		public Coord(int x, int y)
-		{
-			this.x = x;
-			this.y = y;
-		}
-		
-		/// <summary> Creates a new coordinate object given another Coord object i.e. copy 
-		/// constructor
-		/// 
-		/// </summary>
-		/// <param name="c">The Coord object to be copied.
-		/// 
-		/// </param>
-		public Coord(Coord c)
-		{
-			x = c.x;
-			y = c.y;
-		}
-		
-		/// <summary> Returns a string representation of the object coordinates
-		/// 
-		/// </summary>
-		/// <returns> The vertical and the horizontal coordinates
-		/// 
-		/// </returns>
-		public override string ToString()
-		{
-			return $"({x},{y})";
-		}
-	}
+
+    /// <summary> This class represents 2-D coordinates.
+    /// 
+    /// </summary>
+    public class Coord
+    {
+        /// <summary>The horizontal coordinate </summary>
+        public int x;
+
+        /// <summary>The vertical coordinate </summary>
+        public int y;
+
+        /// <summary> Creates a new coordinate object given with the (0,0) coordinates
+        /// 
+        /// </summary>
+        public Coord()
+        {
+        }
+
+        /// <summary> Creates a new coordinate object given the two coordinates.
+        /// 
+        /// </summary>
+        /// <param name="x">The horizontal coordinate.
+        /// 
+        /// </param>
+        /// <param name="y">The vertical coordinate.
+        /// 
+        /// </param>
+        public Coord(int x, int y)
+        {
+            this.x = x;
+            this.y = y;
+        }
+
+        /// <summary> Creates a new coordinate object given another Coord object i.e. copy 
+        /// constructor
+        /// 
+        /// </summary>
+        /// <param name="c">The Coord object to be copied.
+        /// 
+        /// </param>
+        public Coord(Coord c)
+        {
+            x = c.x;
+            y = c.y;
+        }
+
+        /// <summary> Returns a string representation of the object coordinates
+        /// 
+        /// </summary>
+        /// <returns> The vertical and the horizontal coordinates
+        /// 
+        /// </returns>
+        public override string ToString()
+        {
+            return $"({x},{y})";
+        }
+    }
 }

@@ -47,34 +47,35 @@
 
 namespace CoreJ2K.j2k.io
 {
-	
-	/// <summary> This interface defines constants for the two types of byte
-	/// ordering: little- and big-endian.
-	/// 
-	/// Little-endian is least significant byte first.
-	/// 
-	/// Big-endian is most significant byte first.
-	/// 
-	/// This interface defines the constants only. In order to use the
-	/// constants in any other class you can either use the fully qualified 
-	/// name (e.g., <tt>EndianType.LITTLE_ENDIAN</tt>) or declare this
-	/// interface in the implements clause of the class and then access the 
-	/// identifier directly.
-	/// 
-	/// </summary>
-	public struct EndianType_Fields{
-		/// <summary>Identifier for big-endian byte ordering (i.e. most significant 
-		/// byte first) 
-		/// </summary>
-		public const int BIG_ENDIAN = 0;
-		/// <summary>Identifier for little-endian byte ordering (i.e. least
-		/// significant byte first) 
-		/// </summary>
-		public const int LITTLE_ENDIAN = 1;
-	}
-	public interface EndianType
-	{
-		//UPGRADE_NOTE: Members of interface 'EndianType' were extracted into structure 'EndianType_Fields'. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1045'"
-		
-	}
+
+    /// <summary> This interface defines constants for the two types of byte
+    /// ordering: little- and big-endian.
+    /// 
+    /// Little-endian is least significant byte first.
+    /// 
+    /// Big-endian is most significant byte first.
+    /// 
+    /// This interface defines the constants only. In order to use the
+    /// constants in any other class you can either use the fully qualified 
+    /// name (e.g., <tt>EndianType.LITTLE_ENDIAN</tt>) or declare this
+    /// interface in the implements clause of the class and then access the 
+    /// identifier directly.
+    /// 
+    /// </summary>
+    public struct EndianType_Fields
+    {
+        /// <summary>Identifier for big-endian byte ordering (i.e. most significant 
+        /// byte first) 
+        /// </summary>
+        public const int BIG_ENDIAN = 0;
+        /// <summary>Identifier for little-endian byte ordering (i.e. least
+        /// significant byte first) 
+        /// </summary>
+        public const int LITTLE_ENDIAN = 1;
+    }
+    public interface EndianType
+    {
+        //UPGRADE_NOTE: Members of interface 'EndianType' were extracted into structure 'EndianType_Fields'. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1045'"
+
+    }
 }

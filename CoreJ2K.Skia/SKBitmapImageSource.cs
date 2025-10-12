@@ -2,10 +2,10 @@
 // Copyright (c) 2024 Sjofn LLC.
 // Licensed under the BSD 3-Clause License.
 
-using System;
-using System.Linq;
 using CoreJ2K.j2k.image.input;
 using SkiaSharp;
+using System;
+using System.Linq;
 
 namespace CoreJ2K.Util
 {
@@ -13,10 +13,10 @@ namespace CoreJ2K.Util
     {
         /// <summary>DC offset value used when reading image </summary>
         private const int DC_OFFSET = 128;
-        
-#region CONSTRUCTORS
 
-        private SKBitmapImageSource(SKBitmap bitmap) 
+        #region CONSTRUCTORS
+
+        private SKBitmapImageSource(SKBitmap bitmap)
             : base(bitmap.Width, bitmap.Height
             , ImgReaderSkia.GetNumberOfComponents(bitmap.Info)
             , bitmap.Info.BytesPerPixel
@@ -41,16 +41,16 @@ namespace CoreJ2K.Util
             var green = nc > 1 ? barr[1] : null;
             var blue = nc > 2 ? barr[2] : null;
             var alpha = nc > 3 ? barr[3] : null;
-            
+
             // avoid a swizzle
-            if (image.ColorType == SKColorType.Bgra8888 
-                || image.ColorType == SKColorType.Bgra1010102 
+            if (image.ColorType == SKColorType.Bgra8888
+                || image.ColorType == SKColorType.Bgra1010102
                 || image.ColorType == SKColorType.Bgr101010x)
             {
                 blue = barr[2];
                 red = barr[0];
             }
-            
+
             unsafe
             {
                 var ptr = (byte*)safePtr.ToPointer();
@@ -62,25 +62,26 @@ namespace CoreJ2K.Util
                     case SKColorType.Alpha8:
                     case SKColorType.Gray8:
                     case SKColorType.Rg88:
-                    {
-                        var k = 0;
-                        for (var j = 0; j < w * h; ++j)
                         {
-                            red[k] = (*(ptr + 0) & 0xFF) - DC_OFFSET;
-                            if (green != null) { green[k] = (*(ptr + 1) & 0xFF) - DC_OFFSET; }
-                            if (blue != null) { blue[k] = (*(ptr + 2) & 0xFF) - DC_OFFSET; }
-                            if (alpha != null) { alpha[k] = (*(ptr + 3) & 0xFF) - DC_OFFSET; }
+                            var k = 0;
+                            for (var j = 0; j < w * h; ++j)
+                            {
+                                red[k] = (*(ptr + 0) & 0xFF) - DC_OFFSET;
+                                if (green != null) { green[k] = (*(ptr + 1) & 0xFF) - DC_OFFSET; }
+                                if (blue != null) { blue[k] = (*(ptr + 2) & 0xFF) - DC_OFFSET; }
+                                if (alpha != null) { alpha[k] = (*(ptr + 3) & 0xFF) - DC_OFFSET; }
 
-                            ++k;
-                            ptr += image.BytesPerPixel;
+                                ++k;
+                                ptr += image.BytesPerPixel;
+                            }
                         }
-                    } break;
+                        break;
                     default:
                         throw new NotSupportedException(
                             $"Colortype {nameof(image.ColorType)} not currently supported.");
                 }
             }
-            
+
             return barr;
         }
 
@@ -88,7 +89,7 @@ namespace CoreJ2K.Util
         {
             return Enumerable.Repeat(false, ImgReaderSkia.GetNumberOfComponents(bitmap.Info)).ToArray();
         }
-        
+
         #endregion
     }
 }

@@ -2,15 +2,13 @@
 // Licensed under the BSD 3-Clause License.
 
 using System.Runtime.InteropServices;
-using CoreJ2K.Util;
 
 namespace codectest
 {
+    using CoreJ2K;
+    using SkiaSharp;
     using System;
     using System.IO;
-    using SkiaSharp;
-
-    using CoreJ2K;
 
     internal class Program
     {
@@ -22,7 +20,7 @@ namespace codectest
                 di.Delete(true);
             }
             Directory.CreateDirectory("output");
-            
+
             using (var ppm = File.OpenRead(Path.Combine("samples", "a1_mono.ppm")))
             {
                 var enc = J2kImage.ToBytes(J2kImage.CreateEncodableSource(ppm));
@@ -40,13 +38,13 @@ namespace codectest
                 var enc = J2kImage.ToBytes(J2kImage.CreateEncodableSource(pgx));
                 File.WriteAllBytes(Path.Combine("output", "file13.jp2"), enc);
             }
-            
+
             using (var bitmap = SKBitmap.Decode(Path.Combine("samples", "racoon.png")))
             {
                 var enc = J2kImage.ToBytes(bitmap);
                 File.WriteAllBytes(Path.Combine("output", "file14.jp2"), enc);
             }
-            
+
             using (var bitmap = SKBitmap.Decode(Path.Combine("samples", "basn0g01.png")))
             {
                 var enc = J2kImage.ToBytes(bitmap);
@@ -82,7 +80,7 @@ namespace codectest
                 var enc = J2kImage.ToBytes(bitmap);
                 File.WriteAllBytes(Path.Combine("output", "file20.jp2"), enc);
             }
-            
+
             string[] files = Directory.GetFiles("output", "*.*", SearchOption.AllDirectories);
             foreach (var file in files)
             {
@@ -104,9 +102,9 @@ namespace codectest
 
                     var histogram = GenerateHistogram(image);
                     var encoded = histogram.Encode(SKEncodedImageFormat.Png, 100);
-                    File.WriteAllBytes(Path.Combine("output", $"{Path.GetFileNameWithoutExtension (file)}_histogram.png"), encoded.ToArray());
+                    File.WriteAllBytes(Path.Combine("output", $"{Path.GetFileNameWithoutExtension(file)}_histogram.png"), encoded.ToArray());
                     encoded = image.Encode(SKEncodedImageFormat.Png, 100);
-                    File.WriteAllBytes(Path.Combine("output", $"{Path.GetFileNameWithoutExtension (file)}_encoded.png"), encoded.ToArray());
+                    File.WriteAllBytes(Path.Combine("output", $"{Path.GetFileNameWithoutExtension(file)}_encoded.png"), encoded.ToArray());
                 }
                 catch (Exception e)
                 {

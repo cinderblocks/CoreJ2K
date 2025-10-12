@@ -43,53 +43,53 @@
 * 
 * 
 */
-using System;
 using CoreJ2K.j2k.util;
+using System;
 
 namespace CoreJ2K.j2k
 {
-	
-	/// <summary> This class handles exceptions. It should be used in places where it
-	/// is not known how to handle the exception, and the exception can not
-	/// be thrown higher in the stack.
-	/// 
-	/// Different options can be registered for each Thread and
-	/// ThreadGroup. <i>This feature is not implemented yet</i>
-	/// 
-	/// </summary>
-	public class JJ2KExceptionHandler
-	{
-		
-		/// <summary> Handles the exception. If no special action is registered for
-		/// the current thread, then the Exception's stack trace and a
-		/// descriptive message are printed to standard error and the
-		/// current thread is stopped.
-		/// 
-		/// <i>Registration of special actions is not implemented yet.</i>
-		/// 
-		/// </summary>
-		/// <param name="e">The exception to handle
-		/// 
-		/// 
-		/// 
-		/// </param>
-		public static void  handleException(Exception e)
-		{
-			// Test if there is an special action (not implemented yet)
-			
-			// If no special action
-			
-			// Print the Exception message and stack to standard error
-			// including this method in the stack.
-			//UPGRADE_ISSUE: Method 'java.lang.Throwable.fillInStackTrace' was not converted. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1000_javalangThrowablefillInStackTrace'"
-			//e.fillInStackTrace();
-			SupportClass.WriteStackTrace(e);
-			// Print an explicative message
-			FacilityManager.getMsgLogger().println("The Thread is being terminated bacause an Exception (shown above)\nhas been thrown and no special action was defined for this Thread.", 0, 0);
-			// Stop the thread (do not use stop, since it's deprecated in
-			// Java 1.2)
-			//UPGRADE_NOTE: Exception 'java.lang.ThreadDeath' was converted to 'System.InvalidOperationException' which has different behavior. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1100'"
-			throw new InvalidOperationException();
-		}
-	}
+
+    /// <summary> This class handles exceptions. It should be used in places where it
+    /// is not known how to handle the exception, and the exception can not
+    /// be thrown higher in the stack.
+    /// 
+    /// Different options can be registered for each Thread and
+    /// ThreadGroup. <i>This feature is not implemented yet</i>
+    /// 
+    /// </summary>
+    public class JJ2KExceptionHandler
+    {
+
+        /// <summary> Handles the exception. If no special action is registered for
+        /// the current thread, then the Exception's stack trace and a
+        /// descriptive message are printed to standard error and the
+        /// current thread is stopped.
+        /// 
+        /// <i>Registration of special actions is not implemented yet.</i>
+        /// 
+        /// </summary>
+        /// <param name="e">The exception to handle
+        /// 
+        /// 
+        /// 
+        /// </param>
+        public static void handleException(Exception e)
+        {
+            // Test if there is an special action (not implemented yet)
+
+            // If no special action
+
+            // Print the Exception message and stack to standard error
+            // including this method in the stack.
+            //UPGRADE_ISSUE: Method 'java.lang.Throwable.fillInStackTrace' was not converted. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1000_javalangThrowablefillInStackTrace'"
+            //e.fillInStackTrace();
+            SupportClass.WriteStackTrace(e);
+            // Print an explicative message
+            FacilityManager.getMsgLogger().println("The Thread is being terminated bacause an Exception (shown above)\nhas been thrown and no special action was defined for this Thread.", 0, 0);
+            // Stop the thread (do not use stop, since it's deprecated in
+            // Java 1.2)
+            //UPGRADE_NOTE: Exception 'java.lang.ThreadDeath' was converted to 'System.InvalidOperationException' which has different behavior. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1100'"
+            throw new InvalidOperationException();
+        }
+    }
 }

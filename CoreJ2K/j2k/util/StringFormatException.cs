@@ -47,33 +47,33 @@
 using System;
 namespace CoreJ2K.j2k.util
 {
-	
-	/// <summary> Thrown to indicate that the application has attempted to parse a
-	/// badly formatted string.
-	/// 
-	/// </summary>
-	public class StringFormatException:ArgumentException
-	{
-		
-		/// <summary> Creates the exception with an empty messgage.
-		/// 
-		/// 
-		/// 
-		/// </summary>
-		public StringFormatException()
-		{
-		}
-		
-		/// <summary> Creates the exception with the specified detail message.
-		/// 
-		/// </summary>
-		/// <param name="s">The detail message
-		/// 
-		/// 
-		/// 
-		/// </param>
-		public StringFormatException(string s):base(s)
-		{
-		}
-	}
+
+    /// <summary> Thrown to indicate that the application has attempted to parse a
+    /// badly formatted string.
+    /// 
+    /// </summary>
+    public class StringFormatException : ArgumentException
+    {
+
+        /// <summary> Creates the exception with an empty messgage.
+        /// 
+        /// 
+        /// 
+        /// </summary>
+        public StringFormatException()
+        {
+        }
+
+        /// <summary> Creates the exception with the specified detail message.
+        /// 
+        /// </summary>
+        /// <param name="s">The detail message
+        /// 
+        /// 
+        /// 
+        /// </param>
+        public StringFormatException(string s) : base(s)
+        {
+        }
+    }
 }

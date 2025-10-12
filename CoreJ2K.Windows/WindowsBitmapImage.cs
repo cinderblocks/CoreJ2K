@@ -2,9 +2,9 @@
 // Copyright (c) 2024-2025 Sjofn LLC.
 // Licensed under the BSD 3-Clause License.
 
-using System.Drawing.Imaging;
-using System.Drawing;
 using System;
+using System.Drawing;
+using System.Drawing.Imaging;
 using System.Runtime.CompilerServices;
 
 namespace CoreJ2K.Util
@@ -53,7 +53,7 @@ namespace CoreJ2K.Util
                     System.Runtime.InteropServices.Marshal.Copy(Bytes, 0, ptr, Bytes.Length);
                     break;
             }
-            
+
             bitmap.UnlockBits(dstdata);
 
             return bitmap;

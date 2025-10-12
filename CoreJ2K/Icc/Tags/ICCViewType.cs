@@ -21,7 +21,7 @@ namespace CoreJ2K.Icc.Tags
             type = ICCProfile.getInt(data, offset);
             reserved = ICCProfile.getInt(data, offset + ICCProfile.int_size);
             CIEilluminant = ICCProfile.getXYZNumber(data, offset + ICCProfile.int_size);
-            CIEsurround = ICCProfile.getXYZNumber(data, offset + (ICCProfile.int_size*3));
+            CIEsurround = ICCProfile.getXYZNumber(data, offset + (ICCProfile.int_size * 3));
             illuminant = ICCProfile.getInt(data, offset + (ICCProfile.int_size * 3));
         }
     }

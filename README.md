@@ -65,7 +65,7 @@ For *PGM* and *PPM* images, you would normally use the single `Stream` overload,
 * [Guide to the practical implementation of JPEG2000](http://www.jpeg.org/jpeg2000guide/guide/contents.html)
 
 [![CoreJ2K NuGet-Release](https://img.shields.io/nuget/v/CoreJ2K.svg?label=CoreJ2K)](https://www.nuget.org/packages/CoreJ2K/) 
-[![CoreJ2K.Skia NuGet-Release](https://img.shields.io/nuget/v/CoreJ2K.Skia.svg?label=CoreJ2K.Skia)](https://www.nuget.org/packages/CoreJ2K.Skia/)  
+[![CoreJ2K.Skia NuGet-Release](https://img.shields.io/nuget/v/CoreJ2K.Skia.svg?label=CoreJ2K.Skia)](https://www.nuget.org/packages/CoreJ2K.Skia/) 
 [![CoreJ2K.Windows NuGet-Release](https://img.shields.io/nuget/v/CoreJ2K.Windows.svg?label=CoreJ2K.Windows)](https://www.nuget.org/packages/CoreJ2K.Windows/)  
 [![NuGet Downloads](https://img.shields.io/nuget/dt/CoreJ2K?label=NuGet%20downloads)](https://www.nuget.org/packages/CoreJ2K/)  
 [![Commits per month](https://img.shields.io/github/commit-activity/m/cinderblocks/CoreJ2K/master)](https://www.github.com/cinderblocks/CoreJ2K/)  

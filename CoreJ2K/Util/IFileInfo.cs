@@ -1,21 +1,21 @@
 ﻿namespace CoreJ2K.Util
 {
-	public interface IFileInfo
-	{
-		#region PROPERTIES
+    public interface IFileInfo
+    {
+        #region PROPERTIES
 
-		string Name { get; }
+        string Name { get; }
 
-		string FullName { get; }
+        string FullName { get; }
 
-		bool Exists { get; }
+        bool Exists { get; }
 
-		#endregion
+        #endregion
 
-		#region METHODS
+        #region METHODS
 
-		bool Delete();
+        bool Delete();
 
-		#endregion
-	}
+        #endregion
+    }
 }

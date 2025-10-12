@@ -2,10 +2,10 @@
 // Copyright (c) 2024-2025 Sjofn LLC.
 // Licensed under the BSD 3-Clause License.
 
+using SkiaSharp;
 using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using SkiaSharp;
 
 namespace CoreJ2K.Util
 {
@@ -35,26 +35,29 @@ namespace CoreJ2K.Util
             GCHandle gcHandle;
             var info = new SKImageInfo(Width, Height, colorType, SKAlphaType.Unpremul);
 
-            
+
             switch (NumComponents)
             {
                 // SkiaSharp doesn't play well with 24-bit images, upgrade to 32-bit.
                 case 3:
-                {
-                    var pix = ConvertRGB888toRGB888x(Width, Height, Bytes);
-                    gcHandle = GCHandle.Alloc(pix, GCHandleType.Pinned);
-                } break;
+                    {
+                        var pix = ConvertRGB888toRGB888x(Width, Height, Bytes);
+                        gcHandle = GCHandle.Alloc(pix, GCHandleType.Pinned);
+                    }
+                    break;
                 // Attribute layers aren't available in SkiaSharp,
                 // so we will only handle the first four components.
                 case 5:
-                {
-                    var pix = ConvertRGBHM88888toRGBA8888(Width, Height, Bytes);
-                    gcHandle = GCHandle.Alloc(pix, GCHandleType.Pinned);
-                } break;
+                    {
+                        var pix = ConvertRGBHM88888toRGBA8888(Width, Height, Bytes);
+                        gcHandle = GCHandle.Alloc(pix, GCHandleType.Pinned);
+                    }
+                    break;
                 default:
-                {
-                    gcHandle = GCHandle.Alloc(Bytes, GCHandleType.Pinned);
-                } break;
+                    {
+                        gcHandle = GCHandle.Alloc(Bytes, GCHandleType.Pinned);
+                    }
+                    break;
             }
             bitmap.InstallPixels(info, gcHandle.AddrOfPinnedObject(), info.RowBytes,
                 delegate { gcHandle.Free(); }, null);

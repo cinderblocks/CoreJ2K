@@ -43,70 +43,70 @@
 
 namespace CoreJ2K.j2k.codestream
 {
-	
-	/// <summary> This class is used to store the coordinates of objects such as code-blocks
-	/// or precincts. As this is an abstract class, it cannot be used directly but
-	/// derived classes have been created for code-blocks and packets
-	/// (CBlkCoordInfo and PrecCoordInfo).
-	/// 
-	/// </summary>
-	/// <seealso cref="PrecCoordInfo" />
-	/// <seealso cref="CBlkCoordInfo" />
-	public abstract class CoordInfo
-	{
-		
-		/// <summary>Horizontal upper left coordinate in the subband </summary>
-		public int ulx;
-		
-		/// <summary>Vertical upper left coordinate in the subband </summary>
-		public int uly;
-		
-		/// <summary>Object's width </summary>
-		public int w;
-		
-		/// <summary>Object's height </summary>
-		public int h;
-		
-		/// <summary> Constructor. Creates a CoordInfo object.
-		/// 
-		/// </summary>
-		/// <param name="ulx">The horizontal upper left coordinate in the subband
-		/// 
-		/// </param>
-		/// <param name="uly">The vertical upper left coordinate in the subband
-		/// 
-		/// </param>
-		/// <param name="w">The width
-		/// 
-		/// </param>
-		/// <param name="h">The height
-		/// 
-		/// </param>
-		/// <param name="idx">The object's index
-		/// 
-		/// </param>
-		public CoordInfo(int ulx, int uly, int w, int h)
-		{
-			this.ulx = ulx;
-			this.uly = uly;
-			this.w = w;
-			this.h = h;
-		}
-		
-		/// <summary>Empty contructor </summary>
-		public CoordInfo()
-		{
-		}
-		
-		/// <summary> Returns object's information in a String 
-		/// 
-		/// </summary>
-		/// <returns> String with object's information
-		/// 
-		/// </returns>
-		public override string ToString()
-		{
-			return $"ulx={ulx},uly={uly},w={w},h={h}";
-		}
-	}
+
+    /// <summary> This class is used to store the coordinates of objects such as code-blocks
+    /// or precincts. As this is an abstract class, it cannot be used directly but
+    /// derived classes have been created for code-blocks and packets
+    /// (CBlkCoordInfo and PrecCoordInfo).
+    /// 
+    /// </summary>
+    /// <seealso cref="PrecCoordInfo" />
+    /// <seealso cref="CBlkCoordInfo" />
+    public abstract class CoordInfo
+    {
+
+        /// <summary>Horizontal upper left coordinate in the subband </summary>
+        public int ulx;
+
+        /// <summary>Vertical upper left coordinate in the subband </summary>
+        public int uly;
+
+        /// <summary>Object's width </summary>
+        public int w;
+
+        /// <summary>Object's height </summary>
+        public int h;
+
+        /// <summary> Constructor. Creates a CoordInfo object.
+        /// 
+        /// </summary>
+        /// <param name="ulx">The horizontal upper left coordinate in the subband
+        /// 
+        /// </param>
+        /// <param name="uly">The vertical upper left coordinate in the subband
+        /// 
+        /// </param>
+        /// <param name="w">The width
+        /// 
+        /// </param>
+        /// <param name="h">The height
+        /// 
+        /// </param>
+        /// <param name="idx">The object's index
+        /// 
+        /// </param>
+        public CoordInfo(int ulx, int uly, int w, int h)
+        {
+            this.ulx = ulx;
+            this.uly = uly;
+            this.w = w;
+            this.h = h;
+        }
+
+        /// <summary>Empty contructor </summary>
+        public CoordInfo()
+        {
+        }
+
+        /// <summary> Returns object's information in a String 
+        /// 
+        /// </summary>
+        /// <returns> String with object's information
+        /// 
+        /// </returns>
+        public override string ToString()
+        {
+            return $"ulx={ulx},uly={uly},w={w},h={h}";
+        }
+    }
 }

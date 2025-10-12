@@ -24,7 +24,7 @@ namespace CoreJ2K.Icc.Tags
             reserved = ICCProfile.getInt(data, offset + ICCProfile.int_size);
             observer = ICCProfile.getInt(data, offset + ICCProfile.int_size);
             backing = ICCProfile.getXYZNumber(data, offset + ICCProfile.int_size);
-            geometry = ICCProfile.getInt(data, offset + (ICCProfile.int_size*3));
+            geometry = ICCProfile.getInt(data, offset + (ICCProfile.int_size * 3));
             flare = ICCProfile.getInt(data, offset + ICCProfile.int_size);
             illuminant = ICCProfile.getInt(data, offset + ICCProfile.int_size);
         }

@@ -3,9 +3,8 @@
 
 namespace CoreJ2K.Util
 {
-    using System;
-
     using j2k.util;
+    using System;
 
     public class DotnetMsgLogger : StreamMsgLogger
     {
