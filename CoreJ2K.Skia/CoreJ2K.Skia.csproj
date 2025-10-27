@@ -17,7 +17,7 @@
     </ItemGroup>
     <ItemGroup>
       <PackageReference Include="JetBrains.Annotations" Version="2025.2.2" PrivateAssets="all" />
-      <PackageReference Include="SkiaSharp" Version="3.119.0" />
+      <PackageReference Include="SkiaSharp" Version="3.119.1" />
     </ItemGroup>
     <ItemGroup>
       <ProjectReference Include="..\CoreJ2K\CoreJ2K.csproj" />
