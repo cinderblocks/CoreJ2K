@@ -254,13 +254,13 @@ namespace CoreJ2K.j2k.image.input
                 var blue = nc > 2 ? barr[2] : null;
                 var alpha = nc > 3 ? barr[3] : null;
 
-                // avoid a swizzle
+                // swizzle
                 if (image.ColorType == SKColorType.Bgra8888
                     || image.ColorType == SKColorType.Bgra1010102
                     || image.ColorType == SKColorType.Bgr101010x)
                 {
-                    blue = barr[2];
-                    red = barr[0];
+                    blue = barr[0];
+                    red = barr[2];
                 }
 
                 var pixelsAddr = image.GetPixels(blk.ulx, blk.uly);
