@@ -8,6 +8,7 @@ using System;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Linq;
+using System.Runtime.InteropServices;
 
 namespace CoreJ2K.Util
 {
@@ -177,17 +178,157 @@ namespace CoreJ2K.Util
                     }
                     break;
 
-                default:
-                    // Fall back to GetPixel for indexed or uncommon formats
-                    for (int y = 0, xy = 0; y < h; ++y)
+                case PixelFormat.Format16bppGrayScale:
                     {
-                        for (var x = 0; x < w; ++x, ++xy)
+                        var rect = new Rectangle(0, 0, w, h);
+                        var data = bitmap.LockBits(rect, ImageLockMode.ReadOnly, PixelFormat.Format16bppGrayScale);
+                        var totalBytes = Math.Abs(data.Stride) * h;
+                        var buf = new byte[totalBytes];
+                        try
                         {
-                            var color = bitmap.GetPixel(x, y);
-                            for (var c = 0; c < nc; ++c)
+                            Marshal.Copy(data.Scan0, buf, 0, totalBytes);
+                            for (var y = 0; y < h; ++y)
                             {
-                                comps[c][xy] = c == 0 ? color.R : c == 1 ? color.G : color.B;
+                                var rowStart = y * Math.Abs(data.Stride);
+                                var baseIdx = y * w;
+                                for (var x = 0; x < w; ++x)
+                                {
+                                    // Big-endian 16-bit
+                                    var b0 = buf[rowStart + x * 2];
+                                    var b1 = buf[rowStart + x * 2 + 1];
+                                    comps[0][baseIdx + x] = (b0 << 8) | (b1 & 0xFF);
+                                }
                             }
+                        }
+                        finally
+                        {
+                            bitmap.UnlockBits(data);
+                        }
+                    }
+                    break;
+
+                case PixelFormat.Format8bppIndexed:
+                    {
+                        var rect = new Rectangle(0, 0, w, h);
+                        var data = bitmap.LockBits(rect, ImageLockMode.ReadOnly, PixelFormat.Format8bppIndexed);
+                        var totalBytes = Math.Abs(data.Stride) * h;
+                        var buf = new byte[totalBytes];
+                        try
+                        {
+                            Marshal.Copy(data.Scan0, buf, 0, totalBytes);
+                            var palette = bitmap.Palette.Entries;
+                            for (var y = 0; y < h; ++y)
+                            {
+                                var rowStart = y * Math.Abs(data.Stride);
+                                var baseIdx = y * w;
+                                for (var x = 0; x < w; ++x)
+                                {
+                                    var idx = buf[rowStart + x];
+                                    var col = palette[idx];
+                                    comps[0][baseIdx + x] = col.R;
+                                }
+                            }
+                        }
+                        finally
+                        {
+                            bitmap.UnlockBits(data);
+                        }
+                    }
+                    break;
+
+                case PixelFormat.Format4bppIndexed:
+                    {
+                        var rect = new Rectangle(0, 0, w, h);
+                        var data = bitmap.LockBits(rect, ImageLockMode.ReadOnly, PixelFormat.Format4bppIndexed);
+                        var totalBytes = Math.Abs(data.Stride) * h;
+                        var buf = new byte[totalBytes];
+                        try
+                        {
+                            Marshal.Copy(data.Scan0, buf, 0, totalBytes);
+                            var palette = bitmap.Palette.Entries;
+                            for (var y = 0; y < h; ++y)
+                            {
+                                var rowStart = y * Math.Abs(data.Stride);
+                                var baseIdx = y * w;
+                                for (var x = 0; x < w; ++x)
+                                {
+                                    var b = buf[rowStart + (x >> 1)];
+                                    var idx = ((x & 1) == 0) ? (b >> 4) : (b & 0x0F);
+                                    var col = palette[idx];
+                                    comps[0][baseIdx + x] = col.R;
+                                }
+                            }
+                        }
+                        finally
+                        {
+                            bitmap.UnlockBits(data);
+                        }
+                    }
+                    break;
+
+                case PixelFormat.Format1bppIndexed:
+                    {
+                        var rect = new Rectangle(0, 0, w, h);
+                        var data = bitmap.LockBits(rect, ImageLockMode.ReadOnly, PixelFormat.Format1bppIndexed);
+                        var totalBytes = Math.Abs(data.Stride) * h;
+                        var buf = new byte[totalBytes];
+                        try
+                        {
+                            Marshal.Copy(data.Scan0, buf, 0, totalBytes);
+                            var palette = bitmap.Palette.Entries;
+                            for (var y = 0; y < h; ++y)
+                            {
+                                var rowStart = y * Math.Abs(data.Stride);
+                                var baseIdx = y * w;
+                                for (var x = 0; x < w; ++x)
+                                {
+                                    var b = buf[rowStart + (x >> 3)];
+                                    var bit = 7 - (x & 7);
+                                    var idx = (b >> bit) & 1;
+                                    var col = palette[idx];
+                                    comps[0][baseIdx + x] = col.R;
+                                }
+                            }
+                        }
+                        finally
+                        {
+                            bitmap.UnlockBits(data);
+                        }
+                    }
+                    break;
+
+                default:
+                    // As a last resort, clone to 32bpp and read using LockBits to avoid GetPixel
+                    using (var clone = bitmap.Clone(new Rectangle(0, 0, w, h), PixelFormat.Format32bppArgb))
+                    {
+                        var rect = new Rectangle(0, 0, w, h);
+                        var data = clone.LockBits(rect, ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
+                        try
+                        {
+                            var totalBytes = Math.Abs(data.Stride) * h;
+                            var buf = new byte[totalBytes];
+                            Marshal.Copy(data.Scan0, buf, 0, totalBytes);
+                            var bytesPerPixel = 4;
+                            for (var y = 0; y < h; ++y)
+                            {
+                                var rowStart = y * Math.Abs(data.Stride);
+                                var baseIdx = y * w;
+                                for (var x = 0; x < w; ++x)
+                                {
+                                    var idx = rowStart + x * bytesPerPixel;
+                                    var b = buf[idx + 0];
+                                    var g = buf[idx + 1];
+                                    var r = buf[idx + 2];
+                                    var pos = baseIdx + x;
+                                    comps[0][pos] = r;
+                                    if (nc > 1) comps[1][pos] = g;
+                                    if (nc > 2) comps[2][pos] = b;
+                                }
+                            }
+                        }
+                        finally
+                        {
+                            clone.UnlockBits(data);
                         }
                     }
                     break;

@@ -170,19 +170,32 @@ namespace CoreJ2K.Util
                 throw new ArgumentOutOfRangeException(nameof(compIndex));
             }
 
-            var data = new int[blk.w * blk.h];
-            for (int y = blk.uly, k = 0; y < blk.uly + blk.h; ++y)
+            // Validate block coordinates
+            if (blk.ulx < 0 || blk.uly < 0 || blk.w < 0 || blk.h < 0 || blk.ulx + blk.w > TileWidth || blk.uly + blk.h > TileHeight)
             {
-                for (int x = blk.ulx, xy = blk.uly * TileWidth + blk.ulx; x < blk.ulx + blk.w; ++x, ++k, ++xy)
-                {
-                    data[k] = comps[compIndex][xy];
-                }
+                throw new ArgumentOutOfRangeException(nameof(blk), "Requested block is outside image bounds");
+            }
+
+            var width = blk.w;
+            var height = blk.h;
+            var dest = new int[width * height];
+
+            var compArr = comps[compIndex];
+            var tileW = TileWidth;
+
+            // Copy row-by-row using Array.Copy to leverage optimized native implementation
+            var destOffset = 0;
+            var srcRowStart = blk.uly * tileW + blk.ulx;
+            for (var row = 0; row < height; ++row)
+            {
+                Array.Copy(compArr, srcRowStart + row * tileW, dest, destOffset, width);
+                destOffset += width;
             }
 
             blk.offset = 0;
             blk.scanw = blk.w;
             blk.progressive = false;
-            blk.Data = data;
+            blk.Data = dest;
 
             return blk;
         }

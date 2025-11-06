@@ -23,7 +23,13 @@ namespace CoreJ2K.Util
             Width = width;
             Height = height;
             NumberOfComponents = numberOfComponents;
-            byteScaling = bitsUsed.Select(b => 255.0 / (1 << b)).ToArray();
+
+            var bused = bitsUsed as int[] ?? bitsUsed.ToArray();
+            byteScaling = new double[numberOfComponents];
+            for (var i = 0; i < numberOfComponents; ++i)
+            {
+                byteScaling[i] = 255.0 / (1 << bused[i]);
+            }
 
             Data = new int[numberOfComponents * width * height];
         }
@@ -61,9 +67,12 @@ namespace CoreJ2K.Util
             var length = Width * Height;
             var component = new int[length];
 
-            for (int i = number, k = 0; k < length; i += NumberOfComponents, ++k)
+            // Copy interleaved samples for the requested component
+            var srcIndex = number;
+            for (var k = 0; k < length; ++k)
             {
-                component[k] = Data[i];
+                component[k] = Data[srcIndex];
+                srcIndex += NumberOfComponents;
             }
 
             return component;
@@ -82,15 +91,22 @@ namespace CoreJ2K.Util
         private static byte[] ToBytes(int width, int height, int numberOfComponents,
             IReadOnlyList<double> byteScaling, IReadOnlyList<int> data)
         {
-            var count = numberOfComponents * width * height;
+            var pixels = width * height;
+            var count = numberOfComponents * pixels;
             var bytes = new byte[count];
 
-            for (var component = 0; component < numberOfComponents; ++component)
+            // Convert interleaved int samples to bytes with per-component scaling and clamping
+            for (var p = 0; p < pixels; ++p)
             {
-                for (int i = 0, j = 0; i < count; ++i)
+                var baseIdx = p * numberOfComponents;
+                for (var c = 0; c < numberOfComponents; ++c)
                 {
-                    var b = (byte)(byteScaling[component] * data[i]);
-                    bytes[j++] = b;
+                    // Scale and clamp to [0,255]
+                    var scaled = byteScaling[c] * data[baseIdx + c];
+                    var v = (int)scaled;
+                    if (v < 0) v = 0;
+                    else if (v > 255) v = 255;
+                    bytes[baseIdx + c] = (byte)v;
                 }
             }
 
