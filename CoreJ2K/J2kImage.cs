@@ -238,38 +238,39 @@ namespace CoreJ2K
                     for (var i = 0; i < numComps; i++)
                     {
                         db[i] = new DataBlkInt();
-                        ls[i] = 1 << (decodedImage.getNomRangeBits(0) - 1);
-                        mv[i] = (1 << decodedImage.getNomRangeBits(0)) - 1;
-                        fb[i] = decodedImage.GetFixedPoint(0);
+                        // Use per-component nominal bits and fixed point
+                        ls[i] = 1 << (decodedImage.getNomRangeBits(i) - 1);
+                        mv[i] = (1 << decodedImage.getNomRangeBits(i)) - 1;
+                        fb[i] = decodedImage.GetFixedPoint(i);
                     }
+
+                    // Reuse arrays across rows to avoid per-pixel allocations
+                    var rowvalues = new int[width * numComps];
+                    var k = new int[numComps];
+
                     for (var l = 0; l < height; l++)
                     {
-                        for (var i = numComps - 1; i >= 0; i--)
+                        // Load each component line into its DataBlk and initialize indices
+                        for (var i = 0; i < numComps; i++)
                         {
                             db[i].ulx = 0;
                             db[i].uly = l;
                             db[i].w = width;
                             db[i].h = 1;
                             decodedImage.GetInternCompData(db[i], i);
+                            k[i] = db[i].offset; // start index for forward iteration
                         }
-                        var k = new int[numComps];
-                        for (var i = numComps - 1; i >= 0; i--) k[i] = db[i].offset + width - 1;
 
-                        var rowvalues = new int[width * numComps];
-
-                        for (var i = width - 1; i >= 0; i--)
+                        // Fill rowvalues left-to-right, writing component samples interleaved
+                        for (var col = 0; col < width; col++)
                         {
-                            var tmp = new int[numComps];
-                            for (var j = numComps - 1; j >= 0; j--)
+                            var baseOffset = col * numComps;
+                            for (var comp = 0; comp < numComps; comp++)
                             {
-                                tmp[j] = (db[j].data_array[k[j]--] >> fb[j]) + ls[j];
-                                tmp[j] = (tmp[j] < 0) ? 0 : ((tmp[j] > mv[j]) ? mv[j] : tmp[j]);
-
-                            }
-                            var offset = i * numComps;
-                            for (int m = 0; m < numComps; m++)
-                            {
-                                rowvalues[offset + m] = tmp[m];
+                                var v = (db[comp].data_array[k[comp]++] >> fb[comp]) + ls[comp];
+                                if (v < 0) v = 0;
+                                else if (v > mv[comp]) v = mv[comp];
+                                rowvalues[baseOffset + comp] = v;
                             }
                         }
 
