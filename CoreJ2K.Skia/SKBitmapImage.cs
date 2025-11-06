@@ -68,20 +68,24 @@ namespace CoreJ2K.Util
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static unsafe byte[] ConvertRGB888toRGB888x(int width, int height, byte[] input)
         {
-            var ret = new byte[width * height * 4];
-            var destPos = 0;
-            var srcPos = 0;
+            var totalPixels = width * height;
+            var ret = new byte[totalPixels * 4];
+
             fixed (byte* srcPtr = input)
+            fixed (byte* dstPtr = ret)
             {
-                for (var y = 0; y < height; ++y)
+                var s = srcPtr;
+                var d = dstPtr;
+                for (var i = 0; i < totalPixels; ++i)
                 {
-                    for (var x = 0; x < width; ++x)
-                    {
-                        ret[destPos++] = srcPtr[srcPos++];
-                        ret[destPos++] = srcPtr[srcPos++];
-                        ret[destPos++] = srcPtr[srcPos++];
-                        ret[destPos++] = 0xff;
-                    }
+                    // copy R,G,B then set alpha to 0xFF
+                    d[0] = s[0];
+                    d[1] = s[1];
+                    d[2] = s[2];
+                    d[3] = 0xFF;
+
+                    s += 3;
+                    d += 4;
                 }
             }
 
@@ -91,21 +95,24 @@ namespace CoreJ2K.Util
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static unsafe byte[] ConvertRGBHM88888toRGBA8888(int width, int height, byte[] input)
         {
-            var ret = new byte[width * height * 4];
-            var destPos = 0;
-            var srcPos = 0;
+            var totalPixels = width * height;
+            var ret = new byte[totalPixels * 4];
+
             fixed (byte* srcPtr = input)
+            fixed (byte* dstPtr = ret)
             {
-                for (var y = 0; y < height; ++y)
+                var s = srcPtr;
+                var d = dstPtr;
+                for (var i = 0; i < totalPixels; ++i)
                 {
-                    for (var x = 0; x < width; ++x)
-                    {
-                        ret[destPos++] = srcPtr[srcPos++];
-                        ret[destPos++] = srcPtr[srcPos++];
-                        ret[destPos++] = srcPtr[srcPos++];
-                        ret[destPos++] = srcPtr[srcPos++];
-                        ++srcPos;
-                    }
+                    // copy first four channels (R,G,B,H) then skip reserved/unused channel
+                    d[0] = s[0];
+                    d[1] = s[1];
+                    d[2] = s[2];
+                    d[3] = s[3];
+
+                    s += 5; // skip the 5th component in source
+                    d += 4;
                 }
             }
 

@@ -4,7 +4,9 @@
 
 using CoreJ2K.j2k.image;
 using JetBrains.Annotations;
+using System;
 using System.Drawing;
+using System.Runtime.CompilerServices;
 
 namespace CoreJ2K.Util
 {
@@ -14,14 +16,17 @@ namespace CoreJ2K.Util
 
         #region METHODS
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override IImage Create(int width, int height, int numComponents, byte[] bytes)
         {
-            return new WindowsBitmapImage(width, height, numComponents, bytes);
+            return new WindowsBitmapImage(width, height, numComponents, bytes ?? throw new ArgumentNullException(nameof(bytes)));
         }
 
         public override BlkImgDataSrc ToPortableImageSource(object imageObject)
         {
-            return WindowsBitmapImageSource.Create(imageObject);
+            if (imageObject is Bitmap bmp) return WindowsBitmapImageSource.Create(bmp);
+            if (imageObject is null) throw new ArgumentNullException(nameof(imageObject));
+            throw new ArgumentException($"Expected {nameof(Bitmap)} but got {imageObject.GetType()}", nameof(imageObject));
         }
 
         #endregion

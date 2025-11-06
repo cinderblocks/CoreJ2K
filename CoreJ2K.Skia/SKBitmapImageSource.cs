@@ -37,39 +37,96 @@ namespace CoreJ2K.Util
 
             var barr = new int[nc][];
             for (var c = 0; c < nc; ++c) { barr[c] = new int[w * h]; }
-            var red = barr[0];
-            var green = nc > 1 ? barr[1] : null;
-            var blue = nc > 2 ? barr[2] : null;
-            var alpha = nc > 3 ? barr[3] : null;
+
+            var total = w * h;
+
+            // Determine whether the pixel layout needs red/blue swizzling
+            var swizzle = image.ColorType == SKColorType.Bgra8888
+                          || image.ColorType == SKColorType.Bgra1010102
+                          || image.ColorType == SKColorType.Bgr101010x;
 
             unsafe
             {
                 var ptr = (byte*)safePtr.ToPointer();
-                switch (image.ColorType)
-                {
-                    case SKColorType.Bgra8888:
-                    case SKColorType.Rgba8888:
-                    case SKColorType.Rgb888x:
-                    case SKColorType.Alpha8:
-                    case SKColorType.Gray8:
-                    case SKColorType.Rg88:
-                        {
-                            var k = 0;
-                            for (var j = 0; j < w * h; ++j)
-                            {
-                                red[k] = (*(ptr + 0) & 0xFF) - DC_OFFSET;
-                                if (green != null) { green[k] = (*(ptr + 1) & 0xFF) - DC_OFFSET; }
-                                if (blue != null) { blue[k] = (*(ptr + 2) & 0xFF) - DC_OFFSET; }
-                                if (alpha != null) { alpha[k] = (*(ptr + 3) & 0xFF) - DC_OFFSET; }
+                var bpp = image.BytesPerPixel;
 
-                                ++k;
-                                ptr += image.BytesPerPixel;
-                            }
+                if (nc == 1)
+                {
+                    var comp0 = barr[0];
+                    for (var k = 0; k < total; ++k)
+                    {
+                        comp0[k] = ptr[0] - DC_OFFSET;
+                        ptr += bpp;
+                    }
+                }
+                else if (nc == 2)
+                {
+                    var comp0 = barr[0];
+                    var comp1 = barr[1];
+                    for (var k = 0; k < total; ++k)
+                    {
+                        comp0[k] = ptr[0] - DC_OFFSET;
+                        comp1[k] = ptr[1] - DC_OFFSET;
+                        ptr += bpp;
+                    }
+                }
+                else if (nc == 3)
+                {
+                    var red = barr[0];
+                    var green = barr[1];
+                    var blue = barr[2];
+
+                    if (swizzle)
+                    {
+                        // BGRA / BGR order in memory
+                        for (var k = 0; k < total; ++k)
+                        {
+                            red[k] = ptr[2] - DC_OFFSET;
+                            green[k] = ptr[1] - DC_OFFSET;
+                            blue[k] = ptr[0] - DC_OFFSET;
+                            ptr += bpp;
                         }
-                        break;
-                    default:
-                        throw new NotSupportedException(
-                            $"Colortype {nameof(image.ColorType)} not currently supported.");
+                    }
+                    else
+                    {
+                        for (var k = 0; k < total; ++k)
+                        {
+                            red[k] = ptr[0] - DC_OFFSET;
+                            green[k] = ptr[1] - DC_OFFSET;
+                            blue[k] = ptr[2] - DC_OFFSET;
+                            ptr += bpp;
+                        }
+                    }
+                }
+                else // nc >= 4
+                {
+                    var red = barr[0];
+                    var green = barr[1];
+                    var blue = barr[2];
+                    var alpha = barr[3];
+
+                    if (swizzle)
+                    {
+                        for (var k = 0; k < total; ++k)
+                        {
+                            red[k] = ptr[2] - DC_OFFSET;
+                            green[k] = ptr[1] - DC_OFFSET;
+                            blue[k] = ptr[0] - DC_OFFSET;
+                            alpha[k] = ptr[3] - DC_OFFSET;
+                            ptr += bpp;
+                        }
+                    }
+                    else
+                    {
+                        for (var k = 0; k < total; ++k)
+                        {
+                            red[k] = ptr[0] - DC_OFFSET;
+                            green[k] = ptr[1] - DC_OFFSET;
+                            blue[k] = ptr[2] - DC_OFFSET;
+                            alpha[k] = ptr[3] - DC_OFFSET;
+                            ptr += bpp;
+                        }
+                    }
                 }
             }
 
@@ -78,7 +135,9 @@ namespace CoreJ2K.Util
 
         private static bool[] GetSignedArray(SKBitmap bitmap)
         {
-            return Enumerable.Repeat(false, ImgReaderSkia.GetNumberOfComponents(bitmap.Info)).ToArray();
+            // all components are unsigned for SKBitmap-backed images; allocate directly
+            var nc = ImgReaderSkia.GetNumberOfComponents(bitmap.Info);
+            return new bool[nc];
         }
 
         #endregion

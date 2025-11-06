@@ -6,6 +6,7 @@ using System;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace CoreJ2K.Util
 {
@@ -39,22 +40,39 @@ namespace CoreJ2K.Util
 
             var dstdata = bitmap.LockBits(
                 new Rectangle(0, 0, Width, Height),
-                ImageLockMode.ReadWrite,
+                ImageLockMode.WriteOnly,
                 bitmap.PixelFormat);
 
-            var ptr = dstdata.Scan0;
-            switch (NumComponents)
+            try
             {
-                case 5:
-                    var pix = ConvertRGBHM88888toRGBA8888(Width, Height, Bytes);
-                    System.Runtime.InteropServices.Marshal.Copy(pix, 0, ptr, Bytes.Length);
-                    break;
-                default:
-                    System.Runtime.InteropServices.Marshal.Copy(Bytes, 0, ptr, Bytes.Length);
-                    break;
-            }
+                var dstScan0 = dstdata.Scan0;
+                var dstStride = dstdata.Stride;
 
-            bitmap.UnlockBits(dstdata);
+                int bytesPerPixel = (NumComponents == 3) ? 3 : 4;
+                var src = Bytes;
+
+                if (NumComponents == 5)
+                {
+                    // Convert first (5 bytes per pixel -> 4 bytes per pixel)
+                    src = ConvertRGBHM88888toRGBA8888(Width, Height, Bytes);
+                }
+
+                var srcRowBytes = Width * bytesPerPixel;
+                var expectedSrcLen = srcRowBytes * Height;
+                if (src == null || src.Length < expectedSrcLen)
+                    throw new ArgumentException("Source pixel buffer is too small for the image dimensions.");
+
+                for (var y = 0; y < Height; ++y)
+                {
+                    var srcOffset = y * srcRowBytes;
+                    var destPtr = IntPtr.Add(dstScan0, y * dstStride);
+                    Marshal.Copy(src, srcOffset, destPtr, srcRowBytes);
+                }
+            }
+            finally
+            {
+                bitmap.UnlockBits(dstdata);
+            }
 
             return bitmap;
         }
@@ -62,6 +80,11 @@ namespace CoreJ2K.Util
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static unsafe byte[] ConvertRGBHM88888toRGBA8888(int width, int height, byte[] input)
         {
+            if (input == null) throw new ArgumentNullException(nameof(input));
+            // Input is expected to be width * height * 5
+            if (input.Length < width * height * 5)
+                throw new ArgumentException("Input buffer is too small for RGBHM88888 data.", nameof(input));
+
             var ret = new byte[width * height * 4];
             var destPos = 0;
             var srcPos = 0;
@@ -75,7 +98,7 @@ namespace CoreJ2K.Util
                         ret[destPos++] = srcPtr[srcPos++];
                         ret[destPos++] = srcPtr[srcPos++];
                         ret[destPos++] = srcPtr[srcPos++];
-                        ++srcPos;
+                        ++srcPos; // skip the extra channel
                     }
                 }
             }

@@ -102,16 +102,95 @@ namespace CoreJ2K.Util
             var comps = new int[nc][];
             for (var c = 0; c < nc; ++c) comps[c] = new int[w * h];
 
-            for (int y = 0, xy = 0; y < h; ++y)
+            // Fast paths for common formats using LockBits (avoids slow GetPixel calls)
+            switch (bitmap.PixelFormat)
             {
-                for (var x = 0; x < w; ++x, ++xy)
-                {
-                    var color = bitmap.GetPixel(x, y);
-                    for (var c = 0; c < nc; ++c)
+                case PixelFormat.Format24bppRgb:
                     {
-                        comps[c][xy] = c == 0 ? color.R : c == 1 ? color.G : color.B;
+                        var rect = new Rectangle(0, 0, w, h);
+                        var data = bitmap.LockBits(rect, ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb);
+                        try
+                        {
+                            unsafe
+                            {
+                                var ptr = (byte*)data.Scan0.ToPointer();
+                                var stride = data.Stride;
+                                for (var y = 0; y < h; ++y)
+                                {
+                                    var row = ptr + y * stride;
+                                    var baseIdx = y * w;
+                                    for (var x = 0; x < w; ++x)
+                                    {
+                                        var b = row[x * 3 + 0];
+                                        var g = row[x * 3 + 1];
+                                        var r = row[x * 3 + 2];
+
+                                        var idx = baseIdx + x;
+                                        comps[0][idx] = r;
+                                        comps[1][idx] = g;
+                                        comps[2][idx] = b;
+                                    }
+                                }
+                            }
+                        }
+                        finally
+                        {
+                            bitmap.UnlockBits(data);
+                        }
                     }
-                }
+                    break;
+
+                case PixelFormat.Format32bppArgb:
+                case PixelFormat.Format32bppPArgb:
+                case PixelFormat.Format32bppRgb:
+                    {
+                        var rect = new Rectangle(0, 0, w, h);
+                        var data = bitmap.LockBits(rect, ImageLockMode.ReadOnly, bitmap.PixelFormat);
+                        try
+                        {
+                            unsafe
+                            {
+                                var ptr = (byte*)data.Scan0.ToPointer();
+                                var stride = data.Stride;
+                                for (var y = 0; y < h; ++y)
+                                {
+                                    var row = ptr + y * stride;
+                                    var baseIdx = y * w;
+                                    for (var x = 0; x < w; ++x)
+                                    {
+                                        var b = row[x * 4 + 0];
+                                        var g = row[x * 4 + 1];
+                                        var r = row[x * 4 + 2];
+
+                                        var idx = baseIdx + x;
+                                        comps[0][idx] = r;
+                                        comps[1][idx] = g;
+                                        comps[2][idx] = b;
+                                    }
+                                }
+                            }
+                        }
+                        finally
+                        {
+                            bitmap.UnlockBits(data);
+                        }
+                    }
+                    break;
+
+                default:
+                    // Fall back to GetPixel for indexed or uncommon formats
+                    for (int y = 0, xy = 0; y < h; ++y)
+                    {
+                        for (var x = 0; x < w; ++x, ++xy)
+                        {
+                            var color = bitmap.GetPixel(x, y);
+                            for (var c = 0; c < nc; ++c)
+                            {
+                                comps[c][xy] = c == 0 ? color.R : c == 1 ? color.G : color.B;
+                            }
+                        }
+                    }
+                    break;
             }
 
             return comps;

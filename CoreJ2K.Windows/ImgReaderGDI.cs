@@ -10,6 +10,7 @@ using System;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
+using System.Runtime.InteropServices;
 
 namespace CoreJ2K.j2k.image.input
 {
@@ -33,15 +34,15 @@ namespace CoreJ2K.j2k.image.input
 
         public ImgReaderGDI(Image image)
         {
-            if (image.PixelFormat != PixelFormat.Format24bppRgb)
-                throw new ArgumentException("Only 24bpp RGB images are currently supported");
+            if (image.PixelFormat != PixelFormat.Format24bppRgb && image.PixelFormat != PixelFormat.Format32bppArgb)
+                throw new ArgumentException("Only 24bpp RGB and 32bpp ARGB images are currently supported");
 
             this.image = image;
 
             w = image.Width;
             h = image.Height;
 
-            nc = 3;
+            nc = (image.PixelFormat == PixelFormat.Format32bppArgb) ? 4 : 3;
             rb = 8;
         }
 
@@ -215,6 +216,7 @@ namespace CoreJ2K.j2k.image.input
                 dbi.uly = blk.uly;
                 dbi.w = blk.w;
                 dbi.h = blk.h;
+                dbi.scanw = blk.w;
 
                 var red = barr[0];
                 var green = barr[1];
@@ -222,25 +224,43 @@ namespace CoreJ2K.j2k.image.input
                 var alpha = (componentCount > 3) ? barr[3] : null;
 
                 var bitmap = (Bitmap)image;
-                var data = bitmap.LockBits(new Rectangle(blk.ulx, blk.uly, blk.w, blk.h), ImageLockMode.ReadOnly,
-                    (componentCount == 3) ? PixelFormat.Format24bppRgb : PixelFormat.Format32bppArgb);
-                unsafe
+                var pixelFormat = (componentCount == 3) ? PixelFormat.Format24bppRgb : PixelFormat.Format32bppArgb;
+                var data = bitmap.LockBits(new Rectangle(blk.ulx, blk.uly, blk.w, blk.h), ImageLockMode.ReadOnly, pixelFormat);
+                try
                 {
-                    var ptr = (byte*)data.Scan0.ToPointer();
+                    var stride = data.Stride;
+                    var absStride = Math.Abs(stride);
+                    var totalBytes = absStride * blk.h;
+                    var raw = new byte[totalBytes];
+                    Marshal.Copy(data.Scan0, raw, 0, totalBytes);
 
+                    var bytesPerPixel = (componentCount == 3) ? 3 : 4;
                     var k = 0;
-                    for (var j = 0; j < blk.w * blk.h; j++)
+                    for (var row = 0; row < blk.h; row++)
                     {
-                        blue[k] = (*(ptr + 0) & 0xFF) - 128;
-                        green[k] = (*(ptr + 1) & 0xFF) - 128;
-                        red[k] = (*(ptr + 2) & 0xFF) - 128;
-                        if (alpha != null) { alpha[k] = (*(ptr + 3) & 0xFF) - 128; }
-
-                        ++k;
-                        ptr += 3;
+                        var rowStart = row * absStride;
+                        for (var col = 0; col < blk.w; col++)
+                        {
+                            var idx = rowStart + col * bytesPerPixel;
+                            var b = raw[idx + 0];
+                            var g = raw[idx + 1];
+                            var r = raw[idx + 2];
+                            blue[k] = (b & 0xFF) - 128;
+                            green[k] = (g & 0xFF) - 128;
+                            red[k] = (r & 0xFF) - 128;
+                            if (alpha != null)
+                            {
+                                var a = raw[idx + 3];
+                                alpha[k] = (a & 0xFF) - 128;
+                            }
+                            ++k;
+                        }
                     }
                 }
-                bitmap.UnlockBits(data);
+                finally
+                {
+                    bitmap.UnlockBits(data);
+                }
 
                 barr[0] = red;
                 barr[1] = green;
@@ -256,7 +276,7 @@ namespace CoreJ2K.j2k.image.input
             {
                 //Asking for the 2nd or 3rd (or 4th) block component
                 blk.Data = barr[compIndex];
-                blk.offset = (blk.ulx - dbi.ulx) * dbi.w + blk.ulx - dbi.ulx;
+                blk.offset = (blk.ulx - dbi.ulx) + (blk.uly - dbi.uly) * dbi.scanw;
                 blk.scanw = dbi.scanw;
             }
 

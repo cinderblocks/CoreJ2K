@@ -6,34 +6,38 @@ using CoreJ2K.j2k.image;
 using CoreJ2K.j2k.image.input;
 using JetBrains.Annotations;
 using SkiaSharp;
+using System;
+using System.Runtime.CompilerServices;
 
 namespace CoreJ2K.Util
 {
     [UsedImplicitly]
     public sealed class SKBitmapImageCreator : ImageCreator<SKBitmap>
     {
-        public override IImage Create(int width, int height, int numComponents, byte[] bytes)
-        {
-            return new SKBitmapImage(width, height, numComponents, bytes);
-        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public override IImage Create(int width, int height, int numComponents, byte[] bytes) =>
+            new SKBitmapImage(width, height, numComponents, bytes ?? throw new ArgumentNullException(nameof(bytes)));
 
         public override BlkImgDataSrc ToPortableImageSource(object imageObject)
         {
-            return new ImgReaderSkia((SKBitmap)imageObject);
+            if (imageObject is SKBitmap bmp) return new ImgReaderSkia(bmp);
+            if (imageObject is null) throw new ArgumentNullException(nameof(imageObject));
+            throw new ArgumentException($"Expected {nameof(SKBitmap)} but got {imageObject.GetType()}", nameof(imageObject));
         }
     }
 
     [UsedImplicitly]
     public sealed class SKPixmapImageCreator : ImageCreator<SKPixmap>
     {
-        public override IImage Create(int width, int height, int numComponents, byte[] bytes)
-        {
-            return new SKBitmapImage(width, height, numComponents, bytes);
-        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public override IImage Create(int width, int height, int numComponents, byte[] bytes) =>
+            new SKBitmapImage(width, height, numComponents, bytes ?? throw new ArgumentNullException(nameof(bytes)));
 
         public override BlkImgDataSrc ToPortableImageSource(object imageObject)
         {
-            return new ImgReaderSkia((SKPixmap)imageObject);
+            if (imageObject is SKPixmap pm) return new ImgReaderSkia(pm);
+            if (imageObject is null) throw new ArgumentNullException(nameof(imageObject));
+            throw new ArgumentException($"Expected {nameof(SKPixmap)} but got {imageObject.GetType()}", nameof(imageObject));
         }
     }
 }

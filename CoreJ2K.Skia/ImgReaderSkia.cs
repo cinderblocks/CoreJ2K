@@ -208,39 +208,14 @@ namespace CoreJ2K.j2k.image.input
             if ((barr == null) || (dbi.ulx > blk.ulx) || (dbi.uly > blk.uly)
                 || (dbi.ulx + dbi.w < blk.ulx + blk.w) || (dbi.uly + dbi.h < blk.uly + blk.h))
             {
+                // allocate top-level array of component buffers
                 barr = new int[nc][];
 
-                // Reset data arrays if necessary
-                if (barr[compIndex] == null || barr[compIndex].Length < blk.w * blk.h)
+                // ensure each needed buffer is allocated
+                var needed = blk.w * blk.h;
+                for (var cc = 0; cc < nc; ++cc)
                 {
-                    barr[compIndex] = new int[blk.w * blk.h];
-                }
-                blk.Data = barr[compIndex];
-
-                int i;
-                if (nc > 1)
-                {
-                    i = (compIndex + 1) % nc;
-                    if (barr[i] == null || barr[i].Length < blk.w * blk.h)
-                    {
-                        barr[i] = new int[blk.w * blk.h];
-                    }
-                }
-                if (nc > 2)
-                {
-                    i = (compIndex + 2) % nc;
-                    if (barr[i] == null || barr[i].Length < blk.w * blk.h)
-                    {
-                        barr[i] = new int[blk.w * blk.h];
-                    }
-                }
-                if (nc > 3)
-                {
-                    i = (compIndex + 3) % nc;
-                    if (barr[i] == null || barr[i].Length < blk.w * blk.h)
-                    {
-                        barr[i] = new int[blk.w * blk.h];
-                    }
+                    barr[cc] = new int[needed];
                 }
 
                 // set attributes of the DataBlk used for buffering
@@ -249,49 +224,90 @@ namespace CoreJ2K.j2k.image.input
                 dbi.w = blk.w;
                 dbi.h = blk.h;
 
+                // component arrays
                 var red = barr[0];
                 var green = nc > 1 ? barr[1] : null;
                 var blue = nc > 2 ? barr[2] : null;
                 var alpha = nc > 3 ? barr[3] : null;
 
-                // swizzle
-                if (image.ColorType == SKColorType.Bgra8888
-                    || image.ColorType == SKColorType.Bgra1010102
-                    || image.ColorType == SKColorType.Bgr101010x)
-                {
-                    blue = barr[0];
-                    red = barr[2];
-                }
+                // compute swizzle once
+                var swizzle = image.ColorType == SKColorType.Bgra8888
+                              || image.ColorType == SKColorType.Bgra1010102
+                              || image.ColorType == SKColorType.Bgr101010x;
 
                 var pixelsAddr = image.GetPixels(blk.ulx, blk.uly);
 
                 unsafe
                 {
                     var ptr = (byte*)pixelsAddr.ToPointer();
+                    var bpp = image.BytesPerPixel;
+                    var total = needed;
 
-                    switch (image.ColorType)
+                    // handle common component counts with tight, branch-free inner loops
+                    if (nc == 1)
                     {
-                        case SKColorType.Bgra8888:
-                        case SKColorType.Rgba8888:
-                        case SKColorType.Rgb888x:
-                        case SKColorType.Alpha8:
-                        case SKColorType.Gray8:
-                        case SKColorType.Rg88:
-                            var k = 0;
-                            for (var j = 0; j < blk.w * blk.h; ++j)
+                        for (var k = 0; k < total; ++k)
+                        {
+                            red[k] = ptr[0] - DC_OFFSET;
+                            ptr += bpp;
+                        }
+                    }
+                    else if (nc == 2)
+                    {
+                        for (var k = 0; k < total; ++k)
+                        {
+                            red[k] = ptr[0] - DC_OFFSET;
+                            green[k] = ptr[1] - DC_OFFSET;
+                            ptr += bpp;
+                        }
+                    }
+                    else if (nc == 3)
+                    {
+                        if (swizzle)
+                        {
+                            for (var k = 0; k < total; ++k)
                             {
-                                red[k] = (*(ptr + 0) & 0xFF) - DC_OFFSET;
-                                if (green != null) { green[k] = (*(ptr + 1) & 0xFF) - DC_OFFSET; }
-                                if (blue != null) { blue[k] = (*(ptr + 2) & 0xFF) - DC_OFFSET; }
-                                if (alpha != null) { alpha[k] = (*(ptr + 3) & 0xFF) - DC_OFFSET; }
-
-                                ++k;
-                                ptr += image.BytesPerPixel;
+                                red[k] = ptr[2] - DC_OFFSET;   // memory B -> red
+                                green[k] = ptr[1] - DC_OFFSET;
+                                blue[k] = ptr[0] - DC_OFFSET;  // memory R -> blue
+                                ptr += bpp;
                             }
-                            break;
-                        default:
-                            throw new NotSupportedException(
-                                $"Colortype {nameof(image.ColorType)} not currently supported.");
+                        }
+                        else
+                        {
+                            for (var k = 0; k < total; ++k)
+                            {
+                                red[k] = ptr[0] - DC_OFFSET;
+                                green[k] = ptr[1] - DC_OFFSET;
+                                blue[k] = ptr[2] - DC_OFFSET;
+                                ptr += bpp;
+                            }
+                        }
+                    }
+                    else // nc >= 4
+                    {
+                        if (swizzle)
+                        {
+                            for (var k = 0; k < total; ++k)
+                            {
+                                red[k] = ptr[2] - DC_OFFSET;
+                                green[k] = ptr[1] - DC_OFFSET;
+                                blue[k] = ptr[0] - DC_OFFSET;
+                                alpha[k] = ptr[3] - DC_OFFSET;
+                                ptr += bpp;
+                            }
+                        }
+                        else
+                        {
+                            for (var k = 0; k < total; ++k)
+                            {
+                                red[k] = ptr[0] - DC_OFFSET;
+                                green[k] = ptr[1] - DC_OFFSET;
+                                blue[k] = ptr[2] - DC_OFFSET;
+                                alpha[k] = ptr[3] - DC_OFFSET;
+                                ptr += bpp;
+                            }
+                        }
                     }
                 }
 
