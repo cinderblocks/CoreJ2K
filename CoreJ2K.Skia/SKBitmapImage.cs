@@ -7,6 +7,7 @@ using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
+[assembly: InternalsVisibleTo("CoreJ2K.Skia.Tests")]
 namespace CoreJ2K.Util
 {
     internal class SKBitmapImage : ImageBase<SKBitmap>
