@@ -76,7 +76,7 @@ internal static class SupportClass
 
     /*******************************/
     /// <summary>
-    /// Receives a byte array and returns it transformed in an sbyte array
+    /// Receives a byte array and returns it transformed in a sbyte array
     /// </summary>
     /// <param name="byteArray">Byte array to process</param>
     /// <returns>The transformed array</returns>
@@ -156,12 +156,12 @@ internal static class SupportClass
 
     /*******************************/
     /// <summary>
-    /// Provides support functions to create read-write random acces files and write functions
+    /// Provides support functions to create read-write random access files and write functions
     /// </summary>
     public class RandomAccessFileSupport
     {
         /// <summary>
-        /// Creates a new random acces stream with read-write or read rights
+        /// Creates a new random access stream with read-write or read rights
         /// </summary>
         /// <param name="fileName">A relative or absolute path for the file to open</param>
         /// <param name="mode">Mode to open the file in</param>
@@ -172,9 +172,9 @@ internal static class SupportClass
         }
 
         /// <summary>
-        /// Creates a new random acces stream with read-write or read rights
+        /// Creates a new random access stream with read-write or read rights
         /// </summary>
-        /// <param name="fileName">File infomation for the file to open</param>
+        /// <param name="fileName">File information for the file to open</param>
         /// <param name="mode">Mode to open the file in</param>
         /// <returns>The new System.IO.FileStream</returns>
         public static System.IO.Stream CreateRandomAccessFile(IFileInfo fileName, string mode)
@@ -226,7 +226,7 @@ internal static class SupportClass
     /// Performs an unsigned bitwise right shift with the specified number
     /// </summary>
     /// <param name="number">Number to operate on</param>
-    /// <param name="bits">Ammount of bits to shift</param>
+    /// <param name="bits">Amount of bits to shift</param>
     /// <returns>The resulting number from the shift operation</returns>
     public static int URShift(int number, int bits)
     {
@@ -238,7 +238,7 @@ internal static class SupportClass
     /// Performs an unsigned bitwise right shift with the specified number
     /// </summary>
     /// <param name="number">Number to operate on</param>
-    /// <param name="bits">Ammount of bits to shift</param>
+    /// <param name="bits">Amount of bits to shift</param>
     /// <returns>The resulting number from the shift operation</returns>
     public static int URShift(int number, long bits)
     {
@@ -249,7 +249,7 @@ internal static class SupportClass
     /// Performs an unsigned bitwise right shift with the specified number
     /// </summary>
     /// <param name="number">Number to operate on</param>
-    /// <param name="bits">Ammount of bits to shift</param>
+    /// <param name="bits">Amount of bits to shift</param>
     /// <returns>The resulting number from the shift operation</returns>
     public static long URShift(long number, int bits)
     {
@@ -261,7 +261,7 @@ internal static class SupportClass
     /// Performs an unsigned bitwise right shift with the specified number
     /// </summary>
     /// <param name="number">Number to operate on</param>
-    /// <param name="bits">Ammount of bits to shift</param>
+    /// <param name="bits">Amount of bits to shift</param>
     /// <returns>The resulting number from the shift operation</returns>
     public static long URShift(long number, long bits)
     {
@@ -271,7 +271,7 @@ internal static class SupportClass
     /*******************************/
     /// <summary>Reads a number of characters from the current source Stream and writes the data to the target array at the specified index.</summary>
     /// <param name="sourceStream">The source Stream to read from.</param>
-    /// <param name="target">Contains the array of characteres read from the source Stream.</param>
+    /// <param name="target">Contains the array of characters read from the source Stream.</param>
     /// <param name="start">The starting index of the target array.</param>
     /// <param name="count">The maximum number of characters to read from the source Stream.</param>
     /// <returns>The number of characters read. The number will be less than or equal to count depending on the data available in the source Stream. Returns -1 if the end of the stream is reached.</returns>
@@ -301,7 +301,7 @@ internal static class SupportClass
 
     /// <summary>Reads a number of characters from the current source TextReader and writes the data to the target array at the specified index.</summary>
     /// <param name="sourceTextReader">The source TextReader to read from</param>
-    /// <param name="target">Contains the array of characteres read from the source TextReader.</param>
+    /// <param name="target">Contains the array of characters read from the source TextReader.</param>
     /// <param name="start">The starting index of the target array.</param>
     /// <param name="count">The maximum number of characters to read from the source TextReader.</param>
     /// <returns>The number of characters read. The number will be less than or equal to count depending on the data available in the source TextReader. Returns -1 if the end of the stream is reached.</returns>
@@ -400,8 +400,8 @@ internal static class SupportClass
             this.delimiters = delimiter;
 
             //at the end 
-            if (currentPos == chars.Length)
-                throw new ArgumentOutOfRangeException();
+            if (chars == null || currentPos >= chars.Length)
+                throw new InvalidOperationException("No more tokens available");
             //if over a delimiter and delimiters must be returned
             else if ((Array.IndexOf(delimiters.ToCharArray(), chars[currentPos]) != -1)
                      && includeDelims)
@@ -420,13 +420,16 @@ internal static class SupportClass
             var pos = currentPos;
 
             //skip possible delimiters
-            while (Array.IndexOf(delimiter, chars[currentPos]) != -1)
-                //The last one is a delimiter (i.e there is no more tokens)
-                if (++currentPos == chars.Length)
-                {
-                    currentPos = pos;
-                    throw new ArgumentOutOfRangeException();
-                }
+            while (currentPos < chars.Length && Array.IndexOf(delimiter, chars[currentPos]) != -1)
+            {
+                currentPos++;
+            }
+            // The last one was a delimiter (i.e. there are no more tokens)
+            if (currentPos >= chars.Length)
+            {
+                currentPos = pos;
+                throw new InvalidOperationException("No more tokens available");
+            }
 
             //getting the token: compute start and length to avoid repeated concatenation
             var start = currentPos;
@@ -529,7 +532,7 @@ internal static class SupportClass
         /// <summary>
         ///  Performs the same action as HasMoreTokens.
         /// </summary>
-        /// <returns>True or false, depending if there are more tokens</returns>
+        /// <returns>True or false, depending on if there are more tokens</returns>
         public bool MoveNext()
         {
             if (!HasMoreTokens())
@@ -545,7 +548,7 @@ internal static class SupportClass
                 hasCurrent = true;
                 return true;
             }
-            catch (ArgumentOutOfRangeException)
+            catch (InvalidOperationException)
             {
                 // Should not happen because HasMoreTokens checked, but return false defensively
                 currentToken = null;
@@ -566,7 +569,7 @@ internal static class SupportClass
     }
     /*******************************/
     /// <summary>
-    /// This class provides auxiliar functionality to read and unread characters from a string into a buffer.
+    /// This class provides auxiliary functionality to read and unread characters from a string into a buffer.
     /// </summary>
     private class BackStringReader : System.IO.StringReader
     {
@@ -831,7 +834,7 @@ internal static class SupportClass
         }
 
         /// <summary>
-        /// Creates a StreamToknizerSupport that parses the given string.
+        /// Creates a StreamTokenizerSupport that parses the given string.
         /// </summary>
         /// <param name="reader">The System.IO.StringReader that contains the String to be parsed.</param>
         public StreamTokenizerSupport(System.IO.StringReader reader)
@@ -874,7 +877,7 @@ internal static class SupportClass
         }
 
         /// <summary>
-        /// Determines whether or not ends of line are treated as tokens.
+        /// Determines whether ends of line are treated as tokens.
         /// </summary>
         /// <param name="flag">True indicates that end-of-line characters are separate tokens; False indicates 
         /// that end-of-line characters are white space.</param>
@@ -887,13 +890,13 @@ internal static class SupportClass
         /// Return the current line number.
         /// </summary>
         /// <returns>Current line number</returns>
-        public virtual int Lineno()
+        public virtual int LineNo()
         {
             return lineno;
         }
 
         /// <summary>
-        /// Determines whether or not word token are automatically lowercased.
+        /// Determines whether word token are automatically lowercased.
         /// </summary>
         /// <param name="flag">True indicates that all word tokens should be lowercased.</param>
         public virtual void LowerCaseMode(bool flag)
@@ -1346,7 +1349,7 @@ internal static class SupportClass
         }
 
         /// <summary>
-        /// Determines whether or not the tokenizer recognizes C++-style comments.
+        /// Determines whether the tokenizer recognizes C++-style comments.
         /// </summary>
         /// <param name="flag">True indicates to recognize and ignore C++-style comments.</param>
         public virtual void SlashSlashComments(bool flag)
@@ -1355,7 +1358,7 @@ internal static class SupportClass
         }
 
         /// <summary>
-        /// Determines whether or not the tokenizer recognizes C-style comments.
+        /// Determines whether the tokenizer recognizes C-style comments.
         /// </summary>
         /// <param name="flag">True indicates to recognize and ignore C-style comments.</param>
         public virtual void SlashStarComments(bool flag)
