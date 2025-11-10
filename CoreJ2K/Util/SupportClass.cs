@@ -609,33 +609,33 @@ internal static class SupportClass
         /// <returns>The number of characters read.</returns>
         public override int Read(char[] array, int index, int count)
         {
-            var readLimit = buffer.Length - position;
+            var readFromBuffer = 0;
 
             if (count <= 0)
                 return 0;
 
-            if (readLimit > 0)
+            var available = buffer.Length - position;
+            if (available > 0)
             {
-                if (count < readLimit)
-                    readLimit = count;
-                Array.Copy(buffer, position, array, index, readLimit);
-                count -= readLimit;
-                index += readLimit;
-                position += readLimit;
+                var toCopy = Math.Min(count, available);
+                Array.Copy(buffer, position, array, index, toCopy);
+                position += toCopy;
+                index += toCopy;
+                count -= toCopy;
+                readFromBuffer = toCopy;
             }
 
             if (count > 0)
             {
-                count = base.Read(array, index, count);
-                if (count == -1)
-                {
-                    if (readLimit == 0)
-                        return -1;
-                    return readLimit;
-                }
-                return readLimit + count;
+                // base.Read returns number of chars read (0 at EOF)
+                var n = base.Read(array, index, count);
+                if (n > 0)
+                    return readFromBuffer + n;
+                // nothing more read from base, return whatever we read from buffer (may be 0)
+                return readFromBuffer;
             }
-            return readLimit;
+
+            return readFromBuffer;
         }
 
         /// <summary>
@@ -1536,33 +1536,33 @@ internal static class SupportClass
         /// <returns>The number of characters read.</returns>
         public override int Read(char[] array, int index, int count)
         {
-            var readLimit = buffer.Length - position;
+            var readFromBuffer = 0;
 
             if (count <= 0)
                 return 0;
 
-            if (readLimit > 0)
+            var available = buffer.Length - position;
+            if (available > 0)
             {
-                if (count < readLimit)
-                    readLimit = count;
-                Array.Copy(buffer, position, array, index, readLimit);
-                count -= readLimit;
-                index += readLimit;
-                position += readLimit;
+                var toCopy = Math.Min(count, available);
+                Array.Copy(buffer, position, array, index, toCopy);
+                position += toCopy;
+                index += toCopy;
+                count -= toCopy;
+                readFromBuffer = toCopy;
             }
 
             if (count > 0)
             {
-                count = base.Read(array, index, count);
-                if (count == -1)
-                {
-                    if (readLimit == 0)
-                        return -1;
-                    return readLimit;
-                }
-                return readLimit + count;
+                // base.Read returns number of chars read (0 at EOF)
+                var n = base.Read(array, index, count);
+                if (n > 0)
+                    return readFromBuffer + n;
+                // nothing more read from base, return whatever we read from buffer (may be 0)
+                return readFromBuffer;
             }
-            return readLimit;
+
+            return readFromBuffer;
         }
 
         /// <summary>
