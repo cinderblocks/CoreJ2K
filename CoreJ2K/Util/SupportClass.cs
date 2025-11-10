@@ -189,11 +189,14 @@ internal class SupportClass
         /// <param name="fileStream">File to write to</param>
         public static void WriteBytes(string data, System.IO.Stream fileStream)
         {
-            var index = 0;
+            if (data == null) return;
             var length = data.Length;
+            if (length == 0) return;
 
-            while (index < length)
-                fileStream.WriteByte((byte)data[index++]);
+            var buffer = new byte[length];
+            for (int i = 0; i < length; i++)
+                buffer[i] = (byte)data[i];
+            fileStream.Write(buffer, 0, length);
         }
 
         /// <summary>
@@ -282,15 +285,20 @@ internal class SupportClass
         if (target.Length == 0)
             return 0;
 
-        var receiver = new byte[target.Length];
-        var bytesRead = sourceStream.Read(receiver, start, count);
+        if (start < 0 || start >= target.Length) return 0;
+
+        var maxToRead = Math.Min(count, target.Length - start);
+        if (maxToRead <= 0) return 0;
+
+        var receiver = new byte[maxToRead];
+        var bytesRead = sourceStream.Read(receiver, 0, maxToRead);
 
         // Returns -1 if EOF
         if (bytesRead == 0)
             return -1;
 
-        for (var i = start; i < start + bytesRead; i++)
-            target[i] = (sbyte)receiver[i];
+        for (var i = 0; i < bytesRead; i++)
+            target[start + i] = (sbyte)receiver[i];
 
         return bytesRead;
     }
@@ -305,15 +313,19 @@ internal class SupportClass
     {
         // Returns 0 bytes if not enough space in target
         if (target.Length == 0) return 0;
+        if (start < 0 || start >= target.Length) return 0;
 
-        var charArray = new char[target.Length];
-        var bytesRead = sourceTextReader.Read(charArray, start, count);
+        var maxToRead = Math.Min(count, target.Length - start);
+        if (maxToRead <= 0) return 0;
+
+        var charArray = new char[maxToRead];
+        var bytesRead = sourceTextReader.Read(charArray, 0, maxToRead);
 
         // Returns -1 if EOF
         if (bytesRead == 0) return -1;
 
-        for (var index = start; index < start + bytesRead; index++)
-            target[index] = (sbyte)charArray[index];
+        for (var i = 0; i < bytesRead; i++)
+            target[start + i] = (sbyte)charArray[i];
 
         return bytesRead;
     }
@@ -397,7 +409,10 @@ internal class SupportClass
             //if over a delimiter and delimiters must be returned
             else if ((Array.IndexOf(delimiters.ToCharArray(), chars[currentPos]) != -1)
                      && includeDelims)
-                return $"{chars[currentPos++]}";
+            {
+                var single = new char[1] { chars[currentPos++] };
+                return new string(single);
+            }
             //need to get the token wo delimiters.
             else
                 return nextToken(delimiters.ToCharArray());
@@ -406,7 +421,6 @@ internal class SupportClass
         //Returns the nextToken wo delimiters
         private string nextToken(char[] delimiter)
         {
-            var token = "";
             var pos = currentPos;
 
             //skip possible delimiters
@@ -418,15 +432,14 @@ internal class SupportClass
                     throw new ArgumentOutOfRangeException();
                 }
 
-            //getting the token
-            while (Array.IndexOf(delimiter, chars[currentPos]) == -1)
-            {
-                token += chars[currentPos];
-                //the last one is not a delimiter
-                if (++currentPos == chars.Length)
-                    break;
-            }
-            return token;
+            //getting the token: compute start and length to avoid repeated concatenation
+            var start = currentPos;
+            while (currentPos < chars.Length && Array.IndexOf(delimiter, chars[currentPos]) == -1)
+                currentPos++;
+
+            var length = (int)(currentPos - start);
+            if (length <= 0) return string.Empty;
+            return new string(chars, (int)start, length);
         }
 
 
@@ -751,7 +764,7 @@ internal class SupportClass
             WhitespaceChars(0x00, 0x20);
             CommentChar('/');
             QuoteChar('\'');
-            QuoteChar('\"');
+            QuoteChar('"');
             ParseNumbers();
         }
 
@@ -775,11 +788,8 @@ internal class SupportClass
         /// <param name="reader">The System.IO.StringReader that contains the String to be parsed.</param>
         public StreamTokenizerSupport(System.IO.StringReader reader)
         {
-            var s = "";
-            for (var i = reader.Read(); i != -1; i = reader.Read())
-            {
-                s += (char)i;
-            }
+            // Use ReadToEnd to avoid per-char concatenation
+            var s = reader.ReadToEnd();
             reader.Dispose();
             inStringReader = new BackStringReader(s);
             init();
