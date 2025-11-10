@@ -16,7 +16,7 @@ using System;
 /// <summary>
 /// Contains conversion support elements such as classes, interfaces and static methods.
 /// </summary>
-internal class SupportClass
+internal static class SupportClass
 {
     /// <summary>
     /// Converts an array of sbytes to an array of bytes
@@ -230,10 +230,8 @@ internal class SupportClass
     /// <returns>The resulting number from the shift operation</returns>
     public static int URShift(int number, int bits)
     {
-        if (number >= 0)
-            return number >> bits;
-        else
-            return (number >> bits) + (2 << ~bits);
+        // Use unsigned shift via cast to uint for correct semantics
+        return (int)((uint)number >> bits);
     }
 
     /// <summary>
@@ -255,10 +253,8 @@ internal class SupportClass
     /// <returns>The resulting number from the shift operation</returns>
     public static long URShift(long number, int bits)
     {
-        if (number >= 0)
-            return number >> bits;
-        else
-            return (number >> bits) + (2L << ~bits);
+        // Use unsigned shift via cast to ulong for correct semantics
+        return (long)((ulong)number >> bits);
     }
 
     /// <summary>
@@ -1731,6 +1727,4 @@ internal class SupportClass
             return obj;
         }
     }
-
-
 }
