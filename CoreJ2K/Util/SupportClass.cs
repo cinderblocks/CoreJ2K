@@ -446,25 +446,28 @@ internal class SupportClass
         /// <summary>
         /// Determines if there are more tokens to return from the source string
         /// </summary>
-        /// <returns>True or false, depending if there are more tokens</returns>
+        /// <returns>True or false, depending on if there are more tokens</returns>
         public bool HasMoreTokens()
         {
-            //keeping the current pos
-            var pos = currentPos;
+            if (chars == null) { return false; }
+            if (currentPos >= chars.Length) { return false; }
 
-            try
+            var delims = delimiters.ToCharArray();
+
+            // If current position is on a delimiter and delimiters are returned, there's a token
+            if (currentPos < chars.Length && Array.IndexOf(delims, chars[currentPos]) != -1 && includeDelims)
             {
-                NextToken();
+                return true;
             }
-            catch (ArgumentOutOfRangeException)
+
+            // Otherwise, scan forward to find a non-delimiter character
+            var pos = (int)currentPos;
+            while (pos < chars.Length && Array.IndexOf(delims, chars[pos]) != -1)
             {
-                return false;
+                pos++;
             }
-            finally
-            {
-                currentPos = pos;
-            }
-            return true;
+
+            return pos < chars.Length;
         }
 
         /// <summary>
@@ -474,23 +477,40 @@ internal class SupportClass
         {
             get
             {
-                //keeping the current pos
-                var pos = currentPos;
+                // Compute remaining tokens without modifying currentPos and without using exceptions
+                if (chars == null) return 0;
+                if (currentPos >= chars.Length) return 0;
+
+                var delims = delimiters.ToCharArray();
+                var pos = (int)currentPos;
                 var i = 0;
 
-                try
+                while (pos < chars.Length)
                 {
-                    while (true)
+                    // If delimiters are returned and current char is a delimiter, it's a token of length 1
+                    if (Array.IndexOf(delims, chars[pos]) != -1)
                     {
-                        NextToken();
+                        if (includeDelims)
+                        {
+                            i++;
+                            pos++;
+                            continue;
+                        }
+
+                        // Skip delimiters
+                        while (pos < chars.Length && Array.IndexOf(delims, chars[pos]) != -1)
+                            pos++;
+                    }
+                    else
+                    {
+                        // Found start of token, advance until next delimiter
+                        while (pos < chars.Length && Array.IndexOf(delims, chars[pos]) == -1)
+                            pos++;
                         i++;
                     }
                 }
-                catch (ArgumentOutOfRangeException)
-                {
-                    currentPos = pos;
-                    return i;
-                }
+
+                return i;
             }
         }
 
