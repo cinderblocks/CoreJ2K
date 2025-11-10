@@ -274,11 +274,13 @@ internal static class SupportClass
     /// <returns>The number of characters read. The number will be less than or equal to count depending on the data available in the source Stream. Returns -1 if the end of the stream is reached.</returns>
     public static int ReadInput(System.IO.Stream sourceStream, sbyte[] target, int start, int count)
     {
-        // Returns 0 bytes if not enough space in target
-        if (target.Length == 0)
-            return 0;
+        if (sourceStream == null) throw new ArgumentNullException(nameof(sourceStream));
+        if (target == null) throw new ArgumentNullException(nameof(target));
+        if (start < 0) throw new ArgumentOutOfRangeException(nameof(start));
+        if (count < 0) throw new ArgumentOutOfRangeException(nameof(count));
+        if (start >= target.Length) throw new ArgumentOutOfRangeException(nameof(start));
 
-        if (start < 0 || start >= target.Length) return 0;
+        if (count == 0) return 0;
 
         var maxToRead = Math.Min(count, target.Length - start);
         if (maxToRead <= 0) return 0;
@@ -286,7 +288,7 @@ internal static class SupportClass
         var receiver = new byte[maxToRead];
         var bytesRead = sourceStream.Read(receiver, 0, maxToRead);
 
-        // Returns -1 if EOF
+        // Returns -1 if EOF (underlying Stream.Read returns 0 at EOF)
         if (bytesRead == 0)
             return -1;
 
@@ -304,23 +306,27 @@ internal static class SupportClass
     /// <returns>The number of characters read. The number will be less than or equal to count depending on the data available in the source TextReader. Returns -1 if the end of the stream is reached.</returns>
     public static int ReadInput(System.IO.TextReader sourceTextReader, sbyte[] target, int start, int count)
     {
-        // Returns 0 bytes if not enough space in target
-        if (target.Length == 0) return 0;
-        if (start < 0 || start >= target.Length) return 0;
+        if (sourceTextReader == null) throw new ArgumentNullException(nameof(sourceTextReader));
+        if (target == null) throw new ArgumentNullException(nameof(target));
+        if (start < 0) throw new ArgumentOutOfRangeException(nameof(start));
+        if (count < 0) throw new ArgumentOutOfRangeException(nameof(count));
+        if (start >= target.Length) throw new ArgumentOutOfRangeException(nameof(start));
+
+        if (count == 0) return 0;
 
         var maxToRead = Math.Min(count, target.Length - start);
         if (maxToRead <= 0) return 0;
 
         var charArray = new char[maxToRead];
-        var bytesRead = sourceTextReader.Read(charArray, 0, maxToRead);
+        var charsRead = sourceTextReader.Read(charArray, 0, maxToRead);
 
-        // Returns -1 if EOF
-        if (bytesRead == 0) return -1;
+        // Returns -1 if EOF (TextReader.Read returns 0 at EOF)
+        if (charsRead == 0) return -1;
 
-        for (var i = 0; i < bytesRead; i++)
+        for (var i = 0; i < charsRead; i++)
             target[start + i] = (sbyte)charArray[i];
 
-        return bytesRead;
+        return charsRead;
     }
 
     /*******************************/
