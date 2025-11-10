@@ -510,10 +510,21 @@ internal static class SupportClass
             }
         }
 
+        private string currentToken = null;
+        private bool hasCurrent = false;
+
         /// <summary>
         ///  Performs the same action as NextToken.
         /// </summary>
-        public object Current => NextToken();
+        public object Current
+        {
+            get
+            {
+                if (!hasCurrent)
+                    throw new InvalidOperationException("Enumeration has not started. Call MoveNext().");
+                return currentToken;
+            }
+        }
 
         /// <summary>
         ///  Performs the same action as HasMoreTokens.
@@ -521,7 +532,26 @@ internal static class SupportClass
         /// <returns>True or false, depending if there are more tokens</returns>
         public bool MoveNext()
         {
-            return HasMoreTokens();
+            if (!HasMoreTokens())
+            {
+                currentToken = null;
+                hasCurrent = false;
+                return false;
+            }
+
+            try
+            {
+                currentToken = NextToken();
+                hasCurrent = true;
+                return true;
+            }
+            catch (ArgumentOutOfRangeException)
+            {
+                // Should not happen because HasMoreTokens checked, but return false defensively
+                currentToken = null;
+                hasCurrent = false;
+                return false;
+            }
         }
 
         /// <summary>
@@ -529,7 +559,9 @@ internal static class SupportClass
         /// </summary>
         public void Reset()
         {
-            /* noop */
+            currentPos = 0;
+            currentToken = null;
+            hasCurrent = false;
         }
     }
     /*******************************/
