@@ -1673,20 +1673,38 @@ internal static class SupportClass
         /// <returns>The number of characters read into buffer.</returns>
         public virtual int Read(sbyte[] array, int index, int count)
         {
-            var byteCount = 0;
-            var readLimit = count + index;
-            var aux = ToByteArray(array);
+            if (array == null) throw new ArgumentNullException(nameof(array));
+            if (index < 0 || count < 0) throw new ArgumentOutOfRangeException((index < 0) ? nameof(index) : nameof(count));
+            if (index >= array.Length) return 0;
 
-            for (byteCount = 0; position < buffer.Length && index < readLimit; byteCount++)
-                aux[index++] = buffer[position++];
+            // Limit to available space
+            var toRead = Math.Min(count, array.Length - index);
+            if (toRead == 0) return 0;
 
-            if (index < readLimit)
-                byteCount += base.Read(aux, index, readLimit - index);
+            var bytesRead = 0;
 
-            for (var i = 0; i < aux.Length; i++)
-                array[i] = (sbyte)aux[i];
+            // First take bytes from internal buffer (unread area)
+            while (position < buffer.Length && bytesRead < toRead)
+            {
+                array[index + bytesRead] = (sbyte)buffer[position++];
+                bytesRead++;
+            }
 
-            return byteCount;
+            // If still need more, read from the underlying stream
+            if (bytesRead < toRead)
+            {
+                var remaining = toRead - bytesRead;
+                var tmp = new byte[remaining];
+                var n = base.Read(tmp, 0, remaining);
+                if (n > 0)
+                {
+                    for (var i = 0; i < n; i++)
+                        array[index + bytesRead + i] = (sbyte)tmp[i];
+                    bytesRead += n;
+                }
+            }
+
+            return bytesRead;
         }
 
         /// <summary>
