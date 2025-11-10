@@ -189,14 +189,11 @@ internal static class SupportClass
         /// <param name="fileStream">File to write to</param>
         public static void WriteBytes(string data, System.IO.Stream fileStream)
         {
-            if (data == null) return;
-            var length = data.Length;
-            if (length == 0) return;
+            if (data == null || fileStream == null) return;
 
-            var buffer = new byte[length];
-            for (int i = 0; i < length; i++)
-                buffer[i] = (byte)data[i];
-            fileStream.Write(buffer, 0, length);
+            var buffer = System.Text.Encoding.UTF8.GetBytes(data);
+            if (buffer.Length == 0) return;
+            fileStream.Write(buffer, 0, buffer.Length);
         }
 
         /// <summary>
