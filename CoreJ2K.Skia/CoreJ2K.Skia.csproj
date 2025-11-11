@@ -3,7 +3,7 @@
         <AssemblyName>CoreJ2K.Skia</AssemblyName>
         <PackageId>CoreJ2K.Skia</PackageId>
         <Description>.NETStandard JPEG-2000 codec library with SkiaSharp support</Description>
-        <TargetFrameworks>netstandard2.0;netstandard2.1</TargetFrameworks>
+        <TargetFrameworks>netstandard2.0;netstandard2.1;net8.0;net9.0</TargetFrameworks>
         <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
         <DefineConstants>$(DefineConstants);NETSTANDARD</DefineConstants>
         <IncludeSymbols>true</IncludeSymbols>
