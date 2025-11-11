@@ -80,6 +80,8 @@ namespace CoreJ2K.j2k.image.input
                 case SKColorType.Rgb888x:
                 case SKColorType.Bgra8888:
                 case SKColorType.Rgba8888:
+                case SKColorType.Srgba8888:
+                case SKColorType.R8Unorm:
                     return 8;
                 case SKColorType.Alpha16:
                 case SKColorType.Rg1616:
@@ -104,9 +106,8 @@ namespace CoreJ2K.j2k.image.input
                     return 10;
                 case SKColorType.Rgba1010102:
                 case SKColorType.Bgra1010102:
-                    {
-                        return compIndex == 3 ? 2 : 10;
-                    }
+                case SKColorType.Bgr101010xXR:
+                    return compIndex == 3 ? 2 : 10;
                 case SKColorType.AlphaF16:
                 case SKColorType.RgbaF16:
                 case SKColorType.RgbaF16Clamped:
@@ -116,9 +117,12 @@ namespace CoreJ2K.j2k.image.input
                 case SKColorType.Argb4444:
                     throw new NotSupportedException($"4-bit colortype ({image.ColorType}) not supported.");
                 case SKColorType.Unknown:
-                default:
                     throw new ArgumentException(
                         "Image colortype is unknown, Nominal range bits cannot be determined.");
+                case SKColorType.Rgba10x6:
+                default:
+                    throw new ArgumentException(
+                        $"{image.ColorType} is not supported at this time, Nominal range bits cannot be determined.");
             }
         }
 
