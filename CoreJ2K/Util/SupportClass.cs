@@ -12,6 +12,7 @@
 using CoreJ2K.j2k.util;
 using CoreJ2K.Util;
 using System;
+using System.Runtime.InteropServices;
 
 /// <summary>
 /// Contains conversion support elements such as classes, interfaces and static methods.
@@ -25,14 +26,11 @@ internal static class SupportClass
     /// <returns>The new array of bytes</returns>
     public static byte[] ToByteArray(sbyte[] sbyteArray)
     {
-        byte[] byteArray = null;
+        if (sbyteArray == null) return null;
 
-        if (sbyteArray != null)
-        {
-            byteArray = new byte[sbyteArray.Length];
-            for (var index = 0; index < sbyteArray.Length; index++)
-                byteArray[index] = (byte)sbyteArray[index];
-        }
+        var byteArray = new byte[sbyteArray.Length];
+        var destAsSByte = MemoryMarshal.Cast<byte, sbyte>(byteArray.AsSpan());
+        sbyteArray.AsSpan().CopyTo(destAsSByte);
         return byteArray;
     }
 
@@ -57,8 +55,10 @@ internal static class SupportClass
         if (tempObjectArray != null)
         {
             byteArray = new byte[tempObjectArray.Length];
+            // Can't bulk-copy because elements are boxed; use Span to write directly into array
+            var span = byteArray.AsSpan();
             for (var index = 0; index < tempObjectArray.Length; index++)
-                byteArray[index] = (byte)tempObjectArray[index];
+                span[index] = (byte)tempObjectArray[index];
         }
         return byteArray;
     }
@@ -82,13 +82,11 @@ internal static class SupportClass
     /// <returns>The transformed array</returns>
     public static sbyte[] ToSByteArray(byte[] byteArray)
     {
-        sbyte[] sbyteArray = null;
-        if (byteArray != null)
-        {
-            sbyteArray = new sbyte[byteArray.Length];
-            for (var index = 0; index < byteArray.Length; index++)
-                sbyteArray[index] = (sbyte)byteArray[index];
-        }
+        if (byteArray == null) return null;
+
+        var sbyteArray = new sbyte[byteArray.Length];
+        var srcAsSByte = MemoryMarshal.Cast<byte, sbyte>(byteArray.AsSpan());
+        srcAsSByte.CopyTo(sbyteArray.AsSpan());
         return sbyteArray;
     }
 
@@ -292,8 +290,8 @@ internal static class SupportClass
         if (bytesRead == 0)
             return -1;
 
-        for (var i = 0; i < bytesRead; i++)
-            target[start + i] = (sbyte)receiver[i];
+        var src = MemoryMarshal.Cast<byte, sbyte>(receiver.AsSpan(0, bytesRead));
+        src.CopyTo(target.AsSpan(start, bytesRead));
 
         return bytesRead;
     }

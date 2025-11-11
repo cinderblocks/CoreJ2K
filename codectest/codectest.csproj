@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFrameworks>net481;net8.0</TargetFrameworks>
     <OutputType>Exe</OutputType>
     <RootNamespace>codectest</RootNamespace>
     <AssemblyName>codectest</AssemblyName>
