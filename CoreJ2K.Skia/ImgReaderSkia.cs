@@ -212,14 +212,20 @@ namespace CoreJ2K.j2k.image.input
             if ((barr == null) || (dbi.ulx > blk.ulx) || (dbi.uly > blk.uly)
                 || (dbi.ulx + dbi.w < blk.ulx + blk.w) || (dbi.uly + dbi.h < blk.uly + blk.h))
             {
-                // allocate top-level array of component buffers
-                barr = new int[nc][];
+                // ensure top-level array exists and has correct length
+                if (barr == null || barr.Length != nc)
+                {
+                    barr = new int[nc][];
+                }
 
-                // ensure each needed buffer is allocated
+                // ensure each needed buffer is allocated or large enough
                 var needed = blk.w * blk.h;
                 for (var cc = 0; cc < nc; ++cc)
                 {
-                    barr[cc] = new int[needed];
+                    if (barr[cc] == null || barr[cc].Length < needed)
+                    {
+                        barr[cc] = new int[needed];
+                    }
                 }
 
                 // set attributes of the DataBlk used for buffering
@@ -227,6 +233,7 @@ namespace CoreJ2K.j2k.image.input
                 dbi.uly = blk.uly;
                 dbi.w = blk.w;
                 dbi.h = blk.h;
+                dbi.scanw = dbi.w;
 
                 // component arrays
                 var red = barr[0];
@@ -267,65 +274,152 @@ namespace CoreJ2K.j2k.image.input
                     }
                     else if (nc == 3)
                     {
-                        if (swizzle)
+                        if (bpp >= 4)
                         {
-                            for (var k = 0; k < total; ++k)
+                            // Process 4+ byte pixels as uint for fewer memory accesses
+                            var uptr = (uint*)ptr;
+                            if (swizzle)
                             {
-                                red[k] = ptr[2] - DC_OFFSET;   // memory B -> red
-                                green[k] = ptr[1] - DC_OFFSET;
-                                blue[k] = ptr[0] - DC_OFFSET;  // memory R -> blue
-                                ptr += bpp;
+                                // Memory: B G R A (little-endian -> uint = A<<24 | R<<16 | G<<8 | B)
+                                for (var k = 0; k < total; ++k)
+                                {
+                                    var v = *uptr;
+                                    red[k] = (int)((v >> 16) & 0xFF) - DC_OFFSET;
+                                    green[k] = (int)((v >> 8) & 0xFF) - DC_OFFSET;
+                                    blue[k] = (int)(v & 0xFF) - DC_OFFSET;
+                                    uptr++;
+                                }
+                                ptr = (byte*)uptr;
+                            }
+                            else
+                            {
+                                // Memory: R G B A (little-endian -> uint = A<<24 | B<<16 | G<<8 | R)
+                                for (var k = 0; k < total; ++k)
+                                {
+                                    var v = *uptr;
+                                    red[k] = (int)(v & 0xFF) - DC_OFFSET;
+                                    green[k] = (int)((v >> 8) & 0xFF) - DC_OFFSET;
+                                    blue[k] = (int)((v >> 16) & 0xFF) - DC_OFFSET;
+                                    uptr++;
+                                }
+                                ptr = (byte*)uptr;
                             }
                         }
                         else
                         {
-                            for (var k = 0; k < total; ++k)
+                            if (swizzle)
                             {
-                                red[k] = ptr[0] - DC_OFFSET;
-                                green[k] = ptr[1] - DC_OFFSET;
-                                blue[k] = ptr[2] - DC_OFFSET;
-                                ptr += bpp;
+                                for (var k = 0; k < total; ++k)
+                                {
+                                    red[k] = ptr[2] - DC_OFFSET;   // memory B -> red
+                                    green[k] = ptr[1] - DC_OFFSET;
+                                    blue[k] = ptr[0] - DC_OFFSET;  // memory R -> blue
+                                    ptr += bpp;
+                                }
+                            }
+                            else
+                            {
+                                for (var k = 0; k < total; ++k)
+                                {
+                                    red[k] = ptr[0] - DC_OFFSET;
+                                    green[k] = ptr[1] - DC_OFFSET;
+                                    blue[k] = ptr[2] - DC_OFFSET;
+                                    ptr += bpp;
+                                }
                             }
                         }
                     }
                     else // nc >= 4
                     {
-                        if (swizzle)
+                        if (bpp >= 4)
                         {
-                            for (var k = 0; k < total; ++k)
+                            var uptr = (uint*)ptr;
+                            if (swizzle)
                             {
-                                red[k] = ptr[2] - DC_OFFSET;
-                                green[k] = ptr[1] - DC_OFFSET;
-                                blue[k] = ptr[0] - DC_OFFSET;
-                                alpha[k] = ptr[3] - DC_OFFSET;
-                                ptr += bpp;
+                                // Memory: B G R A
+                                for (var k = 0; k < total; ++k)
+                                {
+                                    var v = *uptr;
+                                    red[k] = (int)((v >> 16) & 0xFF) - DC_OFFSET;
+                                    green[k] = (int)((v >> 8) & 0xFF) - DC_OFFSET;
+                                    blue[k] = (int)(v & 0xFF) - DC_OFFSET;
+                                    alpha[k] = (int)((v >> 24) & 0xFF) - DC_OFFSET;
+                                    uptr++;
+                                }
+                                ptr = (byte*)uptr;
+                            }
+                            else
+                            {
+                                // Memory: R G B A
+                                for (var k = 0; k < total; ++k)
+                                {
+                                    var v = *uptr;
+                                    red[k] = (int)(v & 0xFF) - DC_OFFSET;
+                                    green[k] = (int)((v >> 8) & 0xFF) - DC_OFFSET;
+                                    blue[k] = (int)((v >> 16) & 0xFF) - DC_OFFSET;
+                                    alpha[k] = (int)((v >> 24) & 0xFF) - DC_OFFSET;
+                                    uptr++;
+                                }
+                                ptr = (byte*)uptr;
                             }
                         }
                         else
                         {
-                            for (var k = 0; k < total; ++k)
+                            if (swizzle)
                             {
-                                red[k] = ptr[0] - DC_OFFSET;
-                                green[k] = ptr[1] - DC_OFFSET;
-                                blue[k] = ptr[2] - DC_OFFSET;
-                                alpha[k] = ptr[3] - DC_OFFSET;
-                                ptr += bpp;
+                                for (var k = 0; k < total; ++k)
+                                {
+                                    red[k] = ptr[2] - DC_OFFSET;
+                                    green[k] = ptr[1] - DC_OFFSET;
+                                    blue[k] = ptr[0] - DC_OFFSET;
+                                    alpha[k] = ptr[3] - DC_OFFSET;
+                                    ptr += bpp;
+                                }
+                            }
+                            else
+                            {
+                                for (var k = 0; k < total; ++k)
+                                {
+                                    red[k] = ptr[0] - DC_OFFSET;
+                                    green[k] = ptr[1] - DC_OFFSET;
+                                    blue[k] = ptr[2] - DC_OFFSET;
+                                    alpha[k] = ptr[3] - DC_OFFSET;
+                                    ptr += bpp;
+                                }
                             }
                         }
                     }
                 }
 
-                // Set buffer attributes
-                blk.Data = barr[compIndex];
-                blk.offset = 0;
-                blk.scanw = blk.w;
+                // Set buffer attributes - use typed setter when possible to avoid runtime casts
+                if (blk is DataBlkInt dbiBlk)
+                {
+                    dbiBlk.DataInt = barr[compIndex];
+                    dbiBlk.offset = 0;
+                    dbiBlk.scanw = dbiBlk.w;
+                }
+                else
+                {
+                    blk.Data = barr[compIndex];
+                    blk.offset = 0;
+                    blk.scanw = blk.w;
+                }
             }
             else
             {
                 //Asking for the 2nd or 3rd (or 4th) block component
-                blk.Data = barr[compIndex];
-                blk.offset = (blk.ulx - dbi.ulx) * dbi.w + blk.ulx - dbi.ulx;
-                blk.scanw = dbi.scanw;
+                if (blk is DataBlkInt dbiBlk)
+                {
+                    dbiBlk.DataInt = barr[compIndex];
+                    dbiBlk.offset = (blk.ulx - dbi.ulx) + (blk.uly - dbi.uly) * dbi.scanw;
+                    dbiBlk.scanw = dbi.scanw;
+                }
+                else
+                {
+                    blk.Data = barr[compIndex];
+                    blk.offset = (blk.ulx - dbi.ulx) + (blk.uly - dbi.uly) * dbi.scanw;
+                    blk.scanw = dbi.scanw;
+                }
             }
 
             // Turn off the progressive attribute
