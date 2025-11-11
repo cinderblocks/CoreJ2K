@@ -1,7 +1,7 @@
 // Copyright (c) 2007-2016 CSJ2K contributors.
 // Licensed under the BSD 3-Clause License.
 
-using System.Runtime.InteropServices;
+using System.Diagnostics;
 
 namespace codectest
 {
@@ -87,18 +87,11 @@ namespace codectest
                 try
                 {
                     SKBitmap image;
-                    if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                    {
-                        var timer = new HiPerfTimer();
-                        timer.Start();
-                        image = J2kImage.FromFile(file).As<SKBitmap>();
-                        timer.Stop();
-                        Console.WriteLine($"{file}: {timer.Duration} seconds");
-                    }
-                    else
-                    {
-                        image = J2kImage.FromFile(file).As<SKBitmap>();
-                    }
+
+                    var sw = Stopwatch.StartNew();
+                    image = J2kImage.FromFile(file).As<SKBitmap>();
+                    sw.Stop();
+                    Console.WriteLine($"{file}: {sw.Elapsed.TotalSeconds} seconds");
 
                     var histogram = GenerateHistogram(image);
                     var encoded = histogram.Encode(SKEncodedImageFormat.Png, 100);
