@@ -35,4 +35,8 @@
   <ItemGroup>
     <PackageReference Include="SkiaSharp" Version="3.119.1" />
   </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
+    <ProjectReference Include="..\CoreJ2K.ImageSharp\CoreJ2K.ImageSharp.csproj" />
+    <PackageReference Include="SixLabors.ImageSharp" Version="3.1.12" />
+  </ItemGroup>
 </Project>

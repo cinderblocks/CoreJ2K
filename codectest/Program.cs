@@ -10,6 +10,10 @@ namespace codectest
     using SkiaSharp;
     using System;
     using System.IO;
+#if NET8_0 || NET9_0
+    using SixLabors.ImageSharp;
+    using SixLabors.ImageSharp.PixelFormats;
+#endif
 
     internal class Program
     {
@@ -87,10 +91,8 @@ namespace codectest
             {
                 try
                 {
-                    SKBitmap image;
-
                     var sw = Stopwatch.StartNew();
-                    image = J2kImage.FromFile(file).As<SKBitmap>();
+                    var image = J2kImage.FromFile(file).As<SKBitmap>();
                     sw.Stop();
                     Console.WriteLine($"{file}: {sw.Elapsed.TotalSeconds} seconds");
 
@@ -112,6 +114,43 @@ namespace codectest
 
                 }
             }
+
+            // ImageSharp-backed encoding use cases
+#if NET8_0 || NET9_0
+            try
+            {
+                var samples = new[] { "racoon.png", "dog.jpeg" };
+                foreach (var sample in samples)
+                {
+                    var path = Path.Combine("samples", sample);
+                    if (!File.Exists(path)) continue;
+
+                    using var img = Image.Load(path);
+                    var enc = J2kImage.ToBytes(img);
+                    var outpath = Path.Combine("output", Path.GetFileNameWithoutExtension(sample) + "_imagesharp.jp2");
+                    File.WriteAllBytes(outpath, enc);
+
+                    // Try decoding back to ImageSharp and save a PNG to verify roundtrip
+                    try
+                    {
+                        var decoded = J2kImage.FromFile(outpath).As<Image>();
+                        var decodedPath = Path.Combine("output", Path.GetFileNameWithoutExtension(outpath) + "_decoded.png");
+                        decoded.SaveAsPng(decodedPath);
+                        if (decoded is IDisposable d) d.Dispose();
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"ImageSharp roundtrip for {sample} failed: {ex.Message}");
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"ImageSharp encoding failed: {e.Message}");
+            }
+#endif
+
+
         }
 
         private static SKBitmap GenerateHistogram(SKBitmap image)

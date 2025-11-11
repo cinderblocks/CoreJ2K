@@ -360,6 +360,11 @@ namespace CoreJ2K
 
         public static byte[] ToBytes(BlkImgDataSrc imgsrc, ParameterList parameters = null)
         {
+            if (imgsrc == null)
+            {
+                throw new ArgumentNullException(nameof(imgsrc), "Image source cannot be null. Use ImageFactory.ToPortableImageSource(image) to convert image objects to a portable source.");
+            }
+
             // Initialize default parameters
             var defpl = GetDefaultEncoderParameterList(encoder_pinfo);
 
@@ -374,7 +379,7 @@ namespace CoreJ2K
 
             // **** Get general parameters ****
 
-            if (pl.getParameter("file_format").Equals("on"))
+            if (string.Equals(pl.getParameter("file_format"), "on", StringComparison.OrdinalIgnoreCase))
             {
                 useFileFormat = true;
                 if (pl.getParameter("rate") != null
@@ -390,32 +395,32 @@ namespace CoreJ2K
                 return null;
             }
 
-            if (pl.getParameter("pph_tile").Equals("on"))
+            if (string.Equals(pl.getParameter("pph_tile"), "on", StringComparison.OrdinalIgnoreCase))
             {
                 pphTile = true;
 
-                if (pl.getParameter("Psop").Equals("off"))
+                if (string.Equals(pl.getParameter("Psop"), "off", StringComparison.OrdinalIgnoreCase))
                 {
                     pl["Psop"] = "on";
                     tempSop = true;
                 }
-                if (pl.getParameter("Peph").Equals("off"))
+                if (string.Equals(pl.getParameter("Peph"), "off", StringComparison.OrdinalIgnoreCase))
                 {
                     pl["Peph"] = "on";
                     tempEph = true;
                 }
             }
 
-            if (pl.getParameter("pph_main").Equals("on"))
+            if (string.Equals(pl.getParameter("pph_main"), "on", StringComparison.OrdinalIgnoreCase))
             {
                 pphMain = true;
 
-                if (pl.getParameter("Psop").Equals("off"))
+                if (string.Equals(pl.getParameter("Psop"), "off", StringComparison.OrdinalIgnoreCase))
                 {
                     pl["Psop"] = "on";
                     tempSop = true;
                 }
-                if (pl.getParameter("Peph").Equals("off"))
+                if (string.Equals(pl.getParameter("Peph"), "off", StringComparison.OrdinalIgnoreCase))
                 {
                     pl["Peph"] = "on";
                     tempEph = true;
@@ -453,12 +458,12 @@ namespace CoreJ2K
                 pktspertp = pl.getIntParameter("tile_parts");
                 if (pktspertp != 0)
                 {
-                    if (pl.getParameter("Psop").Equals("off"))
+                    if (string.Equals(pl.getParameter("Psop"), "off", StringComparison.OrdinalIgnoreCase))
                     {
                         pl["Psop"] = "on";
                         tempSop = true;
                     }
-                    if (pl.getParameter("Peph").Equals("off"))
+                    if (string.Equals(pl.getParameter("Peph"), "off", StringComparison.OrdinalIgnoreCase))
                     {
                         pl["Peph"] = "on";
                         tempEph = true;
