@@ -10,7 +10,7 @@ namespace codectest
     using SkiaSharp;
     using System;
     using System.IO;
-#if NET8_0 || NET9_0
+#if NET8_0_OR_GREATER
     using SixLabors.ImageSharp;
     using SixLabors.ImageSharp.PixelFormats;
 #endif
@@ -116,7 +116,7 @@ namespace codectest
             }
 
             // ImageSharp-backed encoding use cases
-#if NET8_0 || NET9_0
+#if NET8_0_OR_GREATER
             try
             {
                 var samples = new[] { "racoon.png", "dog.jpeg" };
