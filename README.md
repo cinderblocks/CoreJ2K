@@ -1,7 +1,7 @@
 # CoreJ2K - A Managed and Portable JPEG2000 Codec
 
 Copyright (c) 1999-2000 JJ2000 Partners;  
-Copyright (c) 2007-2012 Jason S. Clary; 
+Copyright (c) 2007-2012 Jason S. Clary;  
 Copyright (c) 2013-2016 Anders Gustafsson, Cureos AB;  
 Copyright (c) 2024-2025 Sjofn LLC.   
 
@@ -179,5 +179,5 @@ Badges and packages
 [![NuGet Downloads](https://img.shields.io/nuget/dt/CoreJ2K?label=NuGet%20downloads)](https://www.nuget.org/packages/CoreJ2K/)  
 [![Commits per month](https://img.shields.io/github/commit-activity/m/cinderblocks/CoreJ2K/master)](https://www.github.com/cinderblocks/CoreJ2K/)  
 [![Build status](https://ci.appveyor.com/api/projects/status/9fr2467p5wxt6qxx?svg=true)](https://ci.appveyor.com/project/cinderblocks57647/corej2k)  
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/5704c7b134b249b3ac8ba3ca9a76dbbb)](https://app.codacy.com/gh/cinderblocks/CoreJ2K/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/5704c7b134b249b3ac8ba3ca9a76dbbb)](https://app.codacy.com/gh/cinderblocks/CoreJ2K/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)  
 [![ZEC](https://img.shields.io/keybase/zec/cinder)](https://keybase.io/cinder) [![BTC](https://img.shields.io/keybase/btc/cinder)](https://keybase.io/cinder)  
