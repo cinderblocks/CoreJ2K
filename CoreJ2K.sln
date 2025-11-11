@@ -33,6 +33,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoreJ2K.Tests", "tests\Core
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoreJ2K.ImageSharp", "CoreJ2K.ImageSharp\CoreJ2K.ImageSharp.csproj", "{62736586-2FD0-806C-13A2-AF5FD4FF09C4}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoreJ2K.Pfim", "CoreJ2K.Pfim\CoreJ2K.Pfim.csproj", "{A9C57915-D9A4-D274-C3A9-89091FE97C49}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -71,6 +73,10 @@ Global
 		{62736586-2FD0-806C-13A2-AF5FD4FF09C4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{62736586-2FD0-806C-13A2-AF5FD4FF09C4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{62736586-2FD0-806C-13A2-AF5FD4FF09C4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A9C57915-D9A4-D274-C3A9-89091FE97C49}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A9C57915-D9A4-D274-C3A9-89091FE97C49}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A9C57915-D9A4-D274-C3A9-89091FE97C49}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A9C57915-D9A4-D274-C3A9-89091FE97C49}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -84,6 +90,7 @@ Global
 		{F6BB25CE-F394-93E0-D049-3A1E0FB66E05} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{3304AF40-7C4F-6666-CCBD-531E828EE2FF} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{62736586-2FD0-806C-13A2-AF5FD4FF09C4} = {3F4353EB-578D-416C-88B4-CA4B94ED9214}
+		{A9C57915-D9A4-D274-C3A9-89091FE97C49} = {3F4353EB-578D-416C-88B4-CA4B94ED9214}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {22290D77-5115-46B8-B497-A17089D41248}

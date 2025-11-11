@@ -3,18 +3,18 @@
 
 using System.Runtime.InteropServices;
 using System.Diagnostics;
+using CoreJ2K;
+using SkiaSharp;
+using System;
+using System.IO;
+using Pfim;
+#if NET8_0_OR_GREATER
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
+#endif
 
 namespace codectest
 {
-    using CoreJ2K;
-    using SkiaSharp;
-    using System;
-    using System.IO;
-#if NET8_0_OR_GREATER
-    using SixLabors.ImageSharp;
-    using SixLabors.ImageSharp.PixelFormats;
-#endif
-
     internal class Program
     {
         private static void Main(string[] args)
@@ -148,9 +148,36 @@ namespace codectest
             {
                 Console.WriteLine($"ImageSharp encoding failed: {e.Message}");
             }
+
+            // Pfim usage examples - requires CoreJ2K.Pfim project referenced for net8.0
+            try
+            {
+                // 1) Decode a JP2 to Pfim.IImage using the new decode-to-Pfim support
+                var srcPath = Path.Combine("output", "file14.jp2");
+                if (File.Exists(srcPath))
+                {
+                    var decoded = J2kImage.FromFile(srcPath).As<IImage>();
+                    Console.WriteLine($"Decoded to Pfim IImage: {decoded.Width}x{decoded.Height}, format={decoded.Format}");
+
+                    // Save raw bytes as a simple PNG via ImageSharp for verification if format is 8-bit RGB/RGBA
+                    if (decoded.Format is ImageFormat.Rgb24 or ImageFormat.Rgba32)
+                    {
+                        var stride = decoded.Stride;
+                        var bpp = decoded.BitsPerPixel;
+                        using var img = Image.LoadPixelData<Rgba32>(decoded.Data, decoded.Width, decoded.Height);
+                        img.SaveAsPng(Path.Combine("output", "file14_decoded_pfim.png"));
+                    }
+
+                    // 2) Use Pfim IImage as an encoding source (CoreJ2K.Pfim ImgReader supports Pfim input)
+                    var encoded = J2kImage.ToBytes(decoded);
+                    File.WriteAllBytes(Path.Combine("output", "file14_roundtrip_pfim.jp2"), encoded);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Pfim examples failed: {ex.Message}");
+            }
 #endif
-
-
         }
 
         private static SKBitmap GenerateHistogram(SKBitmap image)

@@ -30,10 +30,8 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\CoreJ2K.Skia\CoreJ2K.Skia.csproj" />
+    <ProjectReference Include="..\CoreJ2K.Pfim\CoreJ2K.Pfim.csproj" />
     <ProjectReference Include="..\CoreJ2K\CoreJ2K.csproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="SkiaSharp" Version="3.119.1" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
     <ProjectReference Include="..\CoreJ2K.ImageSharp\CoreJ2K.ImageSharp.csproj" />
