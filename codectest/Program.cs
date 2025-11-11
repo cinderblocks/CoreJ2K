@@ -1,6 +1,7 @@
 // Copyright (c) 2007-2016 CSJ2K contributors.
 // Licensed under the BSD 3-Clause License.
 
+using System.Runtime.InteropServices;
 using System.Diagnostics;
 
 namespace codectest
@@ -115,36 +116,143 @@ namespace codectest
 
         private static SKBitmap GenerateHistogram(SKBitmap image)
         {
-            var histogram = new SKBitmap(256, 100, true);
+            const int width = 256;
+            const int height = 100;
+
+            var histogram = new SKBitmap(width, height, true);
 
             var colorcounts = new int[256];
 
-            // This is ungodly slow, but it's just for diagnostics.
-            for (var y = 0; y < image.Height; y++)
+            // Use SKPixmap raw buffer for high-throughput processing
+            var pix = image.PeekPixels();
+            if (pix != null)
             {
-                for (var x = 0; x < image.Width; x++)
+                var imgWidth = pix.Width;
+                var imgHeight = pix.Height;
+                var rowBytes = pix.RowBytes;
+                var bytesPerPixel = pix.Info.BytesPerPixel;
+
+                // Copy raw pixel buffer into managed array and operate on a Span<byte>
+                var totalBytes = rowBytes * imgHeight;
+                var raw = new byte[totalBytes];
+                Marshal.Copy(pix.GetPixels(), raw, 0, totalBytes);
+                var span = new Span<byte>(raw);
+
+                var swizzle = pix.ColorType == SKColorType.Bgra8888
+                              || pix.ColorType == SKColorType.Bgra1010102
+                              || pix.ColorType == SKColorType.Bgr101010x;
+
+                for (var y = 0; y < imgHeight; y++)
                 {
-                    var c = image.GetPixel(x, y);
-                    colorcounts[c.Red]++;
-                    colorcounts[c.Green]++;
-                    colorcounts[c.Blue]++;
+                    var rowStart = y * rowBytes;
+                    var baseIdx = rowStart;
+                    for (var x = 0; x < imgWidth; x++)
+                    {
+                        var idx = baseIdx + x * bytesPerPixel;
+                        byte r, g, b;
+                        if (bytesPerPixel >= 3)
+                        {
+                            if (swizzle)
+                            {
+                                b = span[idx + 0];
+                                g = span[idx + 1];
+                                r = span[idx + 2];
+                            }
+                            else
+                            {
+                                r = span[idx + 0];
+                                g = span[idx + 1];
+                                b = span[idx + 2];
+                            }
+                        }
+                        else if (bytesPerPixel == 2)
+                        {
+                            // Common packed formats (rgb565) are little-endian packed in two bytes.
+                            // Fallback: expand to RGB approximately by bit masks.
+                            var lo = span[idx + 0];
+                            var hi = span[idx + 1];
+                            var value = (ushort)(lo | (hi << 8));
+                            // r: 5 bits, g:6 bits, b:5 bits
+                            r = (byte)((value >> 11) & 0x1F);
+                            g = (byte)((value >> 5) & 0x3F);
+                            b = (byte)(value & 0x1F);
+                            // Scale up to 0..255
+                            r = (byte)((r * 255) / 31);
+                            g = (byte)((g * 255) / 63);
+                            b = (byte)((b * 255) / 31);
+                        }
+                        else
+                        {
+                            // Single byte (grayscale)
+                            r = g = b = span[idx];
+                        }
+
+                        colorcounts[r]++;
+                        colorcounts[g]++;
+                        colorcounts[b]++;
+                    }
+                }
+            }
+            else
+            {
+                // Fallback: per-pixel access
+                var pixels = image.Pixels;
+                if (pixels != null && pixels.Length > 0)
+                {
+                    for (var i = 0; i < pixels.Length; i++)
+                    {
+                        var c = pixels[i];
+                        colorcounts[c.Red]++;
+                        colorcounts[c.Green]++;
+                        colorcounts[c.Blue]++;
+                    }
+                }
+                else
+                {
+                    for (var y = 0; y < image.Height; y++)
+                    {
+                        for (var x = 0; x < image.Width; x++)
+                        {
+                            var c = image.GetPixel(x, y);
+                            colorcounts[c.Red]++;
+                            colorcounts[c.Green]++;
+                            colorcounts[c.Blue]++;
+                        }
+                    }
                 }
             }
 
             var maxval = 0;
             for (var i = 0; i < 256; i++) if (colorcounts[i] > maxval) maxval = colorcounts[i];
-            for (var i = 1; i < 255; i++)
+            if (maxval == 0) maxval = 1; // prevent divide by zero
+
+            // Normalize counts to 0..100
+            var scaled = new byte[256];
+            for (var i = 0; i < 256; i++)
             {
-                //Console.WriteLine(i + ": " + histogram[i] + "," + (((float)histogram[i] / (float)maxval) * 100F));
-                colorcounts[i] = (int)Math.Round((colorcounts[i] / (double)maxval) * 100D);
+                // scale to 0..100
+                scaled[i] = (byte)Math.Round((colorcounts[i] / (double)maxval) * 100D);
             }
-            for (var x = 0; x < 256; x++)
+
+            // Build pixel buffer for histogram: row-major, top-to-bottom
+            var histPixels = new SKColor[width * height];
+
+            for (var x = 0; x < width; x++)
             {
-                for (var y = 0; y < 100; y++)
+                var colHeight = scaled[x]; // 0..100
+                // draw column: bottom pixels are black up to colHeight
+                for (var y = 0; y < height; y++)
                 {
-                    histogram.SetPixel(x, y, colorcounts[x] >= (100 - y) ? SKColors.Black : SKColors.White);
+                    // y = 0 is top row; we want bottom rows to be black for lower y index
+                    var rowFromBottom = height - 1 - y;
+                    var isBlack = rowFromBottom < colHeight;
+                    histPixels[y * width + x] = isBlack ? SKColors.Black : SKColors.White;
                 }
             }
+
+            // Assign pixel buffer in one operation
+            histogram.Pixels = histPixels;
+
             return histogram;
         }
     }
