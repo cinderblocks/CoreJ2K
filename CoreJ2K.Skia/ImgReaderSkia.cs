@@ -427,36 +427,39 @@ namespace CoreJ2K.j2k.image.input
             switch (info.ColorType)
             {
                 case SKColorType.Alpha8:
-                //case SKColorType.Alpha16:
+                case SKColorType.Alpha16:
+                case SKColorType.AlphaF16:
                 case SKColorType.Gray8:
+                case SKColorType.R8Unorm:
                     return 1;
                 case SKColorType.Rg88:
-                    //case SKColorType.Rg1616:
+                case SKColorType.Rg1616:
+                case SKColorType.RgF16:
                     return 2;
                 case SKColorType.Rgb888x:
-                    //case SKColorType.Rgb565:
-                    //case SKColorType.Rgb101010x:
-                    //case SKColorType.Bgr101010x:
+                case SKColorType.Rgb565:
+                case SKColorType.Rgb101010x:
+                case SKColorType.Bgr101010x:
                     return 3;
-                //case SKColorType.Argb4444:
+                case SKColorType.Argb4444:
                 case SKColorType.Bgra8888:
                 case SKColorType.Rgba8888:
-                    //case SKColorType.Rgba1010102:
-                    //case SKColorType.Bgra1010102:
-                    //case SKColorType.Rgba16161616:
-                    return info.AlphaType > SKAlphaType.Opaque ? 4 : 3;
-                // floating point types
+                case SKColorType.Rgba10x6:
                 case SKColorType.RgbaF16:
                 case SKColorType.RgbaF16Clamped:
                 case SKColorType.RgbaF32:
-                case SKColorType.RgF16:
-                case SKColorType.AlphaF16:
-                default:
-                    throw new NotSupportedException(
-                        $"Image colortype ({nameof(info.ColorType)} is not currently supported.");
+                case SKColorType.Srgba8888:
+                case SKColorType.Rgba1010102:
+                case SKColorType.Bgra1010102:
+                case SKColorType.Rgba16161616:
+                case SKColorType.Bgr101010xXR:
+                    return info.AlphaType > SKAlphaType.Opaque ? 4 : 3;
                 case SKColorType.Unknown:
                     throw new ArgumentException(
                         "Image colortype is unknown, number of components cannot be determined.");
+                default:
+                    throw new NotSupportedException(
+                        $"Image colortype ({nameof(info.ColorType)} is not currently supported.");
             }
         }
 
