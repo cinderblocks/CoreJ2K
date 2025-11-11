@@ -185,30 +185,21 @@ namespace CoreJ2K.j2k.image.input
             {
                 var componentCount = (image.PixelFormat == PixelFormat.Format32bppArgb) ? 4 : 3;
 
-                barr = new int[componentCount][];
-
-                // Reset data arrays if needed
-                if (barr[compIndex] == null || barr[compIndex].Length < blk.w * blk.h)
+                // Ensure top-level buffer array
+                if (barr == null || barr.Length != componentCount)
                 {
-                    barr[compIndex] = new int[blk.w * blk.h];
-                }
-                blk.Data = barr[compIndex];
-
-                var i = (compIndex + 1) % 3;
-                if (barr[i] == null || barr[i].Length < blk.w * blk.h)
-                {
-                    barr[i] = new int[blk.w * blk.h];
-                }
-                i = (compIndex + 2) % 3;
-                if (barr[i] == null || barr[i].Length < blk.w * blk.h)
-                {
-                    barr[i] = new int[blk.w * blk.h];
+                    barr = new int[componentCount][];
                 }
 
-                if (componentCount == 4)
+                var needed = blk.w * blk.h;
+
+                // ensure per-component arrays are allocated or large enough
+                for (var cc = 0; cc < componentCount; ++cc)
                 {
-                    if (barr[3] == null || barr[3].Length < blk.w * blk.h)
-                        barr[3] = new int[blk.w * blk.h];
+                    if (barr[cc] == null || barr[cc].Length < needed)
+                    {
+                        barr[cc] = new int[needed];
+                    }
                 }
 
                 // set attributes of the DataBlk used for buffering
@@ -236,24 +227,68 @@ namespace CoreJ2K.j2k.image.input
 
                     var bytesPerPixel = (componentCount == 3) ? 3 : 4;
                     var k = 0;
-                    for (var row = 0; row < blk.h; row++)
+
+                    if (bytesPerPixel >=4)
                     {
-                        var rowStart = row * absStride;
-                        for (var col = 0; col < blk.w; col++)
+                        // process 4-byte pixels as uint
+                        unsafe
                         {
-                            var idx = rowStart + col * bytesPerPixel;
-                            var b = raw[idx + 0];
-                            var g = raw[idx + 1];
-                            var r = raw[idx + 2];
-                            blue[k] = (b & 0xFF) - 128;
-                            green[k] = (g & 0xFF) - 128;
-                            red[k] = (r & 0xFF) - 128;
-                            if (alpha != null)
+                            fixed (byte* rawPtr = raw)
                             {
-                                var a = raw[idx + 3];
-                                alpha[k] = (a & 0xFF) - 128;
+                                uint* uptr = (uint*)rawPtr;
+                                // account for stride padding: if stride != w*4, process per row
+                                if (absStride == blk.w * bytesPerPixel)
+                                {
+                                    for (var i = 0; i < blk.w * blk.h; ++i)
+                                    {
+                                        var v = uptr[i];
+                                        // little-endian: v = 0xAARRGGBB or 0xBBGGRRAA depending on platform
+                                        // For GDI+ Format32bppArgb, memory order is B,G,R,A (little-endian), so v = A<<24 | R<<16 | G<<8 | B
+                                        blue[k] = (int)(v & 0xFF) - 128;
+                                        green[k] = (int)((v >> 8) & 0xFF) - 128;
+                                        red[k] = (int)((v >> 16) & 0xFF) - 128;
+                                        if (alpha != null) alpha[k] = (int)((v >> 24) & 0xFF) - 128;
+                                        ++k;
+                                    }
+                                }
+                                else
+                                {
+                                    // per-row processing to respect stride
+                                    for (var row = 0; row < blk.h; ++row)
+                                    {
+                                        var rowStart = row * absStride;
+                                        var rowPtr = (uint*)(rawPtr + rowStart);
+                                        for (var col = 0; col < blk.w; ++col)
+                                        {
+                                            var v = rowPtr[col];
+                                            blue[k] = (int)(v & 0xFF) - 128;
+                                            green[k] = (int)((v >> 8) & 0xFF) - 128;
+                                            red[k] = (int)((v >> 16) & 0xFF) - 128;
+                                            if (alpha != null) alpha[k] = (int)((v >> 24) & 0xFF) - 128;
+                                            ++k;
+                                        }
+                                    }
+                                }
                             }
-                            ++k;
+                        }
+                    }
+                    else
+                    {
+                        // fallback for 24bpp
+                        for (var row = 0; row < blk.h; row++)
+                        {
+                            var rowStart = row * absStride;
+                            for (var col = 0; col < blk.w; col++)
+                            {
+                                var idx = rowStart + col * bytesPerPixel;
+                                var b = raw[idx + 0];
+                                var g = raw[idx + 1];
+                                var r = raw[idx + 2];
+                                blue[k] = (b & 0xFF) - 128;
+                                green[k] = (g & 0xFF) - 128;
+                                red[k] = (r & 0xFF) - 128;
+                                ++k;
+                            }
                         }
                     }
                 }
@@ -262,22 +297,35 @@ namespace CoreJ2K.j2k.image.input
                     bitmap.UnlockBits(data);
                 }
 
-                barr[0] = red;
-                barr[1] = green;
-                barr[2] = blue;
-                if (alpha != null) barr[3] = alpha;
-
-                // Set buffer attributes
-                blk.Data = barr[compIndex];
-                blk.offset = 0;
-                blk.scanw = blk.w;
+                // Set buffer attributes - use typed setter when possible
+                if (blk is DataBlkInt dbiBlk)
+                {
+                    dbiBlk.DataInt = barr[compIndex];
+                    dbiBlk.offset = 0;
+                    dbiBlk.scanw = dbiBlk.w;
+                }
+                else
+                {
+                    blk.Data = barr[compIndex];
+                    blk.offset = 0;
+                    blk.scanw = blk.w;
+                }
             }
             else
             {
                 //Asking for the 2nd or 3rd (or 4th) block component
-                blk.Data = barr[compIndex];
-                blk.offset = (blk.ulx - dbi.ulx) + (blk.uly - dbi.uly) * dbi.scanw;
-                blk.scanw = dbi.scanw;
+                if (blk is DataBlkInt dbiBlk)
+                {
+                    dbiBlk.DataInt = barr[compIndex];
+                    dbiBlk.offset = (blk.ulx - dbi.ulx) + (blk.uly - dbi.uly) * dbi.scanw;
+                    dbiBlk.scanw = dbi.scanw;
+                }
+                else
+                {
+                    blk.Data = barr[compIndex];
+                    blk.offset = (blk.ulx - dbi.ulx) + (blk.uly - dbi.uly) * dbi.scanw;
+                    blk.scanw = dbi.scanw;
+                }
             }
 
             // Turn off the progressive attribute
