@@ -1,8 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <AssemblyName>CoreJ2K.ImageSharp</AssemblyName>
-    <PackageId>CoreJ2K.ImageSharp</PackageId>
-    <Description>.NETStandard JPEG-2000 codec library with ImageSharp support</Description>
+    <PackageId>CoreJ2K.ImageSharp-Official</PackageId>
+    <Description>Official CoreJ2K .NETStandard JPEG-2000 codec library with ImageSharp support</Description>
     <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
     <DefineConstants>$(DefineConstants);NETSTANDARD</DefineConstants>
