@@ -1,4 +1,5 @@
 ﻿// Copyright (c) 2007-2016 CSJ2K contributors.
+// Copyright (c) 2025, Sjofn LLC.
 // Licensed under the BSD 3-Clause License.
 
 using System.IO;
@@ -17,6 +18,10 @@ namespace CoreJ2K
     /// </summary>
     internal static class J2kSetup
     {
+        // Simple cache for discovered codec types keyed by the plugin contract type
+        private static readonly object _codecCacheLock = new object();
+        private static readonly Dictionary<Type, List<Type>> _codecTypeCache = new Dictionary<Type, List<Type>>();
+
         /// <summary>
         /// Gets a single instance from the platform assembly implementing the <typeparamref name="T"/> type.
         /// </summary>
@@ -29,17 +34,41 @@ namespace CoreJ2K
             try
             {
                 var assembly = GetCurrentAssembly();
-                var type =
-                    assembly.DefinedTypes.Single(
-                        t => (t.IsSubclassOf(typeof(T)) || typeof(T).GetTypeInfo().IsAssignableFrom(t)) && !t.IsAbstract)
-                        .AsType();
+
+                // Find all concrete types in the current assembly that implement/derive from T
+                var types = GetConcreteTypes<T>(assembly).ToList();
+
+                // If there isn't exactly one concrete implementation, return default
+                if (types.Count != 1)
+                {
+                    return default(T);
+                }
+
+                var type = types.Single();
+
+                // Ensure the type has a public parameterless constructor
+                var ctor = type.GetConstructor(Type.EmptyTypes);
+                if (ctor == null)
+                {
+                    return default(T);
+                }
 
                 var instance = (T)Activator.CreateInstance(type);
 
                 return instance;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                try
+                {
+                    CoreJ2K.j2k.util.FacilityManager.getMsgLogger().printmsg(CoreJ2K.j2k.util.MsgLogger_Fields.ERROR,
+                        $"J2kSetup.GetSinglePlatformInstance<{typeof(T).FullName}> failed: {ex.Message}");
+                }
+                catch
+                {
+                    // Swallow any logging failures to avoid throwing from a logger.
+                }
+
                 return default(T);
             }
         }
@@ -60,8 +89,17 @@ namespace CoreJ2K
 
                 return GetDefaultOrSingleInstance<T>(types);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                try
+                {
+                    CoreJ2K.j2k.util.FacilityManager.getMsgLogger().printmsg(CoreJ2K.j2k.util.MsgLogger_Fields.ERROR,
+                        $"J2kSetup.GetDefaultPlatformInstance<{typeof(T).FullName}> failed: {ex.Message}");
+                }
+                catch
+                {
+                }
+
                 return default(T);
             }
         }
@@ -69,18 +107,147 @@ namespace CoreJ2K
 
         internal static IEnumerable<Type> FindCodecs<T>() where T : IImageCreator
         {
+            var contractType = typeof(T);
+
+            // Return cached results if present
+            lock (_codecCacheLock)
+            {
+                if (_codecTypeCache.TryGetValue(contractType, out var cached))
+                {
+                    return cached;
+                }
+            }
+
             try
             {
-                // ReSharper disable once AssignNullToNotNullAttribute
-                return Directory.GetFiles(Path.GetDirectoryName(GetCurrentAssembly().Location),
-                        "CoreJ2K.*.dll", SearchOption.TopDirectoryOnly)
-                    .Select(Assembly.LoadFile).SelectMany(s => s.GetTypes())
-                    .Where(p => (p.IsSubclassOf(typeof(T))
-                                 || typeof(T).GetTypeInfo().IsAssignableFrom(p)) && !p.IsAbstract);
+                var currentAssemblyDir = Path.GetDirectoryName(GetCurrentAssembly().Location);
+                if (string.IsNullOrEmpty(currentAssemblyDir))
+                    return Enumerable.Empty<Type>();
+
+                var dlls = Directory.GetFiles(currentAssemblyDir, "CoreJ2K.*.dll", SearchOption.TopDirectoryOnly);
+
+                var result = new List<Type>();
+
+                foreach (var dll in dlls)
+                {
+                    Assembly asm = null;
+                    try
+                    {
+                        asm = Assembly.LoadFile(dll);
+                    }
+                    catch (Exception loadEx)
+                    {
+                        try
+                        {
+                            CoreJ2K.j2k.util.FacilityManager.getMsgLogger().printmsg(CoreJ2K.j2k.util.MsgLogger_Fields.INFO,
+                                $"Skipping assembly '{dll}' because it failed to load: {loadEx.Message}");
+                        }
+                        catch
+                        {
+                        }
+                        continue;
+                    }
+
+                    Type[] types;
+                    try
+                    {
+                        types = asm.GetTypes();
+                    }
+                    catch (ReflectionTypeLoadException rtle)
+                    {
+                        types = rtle.Types.Where(t => t != null).ToArray();
+                    }
+                    catch (Exception ex)
+                    {
+                        try
+                        {
+                            CoreJ2K.j2k.util.FacilityManager.getMsgLogger().printmsg(CoreJ2K.j2k.util.MsgLogger_Fields.INFO,
+                                $"Skipping types from assembly '{dll}' because GetTypes failed: {ex.Message}");
+                        }
+                        catch
+                        {
+                        }
+
+                        continue;
+                    }
+
+                    foreach (var t in types)
+                    {
+                        try
+                        {
+                            if (t == null) continue;
+
+                            if ((t.IsSubclassOf(typeof(T)) || typeof(T).GetTypeInfo().IsAssignableFrom(t)) && !t.IsAbstract)
+                            {
+                                result.Add(t);
+                            }
+                        }
+                        catch
+                        {
+                            // Ignore type inspection failures for individual types
+                        }
+                    }
+                }
+
+                // Cache the discovered types for this contract
+                lock (_codecCacheLock)
+                {
+                    _codecTypeCache[contractType] = result.ToList();
+                }
+
+                return result;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                return null;
+                try
+                {
+                    CoreJ2K.j2k.util.FacilityManager.getMsgLogger().printmsg(CoreJ2K.j2k.util.MsgLogger_Fields.ERROR,
+                        $"J2kSetup.FindCodecs<{typeof(T).FullName}> failed: {ex.Message}");
+                }
+                catch
+                {
+                }
+
+                return Enumerable.Empty<Type>();
+            }
+        }
+
+        /// <summary>
+        /// Find and instantiate codec instances for the given plugin contract T. Instances are cached to avoid repeated disk scans and activations.
+        /// </summary>
+        internal static IEnumerable<T> FindCodecInstances<T>() where T : IImageCreator
+        {
+            // Discover types first (may be cached)
+            var types = FindCodecs<T>()?.ToList() ?? new List<Type>();
+
+            foreach (var t in types)
+            {
+                if (t == null) continue;
+
+                // Ensure public parameterless ctor exists
+                if (t.GetConstructor(Type.EmptyTypes) == null) continue;
+
+                object obj = null;
+                try
+                {
+                    obj = Activator.CreateInstance(t);
+                }
+                catch (Exception ex)
+                {
+                    try
+                    {
+                        CoreJ2K.j2k.util.FacilityManager.getMsgLogger().printmsg(CoreJ2K.j2k.util.MsgLogger_Fields.INFO,
+                            $"Failed to create codec instance of type '{t.FullName}': {ex.Message}");
+                    }
+                    catch
+                    {
+                    }
+                }
+
+                if (obj is T typed)
+                {
+                    yield return typed;
+                }
             }
         }
 
