@@ -47,6 +47,7 @@ using CoreJ2K.j2k.decoder;
 using CoreJ2K.j2k.image;
 using System;
 using System.Collections.Generic;
+using System.Buffers;
 
 namespace CoreJ2K.j2k.wavelet.synthesis
 {
@@ -422,91 +423,103 @@ namespace CoreJ2K.j2k.wavelet.synthesis
             {
 
                 case DataBlk.TYPE_INT:
-                    buf = new int[(w >= h) ? w : h];
+                    buf = ArrayPool<int>.Shared.Rent((w >= h) ? w : h);
                     break;
 
                 case DataBlk.TYPE_FLOAT:
-                    buf = new float[(w >= h) ? w : h];
+                    buf = ArrayPool<float>.Shared.Rent((w >= h) ? w : h);
                     break;
             }
 
-            //Perform the horizontal reconstruction
-            offset = (uly - db.uly) * db.w + ulx - db.ulx;
-            if (sb.ulcx % 2 == 0)
+            try
             {
-                // start index is even => use LPF
-                for (i = 0; i < h; i++, offset += db.w)
+                //Perform the horizontal reconstruction
+                offset = (uly - db.uly) * db.w + ulx - db.ulx;
+                if (sb.ulcx % 2 == 0)
                 {
-                    Array.Copy((Array)data, offset, (Array)buf, 0, w);
-                    sb.hFilter.synthetize_lpf(buf, 0, (w + 1) / 2, 1, buf, (w + 1) / 2, w / 2, 1, data, offset, 1);
+                    // start index is even => use LPF
+                    for (i = 0; i < h; i++, offset += db.w)
+                    {
+                        Array.Copy((Array)data, offset, (Array)buf, 0, w);
+                        sb.hFilter.synthetize_lpf(buf, 0, (w + 1) / 2, 1, buf, (w + 1) / 2, w / 2, 1, data, offset, 1);
+                    }
+                }
+                else
+                {
+                    // start index is odd => use HPF
+                    for (i = 0; i < h; i++, offset += db.w)
+                    {
+                        Array.Copy((Array)data, offset, (Array)buf, 0, w);
+                        sb.hFilter.synthetize_hpf(buf, 0, w / 2, 1, buf, w / 2, (w + 1) / 2, 1, data, offset, 1);
+                    }
+                }
+
+                //Perform the vertical reconstruction 
+                offset = (uly - db.uly) * db.w + ulx - db.ulx;
+                switch (sb.VerWFilter.DataType)
+                {
+
+                    case DataBlk.TYPE_INT:
+                        int[] data_int, buf_int;
+                        data_int = (int[])data;
+                        buf_int = (int[])buf;
+                        if (sb.ulcy % 2 == 0)
+                        {
+                            // start index is even => use LPF
+                            for (j = 0; j < w; j++, offset++)
+                            {
+                                for (i = h - 1, k = offset + i * db.w; i >= 0; i--, k -= db.w)
+                                    buf_int[i] = data_int[k];
+                                sb.vFilter.synthetize_lpf(buf, 0, (h + 1) / 2, 1, buf, (h + 1) / 2, h / 2, 1, data, offset, db.w);
+                            }
+                        }
+                        else
+                        {
+                            // start index is odd => use HPF
+                            for (j = 0; j < w; j++, offset++)
+                            {
+                                for (i = h - 1, k = offset + i * db.w; i >= 0; i--, k -= db.w)
+                                    buf_int[i] = data_int[k];
+                                sb.vFilter.synthetize_hpf(buf, 0, h / 2, 1, buf, h / 2, (h + 1) / 2, 1, data, offset, db.w);
+                            }
+                        }
+                        break;
+
+                    case DataBlk.TYPE_FLOAT:
+                        float[] data_float, buf_float;
+                        data_float = (float[])data;
+                        buf_float = (float[])buf;
+                        if (sb.ulcy % 2 == 0)
+                        {
+                            // start index is even => use LPF
+                            for (j = 0; j < w; j++, offset++)
+                            {
+                                for (i = h - 1, k = offset + i * db.w; i >= 0; i--, k -= db.w)
+                                    buf_float[i] = data_float[k];
+                                sb.vFilter.synthetize_lpf(buf, 0, (h + 1) / 2, 1, buf, (h + 1) / 2, h / 2, 1, data, offset, db.w);
+                            }
+                        }
+                        else
+                        {
+                            // start index is odd => use HPF
+                            for (j = 0; j < w; j++, offset++)
+                            {
+                                for (i = h - 1, k = offset + i * db.w; i >= 0; i--, k -= db.w)
+                                    buf_float[i] = data_float[k];
+                                sb.vFilter.synthetize_hpf(buf, 0, h / 2, 1, buf, h / 2, (h + 1) / 2, 1, data, offset, db.w);
+                            }
+                        }
+                        break;
                 }
             }
-            else
+            finally
             {
-                // start index is odd => use HPF
-                for (i = 0; i < h; i++, offset += db.w)
+                // Return rented buffer
+                if (buf != null)
                 {
-                    Array.Copy((Array)data, offset, (Array)buf, 0, w);
-                    sb.hFilter.synthetize_hpf(buf, 0, w / 2, 1, buf, w / 2, (w + 1) / 2, 1, data, offset, 1);
+                    if (buf is int[] ai) { try { ArrayPool<int>.Shared.Return(ai, clearArray: false); } catch { } }
+                    else if (buf is float[] af) { try { ArrayPool<float>.Shared.Return(af, clearArray: false); } catch { } }
                 }
-            }
-
-            //Perform the vertical reconstruction 
-            offset = (uly - db.uly) * db.w + ulx - db.ulx;
-            switch (sb.VerWFilter.DataType)
-            {
-
-                case DataBlk.TYPE_INT:
-                    int[] data_int, buf_int;
-                    data_int = (int[])data;
-                    buf_int = (int[])buf;
-                    if (sb.ulcy % 2 == 0)
-                    {
-                        // start index is even => use LPF
-                        for (j = 0; j < w; j++, offset++)
-                        {
-                            for (i = h - 1, k = offset + i * db.w; i >= 0; i--, k -= db.w)
-                                buf_int[i] = data_int[k];
-                            sb.vFilter.synthetize_lpf(buf, 0, (h + 1) / 2, 1, buf, (h + 1) / 2, h / 2, 1, data, offset, db.w);
-                        }
-                    }
-                    else
-                    {
-                        // start index is odd => use HPF
-                        for (j = 0; j < w; j++, offset++)
-                        {
-                            for (i = h - 1, k = offset + i * db.w; i >= 0; i--, k -= db.w)
-                                buf_int[i] = data_int[k];
-                            sb.vFilter.synthetize_hpf(buf, 0, h / 2, 1, buf, h / 2, (h + 1) / 2, 1, data, offset, db.w);
-                        }
-                    }
-                    break;
-
-                case DataBlk.TYPE_FLOAT:
-                    float[] data_float, buf_float;
-                    data_float = (float[])data;
-                    buf_float = (float[])buf;
-                    if (sb.ulcy % 2 == 0)
-                    {
-                        // start index is even => use LPF
-                        for (j = 0; j < w; j++, offset++)
-                        {
-                            for (i = h - 1, k = offset + i * db.w; i >= 0; i--, k -= db.w)
-                                buf_float[i] = data_float[k];
-                            sb.vFilter.synthetize_lpf(buf, 0, (h + 1) / 2, 1, buf, (h + 1) / 2, h / 2, 1, data, offset, db.w);
-                        }
-                    }
-                    else
-                    {
-                        // start index is odd => use HPF
-                        for (j = 0; j < w; j++, offset++)
-                        {
-                            for (i = h - 1, k = offset + i * db.w; i >= 0; i--, k -= db.w)
-                                buf_float[i] = data_float[k];
-                            sb.vFilter.synthetize_hpf(buf, 0, h / 2, 1, buf, h / 2, (h + 1) / 2, 1, data, offset, db.w);
-                        }
-                    }
-                    break;
             }
         }
 

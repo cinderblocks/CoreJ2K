@@ -48,10 +48,10 @@ using CoreJ2K.j2k.entropy;
 using CoreJ2K.j2k.image;
 using CoreJ2K.j2k.util;
 using System;
+using System.Buffers;
 
 namespace CoreJ2K.j2k.wavelet.analysis
 {
-
     /// <summary> This class implements the ForwardWT abstract class with the full-page
     /// approach to be used either with integer or floating-point filters
     /// 
@@ -113,6 +113,8 @@ namespace CoreJ2K.j2k.wavelet.analysis
 
         /// <summary>Block storing the full band decomposition for each component. </summary>
         private readonly DataBlk[] decomposedComps;
+        // Track rented backing buffers for decomposedComps to return to pool
+        private object[] decomposedBuffers;
 
         /// <summary>The horizontal index of the last "sent" code-block in the current
         /// subband in each component. It should be -1 if none have been sent yet.
@@ -168,6 +170,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
 
             currentSubband = new SubbandAn[ncomp];
             decomposedComps = new DataBlk[ncomp];
+            decomposedBuffers = new object[ncomp];
             subbTrees = new SubbandAn[ntiles][];
             for (var i = 0; i < ntiles; i++)
             {
@@ -385,12 +388,24 @@ namespace CoreJ2K.j2k.wavelet.analysis
                 //Get the source image data
                 if (intData)
                 {
-                    decomposedComps[c] = new DataBlkInt(0, 0, w, h);
+                    var dbi = new DataBlkInt();
+                    dbi.ulx = 0; dbi.uly = 0; dbi.w = w; dbi.h = h; dbi.offset = 0; dbi.scanw = w;
+                    // Rent buffer for int data
+                    var intBuf = ArrayPool<int>.Shared.Rent(w * h);
+                    dbi.DataInt = intBuf;
+                    decomposedComps[c] = dbi;
+                    decomposedBuffers[c] = intBuf;
                     bufblk = new DataBlkInt();
                 }
                 else
                 {
-                    decomposedComps[c] = new DataBlkFloat(0, 0, w, h);
+                    var dbf = new DataBlkFloat();
+                    dbf.ulx = 0; dbf.uly = 0; dbf.w = w; dbf.h = h; dbf.offset = 0; dbf.scanw = w;
+                    // Rent buffer for float data
+                    var floatBuf = ArrayPool<float>.Shared.Rent(w * h);
+                    dbf.DataFloat = floatBuf;
+                    decomposedComps[c] = dbf;
+                    decomposedBuffers[c] = floatBuf;
                     bufblk = new DataBlkFloat();
                 }
 
@@ -448,6 +463,13 @@ namespace CoreJ2K.j2k.wavelet.analysis
                 if (currentSubband[c] == null)
                 {
                     // We don't need the transformed data any more (a priori)
+                    // Return rented buffer if any and clear
+                    if (decomposedBuffers[c] != null)
+                    {
+                        if (decomposedBuffers[c] is int[] ai) { try { ArrayPool<int>.Shared.Return(ai, clearArray: false); } catch { } }
+                        else if (decomposedBuffers[c] is float[] af) { try { ArrayPool<float>.Shared.Return(af, clearArray: false); } catch { } }
+                        decomposedBuffers[c] = null;
+                    }
                     decomposedComps[c] = null;
                     // All code-blocks from all subbands in the current
                     // tile have been returned so we return a null
@@ -877,55 +899,62 @@ namespace CoreJ2K.j2k.wavelet.analysis
                 //integer arithmetic.
                 int i, j;
                 int offset;
-                var tmpVector = new int[Math.Max(w, h)];
-                var data = ((DataBlkInt)band).DataInt;
+                var tmpVector = ArrayPool<int>.Shared.Rent(Math.Max(w, h));
+                try
+                {
+                    var data = ((DataBlkInt)band).DataInt;
 
-                //Perform the vertical decomposition
-                if (subband.ulcy % 2 == 0)
-                {
-                    // Even start index => use LPF
-                    for (j = 0; j < w; j++)
+                    //Perform the vertical decomposition
+                    if (subband.ulcy % 2 == 0)
                     {
-                        offset = uly * band_w + ulx + j;
-                        for (i = 0; i < h; i++)
-                            tmpVector[i] = data[offset + (i * band_w)];
-                        subband.vFilter.analyze_lpf(tmpVector, 0, h, 1, data, offset, band_w, data, offset + ((h + 1) / 2) * band_w, band_w);
+                        // Even start index => use LPF
+                        for (j = 0; j < w; j++)
+                        {
+                            offset = uly * band_w + ulx + j;
+                            for (i = 0; i < h; i++)
+                                tmpVector[i] = data[offset + (i * band_w)];
+                            subband.vFilter.analyze_lpf(tmpVector, 0, h, 1, data, offset, band_w, data, offset + ((h + 1) / 2) * band_w, band_w);
+                        }
                     }
-                }
-                else
-                {
-                    // Odd start index => use HPF
-                    for (j = 0; j < w; j++)
+                    else
                     {
-                        offset = uly * band_w + ulx + j;
-                        for (i = 0; i < h; i++)
-                            tmpVector[i] = data[offset + (i * band_w)];
-                        subband.vFilter.analyze_hpf(tmpVector, 0, h, 1, data, offset, band_w, data, offset + (h / 2) * band_w, band_w);
+                        // Odd start index => use HPF
+                        for (j = 0; j < w; j++)
+                        {
+                            offset = uly * band_w + ulx + j;
+                            for (i = 0; i < h; i++)
+                                tmpVector[i] = data[offset + (i * band_w)];
+                            subband.vFilter.analyze_hpf(tmpVector, 0, h, 1, data, offset, band_w, data, offset + (h / 2) * band_w, band_w);
+                        }
                     }
-                }
 
-                //Perform the horizontal decomposition.
-                if (subband.ulcx % 2 == 0)
-                {
-                    // Even start index => use LPF
-                    for (i = 0; i < h; i++)
+                    //Perform the horizontal decomposition.
+                    if (subband.ulcx % 2 == 0)
                     {
-                        offset = (uly + i) * band_w + ulx;
-                        for (j = 0; j < w; j++)
-                            tmpVector[j] = data[offset + j];
-                        subband.hFilter.analyze_lpf(tmpVector, 0, w, 1, data, offset, 1, data, offset + (w + 1) / 2, 1);
+                        // Even start index => use LPF
+                        for (i = 0; i < h; i++)
+                        {
+                            offset = (uly + i) * band_w + ulx;
+                            for (j = 0; j < w; j++)
+                                tmpVector[j] = data[offset + j];
+                            subband.hFilter.analyze_lpf(tmpVector, 0, w, 1, data, offset, 1, data, offset + (w + 1) / 2, 1);
+                        }
+                    }
+                    else
+                    {
+                        // Odd start index => use HPF
+                        for (i = 0; i < h; i++)
+                        {
+                            offset = (uly + i) * band_w + ulx;
+                            for (j = 0; j < w; j++)
+                                tmpVector[j] = data[offset + j];
+                            subband.hFilter.analyze_hpf(tmpVector, 0, w, 1, data, offset, 1, data, offset + w / 2, 1);
+                        }
                     }
                 }
-                else
+                finally
                 {
-                    // Odd start index => use HPF
-                    for (i = 0; i < h; i++)
-                    {
-                        offset = (uly + i) * band_w + ulx;
-                        for (j = 0; j < w; j++)
-                            tmpVector[j] = data[offset + j];
-                        subband.hFilter.analyze_hpf(tmpVector, 0, w, 1, data, offset, 1, data, offset + w / 2, 1);
-                    }
+                    try { ArrayPool<int>.Shared.Return(tmpVector, clearArray: false); } catch { }
                 }
             }
             else
@@ -934,54 +963,61 @@ namespace CoreJ2K.j2k.wavelet.analysis
                 //float arithmetic.
                 int i, j;
                 int offset;
-                var tmpVector = new float[Math.Max(w, h)];
-                var data = ((DataBlkFloat)band).DataFloat;
+                var tmpVector = ArrayPool<float>.Shared.Rent(Math.Max(w, h));
+                try
+                {
+                    var data = ((DataBlkFloat)band).DataFloat;
 
-                //Perform the vertical decomposition.
-                if (subband.ulcy % 2 == 0)
-                {
-                    // Even start index => use LPF
-                    for (j = 0; j < w; j++)
+                    //Perform the vertical decomposition.
+                    if (subband.ulcy % 2 == 0)
                     {
-                        offset = uly * band_w + ulx + j;
-                        for (i = 0; i < h; i++)
-                            tmpVector[i] = data[offset + (i * band_w)];
-                        subband.vFilter.analyze_lpf(tmpVector, 0, h, 1, data, offset, band_w, data, offset + ((h + 1) / 2) * band_w, band_w);
-                    }
-                }
-                else
-                {
-                    // Odd start index => use HPF
-                    for (j = 0; j < w; j++)
-                    {
-                        offset = uly * band_w + ulx + j;
-                        for (i = 0; i < h; i++)
-                            tmpVector[i] = data[offset + (i * band_w)];
-                        subband.vFilter.analyze_hpf(tmpVector, 0, h, 1, data, offset, band_w, data, offset + (h / 2) * band_w, band_w);
-                    }
-                }
-                //Perform the horizontal decomposition.
-                if (subband.ulcx % 2 == 0)
-                {
-                    // Even start index => use LPF
-                    for (i = 0; i < h; i++)
-                    {
-                        offset = (uly + i) * band_w + ulx;
+                        // Even start index => use LPF
                         for (j = 0; j < w; j++)
-                            tmpVector[j] = data[offset + j];
-                        subband.hFilter.analyze_lpf(tmpVector, 0, w, 1, data, offset, 1, data, offset + (w + 1) / 2, 1);
+                        {
+                            offset = uly * band_w + ulx + j;
+                            for (i = 0; i < h; i++)
+                                tmpVector[i] = data[offset + (i * band_w)];
+                            subband.vFilter.analyze_lpf(tmpVector, 0, h, 1, data, offset, band_w, data, offset + ((h + 1) / 2) * band_w, band_w);
+                        }
+                    }
+                    else
+                    {
+                        // Odd start index => use HPF
+                        for (j = 0; j < w; j++)
+                        {
+                            offset = uly * band_w + ulx + j;
+                            for (i = 0; i < h; i++)
+                                tmpVector[i] = data[offset + (i * band_w)];
+                            subband.vFilter.analyze_hpf(tmpVector, 0, h, 1, data, offset, band_w, data, offset + (h / 2) * band_w, band_w);
+                        }
+                    }
+                    //Perform the horizontal decomposition.
+                    if (subband.ulcx % 2 == 0)
+                    {
+                        // Even start index => use LPF
+                        for (i = 0; i < h; i++)
+                        {
+                            offset = (uly + i) * band_w + ulx;
+                            for (j = 0; j < w; j++)
+                                tmpVector[j] = data[offset + j];
+                            subband.hFilter.analyze_lpf(tmpVector, 0, w, 1, data, offset, 1, data, offset + (w + 1) / 2, 1);
+                        }
+                    }
+                    else
+                    {
+                        // Odd start index => use HPF
+                        for (i = 0; i < h; i++)
+                        {
+                            offset = (uly + i) * band_w + ulx;
+                            for (j = 0; j < w; j++)
+                                tmpVector[j] = data[offset + j];
+                            subband.hFilter.analyze_hpf(tmpVector, 0, w, 1, data, offset, 1, data, offset + w / 2, 1);
+                        }
                     }
                 }
-                else
+                finally
                 {
-                    // Odd start index => use HPF
-                    for (i = 0; i < h; i++)
-                    {
-                        offset = (uly + i) * band_w + ulx;
-                        for (j = 0; j < w; j++)
-                            tmpVector[j] = data[offset + j];
-                        subband.hFilter.analyze_hpf(tmpVector, 0, w, 1, data, offset, 1, data, offset + w / 2, 1);
-                    }
+                    try { ArrayPool<float>.Shared.Return(tmpVector, clearArray: false); } catch { }
                 }
             }
         }
@@ -1011,6 +1047,13 @@ namespace CoreJ2K.j2k.wavelet.analysis
             {
                 for (i = decomposedComps.Length - 1; i >= 0; i--)
                 {
+                    // Return any rented buffer
+                    if (decomposedBuffers != null && decomposedBuffers[i] != null)
+                    {
+                        if (decomposedBuffers[i] is int[] ai) { try { ArrayPool<int>.Shared.Return(ai, clearArray: false); } catch { } }
+                        else if (decomposedBuffers[i] is float[] af) { try { ArrayPool<float>.Shared.Return(af, clearArray: false); } catch { } }
+                        decomposedBuffers[i] = null;
+                    }
                     decomposedComps[i] = null;
                     currentSubband[i] = null;
                 }
@@ -1037,6 +1080,13 @@ namespace CoreJ2K.j2k.wavelet.analysis
             {
                 for (i = decomposedComps.Length - 1; i >= 0; i--)
                 {
+                    // Return any rented buffer
+                    if (decomposedBuffers != null && decomposedBuffers[i] != null)
+                    {
+                        if (decomposedBuffers[i] is int[] ai) { try { ArrayPool<int>.Shared.Return(ai, clearArray: false); } catch { } }
+                        else if (decomposedBuffers[i] is float[] af) { try { ArrayPool<float>.Shared.Return(af, clearArray: false); } catch { } }
+                        decomposedBuffers[i] = null;
+                    }
                     decomposedComps[i] = null;
                     currentSubband[i] = null;
                 }

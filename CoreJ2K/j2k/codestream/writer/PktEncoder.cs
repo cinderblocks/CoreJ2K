@@ -921,7 +921,7 @@ namespace CoreJ2K.j2k.codestream.writer
                 }
                 if (bbuf == null)
                 {
-                    lbbuf = bbuf = new byte[1];
+                    lbbuf = bbuf = Array.Empty<byte>();
                 }
                 hbuf.writeBit(0);
                 lblen = 0;
@@ -1186,7 +1186,14 @@ namespace CoreJ2K.j2k.codestream.writer
             // Ensure size for body data
             if (bbuf == null || bbuf.Length < lblen)
             {
-                bbuf = new byte[lblen];
+                if (lblen == 0)
+                {
+                    bbuf = Array.Empty<byte>();
+                }
+                else
+                {
+                    bbuf = new byte[lblen];
+                }
             }
             lbbuf = bbuf;
             lblen = 0;

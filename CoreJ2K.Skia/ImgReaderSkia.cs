@@ -8,6 +8,7 @@
 
 using SkiaSharp;
 using System;
+using System.Buffers;
 
 namespace CoreJ2K.j2k.image.input
 {
@@ -46,9 +47,23 @@ namespace CoreJ2K.j2k.image.input
 
         public override void Close()
         {
+            // Return rented buffers
+            if (barr != null)
+            {
+                for (int i = 0; i < barr.Length; i++)
+                {
+                    var a = barr[i];
+                    if (a != null)
+                    {
+                        try { ArrayPool<int>.Shared.Return(a, clearArray: false); } catch { }
+                        barr[i] = null;
+                    }
+                }
+                barr = null;
+            }
+
             image.Dispose();
             image = null;
-            barr = null;
         }
 
         /// <summary>
@@ -215,16 +230,38 @@ namespace CoreJ2K.j2k.image.input
                 // ensure top-level array exists and has correct length
                 if (barr == null || barr.Length != nc)
                 {
+                    // return any old buffers if replacing
+                    if (barr != null)
+                    {
+                        for (int i = 0; i < barr.Length; i++)
+                        {
+                            var a = barr[i];
+                            if (a != null)
+                            {
+                                try { ArrayPool<int>.Shared.Return(a, clearArray: false); } catch { }
+                            }
+                        }
+                    }
+
                     barr = new int[nc][];
                 }
 
-                // ensure each needed buffer is allocated or large enough
+                // ensure each needed buffer is rented or large enough
                 var needed = blk.w * blk.h;
                 for (var cc = 0; cc < nc; ++cc)
                 {
-                    if (barr[cc] == null || barr[cc].Length < needed)
+                    var cur = barr[cc];
+                    if (cur == null || cur.Length < needed)
                     {
-                        barr[cc] = new int[needed];
+                        // rent a new buffer of the required size (or larger)
+                        var newBuf = ArrayPool<int>.Shared.Rent(needed);
+                        // copy old data if present
+                        if (cur != null)
+                        {
+                            Array.Copy(cur, 0, newBuf, 0, Math.Min(cur.Length, newBuf.Length));
+                            try { ArrayPool<int>.Shared.Return(cur, clearArray: false); } catch { }
+                        }
+                        barr[cc] = newBuf;
                     }
                 }
 
