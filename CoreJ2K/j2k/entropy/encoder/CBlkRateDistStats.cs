@@ -337,8 +337,11 @@ namespace CoreJ2K.j2k.entropy.encoder
                 return;
             }
 
-            truncRates = new int[n];
-            truncDists = new double[n];
+            // Reuse existing arrays if possible to avoid allocations
+            if (truncRates == null || truncRates.Length < n)
+                truncRates = new int[n];
+            if (truncDists == null || truncDists.Length < n)
+                truncDists = new double[n];
 
             // Avoid allocating zero-length arrays
             if (npnt == 0)
@@ -358,7 +361,8 @@ namespace CoreJ2K.j2k.entropy.encoder
                     // Copy terminations if needed
                     if (termp != null)
                     {
-                        isTermPass = new bool[n];
+                        if (isTermPass == null || isTermPass.Length < n)
+                            isTermPass = new bool[n];
                         Array.Copy(termp, 0, isTermPass, 0, n);
                     }
                     else
@@ -392,9 +396,9 @@ namespace CoreJ2K.j2k.entropy.encoder
                         }
                     }
 
-                    // Allocate final arrays and copy out
-                    truncSlopes = new float[npnt];
-                    truncIdxs = new int[npnt];
+                    // Allocate or reuse final arrays and copy out
+                    if (truncSlopes == null || truncSlopes.Length < npnt) truncSlopes = new float[npnt];
+                    if (truncIdxs == null || truncIdxs.Length < npnt) truncIdxs = new int[npnt];
                     for (i = 0; i < npnt; i++)
                     {
                         truncSlopes[i] = tmpSlopes[i];
@@ -416,7 +420,8 @@ namespace CoreJ2K.j2k.entropy.encoder
 
                         if (termp != null)
                         {
-                            isTermPass = new bool[n];
+                            if (isTermPass == null || isTermPass.Length < n)
+                                isTermPass = new bool[n];
                             Array.Copy(termp, 0, isTermPass, 0, n);
                         }
                         else
@@ -450,8 +455,8 @@ namespace CoreJ2K.j2k.entropy.encoder
                             }
                         }
 
-                        truncSlopes = new float[npnt];
-                        truncIdxs = new int[npnt];
+                        if (truncSlopes == null || truncSlopes.Length < npnt) truncSlopes = new float[npnt];
+                        if (truncIdxs == null || truncIdxs.Length < npnt) truncIdxs = new int[npnt];
                         for (i = 0; i < npnt; i++)
                         {
                             truncSlopes[i] = tmpSlopes[i];
