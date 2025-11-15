@@ -3,6 +3,7 @@
 // Licensed under the BSD 3-Clause License.
 
 using System;
+using System.Buffers;
 using CoreJ2K.j2k.image.input;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
@@ -162,15 +163,28 @@ namespace CoreJ2K.j2k.image.input
 
                 // load block as interleaved then de-interleave into barr[]
                 var interleaved = blockLoader(blk.ulx, blk.uly, blk.w, blk.h, nc);
-                if (interleaved.Length != needed * nc) throw new InvalidOperationException("Interleaved loader size mismatch.");
+                if (interleaved == null || interleaved.Length < needed * nc) throw new InvalidOperationException("Interleaved loader size mismatch.");
 
-                for (var c = 0; c < nc; ++c)
+                try
                 {
-                    var dest = barr[c];
-                    var compOffset = c;
-                    for (int i = 0, p = 0; i < needed; ++i, p+=nc)
+                    for (var c = 0; c < nc; ++c)
                     {
-                        dest[i] = interleaved[p + compOffset] - DC_OFFSET;
+                        var dest = barr[c];
+                        var compOffset = c;
+                        for (int i = 0, p = 0; i < needed; ++i, p+=nc)
+                        {
+                            dest[i] = interleaved[p + compOffset] - DC_OFFSET;
+                        }
+                    }
+                }
+                finally
+                {
+                    // If the loader rented the array from the pool, return it
+                    if (interleaved.Length >= 0)
+                    {
+                        // We only return arrays that came from the pool by convention.
+                        // Our loader implementations rent from ArrayPool; safe to return.
+                        ArrayPool<int>.Shared.Return(interleaved);
                     }
                 }
 
@@ -227,7 +241,9 @@ namespace CoreJ2K.j2k.image.input
         private int[] LoadBlockL8(int x, int y, int width, int height, int comps)
         {
             var img = (Image<L8>)image;
-            var ret = new int[width * height * comps];
+            var needed = width * height * comps;
+            var pool = ArrayPool<int>.Shared;
+            var ret = pool.Rent(needed);
             var idx = 0;
             for (var row=y; row< y+height; ++row)
             {
@@ -241,7 +257,9 @@ namespace CoreJ2K.j2k.image.input
         private int[] LoadBlockL16(int x, int y, int width, int height, int comps)
         {
             var img = (Image<L16>)image;
-            var ret = new int[width * height * comps];
+            var needed = width * height * comps;
+            var pool = ArrayPool<int>.Shared;
+            var ret = pool.Rent(needed);
             var idx = 0;
             for (var row=y; row< y+height; ++row)
             {
@@ -255,7 +273,9 @@ namespace CoreJ2K.j2k.image.input
         private int[] LoadBlockRgb24(int x, int y, int width, int height, int comps)
         {
             var img = (Image<Rgb24>)image;
-            var ret = new int[width * height * comps];
+            var needed = width * height * comps;
+            var pool = ArrayPool<int>.Shared;
+            var ret = pool.Rent(needed);
             var idx = 0;
             for (var row=y; row< y+height; ++row)
             {
@@ -272,7 +292,9 @@ namespace CoreJ2K.j2k.image.input
         private int[] LoadBlockBgr24(int x, int y, int width, int height, int comps)
         {
             var img = (Image<Bgr24>)image;
-            var ret = new int[width * height * comps];
+            var needed = width * height * comps;
+            var pool = ArrayPool<int>.Shared;
+            var ret = pool.Rent(needed);
             var idx = 0;
             for (var row=y; row< y+height; ++row)
             {
@@ -290,7 +312,9 @@ namespace CoreJ2K.j2k.image.input
         private int[] LoadBlockRgba32(int x, int y, int width, int height, int comps)
         {
             var img = (Image<Rgba32>)image;
-            var ret = new int[width * height * comps];
+            var needed = width * height * comps;
+            var pool = ArrayPool<int>.Shared;
+            var ret = pool.Rent(needed);
             var idx = 0;
             for (var row=y; row< y+height; ++row)
             {
@@ -308,7 +332,9 @@ namespace CoreJ2K.j2k.image.input
         private int[] LoadBlockBgra32(int x, int y, int width, int height, int comps)
         {
             var img = (Image<Bgra32>)image;
-            var ret = new int[width * height * comps];
+            var needed = width * height * comps;
+            var pool = ArrayPool<int>.Shared;
+            var ret = pool.Rent(needed);
             var idx = 0;
             for (var row=y; row< y+height; ++row)
             {
@@ -326,7 +352,9 @@ namespace CoreJ2K.j2k.image.input
         private int[] LoadBlockArgb32(int x, int y, int width, int height, int comps)
         {
             var img = (Image<Argb32>)image;
-            var ret = new int[width * height * comps];
+            var needed = width * height * comps;
+            var pool = ArrayPool<int>.Shared;
+            var ret = pool.Rent(needed);
             var idx = 0;
             for (var row=y; row< y+height; ++row)
             {
@@ -345,7 +373,9 @@ namespace CoreJ2K.j2k.image.input
         private int[] LoadBlockRgb48(int x, int y, int width, int height, int comps)
         {
             var img = (Image<Rgb48>)image;
-            var ret = new int[width * height * comps];
+            var needed = width * height * comps;
+            var pool = ArrayPool<int>.Shared;
+            var ret = pool.Rent(needed);
             var idx = 0;
             for (var row=y; row< y+height; ++row)
             {
@@ -363,7 +393,9 @@ namespace CoreJ2K.j2k.image.input
         private int[] LoadBlockRgba64(int x, int y, int width, int height, int comps)
         {
             var img = (Image<Rgba64>)image;
-            var ret = new int[width * height * comps];
+            var needed = width * height * comps;
+            var pool = ArrayPool<int>.Shared;
+            var ret = pool.Rent(needed);
             var idx = 0;
             for (var row=y; row< y+height; ++row)
             {
@@ -382,7 +414,9 @@ namespace CoreJ2K.j2k.image.input
         {
             // Fallback dynamic loader through cloning to Rgba32
             using var clone = image.CloneAs<Rgba32>();
-            var ret = new int[width * height * comps];
+            var needed = width * height * comps;
+            var pool = ArrayPool<int>.Shared;
+            var ret = pool.Rent(needed);
             var idx = 0;
             for (var row=y; row< y+height; ++row)
             {

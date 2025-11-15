@@ -43,6 +43,7 @@
 * */
 using CoreJ2K.j2k.wavelet.analysis;
 using System;
+using System.Buffers;
 
 namespace CoreJ2K.j2k.entropy.encoder
 {
@@ -236,7 +237,6 @@ namespace CoreJ2K.j2k.entropy.encoder
             double delta_dist; // Distortion difference
             float k_slope; // R-D slope for the current point
             float p_slope; // R-D slope for the last selected point
-                           //int ll_rate; // Rate for "lossless" coding (i.e. all coded info)
 
             // Convention: when a negative value is stored in 'rates' it meas an
             // invalid point. The absolute value is always the rate for that point.
@@ -251,7 +251,7 @@ namespace CoreJ2K.j2k.entropy.encoder
             // Select the valid points
             npnt = n - first_pnt;
             p_slope = 0f; // To keep compiler happy
-                          //UPGRADE_NOTE: Label 'ploop' was moved. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1014'"
+            //UPGRADE_NOTE: Label 'ploop' was moved. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1014'"
             do
             {
                 p = -1;
@@ -325,46 +325,157 @@ namespace CoreJ2K.j2k.entropy.encoder
             // Initialize the arrays of this object
             nTotTrunc = n;
             nVldTrunc = npnt;
+
+            // If there are no truncation points, use shared empty arrays to avoid zero-length allocations
+            if (n == 0)
+            {
+                truncRates = Array.Empty<int>();
+                truncDists = Array.Empty<double>();
+                truncSlopes = Array.Empty<float>();
+                truncIdxs = Array.Empty<int>();
+                isTermPass = (termp != null) ? Array.Empty<bool>() : null;
+                return;
+            }
+
             truncRates = new int[n];
             truncDists = new double[n];
-            truncSlopes = new float[npnt];
-            truncIdxs = new int[npnt];
-            if (termp != null)
+
+            // Avoid allocating zero-length arrays
+            if (npnt == 0)
             {
-                isTermPass = new bool[n];
-                Array.Copy(termp, 0, isTermPass, 0, n);
+                truncSlopes = Array.Empty<float>();
+                truncIdxs = Array.Empty<int>();
             }
             else
             {
-                isTermPass = null;
-            }
-            Array.Copy(rates, 0, truncRates, 0, n);
-            for (k = first_pnt, p = -1, i = 0; k < n; k++)
-            {
-                if (rates[k] > 0)
+#if NETSTANDARD2_1 || NET8_0 || NET9_0
+                // Use stackalloc for small temporary buffers to avoid heap allocs
+                if (npnt <= 256)
                 {
-                    // A valid point
-                    truncDists[k] = dists[k];
-                    if (p < 0)
+                    Span<float> tmpSlopes = stackalloc float[npnt];
+                    Span<int> tmpIdxs = stackalloc int[npnt];
+
+                    // Copy terminations if needed
+                    if (termp != null)
                     {
-                        // Only arrives at first valid point
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
-                        truncSlopes[i] = (float)(dists[k] / rates[k]);
+                        isTermPass = new bool[n];
+                        Array.Copy(termp, 0, isTermPass, 0, n);
                     }
                     else
                     {
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
-                        truncSlopes[i] = (float)((dists[k] - dists[p]) / (rates[k] - rates[p]));
+                        isTermPass = null;
                     }
-                    truncIdxs[i] = k;
-                    i++;
-                    p = k;
+
+                    Array.Copy(rates, 0, truncRates, 0, n);
+
+                    for (k = first_pnt, p = -1, i = 0; k < n; k++)
+                    {
+                        if (rates[k] > 0)
+                        {
+                            truncDists[k] = dists[k];
+                            if (p < 0)
+                            {
+                                tmpSlopes[i] = (float)(dists[k] / rates[k]);
+                            }
+                            else
+                            {
+                                tmpSlopes[i] = (float)((dists[k] - dists[p]) / (rates[k] - rates[p]));
+                            }
+                            tmpIdxs[i] = k;
+                            i++;
+                            p = k;
+                        }
+                        else
+                        {
+                            truncDists[k] = -1;
+                            truncRates[k] = -truncRates[k];
+                        }
+                    }
+
+                    // Allocate final arrays and copy out
+                    truncSlopes = new float[npnt];
+                    truncIdxs = new int[npnt];
+                    for (i = 0; i < npnt; i++)
+                    {
+                        truncSlopes[i] = tmpSlopes[i];
+                        truncIdxs[i] = tmpIdxs[i];
+                    }
                 }
                 else
+#endif
                 {
-                    truncDists[k] = -1;
-                    truncRates[k] = -truncRates[k];
+                    float[] rentedSlopes = null;
+                    int[] rentedIdxs = null;
+                    try
+                    {
+                        // Fallback: rent from ArrayPool to avoid many small allocs
+                        rentedSlopes = ArrayPool<float>.Shared.Rent(npnt);
+                        rentedIdxs = ArrayPool<int>.Shared.Rent(npnt);
+                        Span<float> tmpSlopes = rentedSlopes.AsSpan(0, npnt);
+                        Span<int> tmpIdxs = rentedIdxs.AsSpan(0, npnt);
+
+                        if (termp != null)
+                        {
+                            isTermPass = new bool[n];
+                            Array.Copy(termp, 0, isTermPass, 0, n);
+                        }
+                        else
+                        {
+                            isTermPass = null;
+                        }
+
+                        Array.Copy(rates, 0, truncRates, 0, n);
+
+                        for (k = first_pnt, p = -1, i = 0; k < n; k++)
+                        {
+                            if (rates[k] > 0)
+                            {
+                                truncDists[k] = dists[k];
+                                if (p < 0)
+                                {
+                                    tmpSlopes[i] = (float)(dists[k] / rates[k]);
+                                }
+                                else
+                                {
+                                    tmpSlopes[i] = (float)((dists[k] - dists[p]) / (rates[k] - rates[p]));
+                                }
+                                tmpIdxs[i] = k;
+                                i++;
+                                p = k;
+                            }
+                            else
+                            {
+                                truncDists[k] = -1;
+                                truncRates[k] = -truncRates[k];
+                            }
+                        }
+
+                        truncSlopes = new float[npnt];
+                        truncIdxs = new int[npnt];
+                        for (i = 0; i < npnt; i++)
+                        {
+                            truncSlopes[i] = tmpSlopes[i];
+                            truncIdxs[i] = tmpIdxs[i];
+                        }
+                    }
+                    finally
+                    {
+                        if (rentedSlopes != null)
+                        {
+                            ArrayPool<float>.Shared.Return(rentedSlopes);
+                        }
+                        if (rentedIdxs != null)
+                        {
+                            ArrayPool<int>.Shared.Return(rentedIdxs);
+                        }
+                    }
                 }
+            }
+
+            if (termp != null && isTermPass == null)
+            {
+                isTermPass = new bool[n];
+                Array.Copy(termp, 0, isTermPass, 0, n);
             }
         }
 

@@ -94,6 +94,10 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// <summary>Number of decomposition levels in each component </summary>
         private readonly int[] ndl;
 
+        // Rented buffers for reconstructed components to avoid LOH allocations
+        private float[][] rentedFloatBuffers;
+        private int[][] rentedIntBuffers;
+
         /// <summary> The reversible flag for each component in each tile. The first index is
         /// the tile index, the second one is the component index. The
         /// reversibility of the components for each tile are calculated on a as
@@ -120,6 +124,8 @@ namespace CoreJ2K.j2k.wavelet.synthesis
             var nc = src.NumComps;
             reconstructedComps = new DataBlk[nc];
             ndl = new int[nc];
+            rentedFloatBuffers = new float[nc][];
+            rentedIntBuffers = new int[nc][];
         }
 
         /// <summary> Returns the reversibility of the current subband. It computes
@@ -273,11 +279,35 @@ namespace CoreJ2K.j2k.wavelet.synthesis
                 {
 
                     case DataBlk.TYPE_FLOAT:
-                        reconstructedComps[compIndex] = new DataBlkFloat(0, 0, getTileCompWidth(tIdx, compIndex), getTileCompHeight(tIdx, compIndex));
+                        var fwidth = getTileCompWidth(tIdx, compIndex);
+                        var fheight = getTileCompHeight(tIdx, compIndex);
+                        reconstructedComps[compIndex] = new DataBlkFloat(0, 0, fwidth, fheight);
+                        try
+                        {
+                            var rent = ArrayPool<float>.Shared.Rent(fwidth * fheight);
+                            reconstructedComps[compIndex].Data = rent;
+                            rentedFloatBuffers[compIndex] = rent;
+                        }
+                        catch
+                        {
+                            // fallback to default allocation if renting fails
+                        }
                         break;
 
                     case DataBlk.TYPE_INT:
-                        reconstructedComps[compIndex] = new DataBlkInt(0, 0, getTileCompWidth(tIdx, compIndex), getTileCompHeight(tIdx, compIndex));
+                        var iwidth = getTileCompWidth(tIdx, compIndex);
+                        var iheight = getTileCompHeight(tIdx, compIndex);
+                        reconstructedComps[compIndex] = new DataBlkInt(0, 0, iwidth, iheight);
+                        try
+                        {
+                            var irent = ArrayPool<int>.Shared.Rent(iwidth * iheight);
+                            reconstructedComps[compIndex].Data = irent;
+                            rentedIntBuffers[compIndex] = irent;
+                        }
+                        catch
+                        {
+                            // fallback to default allocation
+                        }
                         break;
                 }
                 //Reconstruct source image
@@ -645,12 +675,49 @@ namespace CoreJ2K.j2k.wavelet.synthesis
                 ndl[c] = src.getSynSubbandTree(tIdx, c).resLvl;
             }
 
-            // Reset the decomposed component buffers.
-            if (reconstructedComps != null)
+            // Ensure rented buffers are large enough for new tile; do not return them so they are reused
+            for (i = 0; i < nc; i++)
             {
-                for (i = reconstructedComps.Length - 1; i >= 0; i--)
+                var newWidth = getTileCompWidth(tIdx, i);
+                var newHeight = getTileCompHeight(tIdx, i);
+                var needed = newWidth * newHeight;
+
+                if (rentedFloatBuffers != null && rentedFloatBuffers.Length > i && rentedFloatBuffers[i] != null)
                 {
-                    reconstructedComps[i] = null;
+                    if (rentedFloatBuffers[i].Length < needed)
+                    {
+                        // Rent a larger buffer and replace the old one
+                        var old = rentedFloatBuffers[i];
+                        var rent = ArrayPool<float>.Shared.Rent(needed);
+                        rentedFloatBuffers[i] = rent;
+                        try { ArrayPool<float>.Shared.Return(old, clearArray: false); } catch { }
+                    }
+                }
+                if (rentedIntBuffers != null && rentedIntBuffers.Length > i && rentedIntBuffers[i] != null)
+                {
+                    if (rentedIntBuffers[i].Length < needed)
+                    {
+                        var old = rentedIntBuffers[i];
+                        var rent = ArrayPool<int>.Shared.Rent(needed);
+                        rentedIntBuffers[i] = rent;
+                        try { ArrayPool<int>.Shared.Return(old, clearArray: false); } catch { }
+                    }
+                }
+
+                // If a reconstructed block exists, update its dimensions and Data pointer to the rented buffer
+                if (reconstructedComps != null && i < reconstructedComps.Length && reconstructedComps[i] != null)
+                {
+                    var db = reconstructedComps[i];
+                    db.w = newWidth;
+                    db.h = newHeight;
+                    if (db is DataBlkFloat && rentedFloatBuffers[i] != null)
+                    {
+                        db.Data = rentedFloatBuffers[i];
+                    }
+                    else if (db is DataBlkInt && rentedIntBuffers[i] != null)
+                    {
+                        db.Data = rentedIntBuffers[i];
+                    }
                 }
             }
 
@@ -683,11 +750,6 @@ namespace CoreJ2K.j2k.wavelet.synthesis
             } // Loop on components
         }
 
-        /// <summary> Advances to the next tile, in standard scan-line order (by rows then
-        /// columns). An 'NoNextElementException' is thrown if the current tile is
-        /// the last one (i.e. there is no next tile).
-        /// 
-        /// </summary>
         public override void nextTile()
         {
             int i;
@@ -702,14 +764,85 @@ namespace CoreJ2K.j2k.wavelet.synthesis
                 ndl[c] = src.getSynSubbandTree(tIdx, c).resLvl;
             }
 
-            // Reset the decomposed component buffers.
-            if (reconstructedComps != null)
+            // Ensure rented buffers are large enough for new tile; keep them for reuse
+            for (i = 0; i < nc; i++)
             {
-                for (i = reconstructedComps.Length - 1; i >= 0; i--)
+                var newWidth = getTileCompWidth(tIdx, i);
+                var newHeight = getTileCompHeight(tIdx, i);
+                var needed = newWidth * newHeight;
+
+                if (rentedFloatBuffers != null && rentedFloatBuffers.Length > i && rentedFloatBuffers[i] != null)
                 {
-                    reconstructedComps[i] = null;
+                    if (rentedFloatBuffers[i].Length < needed)
+                    {
+                        var old = rentedFloatBuffers[i];
+                        var rent = ArrayPool<float>.Shared.Rent(needed);
+                        rentedFloatBuffers[i] = rent;
+                        try { ArrayPool<float>.Shared.Return(old, clearArray: false); } catch { }
+                    }
+                }
+                if (rentedIntBuffers != null && rentedIntBuffers.Length > i && rentedIntBuffers[i] != null)
+                {
+                    if (rentedIntBuffers[i].Length < needed)
+                    {
+                        var old = rentedIntBuffers[i];
+                        var rent = ArrayPool<int>.Shared.Rent(needed);
+                        rentedIntBuffers[i] = rent;
+                        try { ArrayPool<int>.Shared.Return(old, clearArray: false); } catch { }
+                    }
+                }
+
+                if (reconstructedComps != null && i < reconstructedComps.Length && reconstructedComps[i] != null)
+                {
+                    var db = reconstructedComps[i];
+                    db.w = newWidth;
+                    db.h = newHeight;
+                    if (db is DataBlkFloat && rentedFloatBuffers[i] != null)
+                    {
+                        db.Data = rentedFloatBuffers[i];
+                    }
+                    else if (db is DataBlkInt && rentedIntBuffers[i] != null)
+                    {
+                        db.Data = rentedIntBuffers[i];
+                    }
                 }
             }
+        }
+
+        /// <summary> Closes this object, releasing any system resources it may be using.
+        /// This should be the last method called on an object of this class.
+        /// 
+        /// </summary>
+        public new void Close()
+        {
+            // Return any rented buffers
+            if (rentedFloatBuffers != null)
+            {
+                for (var i = 0; i < rentedFloatBuffers.Length; i++)
+                {
+                    var buf = rentedFloatBuffers[i];
+                    if (buf != null)
+                    {
+                        try { ArrayPool<float>.Shared.Return(buf, clearArray: false); } catch { }
+                        rentedFloatBuffers[i] = null;
+                    }
+                }
+            }
+            if (rentedIntBuffers != null)
+            {
+                for (var i = 0; i < rentedIntBuffers.Length; i++)
+                {
+                    var ibuf = rentedIntBuffers[i];
+                    if (ibuf != null)
+                    {
+                        try { ArrayPool<int>.Shared.Return(ibuf, clearArray: false); } catch { }
+                        rentedIntBuffers[i] = null;
+                    }
+                }
+            }
+
+            // Call base Close (does nothing, but keep behavior consistent)
+            base.Close();
         }
     }
 }
