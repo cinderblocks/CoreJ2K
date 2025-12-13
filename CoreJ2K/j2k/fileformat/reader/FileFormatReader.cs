@@ -359,7 +359,7 @@ namespace CoreJ2K.j2k.fileformat.reader
                 throw new InvalidOperationException("Zero-length of JP2Header Box");
             }
 
-            // Read sub-boxes within JP2 Header to extract ICC profile
+            // Read sub-boxes within JP2 Header to extract ICC profile, resolution, and channel definitions
             try
             {
                 var boxHeader = new byte[16];
@@ -407,6 +407,20 @@ namespace CoreJ2K.j2k.fileformat.reader
                             }
                         }
                     }
+                    // Check for Resolution Box (superbox containing capture and/or display resolution)
+                    else if (boxType == FileFormatBoxes.RESOLUTION_BOX)
+                    {
+                        // Resolution box is a superbox containing resc and/or resd boxes
+                        var resBoxStart = currentPos + 8;
+                        var resBoxEnd = currentPos + boxLen;
+                        
+                        readResolutionSuperBox(resBoxStart, resBoxEnd);
+                    }
+                    // Check for Channel Definition Box
+                    else if (boxType == FileFormatBoxes.CHANNEL_DEFINITION_BOX)
+                    {
+                        readChannelDefinitionBox(boxLen);
+                    }
 
                     // Move to next box
                     currentPos += boxLen;
@@ -415,12 +429,145 @@ namespace CoreJ2K.j2k.fileformat.reader
             }
             catch (Exception e)
             {
-                // Don't fail the whole operation if we can't read the ICC profile
+                // Don't fail the whole operation if we can't read metadata
                 FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING,
-                    $"Error extracting ICC profile from JP2 Header: {e.Message}");
+                    $"Error extracting metadata from JP2 Header: {e.Message}");
             }
 
             return true;
+        }
+
+        /// <summary>
+        /// Reads the Resolution superbox which can contain capture and/or display resolution boxes.
+        /// </summary>
+        /// <param name="boxStart">Start position of resolution superbox content.</param>
+        /// <param name="boxEnd">End position of resolution superbox.</param>
+        private void readResolutionSuperBox(int boxStart, int boxEnd)
+        {
+            var boxHeader = new byte[8];
+            var currentPos = boxStart;
+
+            while (currentPos < boxEnd)
+            {
+                in_Renamed.seek(currentPos);
+                in_Renamed.readFully(boxHeader, 0, 8);
+
+                var boxLen = (boxHeader[0] << 24) | (boxHeader[1] << 16) | 
+                             (boxHeader[2] << 8) | boxHeader[3];
+                var boxType = (boxHeader[4] << 24) | (boxHeader[5] << 16) | 
+                              (boxHeader[6] << 8) | boxHeader[7];
+
+                if (boxType == FileFormatBoxes.CAPTURE_RESOLUTION_BOX)
+                {
+                    // Read capture resolution (resc)
+                    var resData = new byte[10]; // VR_N(2), VR_D(2), HR_N(2), HR_D(2), VR_E(1), HR_E(1)
+                    in_Renamed.readFully(resData, 0, 10);
+
+                    var vr_n = (short)((resData[0] << 8) | resData[1]);
+                    var vr_d = (short)((resData[2] << 8) | resData[3]);
+                    var hr_n = (short)((resData[4] << 8) | resData[5]);
+                    var hr_d = (short)((resData[6] << 8) | resData[7]);
+                    var vr_e = (sbyte)resData[8];
+                    var hr_e = (sbyte)resData[9];
+
+                    // Calculate resolution: (numerator / denominator) * 10^exponent
+                    var verticalRes = (vr_n / (double)vr_d) * Math.Pow(10, vr_e);
+                    var horizontalRes = (hr_n / (double)hr_d) * Math.Pow(10, hr_e);
+
+                    if (Metadata.Resolution == null)
+                        Metadata.Resolution = new ResolutionData();
+
+                    Metadata.Resolution.SetCaptureResolution(horizontalRes, verticalRes);
+
+                    FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                        $"Found Capture Resolution: {horizontalRes:F2}x{verticalRes:F2} pixels/meter " +
+                        $"({horizontalRes / 39.3701:F2}x{verticalRes / 39.3701:F2} DPI)");
+                }
+                else if (boxType == FileFormatBoxes.DEFAULT_DISPLAY_RESOLUTION_BOX)
+                {
+                    // Read display resolution (resd)
+                    var resData = new byte[10];
+                    in_Renamed.readFully(resData, 0, 10);
+
+                    var vr_n = (short)((resData[0] << 8) | resData[1]);
+                    var vr_d = (short)((resData[2] << 8) | resData[3]);
+                    var hr_n = (short)((resData[4] << 8) | resData[5]);
+                    var hr_d = (short)((resData[6] << 8) | resData[7]);
+                    var vr_e = (sbyte)resData[8];
+                    var hr_e = (sbyte)resData[9];
+
+                    var verticalRes = (vr_n / (double)vr_d) * Math.Pow(10, vr_e);
+                    var horizontalRes = (hr_n / (double)hr_d) * Math.Pow(10, hr_e);
+
+                    if (Metadata.Resolution == null)
+                        Metadata.Resolution = new ResolutionData();
+
+                    Metadata.Resolution.SetDisplayResolution(horizontalRes, verticalRes);
+
+                    FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                        $"Found Display Resolution: {horizontalRes:F2}x{verticalRes:F2} pixels/meter " +
+                        $"({horizontalRes / 39.3701:F2}x{verticalRes / 39.3701:F2} DPI)");
+                }
+
+                currentPos += boxLen;
+                if (boxLen == 0) break;
+            }
+        }
+
+        /// <summary>
+        /// Reads the Channel Definition Box which defines the interpretation of image components.
+        /// </summary>
+        /// <param name="boxLength">Total length of the box including header.</param>
+        private void readChannelDefinitionBox(int boxLength)
+        {
+            try
+            {
+                // Read number of channel definitions (N)
+                var nDef = in_Renamed.readShort();
+                
+                if (nDef <= 0)
+                    return;
+
+                if (Metadata.ChannelDefinitions == null)
+                    Metadata.ChannelDefinitions = new ChannelDefinitionData();
+
+                // Read each channel definition (6 bytes each: Cn(2), Typ(2), Asoc(2))
+                for (int i = 0; i < nDef; i++)
+                {
+                    var cn = in_Renamed.readShort();    // Channel index
+                    var typ = in_Renamed.readShort();   // Channel type
+                    var asoc = in_Renamed.readShort();  // Association
+
+                    // Convert typ to ChannelType enum
+                    var channelType = ChannelType.Unspecified;
+                    switch (typ)
+                    {
+                        case 0:
+                            channelType = ChannelType.Color;
+                            break;
+                        case 1:
+                            channelType = ChannelType.Opacity;
+                            break;
+                        case 2:
+                            channelType = ChannelType.PremultipliedOpacity;
+                            break;
+                        default:
+                            channelType = ChannelType.Unspecified;
+                            break;
+                    }
+
+                    Metadata.ChannelDefinitions.AddChannel(cn, channelType, asoc);
+                }
+
+                var alphaInfo = Metadata.ChannelDefinitions.HasAlphaChannel ? " (with alpha)" : "";
+                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                    $"Found Channel Definition Box: {nDef} channels{alphaInfo}");
+            }
+            catch (Exception e)
+            {
+                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING,
+                    $"Error reading Channel Definition Box: {e.Message}");
+            }
         }
 
         /// <summary> This method skips the Contiguous codestream box and adds position
@@ -533,7 +680,7 @@ namespace CoreJ2K.j2k.fileformat.reader
             }
         }
 
-        /// <summary> This method reads the contents of the Intellectual property box
+        /// <summary> This method reads the contents of the UUID Info box
         /// 
         /// </summary>
         public virtual void readUUIDInfoBox(int length)

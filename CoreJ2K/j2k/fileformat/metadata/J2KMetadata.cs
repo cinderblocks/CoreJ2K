@@ -10,7 +10,7 @@ namespace CoreJ2K.j2k.fileformat.metadata
 {
     /// <summary>
     /// Represents metadata extracted from or to be written to a JPEG2000 file.
-    /// Supports comments, XML boxes (XMP, IPTC), UUID boxes, and ICC profiles.
+    /// Supports comments, XML boxes (XMP, IPTC), UUID boxes, ICC profiles, resolution data, and channel definitions.
     /// </summary>
     public class J2KMetadata
     {
@@ -33,6 +33,16 @@ namespace CoreJ2K.j2k.fileformat.metadata
         /// Gets or sets the ICC color profile data.
         /// </summary>
         public ICCProfileData IccProfile { get; set; }
+
+        /// <summary>
+        /// Gets or sets the resolution metadata (DPI/PPI information).
+        /// </summary>
+        public ResolutionData Resolution { get; set; }
+
+        /// <summary>
+        /// Gets or sets the channel definition metadata (alpha channel, component types).
+        /// </summary>
+        public ChannelDefinitionData ChannelDefinitions { get; set; }
 
         /// <summary>
         /// Adds a simple text comment to the metadata.
@@ -65,6 +75,24 @@ namespace CoreJ2K.j2k.fileformat.metadata
         public void SetIccProfile(byte[] profileBytes)
         {
             IccProfile = new ICCProfileData(profileBytes);
+        }
+
+        /// <summary>
+        /// Sets the resolution from DPI values.
+        /// Creates a ResolutionData instance if needed.
+        /// </summary>
+        /// <param name="horizontalDpi">Horizontal DPI.</param>
+        /// <param name="verticalDpi">Vertical DPI.</param>
+        /// <param name="isCapture">True for capture resolution, false for display resolution.</param>
+        public void SetResolutionDpi(double horizontalDpi, double verticalDpi, bool isCapture = false)
+        {
+            if (Resolution == null)
+                Resolution = new ResolutionData();
+
+            if (isCapture)
+                Resolution.SetCaptureDpi(horizontalDpi, verticalDpi);
+            else
+                Resolution.SetDisplayDpi(horizontalDpi, verticalDpi);
         }
 
         /// <summary>

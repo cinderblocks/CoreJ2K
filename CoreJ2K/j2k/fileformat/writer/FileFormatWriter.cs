@@ -336,12 +336,47 @@ namespace CoreJ2K.j2k.fileformat.writer
                 csbLength = CSB_LENGTH;
             }
 
-            // Write box length (LBox)
-            // if the number of bits per components varies, a bpcc box is written
+            // Calculate resolution box length
+            int resLength = 0;
+            if (Metadata != null && Metadata.Resolution != null && Metadata.Resolution.HasResolution)
+            {
+                // Resolution superbox: LBox(4) + TBox(4) + content
+                resLength = 8;
+                
+                if (Metadata.Resolution.HasCaptureResolution)
+                {
+                    resLength += 18; // Capture resolution box: LBox(4) + TBox(4) + data(10)
+                }
+                
+                if (Metadata.Resolution.HasDisplayResolution)
+                {
+                    resLength += 18; // Display resolution box: LBox(4) + TBox(4) + data(10)
+                }
+            }
+
+            // Calculate channel definition box length
+            int cdefLength = 0;
+            if (Metadata != null && Metadata.ChannelDefinitions != null && Metadata.ChannelDefinitions.HasDefinitions)
+            {
+                // Channel Definition box: LBox(4) + TBox(4) + N(2) + (Cn(2) + Typ(2) + Asoc(2)) * N
+                var numChannels = Metadata.ChannelDefinitions.Channels.Count;
+                cdefLength = 8 + 2 + (numChannels * 6);
+            }
+
+            // Calculate total JP2 header length
+            var headerLength = 8 + IHB_LENGTH + csbLength;
+            
             if (bpcVaries)
-                fi.writeInt(8 + IHB_LENGTH + csbLength + BPC_LENGTH + nc);
-            else
-                fi.writeInt(8 + IHB_LENGTH + csbLength);
+                headerLength += BPC_LENGTH + nc;
+                
+            if (cdefLength > 0)
+                headerLength += cdefLength;
+
+            if (resLength > 0)
+                headerLength += resLength;
+
+            // Write box length (LBox)
+            fi.writeInt(headerLength);
 
             // Write a JP2Header (TBox)
             fi.writeInt(FileFormatBoxes.JP2_HEADER_BOX);
@@ -355,7 +390,147 @@ namespace CoreJ2K.j2k.fileformat.writer
             // if the number of bits per components varies write bpcc box
             if (bpcVaries)
                 writeBitsPerComponentBox();
+
+            // Write channel definition box if present (before resolution per ISO spec)
+            if (cdefLength > 0)
+                writeChannelDefinitionBox();
+
+            // Write resolution box if present
+            if (resLength > 0)
+                writeResolutionBox();
         }
+
+        /// <summary>
+        /// Writes the Channel Definition Box which defines the interpretation of image components.
+        /// </summary>
+        private void writeChannelDefinitionBox()
+        {
+            if (Metadata?.ChannelDefinitions == null || !Metadata.ChannelDefinitions.HasDefinitions)
+                return;
+
+            var channels = Metadata.ChannelDefinitions.Channels;
+            var numChannels = channels.Count;
+
+            // Calculate box length: LBox(4) + TBox(4) + N(2) + (Cn(2) + Typ(2) + Asoc(2)) * N
+            var boxLength = 8 + 2 + (numChannels * 6);
+
+            // Write box length (LBox)
+            fi.writeInt(boxLength);
+
+            // Write Channel Definition box type (TBox)
+            fi.writeInt(FileFormatBoxes.CHANNEL_DEFINITION_BOX);
+
+            // Write number of channel definitions (N)
+            fi.writeShort((short)numChannels);
+
+            // Write each channel definition
+            foreach (var channel in channels)
+            {
+                fi.writeShort((short)channel.ChannelIndex);      // Cn
+                fi.writeShort((short)channel.ChannelType);        // Typ
+                fi.writeShort((short)channel.Association);        // Asoc
+            }
+        }
+
+        /// <summary>
+        /// Writes the Resolution superbox containing capture and/or display resolution boxes.
+        /// </summary>
+        private void writeResolutionBox()
+        {
+            if (Metadata?.Resolution == null || !Metadata.Resolution.HasResolution)
+                return;
+
+            // Calculate content length
+            var contentLength = 0;
+            if (Metadata.Resolution.HasCaptureResolution)
+                contentLength += 18;
+            if (Metadata.Resolution.HasDisplayResolution)
+                contentLength += 18;
+
+            // Write Resolution superbox header
+            fi.writeInt(8 + contentLength); // LBox
+            fi.writeInt(FileFormatBoxes.RESOLUTION_BOX); // TBox
+
+            // Write capture resolution box if present
+            if (Metadata.Resolution.HasCaptureResolution)
+            {
+                writeResolutionSubBox(
+                    Metadata.Resolution.HorizontalCaptureResolution.Value,
+                    Metadata.Resolution.VerticalCaptureResolution.Value,
+                    FileFormatBoxes.CAPTURE_RESOLUTION_BOX);
+            }
+
+            // Write display resolution box if present
+            if (Metadata.Resolution.HasDisplayResolution)
+            {
+                writeResolutionSubBox(
+                    Metadata.Resolution.HorizontalDisplayResolution.Value,
+                    Metadata.Resolution.VerticalDisplayResolution.Value,
+                    FileFormatBoxes.DEFAULT_DISPLAY_RESOLUTION_BOX);
+            }
+        }
+
+        /// <summary>
+        /// Writes a resolution sub-box (capture or display resolution).
+        /// Resolution is stored as: VR_N(2), VR_D(2), HR_N(2), HR_D(2), VR_E(1), HR_E(1)
+        /// where resolution = (numerator / denominator) * 10^exponent
+        /// </summary>
+        private void writeResolutionSubBox(double horizontalRes, double verticalRes, int boxType)
+        {
+            // Convert resolution to fraction with exponent
+            // We'll use a simple approach: express as integer * 10^exponent
+            
+            // Find appropriate exponent to keep values reasonable
+            var hr_exp = GetResolutionExponent(horizontalRes);
+            var vr_exp = GetResolutionExponent(verticalRes);
+
+            // Calculate numerator and denominator
+            // Use denominator = 1 for simplicity (could be optimized for better precision)
+            var hr_num = (short)(horizontalRes / Math.Pow(10, hr_exp));
+            var vr_num = (short)(verticalRes / Math.Pow(10, vr_exp));
+            const short denominator = 1;
+
+            // Write resolution box
+            fi.writeInt(18); // LBox: 4 (LBox) + 4 (TBox) + 10 (data)
+            fi.writeInt(boxType); // TBox
+
+            // Write vertical resolution
+            fi.writeShort(vr_num); // VR_N
+            fi.writeShort(denominator); // VR_D
+            
+            // Write horizontal resolution
+            fi.writeShort(hr_num); // HR_N
+            fi.writeShort(denominator); // HR_D
+            
+            // Write exponents
+            fi.writeByte((sbyte)vr_exp); // VR_E
+            fi.writeByte((sbyte)hr_exp); // HR_E
+        }
+
+        /// <summary>
+        /// Calculates an appropriate exponent for resolution values.
+        /// Tries to keep the mantissa in a reasonable range (avoiding very large or small shorts).
+        /// </summary>
+        private int GetResolutionExponent(double resolution)
+        {
+            if (resolution == 0)
+                return 0;
+
+            var absRes = Math.Abs(resolution);
+            
+            // Find exponent such that 1 <= (resolution / 10^exp) < 32767
+            var exp = 0;
+            
+            while (absRes / Math.Pow(10, exp) >= 32767)
+                exp++;
+                
+            while (absRes / Math.Pow(10, exp) < 1 && exp > -10)
+                exp--;
+
+            return exp;
+        }
+
+
 
         /// <summary> This method writes the Bits Per Component box
         /// 
