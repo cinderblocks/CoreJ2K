@@ -41,6 +41,16 @@ namespace CoreJ2K.j2k.fileformat.metadata
         public List<LabelBox> Labels { get; } = new List<LabelBox>();
 
         /// <summary>
+        /// Gets or sets the UUID Info box data (contains UUID list and URL boxes).
+        /// </summary>
+        public UuidInfoBox UuidInfo { get; set; }
+
+        /// <summary>
+        /// Gets or sets the Reader Requirements box data (defines required decoder capabilities).
+        /// </summary>
+        public ReaderRequirementsBox ReaderRequirements { get; set; }
+
+        /// <summary>
         /// Gets or sets the ICC color profile data.
         /// </summary>
         public ICCProfileData IccProfile { get; set; }
@@ -366,6 +376,94 @@ namespace CoreJ2K.j2k.fileformat.metadata
             var label = GetLabel();
             var preview = label?.Length > 50 ? label.Substring(0, 50) + "..." : label;
             return $"Label Box: {preview ?? "(binary data)"}";
+        }
+    }
+
+    /// <summary>
+    /// Represents a UUID Info (uinf) box from JPEG 2000 Part 1.
+    /// The UUID Info box is a superbox that contains a UUID List box and optionally a URL box.
+    /// It provides information about UUIDs used in the file and where to find more information.
+    /// </summary>
+    public class UuidInfoBox
+    {
+        /// <summary>
+        /// Gets the list of UUIDs referenced in the file.
+        /// </summary>
+        public List<Guid> UuidList { get; } = new List<Guid>();
+
+        /// <summary>
+        /// Gets or sets the URL where more information about the UUIDs can be found.
+        /// </summary>
+        public string Url { get; set; }
+
+        /// <summary>
+        /// Gets or sets the version number of the URL.
+        /// </summary>
+        public byte UrlVersion { get; set; }
+
+        /// <summary>
+        /// Gets or sets the URL flags (0 = relative URL,  1 = absolute URL).
+        /// </summary>
+        public byte UrlFlags { get; set; }
+
+        public override string ToString()
+        {
+            var uuidCount = UuidList.Count;
+            var urlInfo = !string.IsNullOrEmpty(Url) ? $", URL: {Url}" : "";
+            return $"UUID Info Box: {uuidCount} UUID(s){urlInfo}";
+        }
+    }
+
+    /// <summary>
+    /// Represents a Reader Requirements (rreq) box from JPEG 2000 Part 1.
+    /// The Reader Requirements box specifies what features a decoder must support to properly decode the file.
+    /// This allows decoders to quickly determine if they can handle a file before attempting to decode it.
+    /// </summary>
+    public class ReaderRequirementsBox
+    {
+        /// <summary>
+        /// Gets the list of standard features (Feature IDs) that the reader must support.
+        /// Each feature ID is a 16-bit value defined in ISO/IEC 15444-1 Annex I.
+        /// </summary>
+        public List<ushort> StandardFeatures { get; } = new List<ushort>();
+
+        /// <summary>
+        /// Gets the list of vendor-specific features that the reader must support.
+        /// Each vendor feature is identified by a UUID.
+        /// </summary>
+        public List<Guid> VendorFeatures { get; } = new List<Guid>();
+
+        /// <summary>
+        /// Gets or sets whether the file is fully compatible with JPEG 2000 Part 1 baseline.
+        /// </summary>
+        public bool IsJp2Compatible { get; set; }
+
+        /// <summary>
+        /// Checks if a specific standard feature is required.
+        /// </summary>
+        /// <param name="featureId">The feature ID to check.</param>
+        /// <returns>True if the feature is required.</returns>
+        public bool RequiresFeature(ushort featureId)
+        {
+            return StandardFeatures.Contains(featureId);
+        }
+
+        /// <summary>
+        /// Checks if a specific vendor feature is required.
+        /// </summary>
+        /// <param name="uuid">The vendor feature UUID to check.</param>
+        /// <returns>True if the vendor feature is required.</returns>
+        public bool RequiresVendorFeature(Guid uuid)
+        {
+            return VendorFeatures.Contains(uuid);
+        }
+
+        public override string ToString()
+        {
+            var stdCount = StandardFeatures.Count;
+            var vendorCount = VendorFeatures.Count;
+            var compat = IsJp2Compatible ? " (JP2 compatible)" : "";
+            return $"Reader Requirements Box: {stdCount} standard feature(s), {vendorCount} vendor feature(s){compat}";
         }
     }
 }

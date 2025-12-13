@@ -693,6 +693,82 @@ namespace CoreJ2K.j2k.fileformat.reader
         /// </summary>
         public virtual void readUUIDInfoBox(int length)
         {
+            if (length <= 8) return; // Box too small
+
+            try
+            {
+                var uuidInfo = new UuidInfoBox();
+                var startPos = in_Renamed.Pos;
+                var endPos = startPos + length - 8; // Exclude box header
+
+                // UUID Info is a superbox containing UUID List and optionally URL box
+                while (in_Renamed.Pos < endPos)
+                {
+                    var boxHeader = new byte[8];
+                    in_Renamed.readFully(boxHeader, 0, 8);
+
+                    var boxLen = (boxHeader[0] << 24) | (boxHeader[1] << 16) |
+                                 (boxHeader[2] << 8) | boxHeader[3];
+                    var boxType = (boxHeader[4] << 24) | (boxHeader[5] << 16) |
+                                  (boxHeader[6] << 8) | boxHeader[7];
+
+                    if (boxType == FileFormatBoxes.UUID_LIST_BOX)
+                    {
+                        // Read UUID List box
+                        // Format: NU(2) + UUID1(16) + UUID2(16) + ...
+                        var numUuids = in_Renamed.readShort();
+                        
+                        for (int i = 0; i < numUuids; i++)
+                        {
+                            var uuidBytes = new byte[16];
+                            in_Renamed.readFully(uuidBytes, 0, 16);
+                            uuidInfo.UuidList.Add(new Guid(uuidBytes));
+                        }
+
+                        FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                            $"Found UUID List: {numUuids} UUID(s)");
+                    }
+                    else if (boxType == FileFormatBoxes.URL_BOX)
+                    {
+                        // Read URL box
+                        // Format: VERS(1) + FLAG(3) + URL(variable length string)
+                        uuidInfo.UrlVersion = in_Renamed.readByte();
+                        
+                        // Read flags (3 bytes)
+                        in_Renamed.readByte(); // FLAG byte 0
+                        in_Renamed.readByte(); // FLAG byte 1
+                        uuidInfo.UrlFlags = in_Renamed.readByte(); // FLAG byte 2
+
+                        // Read URL (remaining bytes in box)
+                        var urlLength = boxLen - 12; // Box header (8) + VERS(1) + FLAG(3)
+                        if (urlLength > 0)
+                        {
+                            var urlBytes = new byte[urlLength];
+                            in_Renamed.readFully(urlBytes, 0, urlLength);
+                            uuidInfo.Url = Encoding.UTF8.GetString(urlBytes).TrimEnd('\0');
+
+                            FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                                $"Found URL: {uuidInfo.Url}");
+                        }
+                    }
+                    else
+                    {
+                        // Skip unknown box type
+                        var skipBytes = boxLen - 8;
+                        if (skipBytes > 0)
+                        {
+                            in_Renamed.seek(in_Renamed.Pos + skipBytes);
+                        }
+                    }
+                }
+
+                Metadata.UuidInfo = uuidInfo;
+            }
+            catch (Exception e)
+            {
+                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING,
+                    $"Error reading UUID Info box: {e.Message}");
+            }
         }
 
         /// <summary> This method reads the contents of the Reader requirements box
@@ -700,6 +776,57 @@ namespace CoreJ2K.j2k.fileformat.reader
         /// </summary>
         public virtual void readReaderRequirementsBox(int length)
         {
+            if (length <= 8) return; // Box too small
+
+            try
+            {
+                var readerReq = new ReaderRequirementsBox();
+
+                // Read ML (mask length) - 1 byte
+                var maskLength = in_Renamed.readByte();
+
+                // Read FUAM (fully understand aspects mask) - maskLength bytes
+                var fuam = new byte[maskLength];
+                in_Renamed.readFully(fuam, 0, maskLength);
+
+                // Read DCM (decode completely mask) - maskLength bytes
+                var dcm = new byte[maskLength];
+                in_Renamed.readFully(dcm, 0, maskLength);
+
+                // Read NSF (number of standard features) - 2 bytes
+                var numStdFeatures = in_Renamed.readShort();
+
+                // Read standard features
+                for (int i = 0; i < numStdFeatures; i++)
+                {
+                    var featureId = (ushort)in_Renamed.readShort();
+                    readerReq.StandardFeatures.Add(featureId);
+                }
+
+                // Read NVF (number of vendor features) - 2 bytes
+                var numVendorFeatures = in_Renamed.readShort();
+
+                // Read vendor features (UUIDs)
+                for (int i = 0; i < numVendorFeatures; i++)
+                {
+                    var uuidBytes = new byte[16];
+                    in_Renamed.readFully(uuidBytes, 0, 16);
+                    readerReq.VendorFeatures.Add(new Guid(uuidBytes));
+                }
+
+                // Check if JP2 compatible (bit 5 of first FUAM byte should be 0 for baseline JP2)
+                readerReq.IsJp2Compatible = (maskLength > 0) && ((fuam[0] & 0x20) == 0);
+
+                Metadata.ReaderRequirements = readerReq;
+
+                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                    $"Found Reader Requirements: {numStdFeatures} standard feature(s), {numVendorFeatures} vendor feature(s)");
+            }
+            catch (Exception e)
+            {
+                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING,
+                    $"Error reading Reader Requirements box: {e.Message}");
+            }
         }
 
         /// <summary>
