@@ -585,6 +585,25 @@ namespace CoreJ2K.j2k.fileformat.reader
                     {
                         FileStructure.HasBitsPerComponentBox = true;
                         FileStructure.BitsPerComponentBoxOrder = jp2HeaderBoxOrder++;
+
+                        // Read the Bits Per Component box data
+                        // Format: BPC[i] (1 byte each) for i = 0 to NC-1
+                        // Each byte: bits 0-6 = bit depth minus 1, bit 7 = sign bit
+                        var bpcLength = boxLen - 8; // Box length minus header
+                        if (bpcLength > 0)
+                        {
+                            var bpcBytes = new byte[bpcLength];
+                            in_Renamed.readFully(bpcBytes, 0, bpcLength);
+
+                            // Store in metadata
+                            Metadata.BitsPerComponent = new BitsPerComponentData
+                            {
+                                ComponentBitDepths = bpcBytes
+                            };
+
+                            FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                                $"Found Bits Per Component Box: {bpcLength} components");
+                        }
                     }
                     // Check for Resolution Box (superbox containing capture and/or display resolution)
                     else if (boxType == FileFormatBoxes.RESOLUTION_BOX)

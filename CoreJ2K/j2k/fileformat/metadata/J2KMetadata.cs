@@ -81,6 +81,12 @@ namespace CoreJ2K.j2k.fileformat.metadata
         public ComponentMappingData ComponentMapping { get; set; }
 
         /// <summary>
+        /// Gets or sets the bits per component box data (varying bit depths per component).
+        /// Required when Image Header Box BPC field is 0xFF (components have different bit depths).
+        /// </summary>
+        public BitsPerComponentData BitsPerComponent { get; set; }
+
+        /// <summary>
         /// Adds a simple text comment to the metadata.
         /// </summary>
         public void AddComment(string text, string language = "en")
@@ -677,5 +683,137 @@ namespace CoreJ2K.j2k.fileformat.metadata
         /// Specifies which column of the palette to use.
         /// </summary>
         public byte PaletteColumn { get; set; }
+    }
+
+    /// <summary>
+    /// Represents bits per component (bpcc) box data per ISO/IEC 15444-1 Section I.5.3.2.
+    /// This box specifies the bit depth for each component when they vary across components.
+    /// Required when the Image Header Box BPC field is 0xFF (indicating varying bit depths).
+    /// </summary>
+    public class BitsPerComponentData
+    {
+        /// <summary>
+        /// Gets or sets the bit depth specification for each component.
+        /// Format: bits 0-6 = bit depth minus 1, bit 7 = sign bit (1=signed, 0=unsigned).
+        /// </summary>
+        public byte[] ComponentBitDepths { get; set; }
+
+        /// <summary>
+        /// Gets the number of components.
+        /// </summary>
+        public int NumComponents => ComponentBitDepths?.Length ?? 0;
+
+        /// <summary>
+        /// Returns true if the specified component uses signed values.
+        /// </summary>
+        /// <param name="componentIndex">The component index (0-based).</param>
+        public bool IsSigned(int componentIndex)
+        {
+            if (ComponentBitDepths == null || componentIndex < 0 || componentIndex >= ComponentBitDepths.Length)
+                return false;
+            return (ComponentBitDepths[componentIndex] & 0x80) != 0;
+        }
+
+        /// <summary>
+        /// Gets the bit depth for a component (without the sign bit).
+        /// </summary>
+        /// <param name="componentIndex">The component index (0-based).</param>
+        public int GetBitDepth(int componentIndex)
+        {
+            if (ComponentBitDepths == null || componentIndex < 0 || componentIndex >= ComponentBitDepths.Length)
+                return 0;
+            return (ComponentBitDepths[componentIndex] & 0x7F) + 1;
+        }
+
+        /// <summary>
+        /// Sets the bit depth for a component.
+        /// </summary>
+        /// <param name="componentIndex">The component index (0-based).</param>
+        /// <param name="bitDepth">The bit depth (1-38).</param>
+        /// <param name="isSigned">Whether the component uses signed values.</param>
+        public void SetBitDepth(int componentIndex, int bitDepth, bool isSigned)
+        {
+            if (ComponentBitDepths == null || componentIndex < 0 || componentIndex >= ComponentBitDepths.Length)
+                throw new ArgumentOutOfRangeException(nameof(componentIndex));
+
+            if (bitDepth < 1 || bitDepth > 38)
+                throw new ArgumentOutOfRangeException(nameof(bitDepth), "Bit depth must be between 1 and 38");
+
+            byte value = (byte)((bitDepth - 1) & 0x7F);
+            if (isSigned)
+                value |= 0x80;
+
+            ComponentBitDepths[componentIndex] = value;
+        }
+
+        /// <summary>
+        /// Checks if all components have the same bit depth and signedness.
+        /// </summary>
+        /// <returns>True if all components are uniform, false if they vary.</returns>
+        public bool AreComponentsUniform()
+        {
+            if (ComponentBitDepths == null || ComponentBitDepths.Length <= 1)
+                return true;
+
+            var firstValue = ComponentBitDepths[0];
+            for (int i = 1; i < ComponentBitDepths.Length; i++)
+            {
+                if (ComponentBitDepths[i] != firstValue)
+                    return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Checks if a Bits Per Component box is needed (per ISO/IEC 15444-1 Section I.5.3.2).
+        /// Returns true if components have varying bit depths or signedness.
+        /// </summary>
+        public bool IsBoxNeeded()
+        {
+            return !AreComponentsUniform();
+        }
+
+        /// <summary>
+        /// Creates a BitsPerComponentData instance from an array of bit depth values.
+        /// </summary>
+        /// <param name="bitDepths">Array of bit depths for each component.</param>
+        /// <param name="isSigned">Array indicating if each component is signed.</param>
+        public static BitsPerComponentData FromBitDepths(int[] bitDepths, bool[] isSigned)
+        {
+            if (bitDepths == null)
+                throw new ArgumentNullException(nameof(bitDepths));
+            if (isSigned != null && isSigned.Length != bitDepths.Length)
+                throw new ArgumentException("isSigned array must match bitDepths array length");
+
+            var data = new BitsPerComponentData
+            {
+                ComponentBitDepths = new byte[bitDepths.Length]
+            };
+
+            for (int i = 0; i < bitDepths.Length; i++)
+            {
+                data.SetBitDepth(i, bitDepths[i], isSigned?[i] ?? false);
+            }
+
+            return data;
+        }
+
+        public override string ToString()
+        {
+            if (ComponentBitDepths == null || ComponentBitDepths.Length == 0)
+                return "Bits Per Component Box: No components";
+
+            var sb = new StringBuilder($"Bits Per Component Box: {NumComponents} components - ");
+            for (int i = 0; i < ComponentBitDepths.Length && i < 10; i++)
+            {
+                if (i > 0) sb.Append(", ");
+                sb.Append($"C{i}:{GetBitDepth(i)}{(IsSigned(i) ? "S" : "U")}");
+            }
+            if (ComponentBitDepths.Length > 10)
+                sb.Append("...");
+
+            return sb.ToString();
+        }
     }
 }
