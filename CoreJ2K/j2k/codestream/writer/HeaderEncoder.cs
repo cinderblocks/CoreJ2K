@@ -89,7 +89,8 @@ namespace CoreJ2K.j2k.codestream.writer
         private static readonly string[][] pinfo = { 
             new string[] { "Hjj2000_COM", null, "Writes or not the JJ2000 COM marker in the " + "codestream", "off" }, 
             new string[] { "HCOM", "<Comment 1>[#<Comment 2>[#<Comment3...>]]", "Adds COM marker segments in the codestream. Comments must be " + "separated with '#' and are written into distinct maker segments.", null },
-            new string[] { "Htlm", "on|off", "Writes TLM (Tile-part Lengths) markers in the main header " + "for fast random tile access. This requires collecting tile-part " + "lengths during encoding.", "off" }
+            new string[] { "Htlm", "on|off", "Writes TLM (Tile-part Lengths) markers in the main header " + "for fast random tile access. This requires collecting tile-part " + "lengths during encoding.", "off" },
+            new string[] { "Hplt", "on|off", "Writes PLT (Packet Length) markers in tile-part headers " + "for fast packet access. This requires collecting packet lengths " + "during encoding.", "off" }
         };
 
         /// <summary>Nominal range bit of the component defining default values in QCD for
@@ -174,6 +175,12 @@ namespace CoreJ2K.j2k.codestream.writer
         /// <summary>Whether or not to write TLM markers</summary>
         private readonly bool useTLM;
 
+        /// <summary>PLT data collected during encoding for writing PLT markers</summary>
+        private metadata.PacketLengthsData pltData;
+
+        /// <summary>Whether or not to write PLT markers</summary>
+        private readonly bool usePLT;
+
         /// <summary> Initializes the header writer with the references to the coding chain.
         /// 
         /// </summary>
@@ -224,6 +231,7 @@ namespace CoreJ2K.j2k.codestream.writer
             enJJ2KMarkSeg = pl.getBooleanParameter("Hjj2000_COM");
             otherCOMMarkSeg = pl.getParameter("HCOM");
             useTLM = pl.getBooleanParameter("Htlm");
+            usePLT = pl.getBooleanParameter("Hplt");
 
             // Initialize marker writers
             codWriter = new markers.CODMarkerWriter(encSpec, dwt, ralloc);
@@ -340,6 +348,21 @@ namespace CoreJ2K.j2k.codestream.writer
             tlmData = tlm;
         }
 
+        /// <summary>
+        /// Gets whether PLT markers should be written.
+        /// </summary>
+        public virtual bool IsPLTEnabled => usePLT;
+
+        /// <summary>
+        /// Sets the PLT data to be written in the tile-part headers.
+        /// This should be called before encoding each tile-part header.
+        /// </summary>
+        /// <param name="plt">The collected packet length data</param>
+        public virtual void SetPLTData(metadata.PacketLengthsData plt)
+        {
+            pltData = plt;
+        }
+
         /// <summary> Write main header. JJ2000 main header corresponds to the following
         /// sequence of marker segments:
         /// 
@@ -413,6 +436,14 @@ namespace CoreJ2K.j2k.codestream.writer
             if (tlmData != null && tlmData.HasTilePartLengths)
             {
                 writeTLM(tlmData);
+            }
+
+            // +--------------------------+
+            // |    PLT marker segment    |
+            // +--------------------------+
+            if (pltData != null && pltData.HasPacketLengths)
+            {
+                writePLM(pltData);
             }
 
             // +---------------------------+
@@ -514,6 +545,14 @@ namespace CoreJ2K.j2k.codestream.writer
             if (tileHeaderWriter.ShouldWritePOC(tileIdx))
             {
                 pocWriter.Write(hbuf, false, tileIdx);
+            }
+
+            // +--------------------------+
+            // |    PLT marker segment    |
+            // +--------------------------+
+            if (pltData != null && pltData.GetPacketCount(tileIdx) > 0)
+            {
+                PLTMarkerWriter.WritePLT(hbuf.BaseStream, pltData, tileIdx, 0);
             }
 
             // +--------------------------+

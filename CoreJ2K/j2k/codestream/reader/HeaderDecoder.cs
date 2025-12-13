@@ -384,6 +384,9 @@ namespace CoreJ2K.j2k.codestream.reader
         /// <summary>The packed packet headers if the PPM or PPT markers are used </summary>
         private System.IO.MemoryStream[] pkdPktHeaders;
 
+        /// <summary>PLT (Packet Length, tile-part header) marker segment data </summary>
+        private codestream.metadata.PacketLengthsData pltData;
+
         /// <summary> Returns the tiling origin, referred to as '(Px,Py)' in the 'ImgData'
         /// interface.
         /// 
@@ -561,9 +564,8 @@ namespace CoreJ2K.j2k.codestream.reader
         //UPGRADE_TODO: Class 'java.io.DataInputStream' was converted to 'System.IO.BinaryReader' which has a different behavior. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1073_javaioDataInputStream'"
         private SynWTFilter readFilter(System.IO.BinaryReader ehs, int[] filtIdx)
         {
-            int kid; // the filter id
-
-            kid = filtIdx[0] = ehs.ReadByte();
+            var kid = // the filter id
+                filtIdx[0] = ehs.ReadByte();
             if (kid >= (1 << 7))
             {
                 throw new NotImplementedException("Custom filters not supported");
@@ -599,8 +601,7 @@ namespace CoreJ2K.j2k.codestream.reader
         //UPGRADE_TODO: Class 'java.io.DataInputStream' was converted to 'System.IO.BinaryReader' which has a different behavior. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1073_javaioDataInputStream'"
         public virtual void checkMarkerLength(System.IO.BinaryReader ehs, string str)
         {
-            long available;
-            available = ehs.BaseStream.Length - ehs.BaseStream.Position;
+            var available = ehs.BaseStream.Length - ehs.BaseStream.Position;
             if ((int)available != 0)
             {
                 FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING,
@@ -779,10 +780,8 @@ namespace CoreJ2K.j2k.codestream.reader
                     // (skip them and see if we can get way with it)
                     FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING,
                         $"COM marker registered as 0x{Convert.ToString(ms.rcom, 16)} unknown, ignoring (this might crash the decoder or decode a quality degraded or even useless image)");
-                    System.IO.BinaryReader temp_BinaryReader;
-                    long temp_Int64;
-                    temp_BinaryReader = ehs;
-                    temp_Int64 = temp_BinaryReader.BaseStream.Position;
+                    var temp_BinaryReader = ehs;
+                    var temp_Int64 = temp_BinaryReader.BaseStream.Position;
                     temp_Int64 = temp_BinaryReader.BaseStream.Seek(ms.lcom - 4, System.IO.SeekOrigin.Current) - temp_Int64;
                     // CONVERSION PROBLEM?
                     var generatedAux2 = (int)temp_Int64; //Ignore this field for the moment
@@ -828,8 +827,6 @@ namespace CoreJ2K.j2k.codestream.reader
         //UPGRADE_TODO: Class 'java.io.DataInputStream' was converted to 'System.IO.BinaryReader' which has a different behavior. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1073_javaioDataInputStream'"
         private void readQCD(System.IO.BinaryReader ehs, bool mainh, int tileIdx, int tpIdx)
         {
-            StdDequantizerParams qParms;
-            int guardBits;
             int[][] exp;
             float[][] nStep = null;
             var ms = hi.NewQCD;
@@ -840,7 +837,7 @@ namespace CoreJ2K.j2k.codestream.reader
             // Sqcd (quantization style)
             ms.sqcd = ehs.ReadByte();
 
-            guardBits = ms.NumGuardBits;
+            var guardBits = ms.NumGuardBits;
             var qType = ms.QuantType;
 
             if (mainh)
@@ -894,7 +891,7 @@ namespace CoreJ2K.j2k.codestream.reader
                 }
             }
 
-            qParms = new StdDequantizerParams();
+            var qParms = new StdDequantizerParams();
 
             if (qType == Markers.SQCX_NO_QUANTIZATION)
             {
@@ -1053,7 +1050,6 @@ namespace CoreJ2K.j2k.codestream.reader
         {
             int cComp; // current component
             int tmp;
-            StdDequantizerParams qParms;
             int[][] expC;
             float[][] nStepC = null;
             var ms = hi.NewQCC;
@@ -1132,7 +1128,7 @@ namespace CoreJ2K.j2k.codestream.reader
             }
 
             // Decode all dequantizer params
-            qParms = new StdDequantizerParams();
+            var qParms = new StdDequantizerParams();
 
             if (qType == Markers.SQCX_NO_QUANTIZATION)
             {
@@ -1286,10 +1282,7 @@ namespace CoreJ2K.j2k.codestream.reader
         //UPGRADE_TODO: Class 'java.io.DataInputStream' was converted to 'System.IO.BinaryReader' which has a different behavior. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1073_javaioDataInputStream'"
         private void readCOD(System.IO.BinaryReader ehs, bool mainh, int tileIdx, int tpIdx)
         {
-            int cstyle; // The block style
-            SynWTFilter[] hfilters, vfilters;
             //int l;
-            int[] cblk;
             string errMsg;
             //bool sopUsed = false;
             //bool ephUsed = false;
@@ -1300,7 +1293,7 @@ namespace CoreJ2K.j2k.codestream.reader
 
             // Scod (block style)
             // We only support wavelet transformed data
-            cstyle = ms.scod = ehs.ReadByte();
+            var cstyle = ms.scod = ehs.ReadByte(); // The block style
 
             if ((cstyle & Markers.SCOX_PRECINCT_PARTITION) != 0)
             {
@@ -1448,7 +1441,7 @@ namespace CoreJ2K.j2k.codestream.reader
             }
 
             // Read the code-blocks dimensions
-            cblk = new int[2];
+            var cblk = new int[2];
             ms.spcod_cw = ehs.ReadByte();
             cblk[0] = 1 << (ms.spcod_cw + 2);
             if (cblk[0] < StdEntropyCoderOptions.MIN_CB_DIM || cblk[0] > StdEntropyCoderOptions.MAX_CB_DIM)
@@ -1486,8 +1479,8 @@ namespace CoreJ2K.j2k.codestream.reader
             }
 
             // Read wavelet filter for tile or image
-            hfilters = new SynWTFilter[1];
-            vfilters = new SynWTFilter[1];
+            var hfilters = new SynWTFilter[1];
+            var vfilters = new SynWTFilter[1];
             hfilters[0] = readFilter(ehs, ms.spcod_t);
             vfilters[0] = hfilters[0];
 
@@ -1505,10 +1498,9 @@ namespace CoreJ2K.j2k.codestream.reader
             var val = Markers.PRECINCT_PARTITION_DEF_SIZE;
             if (!precinctPartitionIsUsed)
             {
-                int w, h;
-                w = 1 << (val & 0x000F);
+                var w = 1 << (val & 0x000F);
                 v[0].Add(w);
-                h = 1 << (((val & 0x00F0) >> 4));
+                var h = 1 << (((val & 0x00F0) >> 4));
                 v[1].Add(h);
             }
             else
@@ -1516,11 +1508,10 @@ namespace CoreJ2K.j2k.codestream.reader
                 ms.spcod_ps = new int[mrl + 1];
                 for (var rl = mrl; rl >= 0; rl--)
                 {
-                    int w, h;
                     val = ms.spcod_ps[mrl - rl] = ehs.ReadByte();
-                    w = 1 << (val & 0x000F);
+                    var w = 1 << (val & 0x000F);
                     v[0].Insert(0, w);
-                    h = 1 << (((val & 0x00F0) >> 4));
+                    var h = 1 << (((val & 0x00F0) >> 4));
                     v[1].Insert(0, h);
                 }
             }
@@ -1583,10 +1574,7 @@ namespace CoreJ2K.j2k.codestream.reader
         private void readCOC(System.IO.BinaryReader ehs, bool mainh, int tileIdx, int tpIdx)
         {
             int cComp; // current component
-            SynWTFilter[] hfilters, vfilters;
             //int tmp, l;
-            int ecOptions;
-            int[] cblk;
             string errMsg;
             var ms = hi.NewCOC;
 
@@ -1626,7 +1614,7 @@ namespace CoreJ2K.j2k.codestream.reader
             var mrl = ms.spcoc_ndl = ehs.ReadByte();
 
             // Read the code-blocks dimensions
-            cblk = new int[2];
+            var cblk = new int[2];
             ms.spcoc_cw = ehs.ReadByte();
             cblk[0] = 1 << (ms.spcoc_cw + 2);
             if (cblk[0] < StdEntropyCoderOptions.MIN_CB_DIM || cblk[0] > StdEntropyCoderOptions.MAX_CB_DIM)
@@ -1657,7 +1645,7 @@ namespace CoreJ2K.j2k.codestream.reader
 
             // Read entropy block mode options
             // NOTE: currently OPT_SEG_SYMBOLS is not included here
-            ecOptions = ms.spcoc_cs = ehs.ReadByte();
+            var ecOptions = ms.spcoc_cs = ehs.ReadByte();
             if ((ecOptions & ~(StdEntropyCoderOptions.OPT_BYPASS | StdEntropyCoderOptions.OPT_RESET_MQ | StdEntropyCoderOptions.OPT_TERM_PASS | StdEntropyCoderOptions.OPT_VERT_STR_CAUSAL | StdEntropyCoderOptions.OPT_PRED_TERM | StdEntropyCoderOptions.OPT_SEG_SYMBOLS)) != 0)
             {
                 throw new CorruptedCodestreamException(
@@ -1665,8 +1653,8 @@ namespace CoreJ2K.j2k.codestream.reader
             }
 
             // Read wavelet filter for tile or image
-            hfilters = new SynWTFilter[1];
-            vfilters = new SynWTFilter[1];
+            var hfilters = new SynWTFilter[1];
+            var vfilters = new SynWTFilter[1];
             hfilters[0] = readFilter(ehs, ms.spcoc_t);
             vfilters[0] = hfilters[0];
 
@@ -1684,10 +1672,9 @@ namespace CoreJ2K.j2k.codestream.reader
             var val = Markers.PRECINCT_PARTITION_DEF_SIZE;
             if (!precinctPartitionIsUsed)
             {
-                int w, h;
-                w = 1 << (val & 0x000F);
+                var w = 1 << (val & 0x000F);
                 v[0].Add(w);
-                h = 1 << (((val & 0x00F0) >> 4));
+                var h = 1 << (((val & 0x00F0) >> 4));
                 v[1].Add(h);
             }
             else
@@ -1695,11 +1682,10 @@ namespace CoreJ2K.j2k.codestream.reader
                 ms.spcoc_ps = new int[mrl + 1];
                 for (var rl = mrl; rl >= 0; rl--)
                 {
-                    int w, h;
                     val = ms.spcoc_ps[rl] = ehs.ReadByte();
-                    w = 1 << (val & 0x000F);
+                    var w = 1 << (val & 0x000F);
                     v[0].Insert(0, w);
-                    h = 1 << (((val & 0x00F0) >> 4));
+                    var h = 1 << (((val & 0x00F0) >> 4));
                     v[1].Insert(0, h);
                 }
             }
@@ -2073,14 +2059,10 @@ namespace CoreJ2K.j2k.codestream.reader
         //UPGRADE_TODO: Class 'java.io.DataInputStream' was converted to 'System.IO.BinaryReader' which has a different behavior. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1073_javaioDataInputStream'"
         private void readPLM(System.IO.BinaryReader ehs)
         {
-            int length;
-
-            length = ehs.ReadUInt16();
+            int length = ehs.ReadUInt16();
             //Ignore all informations contained
-            System.IO.BinaryReader temp_BinaryReader;
-            long temp_Int64;
-            temp_BinaryReader = ehs;
-            temp_Int64 = temp_BinaryReader.BaseStream.Position;
+            var temp_BinaryReader = ehs;
+            var temp_Int64 = temp_BinaryReader.BaseStream.Position;
             temp_Int64 = temp_BinaryReader.BaseStream.Seek(length - 2, System.IO.SeekOrigin.Current) - temp_Int64;
             // CONVERSION PROBLEM?
             var generatedAux = (int)temp_Int64;
@@ -2089,8 +2071,8 @@ namespace CoreJ2K.j2k.codestream.reader
         }
 
         /// <summary> Reads the PLT fields and realigns the codestream where the next marker
-        /// should be found. Informations stored in these fields are currently NOT
-        /// taken into account.
+        /// should be found. This method now reads and stores the PLT data for use
+        /// by the packet decoder.
         /// 
         /// </summary>
         /// <param name="ehs">The encoder header stream.
@@ -2103,19 +2085,41 @@ namespace CoreJ2K.j2k.codestream.reader
         //UPGRADE_TODO: Class 'java.io.DataInputStream' was converted to 'System.IO.BinaryReader' which has a different behavior. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1073_javaioDataInputStream'"
         private void readPLTFields(System.IO.BinaryReader ehs)
         {
-            int length;
+            // Initialize PLT data structure if needed
+            if (pltData == null)
+            {
+                pltData = new codestream.metadata.PacketLengthsData();
+            }
 
-            length = ehs.ReadUInt16();
-            //Ignore all informations contained
-            System.IO.BinaryReader temp_BinaryReader;
-            long temp_Int64;
-            temp_BinaryReader = ehs;
-            temp_Int64 = temp_BinaryReader.BaseStream.Position;
-            temp_Int64 = temp_BinaryReader.BaseStream.Seek(length - 2, System.IO.SeekOrigin.Current) - temp_Int64;
-            // CONVERSION PROBLEM?
-            var generatedAux = (int)temp_Int64;
+            // Determine current tile index from tileOfTileParts list
+            // The tile index is tracked by the most recent SOT marker
+            int currentTileIndex = 0;
+            if (tileOfTileParts != null && tileOfTileParts.Count > 0)
+            {
+                currentTileIndex = tileOfTileParts[tileOfTileParts.Count - 1];
+            }
 
-            FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO, "Skipping unsupported PLT marker");
+            try
+            {
+                // Read PLT marker data using PLTMarkerReader
+                PLTMarkerReader.ReadPLT(ehs.BaseStream, pltData, currentTileIndex);
+                
+                // Log successful PLT reading
+                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                    $"PLT marker read for tile {currentTileIndex}: {pltData.GetPacketCount(currentTileIndex)} packet lengths");
+            }
+            catch (Exception e)
+            {
+                // Fall back to skipping if reading fails
+                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING,
+                    $"Error reading PLT marker for tile {currentTileIndex}: {e.Message}. Skipping marker.");
+                
+                // Skip the marker content
+                int length = ehs.ReadUInt16();
+                var temp_BinaryReader = ehs;
+                var temp_Int64 = temp_BinaryReader.BaseStream.Position;
+                temp_Int64 = temp_BinaryReader.BaseStream.Seek(length - 2, System.IO.SeekOrigin.Current) - temp_Int64;
+            }
         }
 
         /// <summary> Reads the RGN marker segment of the codestream header.
@@ -2205,9 +2209,6 @@ namespace CoreJ2K.j2k.codestream.reader
         //UPGRADE_TODO: Class 'java.io.DataInputStream' was converted to 'System.IO.BinaryReader' which has a different behavior. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1073_javaioDataInputStream'"
         private void readPPM(System.IO.BinaryReader ehs)
         {
-            int curMarkSegLen;
-            int indx; // i, len, off removed
-            int remSegLen;
             //byte[] b;
 
             // If first time readPPM method is called allocate arrays for packed
@@ -2220,11 +2221,11 @@ namespace CoreJ2K.j2k.codestream.reader
             }
 
             // Lppm (marker length)
-            curMarkSegLen = ehs.ReadUInt16();
-            remSegLen = curMarkSegLen - 3;
+            int curMarkSegLen = ehs.ReadUInt16();
+            var remSegLen = curMarkSegLen - 3;
 
             // Zppm (index of PPM marker)
-            indx = ehs.ReadByte();
+            int indx = ehs.ReadByte(); // i, len, off removed
 
             // Read Nppm and Ippm data 
             pPMMarkerData[indx] = new byte[remSegLen];
@@ -2253,10 +2254,6 @@ namespace CoreJ2K.j2k.codestream.reader
         //UPGRADE_TODO: Class 'java.io.DataInputStream' was converted to 'System.IO.BinaryReader' which has a different behavior. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1073_javaioDataInputStream'"
         private void readPPT(System.IO.BinaryReader ehs, int tile, int tpIdx)
         {
-            int curMarkSegLen;
-            int indx; // len = 0; removed
-            byte[] temp;
-
             if (tilePartPkdPktHeaders == null)
             {
                 tilePartPkdPktHeaders = new byte[nTiles][][][];
@@ -2273,13 +2270,13 @@ namespace CoreJ2K.j2k.codestream.reader
             }
 
             // Lppt (marker length)
-            curMarkSegLen = ehs.ReadUInt16();
+            int curMarkSegLen = ehs.ReadUInt16();
 
             // Zppt (index of PPT marker)
-            indx = ehs.ReadByte();
+            int indx = ehs.ReadByte(); // len = 0; removed
 
             // Ippt (packed packet headers)
-            temp = new byte[curMarkSegLen - 3];
+            var temp = new byte[curMarkSegLen - 3];
             ehs.BaseStream.Read(temp, 0, temp.Length); //SupportClass.ReadInput(ehs.BaseStream, temp, 0, temp.Length);
             tilePartPkdPktHeaders[tile][tpIdx][indx] = temp;
 
@@ -2432,10 +2429,13 @@ namespace CoreJ2K.j2k.codestream.reader
                     break;
 
                 case Markers.PLT:
-                    throw new CorruptedCodestreamException("PLT found in main header");
-
-                case Markers.PPT:
-                    throw new CorruptedCodestreamException("PPT found in main header");
+                    if ((nfMarkSeg & PLM_FOUND) != 0)
+                    {
+                        throw new CorruptedCodestreamException("PLT marker found even though PLM marker found in main header");
+                    }
+                    nfMarkSeg |= PLT_FOUND;
+                    htKey = "PLT";
+                    break;
 
                 default:
                     htKey = "UNKNOWN";
@@ -2582,10 +2582,10 @@ namespace CoreJ2K.j2k.codestream.reader
                 case Markers.PLT:
                     if ((nfMarkSeg & PLM_FOUND) != 0)
                     {
-                        throw new CorruptedCodestreamException("PLT marker found even" + "though PLM marker " + "found in main header");
+                        throw new CorruptedCodestreamException("PLT marker found even though PLM marker found in main header");
                     }
-                    FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING, "PLT marker segment found but " + "not used by JJ2000 decoder.");
-                    htKey = "UNKNOWN";
+                    nfMarkSeg |= PLT_FOUND;
+                    htKey = "PLT";
                     break;
 
                 default:
@@ -2806,6 +2806,13 @@ namespace CoreJ2K.j2k.codestream.reader
                 }
             }
 
+            // PLT marker segment
+            if ((nfMarkSeg & PLT_FOUND) != 0)
+            {
+                bais = new System.IO.MemoryStream(ht["PLT"]);
+                readPLTFields(new Util.EndianBinaryReader(bais, true));
+            }
+
             // Reset ht
             ht = null;
         }
@@ -2882,19 +2889,15 @@ namespace CoreJ2K.j2k.codestream.reader
         /// </returns>
         public virtual EntropyDecoder createEntropyDecoder(CodedCBlkDataSrcDec src, ParameterList pl)
         {
-            bool doer;
-            bool verber;
-            int mMax;
-
             // Check parameters
             pl.checkList(EntropyDecoder.OPT_PREFIX, ParameterList.toNameArray(EntropyDecoder.ParameterInfo));
             // Get error detection option
-            doer = pl.getBooleanParameter("Cer");
+            var doer = pl.getBooleanParameter("Cer");
             // Get verbose error detection option
-            verber = pl.getBooleanParameter("Cverber");
+            var verber = pl.getBooleanParameter("Cverber");
 
             // Get maximum number of bit planes from m quit condition
-            mMax = pl.getIntParameter("m_quit");
+            var mMax = pl.getIntParameter("m_quit");
             return new StdEntropyDecoder(src, decSpec, doer, verber, mMax);
         }
 
@@ -3071,17 +3074,15 @@ namespace CoreJ2K.j2k.codestream.reader
                     int nppm;
                     var nTileParts = tileOfTileParts.Count;
                     byte[] temp;
-                    System.IO.MemoryStream pph;
                     var allNppmIppm = new System.IO.MemoryStream();
 
                     // Concatenate all Nppm and Ippm fields
                     for (i = 0; i < nPPMMarkSeg; i++)
                     {
-                        byte[] temp_byteArray;
-                        temp_byteArray = pPMMarkerData[i];
+                        var temp_byteArray = pPMMarkerData[i];
                         allNppmIppm.Write(temp_byteArray, 0, temp_byteArray.Length);
                     }
-                    pph = new System.IO.MemoryStream(allNppmIppm.ToArray());
+                    var pph = new System.IO.MemoryStream(allNppmIppm.ToArray());
 
                     // Read all packed packet headers and concatenate for each
                     // tile part
@@ -3094,8 +3095,7 @@ namespace CoreJ2K.j2k.codestream.reader
                         temp = new byte[nppm];
                         // get ippm field
                         pph.Read(temp, 0, temp.Length); //SupportClass.ReadInput(pph, temp, 0, temp.Length);
-                        byte[] temp_byteArray2;
-                        temp_byteArray2 = temp;
+                        var temp_byteArray2 = temp;
                         pkdPktHeaders[t].Write(temp_byteArray2, 0, temp_byteArray2.Length);
                     }
                 }
@@ -3109,8 +3109,7 @@ namespace CoreJ2K.j2k.codestream.reader
                         {
                             for (i = 0; i < nPPTMarkSeg[t][tp]; i++)
                             {
-                                byte[] temp_byteArray3;
-                                temp_byteArray3 = tilePartPkdPktHeaders[t][tp][i];
+                                var temp_byteArray3 = tilePartPkdPktHeaders[t][tp][i];
                                 pkdPktHeaders[t].Write(temp_byteArray3, 0, temp_byteArray3.Length);
                             }
                         }
@@ -3119,6 +3118,19 @@ namespace CoreJ2K.j2k.codestream.reader
             }
 
             return new System.IO.MemoryStream(pkdPktHeaders[tile].ToArray());
+        }
+
+        /// <summary> Returns the PLT (Packet Length, tile-part header) data if available.
+        /// PLT markers contain packet lengths which can be used for fast packet
+        /// access without parsing packet headers.
+        /// 
+        /// </summary>
+        /// <returns> The PacketLengthsData object containing PLT information, or null if no PLT data is available
+        /// 
+        /// </returns>
+        public virtual codestream.metadata.PacketLengthsData GetPLTData()
+        {
+            return pltData;
         }
     }
 }

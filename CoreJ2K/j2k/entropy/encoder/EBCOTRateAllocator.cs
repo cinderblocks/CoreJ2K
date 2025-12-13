@@ -848,6 +848,13 @@ namespace CoreJ2K.j2k.entropy.encoder
                 tlmData = new codestream.metadata.TilePartLengthsData();
             }
 
+            // PLT SUPPORT: Initialize PLT data collection if enabled
+            codestream.metadata.PacketLengthsData pltData = null;
+            if (headEnc.IsPLTEnabled)
+            {
+                pltData = new codestream.metadata.PacketLengthsData();
+            }
+
             tileLengths = new int[nt];
             actualBytes = 0;
 
@@ -920,6 +927,9 @@ namespace CoreJ2K.j2k.entropy.encoder
                                     tmp += bsWriter.writePacketBody(pktEnc.LastBodyBuf, pktEnc.LastBodyLen, true, pktEnc.ROIinPkt, pktEnc.ROILen);
                                     actualBytes += tmp;
                                     tileLengths[t] += tmp;
+
+                                    // PLT SUPPORT: Record packet length (header + body)
+                                    pltData?.AddPacket(t, tmp);
                                 }
                             } // End loop on precincts
                             sb = sb.parentband;
@@ -937,6 +947,12 @@ namespace CoreJ2K.j2k.entropy.encoder
                     // tileLengths[t] includes the complete tile-part length
                     tlmData.AddTilePart(t, 0, tileLengths[t]);
                 }
+            }
+
+            // PLT SUPPORT: Pass collected PLT data to header encoder
+            if (pltData != null)
+            {
+                headEnc.SetPLTData(pltData);
             }
 
 #if DO_TIMING
