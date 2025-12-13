@@ -114,6 +114,22 @@ namespace CoreJ2K.j2k.fileformat.reader
         /// </summary>
         public J2KMetadata Metadata { get; } = new J2KMetadata();
 
+        /// <summary>
+        /// Gets the JP2 file structure information for validation.
+        /// </summary>
+        public JP2Structure FileStructure { get; private set; }
+
+        /// <summary>
+        /// Gets the validator used for comprehensive JP2 format validation.
+        /// </summary>
+        public JP2Validator Validator { get; private set; }
+
+        /// <summary>
+        /// Gets or sets whether to perform strict validation (throws exceptions on errors).
+        /// Default is false (warnings only).
+        /// </summary>
+        public bool StrictValidation { get; set; } = false;
+
         /// <summary> The constructor of the FileFormatReader
         /// 
         /// </summary>
@@ -141,6 +157,9 @@ namespace CoreJ2K.j2k.fileformat.reader
         /// </exception>
         public virtual void readFileFormat()
         {
+            // Initialize validation structures
+            FileStructure = new JP2Structure();
+            Validator = new JP2Validator();
 
             //int foundCodeStreamBoxes = 0;
             int box;
@@ -150,6 +169,7 @@ namespace CoreJ2K.j2k.fileformat.reader
             short marker;
             var jp2HeaderBoxFound = false;
             var lastBoxFound = false;
+            var jp2HeaderBoxOrder = 0; // Track order of boxes within JP2 Header
 
             try
             {
@@ -159,7 +179,11 @@ namespace CoreJ2K.j2k.fileformat.reader
 
                 // Make sure that the first 12 bytes is the JP2_SIGNATURE_BOX or
                 // if not that the first 2 bytes is the SOC marker
-                if (in_Renamed.readInt() != 0x0000000c || in_Renamed.readInt() != FileFormatBoxes.JP2_SIGNATURE_BOX || in_Renamed.readInt() != 0x0d0a870a)
+                var firstInt = in_Renamed.readInt();
+                var secondInt = in_Renamed.readInt();
+                var thirdInt = in_Renamed.readInt();
+
+                if (firstInt != 0x0000000c || secondInt != FileFormatBoxes.JP2_SIGNATURE_BOX || thirdInt != 0x0d0a870a)
                 {
                     // Not a JP2 file
                     in_Renamed.seek(0);
@@ -175,6 +199,11 @@ namespace CoreJ2K.j2k.fileformat.reader
 
                 // The JP2 File format is being used
                 JP2FFUsed = true;
+
+                // Record signature box information
+                FileStructure.HasSignatureBox = true;
+                FileStructure.SignatureBoxPosition = 0;
+                FileStructure.SignatureBoxLength = 12;
 
                 // Read File Type box
                 if (!readFileTypeBox())
@@ -214,25 +243,40 @@ namespace CoreJ2K.j2k.fileformat.reader
                                 throw new InvalidOperationException("Invalid JP2 file: JP2Header box not " + "found before Contiguous codestream " + "box ");
                             }
                             readContiguousCodeStreamBox(pos, length, longLength);
+                            FileStructure.HasContiguousCodestreamBox = true;
+                            FileStructure.ContiguousCodestreamBoxPosition = pos;
                             break;
 
                         case FileFormatBoxes.JP2_HEADER_BOX:
                             if (jp2HeaderBoxFound)
+                            {
+                                FileStructure.JP2HeaderBoxCount++;
                                 throw new InvalidOperationException("Invalid JP2 file: Multiple " + "JP2Header boxes found");
-                            readJP2HeaderBox(pos, length, longLength);
+                            }
+                            readJP2HeaderBox(pos, length, longLength, ref jp2HeaderBoxOrder);
                             jp2HeaderBoxFound = true;
+                            FileStructure.HasJP2HeaderBox = true;
+                            FileStructure.JP2HeaderBoxPosition = pos;
+                            FileStructure.JP2HeaderBoxLength = length;
+                            FileStructure.JP2HeaderBoxCount = 1;
                             break;
 
                         case FileFormatBoxes.INTELLECTUAL_PROPERTY_BOX:
                             readIntPropertyBox(length);
+                            if (!jp2HeaderBoxFound)
+                                FileStructure.HasMetadataBeforeHeader = true;
                             break;
 
                         case FileFormatBoxes.XML_BOX:
                             readXMLBox(length);
+                            if (!jp2HeaderBoxFound)
+                                FileStructure.HasMetadataBeforeHeader = true;
                             break;
 
                         case FileFormatBoxes.UUID_BOX:
                             readUUIDBox(length);
+                            if (!jp2HeaderBoxFound)
+                                FileStructure.HasMetadataBeforeHeader = true;
                             break;
 
                         case FileFormatBoxes.UUID_INFO_BOX:
@@ -270,6 +314,29 @@ namespace CoreJ2K.j2k.fileformat.reader
             {
                 // Not a valid JP2 file or codestream
                 throw new InvalidOperationException("Invalid JP2 file: Contiguous codestream box " + "missing");
+            }
+
+            // Perform validation
+            Validator.ValidateFileFormat(FileStructure);
+
+            // Log validation results
+            if (Validator.HasErrors)
+            {
+                var report = Validator.GetValidationReport();
+                if (StrictValidation)
+                {
+                    throw new InvalidOperationException($"JP2 validation failed:\n{report}");
+                }
+                else
+                {
+                    FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING,
+                        $"JP2 file has validation errors but continuing in non-strict mode:\n{report}");
+                }
+            }
+            else if (Validator.HasWarnings)
+            {
+                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                    Validator.GetValidationReport());
             }
 
             return;
@@ -311,6 +378,11 @@ namespace CoreJ2K.j2k.fileformat.reader
                 return false;
             }
 
+            // Record File Type box information
+            FileStructure.HasFileTypeBox = true;
+            FileStructure.FileTypeBoxPosition = pos;
+            FileStructure.FileTypeBoxLength = length;
+
             // Check for XLBox
             if (length == 1)
             {
@@ -320,10 +392,11 @@ namespace CoreJ2K.j2k.fileformat.reader
             }
 
             // Read Brand field
-            in_Renamed.readInt();
+            var brand = in_Renamed.readInt();
+            FileStructure.HasValidBrand = (brand == FileFormatBoxes.FT_BR);
 
             // Read MinV field
-            in_Renamed.readInt();
+            FileStructure.MinorVersion = in_Renamed.readInt();
 
             // Check that there is at least one FT_BR entry in in
             // compatibility list
@@ -331,7 +404,10 @@ namespace CoreJ2K.j2k.fileformat.reader
             for (var i = nComp; i > 0; i--)
             {
                 if (in_Renamed.readInt() == FileFormatBoxes.FT_BR)
+                {
                     foundComp = true;
+                    FileStructure.HasJP2Compatibility = true;
+                }
             }
             return foundComp;
         }
@@ -349,6 +425,9 @@ namespace CoreJ2K.j2k.fileformat.reader
         /// 1<<32
         /// 
         /// </param>
+        /// <param name="jp2HeaderBoxOrder">Reference parameter to track the order of boxes within JP2 Header
+        /// 
+        /// </param>
         /// <returns> false if the JP2Header box was not found or invalid else true
         /// 
         /// </returns>
@@ -358,7 +437,7 @@ namespace CoreJ2K.j2k.fileformat.reader
         /// <exception cref="java.io.EOFException">If the end of file was reached
         /// 
         /// </exception>
-        public virtual bool readJP2HeaderBox(long pos, int length, long longLength)
+        public virtual bool readJP2HeaderBox(long pos, int length, long longLength, ref int jp2HeaderBoxOrder)
         {
 
             if (length == 0)
@@ -384,9 +463,22 @@ namespace CoreJ2K.j2k.fileformat.reader
                     var boxType = (boxHeader[4] << 24) | (boxHeader[5] << 16) | 
                                   (boxHeader[6] << 8) | boxHeader[7];
 
-                    // Check for Color Specification Box
-                    if (boxType == FileFormatBoxes.COLOUR_SPECIFICATION_BOX)
+                    // Track box types for validation
+                    if (boxType == FileFormatBoxes.IMAGE_HEADER_BOX)
                     {
+                        FileStructure.HasImageHeaderBox = true;
+                        FileStructure.ImageHeaderBoxOrder = jp2HeaderBoxOrder++;
+
+                        // Read BPC field from Image Header Box to check if Bits Per Component box is needed
+                        // Skip HEIGHT(4), WIDTH(4), NC(2) to get to BPC(1)
+                        in_Renamed.seek(currentPos + 8 + 10); // Skip box header + HEIGHT + WIDTH + NC
+                        FileStructure.ImageHeaderBPCValue = in_Renamed.readByte();
+                    }
+                    else if (boxType == FileFormatBoxes.COLOUR_SPECIFICATION_BOX)
+                    {
+                        FileStructure.HasColourSpecificationBox = true;
+                        FileStructure.ColourSpecificationBoxOrder = jp2HeaderBoxOrder++;
+
                         // Read color specification box contents
                         var csBoxData = new byte[boxLen - 8];
                         in_Renamed.readFully(csBoxData, 0, boxLen - 8);
@@ -415,9 +507,17 @@ namespace CoreJ2K.j2k.fileformat.reader
                             }
                         }
                     }
+                    else if (boxType == FileFormatBoxes.BITS_PER_COMPONENT_BOX)
+                    {
+                        FileStructure.HasBitsPerComponentBox = true;
+                        FileStructure.BitsPerComponentBoxOrder = jp2HeaderBoxOrder++;
+                    }
                     // Check for Resolution Box (superbox containing capture and/or display resolution)
                     else if (boxType == FileFormatBoxes.RESOLUTION_BOX)
                     {
+                        FileStructure.HasResolutionBox = true;
+                        FileStructure.ResolutionBoxOrder = jp2HeaderBoxOrder++;
+
                         // Resolution box is a superbox containing resc and/or resd boxes
                         var resBoxStart = currentPos + 8;
                         var resBoxEnd = currentPos + boxLen;
@@ -427,16 +527,25 @@ namespace CoreJ2K.j2k.fileformat.reader
                     // Check for Channel Definition Box
                     else if (boxType == FileFormatBoxes.CHANNEL_DEFINITION_BOX)
                     {
+                        FileStructure.HasChannelDefinitionBox = true;
+                        FileStructure.ChannelDefinitionBoxOrder = jp2HeaderBoxOrder++;
+
                         readChannelDefinitionBox(boxLen);
                     }
                     // Check for Palette Box
                     else if (boxType == FileFormatBoxes.PALETTE_BOX)
                     {
+                        FileStructure.HasPaletteBox = true;
+                        FileStructure.PaletteBoxOrder = jp2HeaderBoxOrder++;
+
                         readPaletteBox(boxLen);
                     }
                     // Check for Component Mapping Box
                     else if (boxType == FileFormatBoxes.COMPONENT_MAPPING_BOX)
                     {
+                        FileStructure.HasComponentMappingBox = true;
+                        FileStructure.ComponentMappingBoxOrder = jp2HeaderBoxOrder++;
+
                         readComponentMappingBox(boxLen);
                     }
 
