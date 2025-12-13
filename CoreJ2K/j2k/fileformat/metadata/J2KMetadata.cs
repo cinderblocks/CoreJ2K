@@ -5,12 +5,13 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using CoreJ2K.Color.ICC;
+using CoreJ2K.j2k.codestream.metadata;
 
 namespace CoreJ2K.j2k.fileformat.metadata
 {
     /// <summary>
     /// Represents metadata extracted from or to be written to a JPEG2000 file.
-    /// Supports comments, XML boxes (XMP, IPTC), UUID boxes, ICC profiles, resolution data, and channel definitions.
+    /// Supports comments, XML boxes (XMP, IPTC), UUID boxes, ICC profiles, resolution data, channel definitions, and TLM data.
     /// </summary>
     public class J2KMetadata
     {
@@ -43,6 +44,11 @@ namespace CoreJ2K.j2k.fileformat.metadata
         /// Gets or sets the channel definition metadata (alpha channel, component types).
         /// </summary>
         public ChannelDefinitionData ChannelDefinitions { get; set; }
+
+        /// <summary>
+        /// Gets or sets the tile-part lengths data (TLM marker information) for fast tile access.
+        /// </summary>
+        public TilePartLengthsData TilePartLengths { get; set; }
 
         /// <summary>
         /// Adds a simple text comment to the metadata.

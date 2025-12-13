@@ -1015,6 +1015,11 @@ namespace CoreJ2K.j2k.codestream
         /// <summary>Number of found COM marker segment </summary>
         private int ncom = 0;
 
+        /// <summary>Reference to the TLM (Tile-part Lengths, Main header) marker segment data.
+        /// Contains tile-part length information for fast random tile access.
+        /// </summary>
+        public codestream.metadata.TilePartLengthsData tlmValue;
+
         /// <summary>Display information found in the different marker segments of the main
         /// header 
         /// </summary>

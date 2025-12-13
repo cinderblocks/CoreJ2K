@@ -939,7 +939,7 @@ namespace CoreJ2K.j2k.codestream.reader
                         minb = 1 << ((hpd - 1) << 1); // minb = 4^(hpd-1)
                         maxb = 1 << (hpd << 1); // maxb = 4^hpd
                     }
-                    // Allocate array for subbands in resolution level
+                    // Allocate array for subbands in the resolution level
                     exp[rl] = new int[maxb];
 
                     for (j = minb; j < maxb; j++)
@@ -993,7 +993,7 @@ namespace CoreJ2K.j2k.codestream.reader
                         minb = 1 << ((hpd - 1) << 1); // minb = 4^(hpd-1)
                         maxb = 1 << (hpd << 1); // maxb = 4^hpd
                     }
-                    // Allocate array for subbands in resolution level
+                    // Allocate array for subbands in the resolution level
                     exp[rl] = new int[maxb];
                     nStep[rl] = new float[maxb];
 
@@ -1126,7 +1126,7 @@ namespace CoreJ2K.j2k.codestream.reader
                         break;
 
                     default:
-                        throw new CorruptedCodestreamException("Unknown or " + "unsupported " + "quantization style " + "in Sqcd field, QCD " + "marker, main header");
+                        throw new CorruptedCodestreamException("Unknown or " + "unsupported " + "quantization style " + "in Sqcd field, QCD " + "marker, tile header");
 
                 }
             }
@@ -1176,7 +1176,7 @@ namespace CoreJ2K.j2k.codestream.reader
                         minb = 1 << ((hpd - 1) << 1); // minb = 4^(hpd-1)
                         maxb = 1 << (hpd << 1); // maxb = 4^hpd
                     }
-                    // Allocate array for subbands in resolution level
+                    // Allocate array for subbands in the resolution level
                     expC[rl] = new int[maxb];
 
                     for (j = minb; j < maxb; j++)
@@ -1229,7 +1229,7 @@ namespace CoreJ2K.j2k.codestream.reader
                         minb = 1 << ((hpd - 1) << 1); // minb = 4^(hpd-1)
                         maxb = 1 << (hpd << 1); // maxb = 4^hpd
                     }
-                    // Allocate array for subbands in resolution level
+                    // Allocate array for subbands in the resolution level
                     expC[rl] = new int[maxb];
                     nStepC[rl] = new float[maxb];
 
@@ -1906,36 +1906,158 @@ namespace CoreJ2K.j2k.codestream.reader
             }
         }
 
-        /// <summary> Reads TLM marker segment and realigns the codestream where the next
-        /// marker should be found. Informations stored in these fields are
-        /// currently NOT taken into account.
+        /// <summary> Reads TLM marker segment and parses tile-part length information.
+        /// TLM markers contain information about tile-part lengths for fast random
+        /// tile access without parsing the entire codestream.
         /// 
         /// </summary>
-        /// <param name="ehs">The encoder header stream.
+        /// <param name="ehs">The encoded header stream.
         /// 
         /// </param>
+        /// <returns>TilePartLengthsData containing the parsed TLM information, or null if parsing fails
+        /// 
+        /// </returns>
         /// <exception cref="IOException">If an I/O error occurs while reading from the
         /// encoder header stream
         /// 
         /// </exception>
         //UPGRADE_TODO: Class 'java.io.DataInputStream' was converted to 'System.IO.BinaryReader' which has a different behavior. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1073_javaioDataInputStream'"
-        private void readTLM(System.IO.BinaryReader ehs)
+        private codestream.metadata.TilePartLengthsData readTLM(System.IO.BinaryReader ehs)
         {
-            int length;
-
-            length = ehs.ReadUInt16();
-            //Ignore all informations contained
-            System.IO.BinaryReader temp_BinaryReader;
-            long temp_Int64;
-            temp_BinaryReader = ehs;
-            temp_Int64 = temp_BinaryReader.BaseStream.Position;
-            temp_Int64 = temp_BinaryReader.BaseStream.Seek(length - 2, System.IO.SeekOrigin.Current) - temp_Int64;
-            // CONVERSION PROBLEM?
-            var generatedAux = (int)temp_Int64;
-
-            FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO, "Skipping unsupported TLM marker");
+            try
+            {
+                var tlm = new codestream.metadata.TilePartLengthsData();
+                
+                // Ltlm (marker segment length)
+                int ltlm = ehs.ReadUInt16();
+                int dataLength = ltlm - 2; // Remaining bytes after Ltlm
+                
+                // Ztlm (index of this TLM marker segment, for multiple TLM markers)
+                int ztlm = ehs.ReadByte();
+                dataLength--;
+                
+                // Stlm (size parameters)
+                int stlm = ehs.ReadByte();
+                dataLength--;
+                
+                // Parse Stlm field
+                // Bits 6-7: Size of Ttlm field (tile index)
+                int ttlmSize = (stlm >> 6) & 0x03;
+                
+                // Bits 4-5: Size of Ptlm field (tile-part length)
+                // 00 = 16 bits (2 bytes), 01 = 32 bits (4 bytes)
+                int ptlmSize = ((stlm >> 4) & 0x03) == 0 ? 2 : 4;
+                
+                // Validate field sizes
+                if (ttlmSize == 3)
+                {
+                    FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING,
+                        "Invalid TLM marker: reserved Ttlm size value (3)");
+                    return null;
+                }
+                
+                if (((stlm >> 4) & 0x03) > 1)
+                {
+                    FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING,
+                        "Invalid TLM marker: reserved Ptlm size value");
+                    return null;
+                }
+                
+                // Calculate entry size and number of entries
+                int entrySize = ttlmSize + ptlmSize;
+                if (entrySize == 0)
+                {
+                    FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING,
+                        "Invalid TLM marker: entry size is zero");
+                    return null;
+                }
+                
+                int numEntries = dataLength / entrySize;
+                
+                // Track current tile index for implicit tile indexing
+                int currentTileIndex = 0;
+                int tilePartIndex = 0;
+                
+                // Read tile-part entries
+                for (int i = 0; i < numEntries; i++)
+                {
+                    int tileIndex;
+                    
+                    // Read Ttlm (tile index) - size depends on ttlmSize
+                    if (ttlmSize == 0)
+                    {
+                        // Implicit: tiles in sequential order
+                        tileIndex = currentTileIndex;
+                    }
+                    else if (ttlmSize == 1)
+                    {
+                        // 1 byte tile index
+                        tileIndex = ehs.ReadByte();
+                        if (tileIndex != currentTileIndex)
+                        {
+                            // New tile, reset part index
+                            tilePartIndex = 0;
+                            currentTileIndex = tileIndex;
+                        }
+                    }
+                    else // ttlmSize == 2
+                    {
+                        // 2 byte tile index
+                        tileIndex = ehs.ReadUInt16();
+                        if (tileIndex != currentTileIndex)
+                        {
+                            // New tile, reset part index
+                            tilePartIndex = 0;
+                            currentTileIndex = tileIndex;
+                        }
+                    }
+                    
+                    // Read Ptlm (tile-part length)
+                    int tilePartLength;
+                    if (ptlmSize == 2)
+                    {
+                        // 16-bit length
+                        tilePartLength = ehs.ReadUInt16();
+                    }
+                    else // ptlmSize == 4
+                    {
+                        // 32-bit length
+                        tilePartLength = ehs.ReadInt32();
+                    }
+                    
+                    // Add to TLM data
+                    tlm.AddTilePart(tileIndex, tilePartIndex, tilePartLength);
+                    
+                    // Increment part index
+                    if (ttlmSize == 0)
+                    {
+                        // For implicit tiles, increment both indices
+                        tilePartIndex++;
+                        if (tilePartLength == 0)
+                        {
+                            // End of current tile, move to next
+                            currentTileIndex++;
+                            tilePartIndex = 0;
+                        }
+                    }
+                    else
+                    {
+                        tilePartIndex++;
+                    }
+                }
+                
+                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                    $"TLM marker parsed: {numEntries} tile-part entries (Ztlm={ztlm})");
+                
+                return tlm;
+            }
+            catch (Exception e)
+            {
+                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING,
+                    $"Error parsing TLM marker: {e.Message}");
+                return null;
+            }
         }
-
         /// <summary> Reads PLM marker segment and realigns the codestream where the next
         /// marker should be found. Informations stored in these fields are
         /// currently not taken into account.
@@ -2287,6 +2409,7 @@ namespace CoreJ2K.j2k.codestream.reader
                         throw new CorruptedCodestreamException("More than one TLM " + "marker " + "found in main header");
                     }
                     nfMarkSeg |= TLM_FOUND;
+                    htKey = "TLM";
                     break;
 
                 case Markers.PLM:
@@ -2504,6 +2627,13 @@ namespace CoreJ2K.j2k.codestream.reader
             {
                 bais = new System.IO.MemoryStream(ht["SIZ"]);
                 readSIZ(new Util.EndianBinaryReader(bais, true));
+            }
+
+            // TLM marker segment
+            if ((nfMarkSeg & TLM_FOUND) != 0)
+            {
+                bais = new System.IO.MemoryStream(ht["TLM"]);
+                hi.tlmValue = readTLM(new Util.EndianBinaryReader(bais, true));
             }
 
             // COM marker segments

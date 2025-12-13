@@ -1247,6 +1247,107 @@ namespace CoreJ2K.j2k.codestream.writer
             }
         }
 
+        /// <summary> Writes TLM marker segment(s) in the main header.
+        /// TLM markers contain tile-part lengths for fast random tile access.
+        /// 
+        /// Multiple TLM markers may be written if there are many tiles.
+        /// 
+        /// </summary>
+        /// <param name="tlm">The TLM data to write
+        /// 
+        /// </param>
+        protected internal virtual void writeTLM(CoreJ2K.j2k.codestream.metadata.TilePartLengthsData tlm)
+        {
+            if (tlm == null || !tlm.HasTilePartLengths)
+                return;
+
+            try
+            {
+                // Determine optimal field sizes
+                int maxTileIndex = tlm.MaxTileIndex;
+                long maxLength = 0;
+                foreach (var entry in tlm.TilePartEntries)
+                {
+                    if (entry.TilePartLength > maxLength)
+                        maxLength = entry.TilePartLength;
+                }
+                
+                // Determine Ttlm size (0, 1, or 2 bytes)
+                // Use 1 byte if max tile index < 256, 2 bytes otherwise
+                int ttlmSize;
+                if (maxTileIndex < 256)
+                    ttlmSize = 1;
+                else
+                    ttlmSize = 2;
+                
+                // Determine Ptlm size (2 or 4 bytes)
+                int ptlmSize = (maxLength <= 65535) ? 2 : 4;
+                
+                // Calculate Stlm field
+                // Bits 6-7: Ttlm size (00=0, 01=1 byte, 10=2 bytes)
+                // Bits 4-5: Ptlm size (00=2 bytes, 01=4 bytes)
+                int stlm = (ttlmSize << 6) | ((ptlmSize == 4 ? 1 : 0) << 4);
+                
+                // Calculate entry size and max entries per marker
+                int entrySize = ttlmSize + ptlmSize;
+                int maxEntries = (65535 - 4) / entrySize;  // Max entries in one TLM marker
+                
+                var entries = new System.Collections.Generic.List<CoreJ2K.j2k.codestream.metadata.TilePartEntry>(tlm.TilePartEntries);
+                int totalEntries = entries.Count;
+                int entryIndex = 0;
+                int ztlm = 0;
+                
+                // Write TLM markers (may need multiple if many tiles)
+                while (entryIndex < totalEntries)
+                {
+                    int entriesInThisMarker = System.Math.Min(maxEntries, totalEntries - entryIndex);
+                    int ltlm = 4 + (entriesInThisMarker * entrySize);
+                    
+                    // Write TLM marker
+                    hbuf.Write(Markers.TLM);
+                    
+                    // Write Ltlm (marker length)
+                    hbuf.Write((short)ltlm);
+                    
+                    // Write Ztlm (marker index)
+                    hbuf.Write((byte)ztlm++);
+                    
+                    // Write Stlm (size parameters)
+                    hbuf.Write((byte)stlm);
+                    
+                    // Write tile-part entries
+                    for (int i = 0; i < entriesInThisMarker; i++)
+                    {
+                        var entry = entries[entryIndex++];
+                        
+                        // Write Ttlm (tile index)
+                        if (ttlmSize == 1)
+                        {
+                            hbuf.Write((byte)entry.TileIndex);
+                        }
+                        else if (ttlmSize == 2)
+                        {
+                            hbuf.Write((short)entry.TileIndex);
+                        }
+                        // ttlmSize == 0 means implicit (sequential), not used here
+                        
+                        // Write Ptlm (tile-part length)
+                        if (ptlmSize == 2)
+                        {
+                            hbuf.Write((short)entry.TilePartLength);
+                        }
+                        else // ptlmSize == 4
+                        {
+                            hbuf.Write(entry.TilePartLength);
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                throw new InvalidOperationException($"Error writing TLM marker: {e.Message}", e);
+            }
+        }
         /// <summary> Writes QCD marker segment in tile header. QCD is a functional marker
         /// segment countaining the quantization default used for compressing all
         /// the components in an image. The values can be overriden for an
