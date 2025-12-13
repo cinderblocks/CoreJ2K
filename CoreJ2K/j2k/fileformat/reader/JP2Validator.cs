@@ -464,6 +464,38 @@ namespace CoreJ2K.j2k.fileformat.reader
                 $"Compatibility list contains {compatibilityList.Length} profile(s)");
         }
 
+        /// <summary>
+        /// Performs comprehensive codestream validation using CodestreamValidator.
+        /// This validates the full codestream structure including all markers per Annex A.
+        /// </summary>
+        /// <param name="codestreamBytes">The codestream data.</param>
+        /// <param name="maxBytesToRead">Maximum bytes to read (0 = read all available).</param>
+        /// <returns>True if codestream validation passed without errors.</returns>
+        public bool ValidateCodestreamComprehensive(byte[] codestreamBytes, int maxBytesToRead = 0)
+        {
+            var csValidator = new CoreJ2K.j2k.codestream.CodestreamValidator();
+            var result = csValidator.ValidateCodestream(codestreamBytes, maxBytesToRead);
+
+            // Merge errors and warnings from codestream validator
+            foreach (var error in csValidator.Errors)
+            {
+                errors.Add($"Codestream: {error}");
+            }
+
+            foreach (var warning in csValidator.Warnings)
+            {
+                warnings.Add($"Codestream: {warning}");
+            }
+
+            // Log info messages
+            foreach (var info in csValidator.Info)
+            {
+                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO, $"Codestream: {info}");
+            }
+
+            return result;
+        }
+
         // #endregion
 
         /// <summary>

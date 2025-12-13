@@ -130,6 +130,20 @@ namespace CoreJ2K.j2k.fileformat.reader
         /// </summary>
         public bool StrictValidation { get; set; } = false;
 
+        /// <summary>
+        /// Gets or sets whether to perform comprehensive codestream validation.
+        /// This validates all codestream markers per ISO/IEC 15444-1 Annex A.
+        /// Default is false (only basic validation).
+        /// </summary>
+        public bool ComprehensiveCodestreamValidation { get; set; } = false;
+
+        /// <summary>
+        /// Gets or sets maximum bytes to read for codestream validation.
+        /// 0 = validate entire codestream. Smaller values improve performance for large files.
+        /// Default is 65536 (64KB) for performance.
+        /// </summary>
+        public int MaxCodestreamValidationBytes { get; set; } = 65536;
+
         /// <summary> The constructor of the FileFormatReader
         /// 
         /// </summary>
@@ -316,18 +330,33 @@ namespace CoreJ2K.j2k.fileformat.reader
                 throw new InvalidOperationException("Invalid JP2 file: Contiguous codestream box " + "missing");
             }
 
-            // Validate basic codestream markers
+            // Validate codestream markers
             try
             {
-                // Read first few bytes of codestream to validate markers
+                // Read codestream data for validation
                 var savedPos = in_Renamed.Pos;
                 in_Renamed.seek(codeStreamPos[0]);
                 
-                var markerCheckSize = Math.Min(codeStreamLength[0], 1024); // Check first 1KB
-                var codestreamSample = new byte[markerCheckSize];
-                in_Renamed.readFully(codestreamSample, 0, markerCheckSize);
+                // Determine how many bytes to validate
+                var bytesToValidate = MaxCodestreamValidationBytes > 0 
+                    ? Math.Min(codeStreamLength[0], MaxCodestreamValidationBytes)
+                    : codeStreamLength[0];
                 
-                Validator.ValidateBasicCodestreamMarkers(codestreamSample);
+                var codestreamSample = new byte[bytesToValidate];
+                in_Renamed.readFully(codestreamSample, 0, bytesToValidate);
+                
+                if (ComprehensiveCodestreamValidation)
+                {
+                    // Comprehensive validation (slower, more thorough)
+                    FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                        $"Performing comprehensive codestream validation ({bytesToValidate} bytes)...");
+                    Validator.ValidateCodestreamComprehensive(codestreamSample, bytesToValidate);
+                }
+                else
+                {
+                    // Basic validation (fast, checks main markers only)
+                    Validator.ValidateBasicCodestreamMarkers(codestreamSample);
+                }
                 
                 in_Renamed.seek(savedPos);
             }
