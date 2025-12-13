@@ -316,6 +316,27 @@ namespace CoreJ2K.j2k.fileformat.reader
                 throw new InvalidOperationException("Invalid JP2 file: Contiguous codestream box " + "missing");
             }
 
+            // Validate basic codestream markers
+            try
+            {
+                // Read first few bytes of codestream to validate markers
+                var savedPos = in_Renamed.Pos;
+                in_Renamed.seek(codeStreamPos[0]);
+                
+                var markerCheckSize = Math.Min(codeStreamLength[0], 1024); // Check first 1KB
+                var codestreamSample = new byte[markerCheckSize];
+                in_Renamed.readFully(codestreamSample, 0, markerCheckSize);
+                
+                Validator.ValidateBasicCodestreamMarkers(codestreamSample);
+                
+                in_Renamed.seek(savedPos);
+            }
+            catch (Exception e)
+            {
+                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING,
+                    $"Could not validate codestream markers: {e.Message}");
+            }
+
             // Perform validation
             Validator.ValidateFileFormat(FileStructure);
 
@@ -388,6 +409,10 @@ namespace CoreJ2K.j2k.fileformat.reader
             {
                 // Box has 8 byte length;
                 longLength = in_Renamed.readLong();
+                
+                // Detect extended length
+                Validator.DetectExtendedLength(length, longLength);
+                
                 throw new System.IO.IOException("File too long.");
             }
 
@@ -398,17 +423,25 @@ namespace CoreJ2K.j2k.fileformat.reader
             // Read MinV field
             FileStructure.MinorVersion = in_Renamed.readInt();
 
-            // Check that there is at least one FT_BR entry in in
+            // Check that there is at least one FT_BR entry in
             // compatibility list
             nComp = (length - 16) / 4; // Number of compatibilities.
-            for (var i = nComp; i > 0; i--)
+            
+            // Store compatibility list for validation
+            var compatList = new int[nComp];
+            for (var i = 0; i < nComp; i++)
             {
-                if (in_Renamed.readInt() == FileFormatBoxes.FT_BR)
+                compatList[i] = in_Renamed.readInt();
+                if (compatList[i] == FileFormatBoxes.FT_BR)
                 {
                     foundComp = true;
                     FileStructure.HasJP2Compatibility = true;
                 }
             }
+            
+            // Validate compatibility list
+            Validator.ValidateCompatibilityList(compatList, true);
+            
             return foundComp;
         }
 
@@ -499,11 +532,23 @@ namespace CoreJ2K.j2k.fileformat.reader
                                 var iccProfile = new byte[profileSize];
                                 Array.Copy(csBoxData, 3, iccProfile, 0, profileSize);
                                 
-                                // Add to metadata
-                                Metadata.SetIccProfile(iccProfile);
+                                // Validate ICC profile header
+                                if (Validator.ValidateIccProfileBasic(iccProfile))
+                                {
+                                    // Add to metadata
+                                    Metadata.SetIccProfile(iccProfile);
 
-                                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO,
-                                    $"Found ICC Profile ({profileSize} bytes)");
+                                    FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                                        $"Found ICC Profile ({profileSize} bytes)");
+                                }
+                                else
+                                {
+                                    // Still add even if validation failed, but user is warned
+                                    Metadata.SetIccProfile(iccProfile);
+                                    
+                                    FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING,
+                                        $"ICC Profile validation warnings detected, but profile was loaded ({profileSize} bytes)");
+                                }
                             }
                         }
                     }

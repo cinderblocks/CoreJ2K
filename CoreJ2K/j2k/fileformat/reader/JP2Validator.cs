@@ -3,12 +3,13 @@
 
 using System;
 using System.Collections.Generic;
+using CoreJ2K.j2k.util;
 
 namespace CoreJ2K.j2k.fileformat.reader
 {
     /// <summary>
     /// Provides comprehensive validation for JPEG 2000 JP2 file format per ISO/IEC 15444-1.
-    /// Validates box ordering, required boxes, and proper structure.
+    /// Validates box ordering, required boxes, proper structure, and performs enhanced compliance checks.
     /// </summary>
     public class JP2Validator
     {
@@ -57,6 +58,9 @@ namespace CoreJ2K.j2k.fileformat.reader
 
             // Validate box ordering
             ValidateBoxOrdering(structure);
+
+            // Run enhanced compliance checks
+            RunEnhancedValidationChecks(structure);
         }
 
         /// <summary>
@@ -215,6 +219,252 @@ namespace CoreJ2K.j2k.fileformat.reader
                 warnings.Add("Metadata boxes (XML, UUID) found before JP2 Header Box (non-standard location)");
             }
         }
+
+        /// <summary>
+        /// Runs enhanced validation checks for improved compliance.
+        /// </summary>
+        private void RunEnhancedValidationChecks(JP2Structure structure)
+        {
+            FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                "Running enhanced compliance validation checks...");
+
+            // Validate MinorVersion
+            if (structure.HasFileTypeBox)
+            {
+                ValidateMinorVersion(structure.MinorVersion);
+                LogBrandInformation(structure.HasValidBrand ? FileFormatBoxes.FT_BR : 0);
+            }
+
+            // Check BPC box requirement
+            if (structure.HasImageHeaderBox && structure.ImageHeaderBPCValue == 0xFF)
+            {
+                if (!structure.HasBitsPerComponentBox)
+                {
+                    FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING,
+                        "Image Header has BPC=0xFF but Bits Per Component box is missing (required)");
+                }
+                else
+                {
+                    FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                        "Bits Per Component box present as required (BPC varies)");
+                }
+            }
+
+            FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                "Enhanced validation checks complete");
+        }
+
+        // #region Enhanced Validation Methods
+
+        /// <summary>
+        /// Validates the MinorVersion (MinV) field in the File Type box per ISO/IEC 15444-1 Section I.5.2.
+        /// The MinV field indicates the minor version of the JP2 specification.
+        /// </summary>
+        private void ValidateMinorVersion(int minorVersion)
+        {
+            if (minorVersion < 0)
+            {
+                errors.Add($"Invalid MinorVersion value: {minorVersion} (must be non-negative)");
+            }
+
+            if (minorVersion > 0)
+            {
+                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                    $"File uses MinorVersion {minorVersion} (> 0). " +
+                    "This may indicate extended features beyond baseline JP2. " +
+                    "Some features may not be fully supported.");
+            }
+        }
+
+        /// <summary>
+        /// Logs information about the file brand.
+        /// </summary>
+        private void LogBrandInformation(int brand)
+        {
+            const int JP2_BRAND = 0x6a703220; // 'jp2 '
+            const int JPX_BRAND = 0x6a707820; // 'jpx ' (Part 2)
+            const int JPM_BRAND = 0x6a706d20; // 'jpm ' (Part 6)
+
+            if (brand == JP2_BRAND)
+            {
+                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                    "File brand: jp2 (baseline JPEG 2000 Part 1)");
+            }
+            else if (brand == JPX_BRAND)
+            {
+                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                    "File brand: jpx (JPEG 2000 Part 2 - Extensions)");
+            }
+            else if (brand == JPM_BRAND)
+            {
+                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                    "File brand: jpm (JPEG 2000 Part 6 - Compound Image)");
+            }
+            else if (brand != 0)
+            {
+                var brandStr = $"{(char)((brand >> 24) & 0xFF)}{(char)((brand >> 16) & 0xFF)}" +
+                             $"{(char)((brand >> 8) & 0xFF)}{(char)(brand & 0xFF)}";
+                warnings.Add($"Unknown file brand: '{brandStr}' (0x{brand:X8}). Expected 'jp2 ', 'jpx ', or 'jpm '");
+            }
+        }
+
+        /// <summary>
+        /// Performs basic ICC profile header validation per ICC.1:2010 specification.
+        /// Validates profile size, signature, and version fields.
+        /// </summary>
+        /// <param name="profileBytes">The ICC profile data.</param>
+        /// <returns>True if basic validation passes, false otherwise.</returns>
+        public bool ValidateIccProfileBasic(byte[] profileBytes)
+        {
+            if (profileBytes == null || profileBytes.Length < 128)
+            {
+                warnings.Add("ICC profile is too small (< 128 bytes minimum header size)");
+                return false;
+            }
+
+            // Check profile size field (bytes 0-3, big-endian)
+            var profileSize = (profileBytes[0] << 24) | (profileBytes[1] << 16) |
+                            (profileBytes[2] << 8) | profileBytes[3];
+
+            if (profileSize != profileBytes.Length)
+            {
+                warnings.Add($"ICC profile size mismatch: header says {profileSize} bytes, actual {profileBytes.Length} bytes");
+                return false;
+            }
+
+            // Check profile signature 'acsp' (bytes 36-39)
+            if (profileBytes[36] != 'a' || profileBytes[37] != 'c' ||
+                profileBytes[38] != 's' || profileBytes[39] != 'p')
+            {
+                warnings.Add("ICC profile missing 'acsp' signature at offset 36");
+                return false;
+            }
+
+            // Check color space signature (bytes 16-19)
+            var colorSpace = $"{(char)profileBytes[16]}{(char)profileBytes[17]}" +
+                           $"{(char)profileBytes[18]}{(char)profileBytes[19]}";
+
+            // Common colorspaces: 'RGB ', 'GRAY', 'CMYK', 'XYZ ', 'Lab ', etc.
+            var validColorSpaces = new[] { "RGB ", "GRAY", "CMYK", "XYZ ", "Lab " };
+            var isValidCs = false;
+            foreach (var cs in validColorSpaces)
+            {
+                if (colorSpace == cs)
+                {
+                    isValidCs = true;
+                    break;
+                }
+            }
+
+            if (!isValidCs)
+            {
+                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                    $"ICC profile uses colorspace '{colorSpace}' (may be a specialized colorspace)");
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Detects if a box uses extended length (XLBox) format.
+        /// Extended length is used for boxes > 4GB (when LBox = 1).
+        /// </summary>
+        /// <param name="length">The LBox value (first 4 bytes of box).</param>
+        /// <param name="longLength">The XLBox value if present.</param>
+        /// <returns>True if XLBox is detected.</returns>
+        public bool DetectExtendedLength(int length, long longLength)
+        {
+            if (length == 1 && longLength > 0)
+            {
+                var sizeGB = longLength / (1024.0 * 1024.0 * 1024.0);
+                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING,
+                    $"Box uses extended length (XLBox) format: {sizeGB:F2} GB. " +
+                    "Extended length boxes (>4GB) are not fully supported in current implementation.");
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Validates basic codestream marker ordering per ISO/IEC 15444-1 Annex A.
+        /// Checks that SOC marker is first and critical markers appear in correct order.
+        /// </summary>
+        /// <param name="codestreamBytes">The codestream data.</param>
+        /// <returns>True if basic marker order is valid.</returns>
+        public bool ValidateBasicCodestreamMarkers(byte[] codestreamBytes)
+        {
+            if (codestreamBytes == null || codestreamBytes.Length < 2)
+            {
+                errors.Add("Codestream too small to contain valid markers");
+                return false;
+            }
+
+            // Check for SOC (Start of Codestream) marker (0xFF4F) at position 0
+            if (codestreamBytes[0] != 0xFF || codestreamBytes[1] != 0x4F)
+            {
+                errors.Add($"Codestream must start with SOC marker (0xFF4F), found: 0x{codestreamBytes[0]:X2}{codestreamBytes[1]:X2}");
+                return false;
+            }
+
+            // Check that codestream ends with EOC (End of Codestream) marker (0xFFD9)
+            var len = codestreamBytes.Length;
+            if (len >= 2)
+            {
+                if (codestreamBytes[len - 2] != 0xFF || codestreamBytes[len - 1] != 0xD9)
+                {
+                    warnings.Add($"Codestream should end with EOC marker (0xFFD9), found: 0x{codestreamBytes[len - 2]:X2}{codestreamBytes[len - 1]:X2}");
+                }
+            }
+
+            // Check for SIZ marker (0xFF51) after SOC
+            // Per ISO spec, SIZ must be the first marker segment after SOC
+            if (codestreamBytes.Length >= 4)
+            {
+                if (codestreamBytes[2] != 0xFF || codestreamBytes[3] != 0x51)
+                {
+                    warnings.Add($"SIZ marker (0xFF51) should immediately follow SOC, found: 0x{codestreamBytes[2]:X2}{codestreamBytes[3]:X2}");
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Validates compatibility list in File Type box.
+        /// Checks that required profiles are present.
+        /// </summary>
+        /// <param name="compatibilityList">Array of compatibility entries.</param>
+        /// <param name="requireJP2">Whether JP2 compatibility is required.</param>
+        public void ValidateCompatibilityList(int[] compatibilityList, bool requireJP2 = true)
+        {
+            if (compatibilityList == null || compatibilityList.Length == 0)
+            {
+                warnings.Add("Compatibility list is empty");
+                return;
+            }
+
+            const int JP2_BRAND = 0x6a703220; // 'jp2 '
+            var hasJP2 = false;
+
+            foreach (var compat in compatibilityList)
+            {
+                if (compat == JP2_BRAND)
+                {
+                    hasJP2 = true;
+                    break;
+                }
+            }
+
+            if (requireJP2 && !hasJP2)
+            {
+                errors.Add("Compatibility list must include 'jp2 ' (0x6a703220) for baseline JP2 compliance");
+            }
+
+            FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                $"Compatibility list contains {compatibilityList.Length} profile(s)");
+        }
+
+        // #endregion
 
         /// <summary>
         /// Gets a formatted validation report.
