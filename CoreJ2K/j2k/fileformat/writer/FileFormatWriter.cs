@@ -323,13 +323,25 @@ namespace CoreJ2K.j2k.fileformat.writer
         /// </exception>
         public virtual void writeJP2HeaderBox()
         {
+            // Calculate color specification box length
+            int csbLength;
+            if (Metadata != null && Metadata.IccProfile != null && Metadata.IccProfile.IsValid)
+            {
+                // ICC profiled: Header(8) + METH(1) + PREC(1) + APPROX(1) + Size(4) + Profile
+                csbLength = 15 + Metadata.IccProfile.ProfileSize;
+            }
+            else
+            {
+                // Enumerated colorspace
+                csbLength = CSB_LENGTH;
+            }
 
             // Write box length (LBox)
             // if the number of bits per components varies, a bpcc box is written
             if (bpcVaries)
-                fi.writeInt(8 + IHB_LENGTH + CSB_LENGTH + BPC_LENGTH + nc);
+                fi.writeInt(8 + IHB_LENGTH + csbLength + BPC_LENGTH + nc);
             else
-                fi.writeInt(8 + IHB_LENGTH + CSB_LENGTH);
+                fi.writeInt(8 + IHB_LENGTH + csbLength);
 
             // Write a JP2Header (TBox)
             fi.writeInt(FileFormatBoxes.JP2_HEADER_BOX);
@@ -337,7 +349,7 @@ namespace CoreJ2K.j2k.fileformat.writer
             // Write image header box 
             writeImageHeaderBox();
 
-            // Write Colour Bpecification Box
+            // Write Colour Specification Box
             writeColourSpecificationBox();
 
             // if the number of bits per components varies write bpcc box
@@ -375,24 +387,56 @@ namespace CoreJ2K.j2k.fileformat.writer
         /// </exception>
         public virtual void writeColourSpecificationBox()
         {
+            // Check if ICC profile is present in metadata
+            if (Metadata != null && Metadata.IccProfile != null && Metadata.IccProfile.IsValid)
+            {
+                // Write ICC profiled color specification box
+                var profileBytes = Metadata.IccProfile.ProfileBytes;
+                var boxLength = 15 + profileBytes.Length; // Header(8) + METH(1) + PREC(1) + APPROX(1) + Profile size(4) + Profile
 
-            // Write box length (LBox)
-            fi.writeInt(CSB_LENGTH);
+                // Write box length (LBox)
+                fi.writeInt(boxLength);
 
-            // Write a Bits Per Component box (TBox)
-            fi.writeInt(FileFormatBoxes.COLOUR_SPECIFICATION_BOX);
+                // Write Color Specification box type (TBox)
+                fi.writeInt(FileFormatBoxes.COLOUR_SPECIFICATION_BOX);
 
-            // Write METH field
-            fi.writeByte(FileFormatBoxes.CSB_METH);
+                // Write METH field (2 = ICC profile)
+                fi.writeByte(2);
 
-            // Write PREC field
-            fi.writeByte(FileFormatBoxes.CSB_PREC);
+                // Write PREC field (precedence = 0)
+                fi.writeByte(0);
 
-            // Write APPROX field
-            fi.writeByte(FileFormatBoxes.CSB_APPROX);
+                // Write APPROX field (0 = accurate)
+                fi.writeByte(0);
 
-            // Write EnumCS field
-            fi.writeInt(nc > 1 ? FileFormatBoxes.CSB_ENUM_SRGB : FileFormatBoxes.CSB_ENUM_GREY);
+                // Write ICC profile size (stored as big-endian int)
+                fi.writeInt(profileBytes.Length);
+
+                // Write ICC profile data
+                fi.write(profileBytes, 0, profileBytes.Length);
+            }
+            else
+            {
+                // Write enumerated color specification box (original behavior)
+                
+                // Write box length (LBox)
+                fi.writeInt(CSB_LENGTH);
+
+                // Write Color Specification box (TBox)
+                fi.writeInt(FileFormatBoxes.COLOUR_SPECIFICATION_BOX);
+
+                // Write METH field (1 = enumerated)
+                fi.writeByte(FileFormatBoxes.CSB_METH);
+
+                // Write PREC field
+                fi.writeByte(FileFormatBoxes.CSB_PREC);
+
+                // Write APPROX field
+                fi.writeByte(FileFormatBoxes.CSB_APPROX);
+
+                // Write EnumCS field
+                fi.writeInt(nc > 1 ? FileFormatBoxes.CSB_ENUM_SRGB : FileFormatBoxes.CSB_ENUM_GREY);
+            }
         }
 
         /// <summary> This method writes the Image Header box

@@ -359,7 +359,66 @@ namespace CoreJ2K.j2k.fileformat.reader
                 throw new InvalidOperationException("Zero-length of JP2Header Box");
             }
 
-            // Here the JP2Header data (DBox) would be read if we were to use it
+            // Read sub-boxes within JP2 Header to extract ICC profile
+            try
+            {
+                var boxHeader = new byte[16];
+                var headerBoxEnd = pos + length;
+                var currentPos = (int)(pos + 8); // Skip JP2 Header box header
+
+                while (currentPos < headerBoxEnd)
+                {
+                    in_Renamed.seek(currentPos);
+                    in_Renamed.readFully(boxHeader, 0, 8);
+
+                    var boxLen = (boxHeader[0] << 24) | (boxHeader[1] << 16) | 
+                                 (boxHeader[2] << 8) | boxHeader[3];
+                    var boxType = (boxHeader[4] << 24) | (boxHeader[5] << 16) | 
+                                  (boxHeader[6] << 8) | boxHeader[7];
+
+                    // Check for Color Specification Box
+                    if (boxType == FileFormatBoxes.COLOUR_SPECIFICATION_BOX)
+                    {
+                        // Read color specification box contents
+                        var csBoxData = new byte[boxLen - 8];
+                        in_Renamed.readFully(csBoxData, 0, boxLen - 8);
+
+                        // Check method field (METH)
+                        var method = csBoxData[0];
+
+                        // Method 2 = ICC profile
+                        if (method == 2)
+                        {
+                            // ICC profile starts at offset 3 in box data
+                            // First read the profile size
+                            var profileSize = (csBoxData[3] << 24) | (csBoxData[4] << 16) | 
+                                            (csBoxData[5] << 8) | csBoxData[6];
+
+                            if (profileSize > 0 && profileSize < csBoxData.Length - 3)
+                            {
+                                var iccProfile = new byte[profileSize];
+                                Array.Copy(csBoxData, 3, iccProfile, 0, profileSize);
+                                
+                                // Add to metadata
+                                Metadata.SetIccProfile(iccProfile);
+
+                                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                                    $"Found ICC Profile ({profileSize} bytes)");
+                            }
+                        }
+                    }
+
+                    // Move to next box
+                    currentPos += boxLen;
+                    if (boxLen == 0) break; // Avoid infinite loop
+                }
+            }
+            catch (Exception e)
+            {
+                // Don't fail the whole operation if we can't read the ICC profile
+                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING,
+                    $"Error extracting ICC profile from JP2 Header: {e.Message}");
+            }
 
             return true;
         }

@@ -4,12 +4,13 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using CoreJ2K.Color.ICC;
 
 namespace CoreJ2K.j2k.fileformat.metadata
 {
     /// <summary>
     /// Represents metadata extracted from or to be written to a JPEG2000 file.
-    /// Supports comments, XML boxes (XMP, IPTC), and UUID boxes.
+    /// Supports comments, XML boxes (XMP, IPTC), UUID boxes, and ICC profiles.
     /// </summary>
     public class J2KMetadata
     {
@@ -27,6 +28,11 @@ namespace CoreJ2K.j2k.fileformat.metadata
         /// Gets the list of UUID boxes with custom vendor data.
         /// </summary>
         public List<UuidBox> UuidBoxes { get; } = new List<UuidBox>();
+
+        /// <summary>
+        /// Gets or sets the ICC color profile data.
+        /// </summary>
+        public ICCProfileData IccProfile { get; set; }
 
         /// <summary>
         /// Adds a simple text comment to the metadata.
@@ -50,6 +56,15 @@ namespace CoreJ2K.j2k.fileformat.metadata
         public void AddUuid(Guid uuid, byte[] data)
         {
             UuidBoxes.Add(new UuidBox { Uuid = uuid, Data = data });
+        }
+
+        /// <summary>
+        /// Sets the ICC profile from raw profile bytes.
+        /// </summary>
+        /// <param name="profileBytes">The ICC profile bytes.</param>
+        public void SetIccProfile(byte[] profileBytes)
+        {
+            IccProfile = new ICCProfileData(profileBytes);
         }
 
         /// <summary>
