@@ -243,6 +243,14 @@ namespace CoreJ2K.j2k.fileformat.reader
                             readReaderRequirementsBox(length);
                             break;
 
+                        case FileFormatBoxes.JPR_BOX:
+                            readJPRBox(length);
+                            break;
+
+                        case FileFormatBoxes.LBL_BOX:
+                            readLabelBox(length);
+                            break;
+
                         default:
                             FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING,
                                 $"Unknown box-type: 0x{Convert.ToString(box, 16)}");
@@ -692,6 +700,92 @@ namespace CoreJ2K.j2k.fileformat.reader
         /// </summary>
         public virtual void readReaderRequirementsBox(int length)
         {
+        }
+
+        /// <summary>
+        /// Reads the Intellectual Property Rights (JPR) box from JPEG 2000 Part 2.
+        /// The JPR box contains copyright or intellectual property rights information as UTF-8 text.
+        /// </summary>
+        /// <param name="length">The total length of the box including header.</param>
+        public virtual void readJPRBox(int length)
+        {
+            if (length <= 8) return; // Box too small
+
+            try
+            {
+                // Read the JPR content (length includes 8-byte box header)
+                var dataLength = length - 8;
+                var jprBytes = new byte[dataLength];
+                in_Renamed.readFully(jprBytes, 0, dataLength);
+
+                // Try to decode as UTF-8 text
+                try
+                {
+                    var jprText = Encoding.UTF8.GetString(jprBytes);
+                    
+                    // Add to metadata with text
+                    Metadata.IntellectualPropertyRights.Add(new JprBox { Text = jprText });
+
+                    FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                        $"Found Intellectual Property Rights (JPR) box ({dataLength} bytes): {jprText.Substring(0, Math.Min(50, jprText.Length))}...");
+                }
+                catch
+                {
+                    // If not valid UTF-8, store as binary
+                    Metadata.IntellectualPropertyRights.Add(new JprBox { RawData = jprBytes });
+
+                    FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                        $"Found Intellectual Property Rights (JPR) box ({dataLength} bytes, binary data)");
+                }
+            }
+            catch (Exception e)
+            {
+                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING,
+                    $"Error reading Intellectual Property Rights (JPR) box: {e.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Reads the Label (LBL) box from JPEG 2000 Part 2.
+        /// The Label box contains human-readable text labels as UTF-8 text.
+        /// </summary>
+        /// <param name="length">The total length of the box including header.</param>
+        public virtual void readLabelBox(int length)
+        {
+            if (length <= 8) return; // Box too small
+
+            try
+            {
+                // Read the Label content (length includes 8-byte box header)
+                var dataLength = length - 8;
+                var labelBytes = new byte[dataLength];
+                in_Renamed.readFully(labelBytes, 0, dataLength);
+
+                // Try to decode as UTF-8 text
+                try
+                {
+                    var labelText = Encoding.UTF8.GetString(labelBytes);
+                    
+                    // Add to metadata with text
+                    Metadata.Labels.Add(new LabelBox { Label = labelText });
+
+                    FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                        $"Found Label (LBL) box ({dataLength} bytes): {labelText.Substring(0, Math.Min(50, labelText.Length))}...");
+                }
+                catch
+                {
+                    // If not valid UTF-8, store as binary
+                    Metadata.Labels.Add(new LabelBox { RawData = labelBytes });
+
+                    FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                        $"Found Label (LBL) box ({dataLength} bytes, binary data)");
+                }
+            }
+            catch (Exception e)
+            {
+                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING,
+                    $"Error reading Label (LBL) box: {e.Message}");
+            }
         }
     }
 }

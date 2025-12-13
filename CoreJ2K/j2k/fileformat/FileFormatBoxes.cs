@@ -66,6 +66,11 @@ namespace CoreJ2K.j2k.fileformat
         public const int XML_BOX = 0x786d6c20;
         public const int UUID_BOX = 0x75756964;
         public const int UUID_INFO_BOX = 0x75696e66;
+        
+        /// <summary>JPEG 2000 Part 2 boxes</summary>
+        public const int JPR_BOX = 0x6a707220; // 'jpr ' - Intellectual Property Rights box (Part 2)
+        public const int LBL_BOX = 0x6c626c20; // 'lbl ' - Label box (Part 2)
+        
         /// <summary>JP2 Header boxes </summary>
         public const int IMAGE_HEADER_BOX = 0x69686472;
         public const int BITS_PER_COMPONENT_BOX = 0x62706363;

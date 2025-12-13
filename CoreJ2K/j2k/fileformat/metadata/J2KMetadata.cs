@@ -11,7 +11,7 @@ namespace CoreJ2K.j2k.fileformat.metadata
 {
     /// <summary>
     /// Represents metadata extracted from or to be written to a JPEG2000 file.
-    /// Supports comments, XML boxes (XMP, IPTC), UUID boxes, ICC profiles, resolution data, channel definitions, and TLM data.
+    /// Supports comments, XML boxes (XMP, IPTC), UUID boxes, ICC profiles, resolution data, channel definitions, TLM data, JPR, and Label boxes.
     /// </summary>
     public class J2KMetadata
     {
@@ -29,6 +29,16 @@ namespace CoreJ2K.j2k.fileformat.metadata
         /// Gets the list of UUID boxes with custom vendor data.
         /// </summary>
         public List<UuidBox> UuidBoxes { get; } = new List<UuidBox>();
+
+        /// <summary>
+        /// Gets the list of Intellectual Property Rights (JPR) boxes from JPEG 2000 Part 2.
+        /// </summary>
+        public List<JprBox> IntellectualPropertyRights { get; } = new List<JprBox>();
+
+        /// <summary>
+        /// Gets the list of Label boxes from JPEG 2000 Part 2.
+        /// </summary>
+        public List<LabelBox> Labels { get; } = new List<LabelBox>();
 
         /// <summary>
         /// Gets or sets the ICC color profile data.
@@ -72,6 +82,24 @@ namespace CoreJ2K.j2k.fileformat.metadata
         public void AddUuid(Guid uuid, byte[] data)
         {
             UuidBoxes.Add(new UuidBox { Uuid = uuid, Data = data });
+        }
+
+        /// <summary>
+        /// Adds an Intellectual Property Rights box (JPEG 2000 Part 2).
+        /// </summary>
+        /// <param name="text">The copyright or rights statement.</param>
+        public void AddIntellectualPropertyRights(string text)
+        {
+            IntellectualPropertyRights.Add(new JprBox { Text = text });
+        }
+
+        /// <summary>
+        /// Adds a Label box (JPEG 2000 Part 2).
+        /// </summary>
+        /// <param name="label">The label text.</param>
+        public void AddLabel(string label)
+        {
+            Labels.Add(new LabelBox { Label = label });
         }
 
         /// <summary>
@@ -228,6 +256,116 @@ namespace CoreJ2K.j2k.fileformat.metadata
         {
             var name = IsXmp ? "XMP" : IsExif ? "EXIF" : "UUID";
             return $"{name} Box [{Uuid}] ({Data?.Length ?? 0} bytes)";
+        }
+    }
+
+    /// <summary>
+    /// Represents an Intellectual Property Rights (JPR) box from JPEG 2000 Part 2.
+    /// The JPR box contains copyright or other intellectual property rights information.
+    /// This box supersedes the IPR flag in the Image Header box from Part 1.
+    /// </summary>
+    public class JprBox
+    {
+        /// <summary>
+        /// Gets or sets the intellectual property rights statement (e.g., copyright notice).
+        /// This is stored as UTF-8 text.
+        /// </summary>
+        public string Text { get; set; }
+
+        /// <summary>
+        /// Gets or sets the raw binary data. 
+        /// When set, this takes precedence over Text property.
+        /// </summary>
+        public byte[] RawData { get; set; }
+
+        /// <summary>
+        /// Returns true if this box contains binary data rather than text.
+        /// </summary>
+        public bool IsBinary => RawData != null;
+
+        /// <summary>
+        /// Gets the text content, converting from RawData if necessary.
+        /// </summary>
+        public string GetText()
+        {
+            if (!string.IsNullOrEmpty(Text))
+                return Text;
+
+            if (RawData != null)
+            {
+                try
+                {
+                    return Encoding.UTF8.GetString(RawData);
+                }
+                catch
+                {
+                    return null;
+                }
+            }
+
+            return null;
+        }
+
+        public override string ToString()
+        {
+            var text = GetText();
+            var preview = text?.Length > 50 ? text.Substring(0, 50) + "..." : text;
+            return $"JPR Box: {preview ?? "(binary data)"}";
+        }
+    }
+
+    /// <summary>
+    /// Represents a Label (LBL) box from JPEG 2000 Part 2.
+    /// The Label box contains human-readable text labels for the image or components.
+    /// This can be used to provide descriptions, titles, or other labeling information.
+    /// </summary>
+    public class LabelBox
+    {
+        /// <summary>
+        /// Gets or sets the label text.
+        /// Labels are stored as UTF-8 text without null termination.
+        /// </summary>
+        public string Label { get; set; }
+
+        /// <summary>
+        /// Gets or sets the raw binary data.
+        /// When set, this takes precedence over Label property.
+        /// </summary>
+        public byte[] RawData { get; set; }
+
+        /// <summary>
+        /// Returns true if this box contains binary data rather than text.
+        /// </summary>
+        public bool IsBinary => RawData != null;
+
+        /// <summary>
+        /// Gets the label text, converting from RawData if necessary.
+        /// </summary>
+        public string GetLabel()
+        {
+            if (!string.IsNullOrEmpty(Label))
+                return Label;
+
+            if (RawData != null)
+            {
+                try
+                {
+                    return Encoding.UTF8.GetString(RawData);
+                }
+                catch
+                {
+                    return null;
+                }
+            }
+
+            return null;
+        }
+
+        public override string ToString()
+        {
+            var label = GetLabel();
+            var preview = label?.Length > 50 ? label.Substring(0, 50) + "..." : label;
+            return $"Label Box: {preview ?? "(binary data)"}";
         }
     }
 }

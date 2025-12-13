@@ -199,7 +199,7 @@ namespace CoreJ2K.j2k.fileformat.writer
         }
 
         /// <summary>
-        /// Writes all metadata boxes (XML and UUID boxes).
+        /// Writes all metadata boxes (XML, UUID, JPR, and Label boxes).
         /// </summary>
         /// <returns>Total bytes written for metadata.</returns>
         private int writeMetadataBoxes()
@@ -216,6 +216,18 @@ namespace CoreJ2K.j2k.fileformat.writer
             foreach (var uuidBox in Metadata.UuidBoxes)
             {
                 bytesWritten += writeUUIDBox(uuidBox);
+            }
+
+            // Write Intellectual Property Rights (JPR) boxes (JPEG 2000 Part 2)
+            foreach (var jprBox in Metadata.IntellectualPropertyRights)
+            {
+                bytesWritten += writeJPRBox(jprBox);
+            }
+
+            // Write Label boxes (JPEG 2000 Part 2)
+            foreach (var labelBox in Metadata.Labels)
+            {
+                bytesWritten += writeLabelBox(labelBox);
             }
 
             return bytesWritten;
@@ -286,6 +298,102 @@ namespace CoreJ2K.j2k.fileformat.writer
             catch (Exception e)
             {
                 throw new InvalidOperationException($"Error writing UUID box: {e.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Writes an Intellectual Property Rights (JPR) box to the file (JPEG 2000 Part 2).
+        /// The JPR box contains copyright or intellectual property rights information.
+        /// </summary>
+        /// <param name="jprBox">The JPR box to write.</param>
+        /// <returns>Number of bytes written.</returns>
+        private int writeJPRBox(JprBox jprBox)
+        {
+            if (jprBox == null)
+                return 0;
+
+            try
+            {
+                byte[] dataBytes;
+
+                // Use raw data if available, otherwise convert text to UTF-8
+                if (jprBox.IsBinary)
+                {
+                    dataBytes = jprBox.RawData;
+                }
+                else if (!string.IsNullOrEmpty(jprBox.Text))
+                {
+                    dataBytes = Encoding.UTF8.GetBytes(jprBox.Text);
+                }
+                else
+                {
+                    return 0; // No data to write
+                }
+
+                var boxLength = 8 + dataBytes.Length; // 8 bytes for LBox + TBox
+
+                // Write box length (LBox)
+                fi.writeInt(boxLength);
+
+                // Write JPR box type (TBox)
+                fi.writeInt(FileFormatBoxes.JPR_BOX);
+
+                // Write JPR data
+                fi.write(dataBytes, 0, dataBytes.Length);
+
+                return boxLength;
+            }
+            catch (Exception e)
+            {
+                throw new InvalidOperationException($"Error writing Intellectual Property Rights (JPR) box: {e.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Writes a Label (LBL) box to the file (JPEG 2000 Part 2).
+        /// The Label box contains human-readable text labels.
+        /// </summary>
+        /// <param name="labelBox">The Label box to write.</param>
+        /// <returns>Number of bytes written.</returns>
+        private int writeLabelBox(LabelBox labelBox)
+        {
+            if (labelBox == null)
+                return 0;
+
+            try
+            {
+                byte[] dataBytes;
+
+                // Use raw data if available, otherwise convert label to UTF-8
+                if (labelBox.IsBinary)
+                {
+                    dataBytes = labelBox.RawData;
+                }
+                else if (!string.IsNullOrEmpty(labelBox.Label))
+                {
+                    dataBytes = Encoding.UTF8.GetBytes(labelBox.Label);
+                }
+                else
+                {
+                    return 0; // No data to write
+                }
+
+                var boxLength = 8 + dataBytes.Length; // 8 bytes for LBox + TBox
+
+                // Write box length (LBox)
+                fi.writeInt(boxLength);
+
+                // Write Label box type (TBox)
+                fi.writeInt(FileFormatBoxes.LBL_BOX);
+
+                // Write Label data
+                fi.write(dataBytes, 0, dataBytes.Length);
+
+                return boxLength;
+            }
+            catch (Exception e)
+            {
+                throw new InvalidOperationException($"Error writing Label (LBL) box: {e.Message}");
             }
         }
 
