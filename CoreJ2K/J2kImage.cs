@@ -147,6 +147,240 @@ namespace CoreJ2K
             }
 
             // **** Inverse wavelet transform ***
+
+            InverseWT invWT;
+            try
+            {
+                // full page inverse wavelet transform
+                invWT = InverseWT.createInstance(deq, decSpec);
+            }
+            catch (ArgumentException e)
+            {
+                throw new InvalidOperationException("Cannot instantiate inverse wavelet transform.", e);
+            }
+
+            var res = breader.ImgRes;
+            invWT.ImgResLevel = res;
+
+            // **** Data converter **** (after inverse transform module)
+            var converter = new ImgDataConverter(invWT, 0);
+
+            // **** Inverse component transformation **** 
+            var ictransf = new InvCompTransf(converter, decSpec, depth, pl);
+
+            // **** Color space mapping ****
+            BlkImgDataSrc color;
+            if (ff.JP2FFUsed && pl.getParameter("nocolorspace").Equals("off"))
+            {
+                try
+                {
+                    var csMap = new ColorSpace(in_stream, hd, pl);
+                    var channels = hd.createChannelDefinitionMapper(ictransf, csMap);
+                    var resampled = hd.createResampler(channels, csMap);
+                    var palettized = hd.createPalettizedColorSpaceMapper(resampled, csMap);
+                    color = hd.createColorSpaceMapper(palettized, csMap);
+                }
+                catch (ArgumentException e)
+                {
+                    throw new InvalidOperationException("Could not instantiate ICC profiler.", e);
+                }
+                catch (ColorSpaceException e)
+                {
+                    throw new InvalidOperationException("Error processing ColorSpace information.", e);
+                }
+            }
+            else
+            {
+                // Skip colorspace mapping
+                color = ictransf;
+            }
+
+            // This is the last image in the decoding chain and should be
+            // assigned by the last transformation:
+            var decodedImage = color;
+            if (color == null)
+            {
+                decodedImage = ictransf;
+            }
+            var numComps = decodedImage.NumComps;
+            var imgWidth = decodedImage.ImgWidth;
+
+            // **** Copy to Bitmap ****
+
+            var bitsUsed = new int[numComps];
+            for (var j = 0; j < numComps; ++j) bitsUsed[j] = decodedImage.getNomRangeBits(numComps - 1 - j);
+
+            var dst = new InterleavedImage(imgWidth, decodedImage.ImgHeight, numComps, bitsUsed);
+
+            var numTiles = decodedImage.getNumTiles(null);
+
+            var tIdx = 0;
+
+            for (var y = 0; y < numTiles.y; y++)
+            {
+                // Loop on horizontal tiles
+                for (var x = 0; x < numTiles.x; x++, tIdx++)
+                {
+                    decodedImage.setTile(x, y);
+
+                    var height = decodedImage.getTileCompHeight(tIdx, 0);
+                    var width = decodedImage.getTileCompWidth(tIdx, 0);
+
+                    var tOffx = decodedImage.getCompULX(0)
+                                - (int)Math.Ceiling(decodedImage.ImgULX / (double)decodedImage.getCompSubsX(0));
+
+                    var tOffy = decodedImage.getCompULY(0)
+                                - (int)Math.Ceiling(decodedImage.ImgULY / (double)decodedImage.getCompSubsY(0));
+
+                    var db = new DataBlkInt[numComps];
+                    var ls = new int[numComps];
+                    var mv = new int[numComps];
+                    var fb = new int[numComps];
+                    for (var i = 0; i < numComps; i++)
+                    {
+                        db[i] = new DataBlkInt();
+                        // Use per-component nominal bits and fixed point
+                        ls[i] = 1 << (decodedImage.getNomRangeBits(i) - 1);
+                        mv[i] = (1 << decodedImage.getNomRangeBits(i)) - 1;
+                        fb[i] = decodedImage.GetFixedPoint(i);
+                    }
+
+                    // Reuse arrays across rows to avoid per-pixel allocations
+                    var rowvalues = new int[width * numComps];
+                    var k = new int[numComps];
+
+                    for (var l = 0; l < height; l++)
+                    {
+                        // Load each component line into its DataBlk and initialize indices
+                        for (var i = 0; i < numComps; i++)
+                        {
+                            db[i].ulx = 0;
+                            db[i].uly = l;
+                            db[i].w = width;
+                            db[i].h = 1;
+                            decodedImage.GetInternCompData(db[i], i);
+                            k[i] = db[i].offset; // start index for forward iteration
+                        }
+
+                        // Fill rowvalues left-to-right, writing component samples interleaved
+                        for (var col = 0; col < width; col++)
+                        {
+                            var baseOffset = col * numComps;
+                            for (var comp = 0; comp < numComps; comp++)
+                            {
+                                var v = (db[comp].data_array[k[comp]++] >> fb[comp]) + ls[comp];
+                                if (v < 0) v = 0;
+                                else if (v > mv[comp]) v = mv[comp];
+                                rowvalues[baseOffset + comp] = v;
+                            }
+                        }
+
+                        dst.FillRow(tOffx, tOffy + l, imgWidth, rowvalues);
+                    }
+                }
+            }
+
+            return dst;
+        }
+
+        /// <summary>
+        /// Decodes a JPEG2000 stream and returns both the image and any metadata found.
+        /// </summary>
+        /// <param name="stream">The stream containing JPEG2000 data.</param>
+        /// <param name="metadata">Output parameter that receives the metadata (comments, XML, UUIDs).</param>
+        /// <param name="parameters">Optional decoder parameters.</param>
+        /// <returns>The decoded image.</returns>
+        public static InterleavedImage FromStream(Stream stream, out j2k.fileformat.metadata.J2KMetadata metadata, ParameterList parameters = null)
+        {
+            RandomAccessIO in_stream = new ISRandomAccessIO(stream);
+            var pl = parameters ?? new ParameterList(GetDefaultDecoderParameterList(decoder_pinfo));
+
+            var ff = new FileFormatReader(in_stream);
+            ff.readFileFormat();
+            
+            // Extract metadata
+            metadata = ff.Metadata;
+            
+            if (ff.JP2FFUsed)
+            {
+                in_stream.seek(ff.FirstCodeStreamPos);
+            }
+
+            // Decode image (rest of existing code)
+            // ... continue with existing decoding logic ...
+            
+            var hi = new HeaderInfo();
+            HeaderDecoder hd;
+            try
+            {
+                hd = new HeaderDecoder(in_stream, pl, hi);
+            }
+            catch (EndOfStreamException e)
+            {
+                throw new InvalidOperationException("Codestream too short or bad header, unable to decode.", e);
+            }
+
+            var nCompCod = hd.NumComps;
+            var nTiles = hi.sizValue.NumTiles;
+            var decSpec = hd.DecoderSpecs;
+
+            // Get demixed bitdepths
+            var depth = new int[nCompCod];
+            for (var i = 0; i < nCompCod; i++)
+            {
+                depth[i] = hd.getOriginalBitDepth(i);
+            }
+
+            // **** Bit stream reader ****
+            BitstreamReaderAgent breader;
+            try
+            {
+                breader = BitstreamReaderAgent.createInstance(in_stream, hd, pl, decSpec, false, hi);
+            }
+            catch (IOException e)
+            {
+                throw new InvalidOperationException("Error while reading bit stream header or parsing packets.", e);
+            }
+            catch (ArgumentException e)
+            {
+                throw new InvalidOperationException("Cannot instantiate bit stream reader.", e);
+            }
+
+            // **** Entropy decoder ****
+            EntropyDecoder entdec;
+            try
+            {
+                entdec = hd.createEntropyDecoder(breader, pl);
+            }
+            catch (ArgumentException e)
+            {
+                throw new InvalidOperationException("Cannot instantiate entropy decoder.", e);
+            }
+
+            // **** ROI de-scaler ****
+            ROIDeScaler roids;
+            try
+            {
+                roids = hd.createROIDeScaler(entdec, pl, decSpec);
+            }
+            catch (ArgumentException e)
+            {
+                throw new InvalidOperationException("Cannot instantiate roi de-scaler.", e);
+            }
+
+            // **** Dequantizer ****
+            Dequantizer deq;
+            try
+            {
+                deq = HeaderDecoder.createDequantizer(roids, depth, decSpec);
+            }
+            catch (ArgumentException e)
+            {
+                throw new InvalidOperationException("Cannot instantiate dequantizer.", e);
+            }
+
+            // **** Inverse wavelet transform ***
+
             InverseWT invWT;
             try
             {
@@ -359,6 +593,18 @@ namespace CoreJ2K
         }
 
         public static byte[] ToBytes(BlkImgDataSrc imgsrc, ParameterList parameters = null)
+        {
+            return ToBytes(imgsrc, null, parameters);
+        }
+
+        /// <summary>
+        /// Encodes an image source to JPEG2000 bytes with optional metadata.
+        /// </summary>
+        /// <param name="imgsrc">The image source to encode.</param>
+        /// <param name="metadata">Optional metadata (comments, XML, UUIDs) to include.</param>
+        /// <param name="parameters">Optional encoder parameters.</param>
+        /// <returns>The encoded JPEG2000 data.</returns>
+        public static byte[] ToBytes(BlkImgDataSrc imgsrc, j2k.fileformat.metadata.J2KMetadata metadata, ParameterList parameters = null)
         {
             if (imgsrc == null)
             {
@@ -764,6 +1010,13 @@ namespace CoreJ2K
                             nc,
                             bpc,
                             fileLength);
+                        
+                        // Attach metadata if provided
+                        if (metadata != null)
+                        {
+                            ffw.Metadata = metadata;
+                        }
+                        
                         fileLength += ffw.writeFileFormat();
                     }
                     catch (IOException e)
@@ -773,6 +1026,7 @@ namespace CoreJ2K
                 }
 
                 // **** Close image readers ***
+
                 imgsrc.Close();
 
                 return outStream.ToArray();
@@ -952,7 +1206,7 @@ namespace CoreJ2K
                     {
                         "rate", "<decoding rate in bpp>",
                         "Specifies the decoding rate in bits per pixel (bpp) where the "
-                        + "number of pixels is related to the image's original size (Note:"
+                        + "number of pixels is related to the image's original size (Note:" 
                         + " this number is not affected by the '-res' option). If it is equal"
                         + "to -1, the whole codestream is decoded. "
                         + "The codestream is either parsed (default) or truncated depending "

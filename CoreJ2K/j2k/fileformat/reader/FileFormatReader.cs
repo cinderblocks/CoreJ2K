@@ -41,10 +41,12 @@
 * Copyright (c) 1999/2000 JJ2000 Partners.
 * */
 using CoreJ2K.j2k.codestream;
+using CoreJ2K.j2k.fileformat.metadata;
 using CoreJ2K.j2k.io;
 using CoreJ2K.j2k.util;
 using System;
 using System.Collections.Generic;
+using System.Text;
 
 namespace CoreJ2K.j2k.fileformat.reader
 {
@@ -106,6 +108,11 @@ namespace CoreJ2K.j2k.fileformat.reader
 
         /// <summary>Flag indicating whether or not the JP2 file format is used </summary>
         public bool JP2FFUsed;
+
+        /// <summary>
+        /// Gets the metadata (comments, XML, UUID boxes) extracted from the file.
+        /// </summary>
+        public J2KMetadata Metadata { get; } = new J2KMetadata();
 
         /// <summary> The constructor of the FileFormatReader
         /// 
@@ -410,13 +417,61 @@ namespace CoreJ2K.j2k.fileformat.reader
         /// </summary>
         public virtual void readXMLBox(int length)
         {
+            if (length <= 8) return; // Box too small
+
+            try
+            {
+                // Read the XML content (length includes 8-byte box header)
+                var dataLength = length - 8;
+                var xmlBytes = new byte[dataLength];
+                in_Renamed.readFully(xmlBytes, 0, dataLength);
+
+                // Convert to string (XML boxes are UTF-8)
+                var xmlContent = Encoding.UTF8.GetString(xmlBytes);
+
+                // Add to metadata
+                Metadata.XmlBoxes.Add(new XmlBox { XmlContent = xmlContent });
+
+                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                    $"Found XML box ({dataLength} bytes)");
+            }
+            catch (Exception e)
+            {
+                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING,
+                    $"Error reading XML box: {e.Message}");
+            }
         }
 
-        /// <summary> This method reads the contents of the Intellectual property box
+        /// <summary> This method reads the contents of the UUID box
         /// 
         /// </summary>
         public virtual void readUUIDBox(int length)
         {
+            if (length <= 24) return; // Box too small (8 header + 16 UUID)
+
+            try
+            {
+                // Read UUID (16 bytes)
+                var uuidBytes = new byte[16];
+                in_Renamed.readFully(uuidBytes, 0, 16);
+                var uuid = new Guid(uuidBytes);
+
+                // Read data (remaining bytes)
+                var dataLength = length - 24; // Box header (8) + UUID (16)
+                var data = new byte[dataLength];
+                in_Renamed.readFully(data, 0, dataLength);
+
+                // Add to metadata
+                Metadata.UuidBoxes.Add(new UuidBox { Uuid = uuid, Data = data });
+
+                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                    $"Found UUID box: {uuid} ({dataLength} bytes)");
+            }
+            catch (Exception e)
+            {
+                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING,
+                    $"Error reading UUID box: {e.Message}");
+            }
         }
 
         /// <summary> This method reads the contents of the Intellectual property box

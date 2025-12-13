@@ -40,12 +40,14 @@
 * 
 * Copyright (c) 1999/2000 JJ2000 Partners.
 *  */
+using CoreJ2K.j2k.fileformat.metadata;
 using CoreJ2K.j2k.io;
 using System;
 
 namespace CoreJ2K.j2k.fileformat.writer
 {
     using System.IO;
+    using System.Text;
 
     /// <summary> This class writes the file format wrapper that may or may not exist around
     /// a valid JPEG 2000 codestream. This class writes the simple possible legal
@@ -151,6 +153,7 @@ namespace CoreJ2K.j2k.fileformat.writer
         public virtual int writeFileFormat()
         {
             byte[] codestream;
+            int metadataLength = 0;
 
             try
             {
@@ -171,6 +174,12 @@ namespace CoreJ2K.j2k.fileformat.writer
                 // Write JP2 Header box
                 writeJP2HeaderBox();
 
+                // Write metadata boxes (XML, UUID) if present
+                if (Metadata != null)
+                {
+                    metadataLength = writeMetadataBoxes();
+                }
+
                 // Write the Codestream box 
                 writeContiguousCodeStreamBox(codestream);
 
@@ -181,10 +190,103 @@ namespace CoreJ2K.j2k.fileformat.writer
                 throw new InvalidOperationException(
                     $"Error while writing JP2 file format(2): {e.Message}\n{e.StackTrace}");
             }
-            if (bpcVaries)
-                return 12 + FTB_LENGTH + 8 + IHB_LENGTH + CSB_LENGTH + BPC_LENGTH + nc + 8;
-            else
-                return 12 + FTB_LENGTH + 8 + IHB_LENGTH + CSB_LENGTH + 8;
+            
+            var baseLength = bpcVaries 
+                ? 12 + FTB_LENGTH + 8 + IHB_LENGTH + CSB_LENGTH + BPC_LENGTH + nc + 8
+                : 12 + FTB_LENGTH + 8 + IHB_LENGTH + CSB_LENGTH + 8;
+                
+            return baseLength + metadataLength;
+        }
+
+        /// <summary>
+        /// Writes all metadata boxes (XML and UUID boxes).
+        /// </summary>
+        /// <returns>Total bytes written for metadata.</returns>
+        private int writeMetadataBoxes()
+        {
+            var bytesWritten = 0;
+
+            // Write XML boxes
+            foreach (var xmlBox in Metadata.XmlBoxes)
+            {
+                bytesWritten += writeXMLBox(xmlBox);
+            }
+
+            // Write UUID boxes
+            foreach (var uuidBox in Metadata.UuidBoxes)
+            {
+                bytesWritten += writeUUIDBox(uuidBox);
+            }
+
+            return bytesWritten;
+        }
+
+        /// <summary>
+        /// Writes an XML box to the file.
+        /// </summary>
+        /// <param name="xmlBox">The XML box to write.</param>
+        /// <returns>Number of bytes written.</returns>
+        private int writeXMLBox(XmlBox xmlBox)
+        {
+            if (string.IsNullOrEmpty(xmlBox.XmlContent))
+                return 0;
+
+            try
+            {
+                // Convert XML content to UTF-8 bytes
+                var xmlBytes = Encoding.UTF8.GetBytes(xmlBox.XmlContent);
+                var boxLength = 8 + xmlBytes.Length; // 8 bytes for LBox + TBox
+
+                // Write box length (LBox)
+                fi.writeInt(boxLength);
+
+                // Write XML box type (TBox)
+                fi.writeInt(FileFormatBoxes.XML_BOX);
+
+                // Write XML data
+                fi.write(xmlBytes, 0, xmlBytes.Length);
+
+                return boxLength;
+            }
+            catch (Exception e)
+            {
+                throw new InvalidOperationException($"Error writing XML box: {e.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Writes a UUID box to the file.
+        /// </summary>
+        /// <param name="uuidBox">The UUID box to write.</param>
+        /// <returns>Number of bytes written.</returns>
+        private int writeUUIDBox(UuidBox uuidBox)
+        {
+            if (uuidBox.Data == null || uuidBox.Data.Length == 0)
+                return 0;
+
+            try
+            {
+                var boxLength = 8 + 16 + uuidBox.Data.Length; // LBox(4) + TBox(4) + UUID(16) + Data
+
+                // Write box length (LBox)
+                fi.writeInt(boxLength);
+
+                // Write UUID box type (TBox)
+                fi.writeInt(FileFormatBoxes.UUID_BOX);
+
+                // Write UUID (16 bytes)
+                var uuidBytes = uuidBox.Uuid.ToByteArray();
+                fi.write(uuidBytes, 0, 16);
+
+                // Write data
+                fi.write(uuidBox.Data, 0, uuidBox.Data.Length);
+
+                return boxLength;
+            }
+            catch (Exception e)
+            {
+                throw new InvalidOperationException($"Error writing UUID box: {e.Message}");
+            }
         }
 
         /// <summary> This method writes the File Type box
@@ -359,5 +461,11 @@ namespace CoreJ2K.j2k.fileformat.writer
             for (var i = 0; i < clength; i++)
                 fi.writeByte(cs[i]);
         }
+
+        /// <summary>
+        /// Gets or sets the metadata (comments, XML, UUID boxes) to write to the file.
+        /// Set this before calling writeFileFormat().
+        /// </summary>
+        public J2KMetadata Metadata { get; set; }
     }
 }
