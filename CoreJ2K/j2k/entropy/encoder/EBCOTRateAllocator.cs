@@ -841,6 +841,13 @@ namespace CoreJ2K.j2k.entropy.encoder
             // Start with the maximum slope
             rdThreshold = maxSlope;
 
+            // TLM SUPPORT: Initialize TLM data collection if enabled
+            codestream.metadata.TilePartLengthsData tlmData = null;
+            if (headEnc.IsTLMEnabled)
+            {
+                tlmData = new codestream.metadata.TilePartLengthsData();
+            }
+
             tileLengths = new int[nt];
             actualBytes = 0;
 
@@ -922,6 +929,15 @@ namespace CoreJ2K.j2k.entropy.encoder
                 layers[l].rdThreshold = rdThreshold;
                 layers[l].actualBytes = actualBytes;
             } // end loop on layers
+
+            if (tlmData != null)
+            {
+                for (var t = 0; t < nt; t++)
+                {
+                    // tileLengths[t] includes the complete tile-part length
+                    tlmData.AddTilePart(t, 0, tileLengths[t]);
+                }
+            }
 
 #if DO_TIMING
 			buildTime += (System.DateTime.Now.Ticks - 621355968000000000) / 10000 - stime;
@@ -1005,6 +1021,12 @@ namespace CoreJ2K.j2k.entropy.encoder
 #if DO_TIMING
 			writeTime += (System.DateTime.Now.Ticks - 621355968000000000) / 10000 - stime;
 #endif
+            // TLM SUPPORT: Pass collected TLM data to header encoder
+            if (tlmData != null)
+            {
+                headEnc.SetTLMData(tlmData);
+            }
+
         }
 
         /// <summary> Write a piece of bit stream according to the

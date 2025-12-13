@@ -86,7 +86,11 @@ namespace CoreJ2K.j2k.codestream.writer
         /// <summary>The list of parameters that are accepted for the header encoder
         /// module. Options for this modules start with 'H'. 
         /// </summary>
-        private static readonly string[][] pinfo = { new string[] { "Hjj2000_COM", null, "Writes or not the JJ2000 COM marker in the " + "codestream", "off" }, new string[] { "HCOM", "<Comment 1>[#<Comment 2>[#<Comment3...>]]", "Adds COM marker segments in the codestream. Comments must be " + "separated with '#' and are written into distinct maker segments.", null } };
+        private static readonly string[][] pinfo = { 
+            new string[] { "Hjj2000_COM", null, "Writes or not the JJ2000 COM marker in the " + "codestream", "off" }, 
+            new string[] { "HCOM", "<Comment 1>[#<Comment 2>[#<Comment3...>]]", "Adds COM marker segments in the codestream. Comments must be " + "separated with '#' and are written into distinct maker segments.", null },
+            new string[] { "Htlm", "on|off", "Writes TLM (Tile-part Lengths) markers in the main header " + "for fast random tile access. This requires collecting tile-part " + "lengths during encoding.", "off" }
+        };
 
         /// <summary>Nominal range bit of the component defining default values in QCD for
         /// main header 
@@ -164,6 +168,12 @@ namespace CoreJ2K.j2k.codestream.writer
         private readonly MainHeaderWriter mainHeaderWriter;
         private readonly TileHeaderWriter tileHeaderWriter;
 
+        /// <summary>TLM data collected during encoding for writing TLM markers</summary>
+        private metadata.TilePartLengthsData tlmData;
+
+        /// <summary>Whether or not to write TLM markers</summary>
+        private readonly bool useTLM;
+
         /// <summary> Initializes the header writer with the references to the coding chain.
         /// 
         /// </summary>
@@ -209,11 +219,11 @@ namespace CoreJ2K.j2k.codestream.writer
             this.ralloc = ralloc;
 
             baos = new System.IO.MemoryStream();
-            //UPGRADE_TODO: Class 'java.io.DataOutputStream' was converted to 'System.IO.BinaryWriter' which has a different behavior. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1073_javaioDataOutputStream'"
             hbuf = new Util.EndianBinaryWriter(baos, true);
             nComp = origsrc.NumComps;
             enJJ2KMarkSeg = pl.getBooleanParameter("Hjj2000_COM");
             otherCOMMarkSeg = pl.getParameter("HCOM");
+            useTLM = pl.getBooleanParameter("Htlm");
 
             // Initialize marker writers
             codWriter = new markers.CODMarkerWriter(encSpec, dwt, ralloc);
@@ -315,6 +325,21 @@ namespace CoreJ2K.j2k.codestream.writer
             PLMMarkerWriter.WritePLM(hbuf, plm);
         }
 
+        /// <summary>
+        /// Gets whether TLM markers should be written.
+        /// </summary>
+        public virtual bool IsTLMEnabled => useTLM;
+
+        /// <summary>
+        /// Sets the TLM data to be written in the main header.
+        /// This should be called after all tiles have been encoded.
+        /// </summary>
+        /// <param name="tlm">The collected tile-part length data</param>
+        public virtual void SetTLMData(metadata.TilePartLengthsData tlm)
+        {
+            tlmData = tlm;
+        }
+
         /// <summary> Write main header. JJ2000 main header corresponds to the following
         /// sequence of marker segments:
         /// 
@@ -380,6 +405,14 @@ namespace CoreJ2K.j2k.codestream.writer
             if (mainHeaderWriter.ShouldWritePOC())
             {
                 pocWriter.Write(hbuf, true, 0);
+            }
+
+            // +--------------------------+
+            // |    TLM marker segment    |
+            // +--------------------------+
+            if (tlmData != null && tlmData.HasTilePartLengths)
+            {
+                writeTLM(tlmData);
             }
 
             // +---------------------------+
