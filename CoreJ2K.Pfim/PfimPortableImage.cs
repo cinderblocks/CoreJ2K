@@ -11,7 +11,7 @@ namespace CoreJ2K.Pfim
 {
     /// <summary>
     /// Minimal Pfim-backed image implementing CoreJ2K.Util.IImage for decode targets.
-    /// Wraps a raw byte buffer with width/height/format so user code can get a Pfim IImage via As<IImage>().
+    /// Wraps a raw byte buffer with width/height/format so user code can get a Pfim IImage via As&lt;IImage&gt;().
     /// </summary>
     internal sealed class PfimPortableImage : ImageBase<PfIImage>
     {

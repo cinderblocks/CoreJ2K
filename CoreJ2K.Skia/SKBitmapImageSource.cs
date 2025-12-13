@@ -9,7 +9,7 @@ using System.Linq;
 
 namespace CoreJ2K.Util
 {
-    public class SKBitmapImageSource : PortableImageSource
+    public class SKBitmapImageSource : InterleavedImageSource
     {
         /// <summary>DC offset value used when reading image </summary>
         private const int DC_OFFSET = 128;

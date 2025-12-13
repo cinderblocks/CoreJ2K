@@ -6,12 +6,11 @@ using System;
 using CoreJ2K.j2k.image;
 using CoreJ2K.j2k.image.input;
 using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
 
 namespace CoreJ2K.ImageSharp
 {
     /// <summary>
-    /// Provides a PortableImageSource implementation backed by an ImageSharp Image.
+    /// Provides an image source implementation backed by an ImageSharp Image.
     /// This is currently unused directly (ImgReaderImageSharp covers reading) but left for parity with other backends.
     /// </summary>
     internal static class PortableImageSourceImageSharp

@@ -31,7 +31,7 @@ namespace CoreJ2K.Pfim
                     throw new NotSupportedException($"Pfim decode target does not support {numComponents} components.");
             }
             var expected = width * height * (bpp / 8);
-            // For interop with PortableImage (which produces 8-bit per component interleaved bytes), allow expected == width*height*numComponents when bpp==8
+            // For interop with InterleavedImage (which produces 8-bit per component interleaved bytes), allow expected == width*height*numComponents when bpp==8
             if (bpp == 8)
             {
                 expected = width * height * numComponents;

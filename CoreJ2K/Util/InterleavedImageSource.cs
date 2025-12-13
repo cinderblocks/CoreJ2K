@@ -1,4 +1,5 @@
 ﻿// Copyright (c) 2007-2016 CSJ2K contributors.
+// Copyright (c) 2025 Sjofn LLC.
 // Licensed under the BSD 3-Clause License.
 
 namespace CoreJ2K.Util
@@ -7,7 +8,11 @@ namespace CoreJ2K.Util
     using j2k.image;
     using System;
 
-    public class PortableImageSource : BlkImgDataSrc
+    /// <summary>
+    /// Provides a BlkImgDataSrc implementation for interleaved image data.
+    /// Used to feed image component data to the encoder from memory.
+    /// </summary>
+    public class InterleavedImageSource : BlkImgDataSrc
     {
         #region FIELDS
 
@@ -21,7 +26,7 @@ namespace CoreJ2K.Util
 
         #region CONSTRUCTORS
 
-        public PortableImageSource(int w, int h, int nc, int rb, bool[] sgnd, int[][] comps)
+        public InterleavedImageSource(int w, int h, int nc, int rb, bool[] sgnd, int[][] comps)
         {
             this.TileWidth = w;
             this.TileHeight = h;

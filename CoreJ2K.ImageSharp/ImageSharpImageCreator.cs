@@ -35,6 +35,11 @@ namespace CoreJ2K.ImageSharp
             }
         }
 
+        /// <summary>
+        /// Converts an ImageSharp image object to an image data source for encoding.
+        /// </summary>
+        /// <param name="imageObject">The image object to convert.</param>
+        /// <returns>A BlkImgDataSrc implementation for the given image.</returns>
         public override BlkImgDataSrc ToPortableImageSource(object imageObject)
         {
             if (imageObject is Image img) return new ImgReaderImageSharp(img);

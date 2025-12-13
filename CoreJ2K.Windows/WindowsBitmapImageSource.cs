@@ -12,7 +12,7 @@ using System.Runtime.InteropServices;
 
 namespace CoreJ2K.Util
 {
-    internal class WindowsBitmapImageSource : PortableImageSource
+    internal class WindowsBitmapImageSource : InterleavedImageSource
     {
         #region CONSTRUCTORS
 

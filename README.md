@@ -1,4 +1,9 @@
-# CoreJ2K - A Managed and Portable JPEG2000 Codec
+﻿```
+▄█████  ▄▄▄  ▄▄▄▄  ▄▄▄▄▄    ██ ████▄ ██ ▄█▀ 
+██     ██▀██ ██▄█▄ ██▄▄     ██  ▄██▀ ████   
+▀█████ ▀███▀ ██ ██ ██▄▄▄ ████▀ ███▄▄ ██ ▀█▄ 
+A Managed and Portable JPEG2000 Codec for .NET Platforms
+```
 
 Copyright (c) 1999-2000 JJ2000 Partners;  
 Copyright (c) 2007-2012 Jason S. Clary;  
@@ -77,19 +82,19 @@ Encoding from low-level image source (PGM/PPM/PGX) or platform images
 
 `J2kImage.ToBytes` accepts an optional `ParameterList` to control encoding options (compression rate, wavelet levels, tiling, component transform, etc.). The library expects parameter names without leading dashes (the same names used internally). Common encoder keys (exact names accepted) include:
 
-- `rate` � target output bitrate in bits-per-pixel (bpp) (string/float)
-- `lossless` � `on`/`off`
-- `file_format` � `on`/`off` (wrap codestream in JP2)
-- `tiles` � nominal tile width and height, e.g. `"1024 1024"`
-- `tile_parts` � packets per tile-part (integer)
-- `Wlev` � number of wavelet decomposition levels (integer)
-- `Wcboff` � code-block partition origin: two ints `"0 0"` or `"1 1"`
-- `Ffilters` � wavelet filters (e.g. `"w5x3"` or `"w9x7"`)
-- `Mct` � component transform (`on`/`off` or `rct`/`ict` per tile)
-- `Qtype`, `Qstep`, `Qguard_bits` � quantization controls
-- `Alayers` � explicit layers specification (rate and optional +layers)
-- `Aptype` � progression order specification (e.g. `"res"` or `"layer"`)
-- `pph_tile`, `pph_main`, `Psop`, `Peph` � packet/header options
+- `rate` — target output bitrate in bits-per-pixel (bpp) (string/float)
+- `lossless` — `on`/`off`
+- `file_format` — `on`/`off` (wrap codestream in JP2)
+- `tiles` — nominal tile width and height, e.g. `"1024 1024"`
+- `tile_parts` — packets per tile-part (integer)
+- `Wlev` — number of wavelet decomposition levels (integer)
+- `Wcboff` — code-block partition origin: two ints `"0 0"` or `"1 1"`
+- `Ffilters` — wavelet filters (e.g. `"w5x3"` or `"w9x7"`)
+- `Mct` — component transform (`on`/`off` or `rct`/`ict` per tile)
+- `Qtype`, `Qstep`, `Qguard_bits` — quantization controls
+- `Alayers` — explicit layers specification (rate and optional +layers)
+- `Aptype` — progression order specification (e.g. `"res"` or `"layer"`)
+- `pph_tile`, `pph_main`, `Psop`, `Peph` — packet/header options
 
 Below are practical examples that use the exact parameter names the encoder recognizes.
 
@@ -163,7 +168,7 @@ This repository contains multiple packages and TFMs to support a wide range of .
 
 ## Usage notes
 
-- `PortableImage` is the library's cross-platform image wrapper. Use `As<T>()` to cast to platform-specific types, for example `As<SKBitmap>()` when using the Skia integration.
+- `InterleavedImage` is the library's cross-platform image wrapper. Use `As<T>()` to cast to platform-specific types, for example `As<SKBitmap>()` when using the Skia integration.
 - `J2kImage.ToBytes(object, ParameterList?)` accepts platform-specific image objects or codec-specific sources. If encoding parameters are required you can supply a `ParameterList` instance with keys shown above.
 - The library exposes many encoder options using the same names as the original JJ2000/CSJ2K code; check the source for the full list of supported keys (e.g. `encoder_pinfo` in `J2kImage`).
 

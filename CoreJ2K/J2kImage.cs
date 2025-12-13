@@ -37,7 +37,7 @@ namespace CoreJ2K
 
         #region Static Decoder Methods
 
-        public static PortableImage FromFile(string filename, ParameterList parameters = null)
+        public static InterleavedImage FromFile(string filename, ParameterList parameters = null)
         {
             using (var stream = FileStreamFactory.New(filename, "r"))
             {
@@ -45,7 +45,7 @@ namespace CoreJ2K
             }
         }
 
-        public static PortableImage FromBytes(byte[] j2kdata, ParameterList parameters = null)
+        public static InterleavedImage FromBytes(byte[] j2kdata, ParameterList parameters = null)
         {
             using (var stream = new MemoryStream(j2kdata))
             {
@@ -53,7 +53,7 @@ namespace CoreJ2K
             }
         }
 
-        public static PortableImage FromStream(Stream stream, ParameterList parameters = null)
+        public static InterleavedImage FromStream(Stream stream, ParameterList parameters = null)
         {
             RandomAccessIO in_stream = new ISRandomAccessIO(stream);
 
@@ -209,7 +209,7 @@ namespace CoreJ2K
             var bitsUsed = new int[numComps];
             for (var j = 0; j < numComps; ++j) bitsUsed[j] = decodedImage.getNomRangeBits(numComps - 1 - j);
 
-            var dst = new PortableImage(imgWidth, decodedImage.ImgHeight, numComps, bitsUsed);
+            var dst = new InterleavedImage(imgWidth, decodedImage.ImgHeight, numComps, bitsUsed);
 
             var numTiles = decodedImage.getNumTiles(null);
 
