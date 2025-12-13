@@ -444,6 +444,33 @@ namespace CoreJ2K.j2k.fileformat.writer
                 csbLength = CSB_LENGTH;
             }
 
+            // Calculate palette box length
+            int paletteLength = 0;
+            if (Metadata != null && Metadata.Palette != null)
+            {
+                var palette = Metadata.Palette;
+                // LBox(4) + TBox(4) + NE(2) + NPC(1) + B[NPC] + entries
+                paletteLength = 8 + 3 + palette.NumColumns;
+                
+                // Add entry data size
+                for (int i = 0; i < palette.NumEntries; i++)
+                {
+                    for (int j = 0; j < palette.NumColumns; j++)
+                    {
+                        var bitDepth = palette.GetBitDepth(j);
+                        paletteLength += (bitDepth <= 8) ? 1 : 2;
+                    }
+                }
+            }
+
+            // Calculate component mapping box length
+            int cmapLength = 0;
+            if (Metadata != null && Metadata.ComponentMapping != null)
+            {
+                // LBox(4) + TBox(4) + (CMP(2) + MTYP(1) + PCOL(1)) * numChannels
+                cmapLength = 8 + (4 * Metadata.ComponentMapping.NumChannels);
+            }
+
             // Calculate resolution box length
             int resLength = 0;
             if (Metadata != null && Metadata.Resolution != null && Metadata.Resolution.HasResolution)
@@ -477,6 +504,12 @@ namespace CoreJ2K.j2k.fileformat.writer
             if (bpcVaries)
                 headerLength += BPC_LENGTH + nc;
                 
+            if (paletteLength > 0)
+                headerLength += paletteLength;
+                
+            if (cmapLength > 0)
+                headerLength += cmapLength;
+                
             if (cdefLength > 0)
                 headerLength += cdefLength;
 
@@ -489,21 +522,29 @@ namespace CoreJ2K.j2k.fileformat.writer
             // Write a JP2Header (TBox)
             fi.writeInt(FileFormatBoxes.JP2_HEADER_BOX);
 
-            // Write image header box 
+            // Write image header box (required, must be first)
             writeImageHeaderBox();
 
-            // Write Colour Specification Box
+            // Write Colour Specification Box (required)
             writeColourSpecificationBox();
 
-            // if the number of bits per components varies write bpcc box
+            // Write Bits Per Component box if needed (optional)
             if (bpcVaries)
                 writeBitsPerComponentBox();
 
-            // Write channel definition box if present (before resolution per ISO spec)
+            // Write Palette box if present (optional, must come before cmap)
+            if (paletteLength > 0)
+                writePaletteBox();
+
+            // Write Component Mapping box if present (optional, must come after palette)
+            if (cmapLength > 0)
+                writeComponentMappingBox();
+
+            // Write channel definition box if present (optional)
             if (cdefLength > 0)
                 writeChannelDefinitionBox();
 
-            // Write resolution box if present
+            // Write resolution box if present (optional)
             if (resLength > 0)
                 writeResolutionBox();
         }
@@ -588,12 +629,12 @@ namespace CoreJ2K.j2k.fileformat.writer
             // Convert resolution to fraction with exponent
             // We'll use a simple approach: express as integer * 10^exponent
             
-            // Find appropriate exponent to keep values reasonable
+            // Find appropriate exponent to keep values in a reasonable range
             var hr_exp = GetResolutionExponent(horizontalRes);
             var vr_exp = GetResolutionExponent(verticalRes);
 
             // Calculate numerator and denominator
-            // Use denominator = 1 for simplicity (could be optimized for better precision)
+            // For simplicity, use denominator = 1 (could be optimized for better precision)
             var hr_num = (short)(horizontalRes / Math.Pow(10, hr_exp));
             var vr_num = (short)(verticalRes / Math.Pow(10, vr_exp));
             const short denominator = 1;
@@ -659,6 +700,115 @@ namespace CoreJ2K.j2k.fileformat.writer
             for (var i = 0; i < nc; i++)
             {
                 fi.writeByte(bpc[i] - 1);
+            }
+        }
+
+        /// <summary>
+        /// Writes the Palette Box (pclr) which defines a lookup table for indexed color images.
+        /// Format: NE(2) + NPC(1) + B[NPC](1) + C[NE][NPC](1 or 2 each)
+        /// </summary>
+        private void writePaletteBox()
+        {
+            if (Metadata?.Palette == null)
+                return;
+
+            var palette = Metadata.Palette;
+
+            // Calculate box length
+            var dataLength = 3 + palette.NumColumns; // NE(2) + NPC(1) + B[NPC]
+            
+            // Add entry data size
+            for (int i = 0; i < palette.NumEntries; i++)
+            {
+                for (int j = 0; j < palette.NumColumns; j++)
+                {
+                    var bitDepth = palette.GetBitDepth(j);
+                    dataLength += (bitDepth <= 8) ? 1 : 2;
+                }
+            }
+
+            var boxLength = 8 + dataLength; // LBox(4) + TBox(4) + data
+
+            // Write box length (LBox)
+            fi.writeInt(boxLength);
+
+            // Write Palette box type (TBox)
+            fi.writeInt(FileFormatBoxes.PALETTE_BOX);
+
+            // Write NE (number of entries) - 2 bytes
+            fi.writeShort((short)palette.NumEntries);
+
+            // Write NPC (number of palette columns) - 1 byte
+            fi.writeByte((byte)palette.NumColumns);
+
+            // Write B array (bit depths for each column)
+            for (int i = 0; i < palette.NumColumns; i++)
+            {
+                fi.writeByte((byte)palette.BitDepths[i]);
+            }
+
+            // Write palette entries
+            for (int entryIdx = 0; entryIdx < palette.NumEntries; entryIdx++)
+            {
+                for (int colIdx = 0; colIdx < palette.NumColumns; colIdx++)
+                {
+                    var value = palette.GetEntry(entryIdx, colIdx);
+                    var bitDepth = palette.GetBitDepth(colIdx);
+
+                    if (bitDepth <= 8)
+                    {
+                        // 8-bit entry
+                        fi.writeByte((byte)(value & 0xFF));
+                    }
+                    else if (bitDepth <= 16)
+                    {
+                        // 16-bit entry
+                        fi.writeShort((short)(value & 0xFFFF));
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException($"Palette bit depth > 16 not supported: {bitDepth}");
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Writes the Component Mapping Box (cmap) which maps codestream components to output channels.
+        /// Format: Array of {CMP(2) + MTYP(1) + PCOL(1)} entries
+        /// </summary>
+        private void writeComponentMappingBox()
+        {
+            if (Metadata?.ComponentMapping == null)
+                return;
+
+            var componentMapping = Metadata.ComponentMapping;
+            var numChannels = componentMapping.NumChannels;
+
+            // Calculate box length: LBox(4) + TBox(4) + (CMP(2) + MTYP(1) + PCOL(1)) * numChannels
+            var boxLength = 8 + (4 * numChannels);
+
+            // Write box length (LBox)
+            fi.writeInt(boxLength);
+
+            // Write Component Mapping box type (TBox)
+            fi.writeInt(FileFormatBoxes.COMPONENT_MAPPING_BOX);
+
+            // Write each mapping entry
+            for (int i = 0; i < numChannels; i++)
+            {
+                var componentIndex = componentMapping.GetComponentIndex(i);
+                var mappingType = componentMapping.GetMappingType(i);
+                var paletteColumn = componentMapping.GetPaletteColumn(i);
+
+                // Write CMP (component index) - 2 bytes
+                fi.writeShort((short)componentIndex);
+
+                // Write MTYP (mapping type) - 1 byte
+                fi.writeByte(mappingType);
+
+                // Write PCOL (palette column) - 1 byte
+                fi.writeByte(paletteColumn);
             }
         }
 

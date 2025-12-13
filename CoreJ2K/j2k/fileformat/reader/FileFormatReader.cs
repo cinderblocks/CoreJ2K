@@ -367,7 +367,7 @@ namespace CoreJ2K.j2k.fileformat.reader
                 throw new InvalidOperationException("Zero-length of JP2Header Box");
             }
 
-            // Read sub-boxes within JP2 Header to extract ICC profile, resolution, and channel definitions
+            // Read sub-boxes within JP2 Header to extract ICC profile, resolution, channel definitions, palette, and component mapping
             try
             {
                 var boxHeader = new byte[16];
@@ -428,6 +428,16 @@ namespace CoreJ2K.j2k.fileformat.reader
                     else if (boxType == FileFormatBoxes.CHANNEL_DEFINITION_BOX)
                     {
                         readChannelDefinitionBox(boxLen);
+                    }
+                    // Check for Palette Box
+                    else if (boxType == FileFormatBoxes.PALETTE_BOX)
+                    {
+                        readPaletteBox(boxLen);
+                    }
+                    // Check for Component Mapping Box
+                    else if (boxType == FileFormatBoxes.COMPONENT_MAPPING_BOX)
+                    {
+                        readComponentMappingBox(boxLen);
                     }
 
                     // Move to next box
@@ -912,6 +922,151 @@ namespace CoreJ2K.j2k.fileformat.reader
             {
                 FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING,
                     $"Error reading Label (LBL) box: {e.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Reads the Palette Box (pclr) from JP2 Header.
+        /// The Palette box defines a lookup table for indexed color images.
+        /// Format: NE(2) + NPC(1) + B[NPC](1) + C[NE][NPC](1 or 2 each)
+        /// </summary>
+        /// <param name="boxLength">Total length of the box including header.</param>
+        private void readPaletteBox(int boxLength)
+        {
+            if (boxLength <= 11) return; // Box too small (8 header + 3 minimum data)
+
+            try
+            {
+                // Read NE (number of entries) - 2 bytes
+                var numEntries = in_Renamed.readShort() & 0xFFFF;
+                
+                // Read NPC (number of palette columns) - 1 byte
+                var numColumns = in_Renamed.readByte() & 0xFF;
+
+                if (numEntries == 0 || numColumns == 0)
+                {
+                    FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING,
+                        "Invalid palette: zero entries or columns");
+                    return;
+                }
+
+                // Read bit depths for each column (B array)
+                var bitDepths = new short[numColumns];
+                for (int i = 0; i < numColumns; i++)
+                {
+                    bitDepths[i] = (short)(in_Renamed.readByte() & 0xFF);
+                }
+
+                // Read palette entries
+                var entries = new int[numEntries][];
+                for (int entryIdx = 0; entryIdx < numEntries; entryIdx++)
+                {
+                    entries[entryIdx] = new int[numColumns];
+                    
+                    for (int colIdx = 0; colIdx < numColumns; colIdx++)
+                    {
+                        var bitDepth = (bitDepths[colIdx] & 0x7F) + 1; // Bits 0-6 are depth minus 1
+                        var isSigned = (bitDepths[colIdx] & 0x80) != 0; // Bit 7 is sign flag
+                        
+                        int value;
+                        if (bitDepth <= 8)
+                        {
+                            // 8-bit entry
+                            value = in_Renamed.readByte() & 0xFF;
+                        }
+                        else if (bitDepth <= 16)
+                        {
+                            // 16-bit entry
+                            value = in_Renamed.readShort() & 0xFFFF;
+                        }
+                        else
+                        {
+                            throw new InvalidOperationException($"Palette bit depth > 16 not supported: {bitDepth}");
+                        }
+
+                        // Handle sign extension for signed values
+                        if (isSigned && (value & (1 << (bitDepth - 1))) != 0)
+                        {
+                            // Sign bit is set, extend sign
+                            var mask = unchecked((int)(0xFFFFFFFF << bitDepth));
+                            entries[entryIdx][colIdx] = mask | value;
+                        }
+                        else
+                        {
+                            // Unsigned or positive signed value
+                            var mask = (1 << bitDepth) - 1;
+                            entries[entryIdx][colIdx] = mask & value;
+                        }
+                    }
+                }
+
+                // Store in metadata
+                Metadata.SetPalette(numEntries, numColumns, bitDepths, entries);
+
+                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                    $"Found Palette Box: {numEntries} entries, {numColumns} columns");
+            }
+            catch (Exception e)
+            {
+                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING,
+                    $"Error reading Palette Box: {e.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Reads the Component Mapping Box (cmap) from JP2 Header.
+        /// The Component Mapping box defines how codestream components map to output channels.
+        /// Format: Array of {CMP(2) + MTYP(1) + PCOL(1)} entries
+        /// </summary>
+        /// <param name="boxLength">Total length of the box including header.</param>
+        private void readComponentMappingBox(int boxLength)
+        {
+            if (boxLength <= 8) return; // Box too small
+
+            try
+            {
+                var dataLength = boxLength - 8;
+                
+                // Each mapping entry is 4 bytes: CMP (component index) - 2 bytes
+                // MTYP (mapping type) - 1 byte, PCOL (palette column) - 1 byte
+                if (dataLength % 4 != 0)
+                {
+                    FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING,
+                        $"Invalid Component Mapping Box: length {dataLength} is not multiple of 4");
+                    return;
+                }
+
+                var numChannels = dataLength / 4;
+
+                // Create component mapping data
+                var componentMapping = new ComponentMappingData();
+
+                for (int i = 0; i < numChannels; i++)
+                {
+                    // Read CMP (component index) - 2 bytes
+                    var componentIndex = (ushort)(in_Renamed.readShort() & 0xFFFF);
+                    
+                    // Read MTYP (mapping type) - 1 byte
+                    // 0 = direct use, 1 = palette mapping
+                    var mappingType = (byte)(in_Renamed.readByte() & 0xFF);
+                    
+                    // Read PCOL (palette column) - 1 byte
+                    var paletteColumn = (byte)(in_Renamed.readByte() & 0xFF);
+
+                    componentMapping.AddMapping(componentIndex, mappingType, paletteColumn);
+                }
+
+                // Store in metadata
+                Metadata.ComponentMapping = componentMapping;
+
+                var paletteInfo = componentMapping.UsesPalette ? " (uses palette)" : " (direct mapping)";
+                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                    $"Found Component Mapping Box: {numChannels} channels{paletteInfo}");
+            }
+            catch (Exception e)
+            {
+                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING,
+                    $"Error reading Component Mapping Box: {e.Message}");
             }
         }
     }

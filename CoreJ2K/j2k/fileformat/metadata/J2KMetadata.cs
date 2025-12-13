@@ -11,7 +11,7 @@ namespace CoreJ2K.j2k.fileformat.metadata
 {
     /// <summary>
     /// Represents metadata extracted from or to be written to a JPEG2000 file.
-    /// Supports comments, XML boxes (XMP, IPTC), UUID boxes, ICC profiles, resolution data, channel definitions, TLM data, JPR, and Label boxes.
+    /// Supports comments, XML boxes (XMP, IPTC), UUID boxes, ICC profiles, resolution data, channel definitions, palette, component mapping, TLM data, JPR, and Label boxes.
     /// </summary>
     public class J2KMetadata
     {
@@ -69,6 +69,16 @@ namespace CoreJ2K.j2k.fileformat.metadata
         /// Gets or sets the tile-part lengths data (TLM marker information) for fast tile access.
         /// </summary>
         public TilePartLengthsData TilePartLengths { get; set; }
+
+        /// <summary>
+        /// Gets or sets the palette box data (for palettized/indexed color images).
+        /// </summary>
+        public PaletteData Palette { get; set; }
+
+        /// <summary>
+        /// Gets or sets the component mapping box data (maps codestream components to image channels).
+        /// </summary>
+        public ComponentMappingData ComponentMapping { get; set; }
 
         /// <summary>
         /// Adds a simple text comment to the metadata.
@@ -137,6 +147,38 @@ namespace CoreJ2K.j2k.fileformat.metadata
                 Resolution.SetCaptureDpi(horizontalDpi, verticalDpi);
             else
                 Resolution.SetDisplayDpi(horizontalDpi, verticalDpi);
+        }
+
+        /// <summary>
+        /// Sets palette data for indexed color images.
+        /// </summary>
+        /// <param name="numEntries">Number of palette entries.</param>
+        /// <param name="numColumns">Number of color columns (typically 3 for RGB).</param>
+        /// <param name="bitDepths">Bit depth for each column (sign bit in MSB).</param>
+        /// <param name="entries">The palette entries [entry][column].</param>
+        public void SetPalette(int numEntries, int numColumns, short[] bitDepths, int[][] entries)
+        {
+            Palette = new PaletteData
+            {
+                NumEntries = numEntries,
+                NumColumns = numColumns,
+                BitDepths = bitDepths,
+                Entries = entries
+            };
+        }
+
+        /// <summary>
+        /// Adds a component mapping entry (maps a codestream component to an output channel).
+        /// </summary>
+        /// <param name="componentIndex">Codestream component index.</param>
+        /// <param name="mappingType">Mapping type (0=direct, 1=palette).</param>
+        /// <param name="paletteColumn">Palette column index (if mappingType=1).</param>
+        public void AddComponentMapping(ushort componentIndex, byte mappingType, byte paletteColumn)
+        {
+            if (ComponentMapping == null)
+                ComponentMapping = new ComponentMappingData();
+
+            ComponentMapping.AddMapping(componentIndex, mappingType, paletteColumn);
         }
 
         /// <summary>
@@ -465,5 +507,175 @@ namespace CoreJ2K.j2k.fileformat.metadata
             var compat = IsJp2Compatible ? " (JP2 compatible)" : "";
             return $"Reader Requirements Box: {stdCount} standard feature(s), {vendorCount} vendor feature(s){compat}";
         }
+    }
+
+    /// <summary>
+    /// Represents palette (pclr) box data for indexed color images.
+    /// The palette maps index values to multi-component color values.
+    /// Required when using palettized color in JP2 images.
+    /// </summary>
+    public class PaletteData
+    {
+        /// <summary>
+        /// Gets or sets the number of palette entries (NE field).
+        /// Valid range: 1 to 1024 for most implementations.
+        /// </summary>
+        public int NumEntries { get; set; }
+
+        /// <summary>
+        /// Gets or sets the number of palette columns/components (NPC field).
+        /// Typically 3 for RGB palettes, 1 for grayscale palettes.
+        /// </summary>
+        public int NumColumns { get; set; }
+
+        /// <summary>
+        /// Gets or sets the bit depths for each column (B field).
+        /// Format: bits 0-6 = bit depth minus 1, bit 7 = sign bit (1=signed, 0=unsigned).
+        /// Array length must equal NumColumns.
+        /// </summary>
+        public short[] BitDepths { get; set; }
+
+        /// <summary>
+        /// Gets or sets the palette entries.
+        /// Format: entries[entryIndex][columnIndex]
+        /// Each entry maps an index to color component values.
+        /// </summary>
+        public int[][] Entries { get; set; }
+
+        /// <summary>
+        /// Returns true if the specified column uses signed values.
+        /// </summary>
+        public bool IsSigned(int column)
+        {
+            return (BitDepths[column] & 0x80) != 0;
+        }
+
+        /// <summary>
+        /// Gets the bit depth for a column (without the sign bit).
+        /// </summary>
+        public int GetBitDepth(int column)
+        {
+            return (BitDepths[column] & 0x7F) + 1;
+        }
+
+        /// <summary>
+        /// Gets a palette entry value.
+        /// </summary>
+        public int GetEntry(int entryIndex, int columnIndex)
+        {
+            return Entries[entryIndex][columnIndex];
+        }
+
+        public override string ToString()
+        {
+            var depths = new StringBuilder();
+            for (int i = 0; i < NumColumns; i++)
+            {
+                if (i > 0) depths.Append(", ");
+                depths.Append($"{GetBitDepth(i)}{(IsSigned(i) ? "S" : "U")}");
+            }
+            return $"Palette Box: {NumEntries} entries, {NumColumns} columns, depths=[{depths}]";
+        }
+    }
+
+    /// <summary>
+    /// Represents component mapping (cmap) box data.
+    /// Maps codestream components to output image channels, with optional palette indirection.
+    /// Required when using palettized color or when components need custom channel assignments.
+    /// </summary>
+    public class ComponentMappingData
+    {
+        /// <summary>
+        /// Gets the list of component mappings.
+        /// </summary>
+        public List<ComponentMapping> Mappings { get; } = new List<ComponentMapping>();
+
+        /// <summary>
+        /// Gets the number of mapped channels.
+        /// </summary>
+        public int NumChannels => Mappings.Count;
+
+        /// <summary>
+        /// Adds a component mapping.
+        /// </summary>
+        /// <param name="componentIndex">Codestream component index (CMP field).</param>
+        /// <param name="mappingType">Mapping type (MTYP field): 0=direct, 1=palette mapping.</param>
+        /// <param name="paletteColumn">Palette column index (PCOL field), used when mappingType=1.</param>
+        public void AddMapping(ushort componentIndex, byte mappingType, byte paletteColumn)
+        {
+            Mappings.Add(new ComponentMapping
+            {
+                ComponentIndex = componentIndex,
+                MappingType = mappingType,
+                PaletteColumn = paletteColumn
+            });
+        }
+
+        /// <summary>
+        /// Gets the component index for a channel.
+        /// </summary>
+        public ushort GetComponentIndex(int channel)
+        {
+            return Mappings[channel].ComponentIndex;
+        }
+
+        /// <summary>
+        /// Gets the mapping type for a channel.
+        /// </summary>
+        public byte GetMappingType(int channel)
+        {
+            return Mappings[channel].MappingType;
+        }
+
+        /// <summary>
+        /// Gets the palette column for a channel.
+        /// </summary>
+        public byte GetPaletteColumn(int channel)
+        {
+            return Mappings[channel].PaletteColumn;
+        }
+
+        /// <summary>
+        /// Returns true if any channel uses palette mapping.
+        /// </summary>
+        public bool UsesPalette => Mappings.Exists(m => m.MappingType == 1);
+
+        public override string ToString()
+        {
+            var sb = new StringBuilder($"Component Mapping Box: {NumChannels} channels");
+            for (int i = 0; i < Mappings.Count; i++)
+            {
+                var m = Mappings[i];
+                sb.Append($"\n  Channel[{i}]: Component={m.ComponentIndex}, Type={m.MappingType}");
+                if (m.MappingType == 1)
+                    sb.Append($", PaletteCol={m.PaletteColumn}");
+            }
+            return sb.ToString();
+        }
+    }
+
+    /// <summary>
+    /// Represents a single component-to-channel mapping entry.
+    /// </summary>
+    public class ComponentMapping
+    {
+        /// <summary>
+        /// Gets or sets the codestream component index (CMP field).
+        /// </summary>
+        public ushort ComponentIndex { get; set; }
+
+        /// <summary>
+        /// Gets or sets the mapping type (MTYP field).
+        /// 0 = Direct use (component maps directly to channel)
+        /// 1 = Palette mapping (component used as index into palette)
+        /// </summary>
+        public byte MappingType { get; set; }
+
+        /// <summary>
+        /// Gets or sets the palette column index (PCOL field).
+        /// Only used when MappingType = 1.
+        /// Specifies which column of the palette to use.
+        /// </summary>
+        public byte PaletteColumn { get; set; }
     }
 }
