@@ -15,6 +15,7 @@ namespace CoreJ2K.j2k.codestream.writer
         /// <summary>
         /// Writes TLM marker segment(s) to the provided BinaryWriter.
         /// Multiple TLM markers may be written if there are many tile-parts.
+        /// Note: This method writes in big-endian format as required by JPEG 2000.
         /// </summary>
         /// <param name="writer">The BinaryWriter to write to</param>
         /// <param name="tlm">The tile-part length data to write</param>
@@ -68,11 +69,11 @@ namespace CoreJ2K.j2k.codestream.writer
                     int entriesInThisMarker = System.Math.Min(maxEntries, totalEntries - entryIndex);
                     int ltlm = 4 + (entriesInThisMarker * entrySize);
                     
-                    // Write TLM marker
-                    writer.Write(Markers.TLM);
+                    // Write TLM marker (big-endian)
+                    WriteBigEndianShort(writer, Markers.TLM);
                     
-                    // Write Ltlm (marker length)
-                    writer.Write((short)ltlm);
+                    // Write Ltlm (marker length) (big-endian)
+                    WriteBigEndianShort(writer, (short)ltlm);
                     
                     // Write Ztlm (marker index)
                     writer.Write((byte)ztlm++);
@@ -85,25 +86,25 @@ namespace CoreJ2K.j2k.codestream.writer
                     {
                         var entry = entries[entryIndex++];
                         
-                        // Write Ttlm (tile index)
+                        // Write Ttlm (tile index) (big-endian)
                         if (ttlmSize == 1)
                         {
                             writer.Write((byte)entry.TileIndex);
                         }
                         else if (ttlmSize == 2)
                         {
-                            writer.Write((short)entry.TileIndex);
+                            WriteBigEndianShort(writer, (short)entry.TileIndex);
                         }
                         // ttlmSize == 0 means implicit (sequential), not used here
                         
-                        // Write Ptlm (tile-part length)
+                        // Write Ptlm (tile-part length) (big-endian)
                         if (ptlmSize == 2)
                         {
-                            writer.Write((short)entry.TilePartLength);
+                            WriteBigEndianShort(writer, (short)entry.TilePartLength);
                         }
                         else // ptlmSize == 4
                         {
-                            writer.Write(entry.TilePartLength);
+                            WriteBigEndianInt(writer, entry.TilePartLength);
                         }
                     }
                 }
@@ -112,6 +113,26 @@ namespace CoreJ2K.j2k.codestream.writer
             {
                 throw new InvalidOperationException($"Error writing TLM marker: {e.Message}", e);
             }
+        }
+
+        /// <summary>
+        /// Writes a short value in big-endian format.
+        /// </summary>
+        private static void WriteBigEndianShort(BinaryWriter writer, short value)
+        {
+            writer.Write((byte)((value >> 8) & 0xFF));
+            writer.Write((byte)(value & 0xFF));
+        }
+
+        /// <summary>
+        /// Writes an int value in big-endian format.
+        /// </summary>
+        private static void WriteBigEndianInt(BinaryWriter writer, int value)
+        {
+            writer.Write((byte)((value >> 24) & 0xFF));
+            writer.Write((byte)((value >> 16) & 0xFF));
+            writer.Write((byte)((value >> 8) & 0xFF));
+            writer.Write((byte)(value & 0xFF));
         }
     }
 }
