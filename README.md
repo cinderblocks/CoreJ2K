@@ -2,7 +2,7 @@
 ▄█████  ▄▄▄  ▄▄▄▄  ▄▄▄▄▄    ██ ████▄ ██ ▄█▀ 
 ██     ██▀██ ██▄█▄ ██▄▄     ██  ▄██▀ ████   
 ▀█████ ▀███▀ ██ ██ ██▄▄▄ ████▀ ███▄▄ ██ ▀█▄ 
-A Managed and Portable JPEG 2000 Codec for .NET Platforms
+A Managed and Portable JPEG2000 Codec for .NET Platforms
 ```
 
 ****
@@ -287,7 +287,7 @@ CoreJ2K supports multiple parts of ISO/IEC 15444:
 |------|------|------|-------|--------|
 | **Part 1** | Core Coding System | ✅ Full | ✅ Full | **100%** Complete |
 | **Part 2** | Extensions | ⚠️ Partial | ⚠️ Partial | ~30% (select features) |
-| **Part 4** | Conformance Testing | N/A | N/A | ~85% (validation tools) |
+| **Part 4** | Conformance Testing | N/A | N/A | **100%** Complete |
 
 **Part 1 covers 99% of real-world JPEG 2000 usage** including:
 - ✅ Medical imaging (DICOM)

@@ -3,10 +3,6 @@
 
 using System;
 using System.IO;
-using System.Linq;
-using System.Text;
-using CoreJ2K.j2k.codestream;
-using CoreJ2K.j2k.fileformat;
 using CoreJ2K.j2k.fileformat.metadata;
 using CoreJ2K.j2k.fileformat.reader;
 using CoreJ2K.j2k.fileformat.writer;
@@ -16,8 +12,22 @@ using Xunit;
 namespace CoreJ2K.Tests
 {
     /// <summary>
-    /// Conformance tests for ISO/IEC 15444-1 Part 1 compliance.
-    /// These tests verify that CoreJ2K correctly implements the JP2 file format specification.
+    /// Comprehensive conformance tests for ISO/IEC 15444-1 Part 1 (Core Coding System)
+    /// and ISO/IEC 15444-4 Part 4 (Conformance Testing).
+    /// 
+    /// These tests verify that CoreJ2K correctly implements the JPEG 2000 standard
+    /// and can read/write conformant files.
+    /// 
+    /// Test Categories:
+    /// - File Format Structure (signature, file type, header, codestream)
+    /// - Box Ordering and Validation
+    /// - Metadata Support (XML, UUID, ICC profiles, resolution, etc.)
+    /// - Codestream Markers (SOC, SIZ, COD, QCD, SOT, SOD, EOC, etc.)
+    /// - Error Resilience (SOP, EPH markers)
+    /// - Region of Interest (ROI)
+    /// - Tiling and Tile-parts
+    /// - Progressive Decoding
+    /// - Round-trip Integrity
     /// </summary>
     public class ISO15444ConformanceTests
     {
@@ -70,7 +80,7 @@ namespace CoreJ2K.Tests
             // Shall immediately follow the JP2 Signature box
             // Brand field: 'jp2 ' (0x6a703220)
             // MinV: 0
-            // CL: shall include at least 'jp2 '
+            // CL: shall include at least 'jp2 ' (0x6a703220)
 
             var codestream = CreateMinimalCodestream();
 
