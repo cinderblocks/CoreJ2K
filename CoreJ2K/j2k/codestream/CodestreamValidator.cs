@@ -75,6 +75,18 @@ namespace CoreJ2K.j2k.codestream
 
                 return !HasErrors;
             }
+            catch (IndexOutOfRangeException ex)
+            {
+                // More specific error for array access issues
+                errors.Add($"Codestream truncated or corrupted: {ex.Message}");
+                return false;
+            }
+            catch (ArgumentOutOfRangeException ex)
+            {
+                // Handle out of range access
+                errors.Add($"Invalid marker segment length or position: {ex.Message}");
+                return false;
+            }
             catch (Exception ex)
             {
                 errors.Add($"Exception during validation: {ex.Message}");
@@ -91,7 +103,7 @@ namespace CoreJ2K.j2k.codestream
             var pos = 0;
 
             // 1. SOC marker must be first (0xFF4F)
-            if (!ValidateSOC(data, ref pos))
+            if (!ValidateSOC(data, ref pos, maxBytes))
                 return -1;
 
             // 2. SIZ marker must immediately follow SOC (0xFF51)
@@ -106,6 +118,13 @@ namespace CoreJ2K.j2k.codestream
 
             while (pos < maxBytes - 1)
             {
+                // Safety check: ensure we have at least 2 bytes for marker
+                if (pos + 1 >= maxBytes)
+                {
+                    warnings.Add($"Main header validation incomplete (reached maxBytes limit at position {pos})");
+                    break;
+                }
+
                 // Check if we've reached SOT (start of tile-part headers)
                 if (data[pos] == 0xFF && data[pos + 1] == 0x90) // SOT marker
                 {
@@ -128,6 +147,13 @@ namespace CoreJ2K.j2k.codestream
                 {
                     errors.Add("SOD marker found before SOT (no tile-parts defined)");
                     return -1;
+                }
+
+                // Check if we've reached EOC (end of codestream)
+                if (data[pos] == 0xFF && data[pos + 1] == 0xD9) // EOC marker
+                {
+                    warnings.Add("EOC marker found in main header (before any tile-parts)");
+                    return pos;
                 }
 
                 // Read marker
@@ -210,8 +236,12 @@ namespace CoreJ2K.j2k.codestream
                         break;
 
                     default:
-                        errors.Add($"Unknown or unexpected marker in main header: 0x{marker:X4} at position {pos - 2}");
-                        return -1;
+                        // Don't fail on unknown markers, just warn and try to skip
+                        warnings.Add($"Unknown or unexpected marker in main header: 0x{marker:X4} at position {pos - 2}");
+                        // Try to skip the marker if it has a length field
+                        if (!TrySkipUnknownMarker(data, ref pos, maxBytes))
+                            return -1;
+                        break;
                 }
             }
 
@@ -220,9 +250,9 @@ namespace CoreJ2K.j2k.codestream
             return pos;
         }
 
-        private bool ValidateSOC(byte[] data, ref int pos)
+        private bool ValidateSOC(byte[] data, ref int pos, int maxBytes)
         {
-            if (pos + 1 >= data.Length)
+            if (pos + 1 >= maxBytes)
             {
                 errors.Add("Codestream too short for SOC marker");
                 return false;
@@ -517,6 +547,47 @@ namespace CoreJ2K.j2k.codestream
             pos += length - 2;
             info.Add($"{markerName} marker validated ({length} bytes)");
             return true;
+        }
+
+        /// <summary>
+        /// Attempts to skip an unknown marker by reading its length field.
+        /// Returns false if the marker cannot be skipped safely.
+        /// </summary>
+        private bool TrySkipUnknownMarker(byte[] data, ref int pos, int maxBytes)
+        {
+            try
+            {
+                // Check if we have room for a length field
+                if (pos + 2 > maxBytes)
+                {
+                    errors.Add($"Cannot read length of unknown marker at position {pos - 2} (insufficient data)");
+                    return false;
+                }
+
+                var length = (data[pos] << 8) | data[pos + 1];
+                
+                if (length < 2)
+                {
+                    errors.Add($"Invalid marker segment length: {length}");
+                    return false;
+                }
+
+                if (pos + length > maxBytes)
+                {
+                    warnings.Add($"Marker segment extends beyond available data (need {length} bytes, have {maxBytes - pos})");
+                    pos = maxBytes; // Skip to end
+                    return true; // Return true to allow continuation
+                }
+
+                pos += length;
+                info.Add($"Skipped unknown marker ({length} bytes)");
+                return true;
+            }
+            catch (Exception)
+            {
+                errors.Add($"Failed to skip unknown marker at position {pos - 2}");
+                return false;
+            }
         }
 
         /// <summary>
