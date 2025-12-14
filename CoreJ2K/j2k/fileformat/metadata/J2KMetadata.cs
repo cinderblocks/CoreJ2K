@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using CoreJ2K.Color.ICC;
 using CoreJ2K.j2k.codestream.metadata;
@@ -19,6 +20,12 @@ namespace CoreJ2K.j2k.fileformat.metadata
         /// Gets the list of text comments found in the file.
         /// </summary>
         public List<CommentBox> Comments { get; } = new List<CommentBox>();
+
+        /// <summary>
+        /// Gets the list of comments from COM (Comment) marker segments in the codestream.
+        /// These are stored in the main header or tile-part headers.
+        /// </summary>
+        public List<CodestreamComment> CodestreamComments { get; } = new List<CodestreamComment>();
 
         /// <summary>
         /// Gets the list of XML boxes (including XMP, IPTC, etc.).
@@ -126,6 +133,78 @@ namespace CoreJ2K.j2k.fileformat.metadata
         public void AddLabel(string label)
         {
             Labels.Add(new LabelBox { Label = label });
+        }
+
+        /// <summary>
+        /// Adds a COM marker comment from the codestream.
+        /// </summary>
+        /// <param name="text">The comment text</param>
+        /// <param name="registrationMethod">Registration method (0=binary, 1=Latin text)</param>
+        /// <param name="isMainHeader">True if from main header, false if from tile header</param>
+        /// <param name="tileIndex">Tile index (if from tile header)</param>
+        public void AddCodestreamComment(string text, int registrationMethod = 1, bool isMainHeader = true, int tileIndex = -1)
+        {
+            CodestreamComments.Add(new CodestreamComment
+            {
+                Text = text,
+                RegistrationMethod = registrationMethod,
+                IsMainHeader = isMainHeader,
+                TileIndex = tileIndex
+            });
+        }
+
+        /// <summary>
+        /// Adds a COM marker comment with binary data from the codestream.
+        /// </summary>
+        /// <param name="data">The binary comment data</param>
+        /// <param name="registrationMethod">Registration method</param>
+        /// <param name="isMainHeader">True if from main header, false if from tile header</param>
+        /// <param name="tileIndex">Tile index (if from tile header)</param>
+        public void AddCodestreamComment(byte[] data, int registrationMethod, bool isMainHeader = true, int tileIndex = -1)
+        {
+            CodestreamComments.Add(new CodestreamComment
+            {
+                Data = data,
+                RegistrationMethod = registrationMethod,
+                IsMainHeader = isMainHeader,
+                TileIndex = tileIndex,
+                IsBinary = true
+            });
+        }
+
+        /// <summary>
+        /// Gets all comments from both JP2 boxes and codestream COM markers.
+        /// </summary>
+        public IEnumerable<string> GetAllComments()
+        {
+            foreach (var comment in Comments)
+            {
+                if (!string.IsNullOrEmpty(comment.Text))
+                    yield return comment.Text;
+            }
+
+            foreach (var comment in CodestreamComments)
+            {
+                if (!comment.IsBinary && !string.IsNullOrEmpty(comment.Text))
+                    yield return comment.Text;
+            }
+        }
+
+        /// <summary>
+        /// Gets all comments from the main header COM markers.
+        /// </summary>
+        public IEnumerable<CodestreamComment> GetMainHeaderComments()
+        {
+            return CodestreamComments.Where(c => c.IsMainHeader);
+        }
+
+        /// <summary>
+        /// Gets all comments from a specific tile's COM markers.
+        /// </summary>
+        /// <param name="tileIndex">The tile index</param>
+        public IEnumerable<CodestreamComment> GetTileComments(int tileIndex)
+        {
+            return CodestreamComments.Where(c => !c.IsMainHeader && c.TileIndex == tileIndex);
         }
 
         /// <summary>
