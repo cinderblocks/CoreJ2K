@@ -1010,18 +1010,64 @@ namespace CoreJ2K.j2k.fileformat.writer
         /// </exception>
         public virtual void writeContiguousCodeStreamBox(byte[] cs)
         {
-
-            // Write box length (LBox)
-            // This value is set to 0 since in this implementation, this box is
-            // always last
-            fi.writeInt(clength + 8);
-
-            // Write contiguous codestream box name (TBox)
-            fi.writeInt(FileFormatBoxes.CONTIGUOUS_CODESTREAM_BOX);
+            // Write box with automatic XLBox support if needed
+            WriteBoxHeader(FileFormatBoxes.CONTIGUOUS_CODESTREAM_BOX, clength);
 
             // Write codestream
             for (var i = 0; i < clength; i++)
                 fi.writeByte(cs[i]);
+        }
+
+        /// <summary>
+        /// Writes a box header with automatic Extended Length (XLBox) support.
+        /// If the content length exceeds uint.MaxValue (4GB), automatically uses XLBox format.
+        /// </summary>
+        /// <param name="boxType">The box type (TBox) - e.g., FileFormatBoxes.CONTIGUOUS_CODESTREAM_BOX</param>
+        /// <param name="contentLength">The length of the box content in bytes</param>
+        /// <exception cref="IOException">If an I/O error occurred.</exception>
+        private void WriteBoxHeader(int boxType, long contentLength)
+        {
+            var totalLength = contentLength + 8; // Standard header is 8 bytes
+
+            if (totalLength > uint.MaxValue)
+            {
+                // Use Extended Length (XLBox) format
+                // Header: LBox(4)=1 + TBox(4) + XLBox(8)
+                fi.writeInt(1);                          // LBox = 1 indicates XLBox
+                fi.writeInt(boxType);                    // TBox
+                fi.writeLong(contentLength + 16);        // XLBox includes 16-byte header
+            }
+            else
+            {
+                // Use standard box format
+                // Header: LBox(4) + TBox(4)
+                fi.writeInt((int)totalLength);           // LBox
+                fi.writeInt(boxType);                    // TBox
+            }
+        }
+
+        /// <summary>
+        /// Writes a box header with automatic Extended Length (XLBox) support, given total box length.
+        /// This overload is useful when you already calculated the total length including header.
+        /// </summary>
+        /// <param name="boxType">The box type (TBox)</param>
+        /// <param name="totalBoxLength">The total length of the box including header</param>
+        /// <param name="isTotal">Set to true to indicate totalBoxLength includes header</param>
+        private void WriteBoxHeaderTotal(int boxType, long totalBoxLength, bool isTotal = true)
+        {
+            if (totalBoxLength > uint.MaxValue)
+            {
+                // Use Extended Length (XLBox) format
+                fi.writeInt(1);                          // LBox = 1
+                fi.writeInt(boxType);                    // TBox
+                fi.writeLong(totalBoxLength);            // XLBox
+            }
+            else
+            {
+                // Use standard box format
+                fi.writeInt((int)totalBoxLength);        // LBox
+                fi.writeInt(boxType);                    // TBox
+            }
         }
 
         /// <summary>

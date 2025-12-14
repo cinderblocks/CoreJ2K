@@ -64,9 +64,29 @@ namespace CoreJ2K.Color.Boxes
 
             dataStart = boxStart + 8;
             length = ICCProfile.getInt(boxHeader, 0);
-            boxEnd = boxStart + length;
+            
             if (length == 1)
-                throw new ColorSpaceException("extended length boxes not supported");
+            {
+                // Extended length box (XLBox) - read 8-byte length
+                this.in_Renamed.readFully(boxHeader, 8, 8);
+                var xlbox = ICCProfile.getLong(boxHeader, 8);
+                
+                // For boxes > int.MaxValue, we clamp to int.MaxValue
+                // This is a limitation of the current API which uses int for positions
+                if (xlbox > int.MaxValue)
+                {
+                    length = int.MaxValue;
+                    // Note: Actual box extends beyond int.MaxValue
+                }
+                else
+                {
+                    length = (int)xlbox;
+                }
+                
+                dataStart = boxStart + 16; // 16-byte header for XLBox
+            }
+            
+            boxEnd = boxStart + length;
         }
 
 
