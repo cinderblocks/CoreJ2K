@@ -576,6 +576,25 @@ namespace CoreJ2K.j2k.fileformat.metadata
     /// </summary>
     public class ReaderRequirementsBox
     {
+        // Common standard feature IDs per ISO/IEC 15444-1 Annex I
+        public const ushort FEATURE_NO_EXTENSIONS = 0;
+        public const ushort FEATURE_DCT_ONLY = 1;
+        public const ushort FEATURE_NO_OPACITY = 2;
+        public const ushort FEATURE_SINGLE_TILE = 3;
+        public const ushort FEATURE_LESS_THAN_257_COMPONENTS = 4;
+        public const ushort FEATURE_NO_SUBSAMPLING = 5;
+        public const ushort FEATURE_LOSSLESS = 6;
+        public const ushort FEATURE_NO_PART2_EXTENSIONS = 7;
+        public const ushort FEATURE_DCT = 67;
+        public const ushort FEATURE_ARBITRARY_DECOMP = 68;
+        public const ushort FEATURE_ARBITRARY_CODEBLOCK = 69;
+        public const ushort FEATURE_SELECTIVE_ARITHMETIC_BYPASS = 70;
+        public const ushort FEATURE_RESET_PROBABILITY = 71;
+        public const ushort FEATURE_TERMINATION_ON_EACH_PASS = 72;
+        public const ushort FEATURE_VERTICAL_CAUSAL_CONTEXT = 73;
+        public const ushort FEATURE_PREDICTABLE_TERMINATION = 74;
+        public const ushort FEATURE_SEGMENTATION_SYMBOLS = 75;
+
         /// <summary>
         /// Gets the list of standard features (Feature IDs) that the reader must support.
         /// Each feature ID is a 16-bit value defined in ISO/IEC 15444-1 Annex I.
@@ -611,6 +630,54 @@ namespace CoreJ2K.j2k.fileformat.metadata
         public bool RequiresVendorFeature(Guid uuid)
         {
             return VendorFeatures.Contains(uuid);
+        }
+
+        /// <summary>
+        /// Gets a human-readable description of a standard feature.
+        /// </summary>
+        /// <param name="featureId">The feature ID.</param>
+        /// <returns>Description of the feature.</returns>
+        public static string GetFeatureDescription(ushort featureId)
+        {
+            switch (featureId)
+            {
+                case FEATURE_NO_EXTENSIONS:
+                    return "No extensions (baseline)";
+                case FEATURE_DCT_ONLY:
+                    return "DCT only";
+                case FEATURE_NO_OPACITY:
+                    return "No opacity channel";
+                case FEATURE_SINGLE_TILE:
+                    return "Single tile";
+                case FEATURE_LESS_THAN_257_COMPONENTS:
+                    return "Less than 257 components";
+                case FEATURE_NO_SUBSAMPLING:
+                    return "No component subsampling";
+                case FEATURE_LOSSLESS:
+                    return "Lossless compression";
+                case FEATURE_NO_PART2_EXTENSIONS:
+                    return "No Part 2 extensions";
+                case FEATURE_DCT:
+                    return "DCT transformation";
+                case FEATURE_ARBITRARY_DECOMP:
+                    return "Arbitrary decomposition levels";
+                case FEATURE_ARBITRARY_CODEBLOCK:
+                    return "Arbitrary codeblock size";
+                case FEATURE_SELECTIVE_ARITHMETIC_BYPASS:
+                    return "Selective arithmetic coding bypass";
+                case FEATURE_RESET_PROBABILITY:
+                    return "Reset of probability contexts";
+                case FEATURE_TERMINATION_ON_EACH_PASS:
+                    return "Termination on each coding pass";
+                case FEATURE_VERTICAL_CAUSAL_CONTEXT:
+                    return "Vertically causal context";
+                case FEATURE_PREDICTABLE_TERMINATION:
+                    return "Predictable termination";
+                case FEATURE_SEGMENTATION_SYMBOLS:
+                    return "Segmentation symbols";
+                default:
+                    return $"Unknown feature {featureId}";
+            }
         }
 
         public override string ToString()
