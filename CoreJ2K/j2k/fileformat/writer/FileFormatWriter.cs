@@ -199,7 +199,7 @@ namespace CoreJ2K.j2k.fileformat.writer
         }
 
         /// <summary>
-        /// Writes all metadata boxes (XML, UUID, JPR, and Label boxes).
+        /// Writes all metadata boxes (XML, UUID, JPR, Label, and UUID Info boxes).
         /// </summary>
         /// <returns>Total bytes written for metadata.</returns>
         private int writeMetadataBoxes()
@@ -216,6 +216,12 @@ namespace CoreJ2K.j2k.fileformat.writer
             foreach (var uuidBox in Metadata.UuidBoxes)
             {
                 bytesWritten += writeUUIDBox(uuidBox);
+            }
+
+            // Write UUID Info box if present
+            if (Metadata.UuidInfo != null && Metadata.UuidInfo.UuidList.Count > 0)
+            {
+                bytesWritten += writeUUIDInfoBox(Metadata.UuidInfo);
             }
 
             // Write Intellectual Property Rights (JPR) boxes (JPEG 2000 Part 2)
@@ -394,6 +400,85 @@ namespace CoreJ2K.j2k.fileformat.writer
             catch (Exception e)
             {
                 throw new InvalidOperationException($"Error writing Label (LBL) box: {e.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Writes a UUID Info (uinf) box to the file.
+        /// The UUID Info box is a superbox containing a UUID List box and optionally a URL box.
+        /// Format per ISO/IEC 15444-1 Section I.7.1: uinf -> [ulst] + [url?]
+        /// </summary>
+        /// <param name="uuidInfo">The UUID Info box to write.</param>
+        /// <returns>Number of bytes written.</returns>
+        private int writeUUIDInfoBox(UuidInfoBox uuidInfo)
+        {
+            if (uuidInfo == null || uuidInfo.UuidList.Count == 0)
+                return 0;
+
+            try
+            {
+                // Calculate content length
+                var contentLength = 0;
+
+                // UUID List box length: LBox(4) + TBox(4) + NU(2) + UUIDs(16*count)
+                var ulistLength = 8 + 2 + (16 * uuidInfo.UuidList.Count);
+                contentLength += ulistLength;
+
+                // URL box length if present: LBox(4) + TBox(4) + VERS(1) + FLAG(3) + URL
+                var urlLength = 0;
+                if (!string.IsNullOrEmpty(uuidInfo.Url))
+                {
+                    var urlBytes = Encoding.UTF8.GetBytes(uuidInfo.Url);
+                    urlLength = 8 + 4 + urlBytes.Length; // LBox + TBox + VERS + FLAG(3) + URL
+                    contentLength += urlLength;
+                }
+
+                // UUID Info superbox length: LBox(4) + TBox(4) + content
+                var boxLength = 8 + contentLength;
+
+                // Write UUID Info superbox header
+                fi.writeInt(boxLength);
+                fi.writeInt(FileFormatBoxes.UUID_INFO_BOX);
+
+                // Write UUID List box
+                fi.writeInt(ulistLength); // LBox
+                fi.writeInt(FileFormatBoxes.UUID_LIST_BOX); // TBox
+
+                // Write NU (number of UUIDs) - 2 bytes
+                fi.writeShort((short)uuidInfo.UuidList.Count);
+
+                // Write each UUID (16 bytes each)
+                foreach (var uuid in uuidInfo.UuidList)
+                {
+                    var uuidBytes = uuid.ToByteArray();
+                    fi.write(uuidBytes, 0, 16);
+                }
+
+                // Write URL box if present
+                if (!string.IsNullOrEmpty(uuidInfo.Url))
+                {
+                    var urlBytes = Encoding.UTF8.GetBytes(uuidInfo.Url);
+
+                    fi.writeInt(urlLength); // LBox
+                    fi.writeInt(FileFormatBoxes.URL_BOX); // TBox
+
+                    // Write VERS (1 byte)
+                    fi.writeByte(uuidInfo.UrlVersion);
+
+                    // Write FLAG (3 bytes) - FLAG[0]=0, FLAG[1]=0, FLAG[2]=UrlFlags
+                    fi.writeByte(0);
+                    fi.writeByte(0);
+                    fi.writeByte(uuidInfo.UrlFlags);
+
+                    // Write URL data
+                    fi.write(urlBytes, 0, urlBytes.Length);
+                }
+
+                return boxLength;
+            }
+            catch (Exception e)
+            {
+                throw new InvalidOperationException($"Error writing UUID Info box: {e.Message}");
             }
         }
 

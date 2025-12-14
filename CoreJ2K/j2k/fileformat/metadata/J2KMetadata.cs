@@ -309,6 +309,64 @@ namespace CoreJ2K.j2k.fileformat.metadata
         {
             return XmlBoxes.Find(x => x.IsIPTC);
         }
+
+        /// <summary>
+        /// Sets UUID Info with a list of UUIDs and optional URL.
+        /// </summary>
+        /// <param name="uuids">List of UUIDs to include in the UUID List.</param>
+        /// <param name="url">Optional URL where more information about the UUIDs can be found.</param>
+        /// <param name="urlVersion">URL version (default 0).</param>
+        /// <param name="urlFlags">URL flags: 0=relative, 1=absolute (default 0).</param>
+        public void SetUuidInfo(List<Guid> uuids, string url = null, byte urlVersion = 0, byte urlFlags = 0)
+        {
+            if (UuidInfo == null)
+                UuidInfo = new UuidInfoBox();
+
+            UuidInfo.UuidList.Clear();
+            if (uuids != null)
+            {
+                foreach (var uuid in uuids)
+                {
+                    UuidInfo.UuidList.Add(uuid);
+                }
+            }
+
+            UuidInfo.Url = url;
+            UuidInfo.UrlVersion = urlVersion;
+            UuidInfo.UrlFlags = urlFlags;
+        }
+
+        /// <summary>
+        /// Adds a UUID to the UUID Info list.
+        /// Creates UUID Info if it doesn't exist.
+        /// </summary>
+        /// <param name="uuid">The UUID to add.</param>
+        public void AddUuidToInfo(Guid uuid)
+        {
+            if (UuidInfo == null)
+                UuidInfo = new UuidInfoBox();
+
+            if (!UuidInfo.UuidList.Contains(uuid))
+            {
+                UuidInfo.UuidList.Add(uuid);
+            }
+        }
+
+        /// <summary>
+        /// Sets the URL in the UUID Info box.
+        /// </summary>
+        /// <param name="url">The URL.</param>
+        /// <param name="isAbsolute">True for absolute URL, false for relative URL.</param>
+        /// <param name="version">URL version (default 0).</param>
+        public void SetUuidInfoUrl(string url, bool isAbsolute = true, byte version = 0)
+        {
+            if (UuidInfo == null)
+                UuidInfo = new UuidInfoBox();
+
+            UuidInfo.Url = url;
+            UuidInfo.UrlVersion = version;
+            UuidInfo.UrlFlags = (byte)(isAbsolute ? 1 : 0);
+        }
     }
 
     /// <summary>
