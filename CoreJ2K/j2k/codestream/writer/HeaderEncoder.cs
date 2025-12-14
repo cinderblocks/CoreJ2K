@@ -90,7 +90,9 @@ namespace CoreJ2K.j2k.codestream.writer
             new string[] { "Hjj2000_COM", null, "Writes or not the JJ2000 COM marker in the " + "codestream", "off" }, 
             new string[] { "HCOM", "<Comment 1>[#<Comment 2>[#<Comment3...>]]", "Adds COM marker segments in the codestream. Comments must be " + "separated with '#' and are written into distinct maker segments.", null },
             new string[] { "Htlm", "on|off", "Writes TLM (Tile-part Lengths) markers in the main header " + "for fast random tile access. This requires collecting tile-part " + "lengths during encoding.", "off" },
-            new string[] { "Hplt", "on|off", "Writes PLT (Packet Length) markers in tile-part headers " + "for fast packet access. This requires collecting packet lengths " + "during encoding.", "off" }
+            new string[] { "Hplt", "on|off", "Writes PLT (Packet Length) markers in tile-part headers " + "for fast packet access. This requires collecting packet lengths " + "during encoding.", "off" },
+            new string[] { "Hppm", "on|off", "Writes PPM (Packed Packet headers, Main header) markers " + "for fast packet header access. This stores all packet headers in " + "the main header.", "off" },
+            new string[] { "Hppt", "on|off", "Writes PPT (Packed Packet headers, Tile-part header) markers " + "for fast packet header access. This stores packet headers in each " + "tile-part header. Cannot be used with Hppm.", "off" }
         };
 
         /// <summary>Nominal range bit of the component defining default values in QCD for
@@ -181,6 +183,18 @@ namespace CoreJ2K.j2k.codestream.writer
         /// <summary>Whether or not to write PLT markers</summary>
         private readonly bool usePLT;
 
+        /// <summary>PPM data collected during encoding for writing PPM markers</summary>
+        private System.Collections.Generic.Dictionary<int, System.Collections.Generic.List<byte[]>> ppmData;
+
+        /// <summary>Whether or not to write PPM markers</summary>
+        private readonly bool usePPM;
+
+        /// <summary>PPT data collected during encoding for writing PPT markers</summary>
+        private System.Collections.Generic.Dictionary<int, System.Collections.Generic.List<byte[]>> pptData;
+
+        /// <summary>Whether or not to write PPT markers</summary>
+        private readonly bool usePPT;
+
         /// <summary> Initializes the header writer with the references to the coding chain.
         /// 
         /// </summary>
@@ -232,6 +246,24 @@ namespace CoreJ2K.j2k.codestream.writer
             otherCOMMarkSeg = pl.getParameter("HCOM");
             useTLM = pl.getBooleanParameter("Htlm");
             usePLT = pl.getBooleanParameter("Hplt");
+            usePPM = pl.getBooleanParameter("Hppm");
+            usePPT = pl.getBooleanParameter("Hppt");
+
+            // Validate PPM/PPT usage (can't use both)
+            if (usePPM && usePPT)
+            {
+                throw new ArgumentException("Cannot use both PPM (Hppm) and PPT (Hppt) markers. Choose one or neither.");
+            }
+
+            // Initialize data structures for PPM/PPT
+            if (usePPM)
+            {
+                ppmData = new System.Collections.Generic.Dictionary<int, System.Collections.Generic.List<byte[]>>();
+            }
+            if (usePPT)
+            {
+                pptData = new System.Collections.Generic.Dictionary<int, System.Collections.Generic.List<byte[]>>();
+            }
 
             // Initialize marker writers
             codWriter = new markers.CODMarkerWriter(encSpec, dwt, ralloc);
@@ -363,6 +395,97 @@ namespace CoreJ2K.j2k.codestream.writer
             pltData = plt;
         }
 
+        /// <summary>
+        /// Gets whether PPM markers should be written.
+        /// </summary>
+        public virtual bool IsPPMEnabled => usePPM;
+
+        /// <summary>
+        /// Adds a packet header to the PPM data for the main header.
+        /// </summary>
+        /// <param name="tileIdx">The tile index</param>
+        /// <param name="packetHeader">The packet header data</param>
+        public virtual void AddPPMPacketHeader(int tileIdx, byte[] packetHeader)
+        {
+            if (!usePPM)
+                return;
+
+            if (!ppmData.ContainsKey(tileIdx))
+            {
+                ppmData[tileIdx] = new System.Collections.Generic.List<byte[]>();
+            }
+            ppmData[tileIdx].Add(packetHeader);
+        }
+
+        /// <summary>
+        /// Sets the PPM data to be written in the main header.
+        /// This should be called after all packets have been encoded.
+        /// </summary>
+        /// <param name="ppm">The collected packet header data</param>
+        public virtual void SetPPMData(System.Collections.Generic.Dictionary<int, System.Collections.Generic.List<byte[]>> ppm)
+        {
+            ppmData = ppm;
+        }
+
+        /// <summary>
+        /// Gets whether PPT markers should be written.
+        /// </summary>
+        public virtual bool IsPPTEnabled => usePPT;
+
+        /// <summary>
+        /// Adds a packet header to the PPT data for a tile-part header.
+        /// </summary>
+        /// <param name="tileIdx">The tile index</param>
+        /// <param name="packetHeader">The packet header data</param>
+        public virtual void AddPPTPacketHeader(int tileIdx, byte[] packetHeader)
+        {
+            if (!usePPT)
+                return;
+
+            if (!pptData.ContainsKey(tileIdx))
+            {
+                pptData[tileIdx] = new System.Collections.Generic.List<byte[]>();
+            }
+            pptData[tileIdx].Add(packetHeader);
+        }
+
+        /// <summary>
+        /// Sets the PPT data to be written in tile-part headers.
+        /// This should be called before encoding each tile-part header.
+        /// </summary>
+        /// <param name="tileIdx">The tile index</param>
+        /// <param name="ppt">The collected packet header data for this tile</param>
+        public virtual void SetPPTData(int tileIdx, System.Collections.Generic.List<byte[]> ppt)
+        {
+            if (!usePPT)
+                return;
+
+            pptData[tileIdx] = ppt;
+        }
+
+        /// <summary>
+        /// Writes PPM marker segment(s) in the main header.
+        /// PPM markers contain packet headers for all tiles, allowing decoders to
+        /// quickly locate packets without parsing packet headers in tile-parts.
+        /// </summary>
+        /// <param name="ppm">The PPM data to write</param>
+        protected internal virtual void writePPM(System.Collections.Generic.Dictionary<int, System.Collections.Generic.List<byte[]>> ppm)
+        {
+            PPMMarkerWriter.WritePPM(hbuf, ppm);
+        }
+
+        /// <summary>
+        /// Writes PPT marker segment(s) in a tile-part header.
+        /// PPT markers contain packet headers for this tile-part, allowing decoders to
+        /// quickly locate packets without parsing packet headers in packet bodies.
+        /// </summary>
+        /// <param name="tileIdx">The tile index</param>
+        /// <param name="ppt">The PPT data to write</param>
+        protected internal virtual void writePPT(int tileIdx, System.Collections.Generic.List<byte[]> ppt)
+        {
+            PPTMarkerWriter.WritePPT(hbuf, ppt);
+        }
+
         /// <summary> Write main header. JJ2000 main header corresponds to the following
         /// sequence of marker segments:
         /// 
@@ -446,9 +569,17 @@ namespace CoreJ2K.j2k.codestream.writer
                 writePLM(pltData);
             }
 
-            // +---------------------------+
-            // |      Comments (COM)       |
-            // +---------------------------+
+            // +--------------------------+
+            // |    PPM marker segment    |
+            // +--------------------------+
+            if (ppmData != null && ppmData.Count > 0)
+            {
+                writePPM(ppmData);
+            }
+
+            // +--------------------------+
+            // |    Comments (COM)       |
+            // +--------------------------+
             comWriter.Write(hbuf);
         }
 
@@ -553,6 +684,14 @@ namespace CoreJ2K.j2k.codestream.writer
             if (pltData != null && pltData.GetPacketCount(tileIdx) > 0)
             {
                 PLTMarkerWriter.WritePLT(hbuf.BaseStream, pltData, tileIdx, 0);
+            }
+
+            // +--------------------------+
+            // |    PPT marker segment    |
+            // +--------------------------+
+            if (pptData != null && pptData.ContainsKey(tileIdx) && pptData[tileIdx].Count > 0)
+            {
+                writePPT(tileIdx, pptData[tileIdx]);
             }
 
             // +--------------------------+
