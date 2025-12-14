@@ -17,6 +17,16 @@ namespace CoreJ2K.j2k.codestream
         private readonly List<string> warnings = new List<string>();
         private readonly List<string> info = new List<string>();
 
+        // Validation state
+        private int numComponents;
+        private int numTilesX;
+        private int numTilesY;
+        private int decompositionLevels;
+        private bool usesSOP;
+        private bool usesEPH;
+        private bool[] componentHasCOC;
+        private bool[] componentHasQCC;
+
         /// <summary>
         /// Gets validation errors found during codestream validation.
         /// </summary>
@@ -69,21 +79,34 @@ namespace CoreJ2K.j2k.codestream
                 if (pos < 0)
                     return false;
 
-                // Note: Full tile-part validation would require parsing the entire codestream
-                // For now, we focus on main header and basic structure
-                info.Add($"Main header validated successfully (ends at byte {pos})");
+                // Validate tile-parts if we have enough data
+                if (pos < maxBytes - 1)
+                {
+                    pos = ValidateTileParts(codestream, pos, maxBytes);
+                    if (pos < 0)
+                        return false;
+                }
+
+                // Check for EOC marker
+                if (pos < maxBytes - 1)
+                {
+                    if (!ValidateEOC(codestream, ref pos, maxBytes))
+                    {
+                        warnings.Add("EOC marker not found at end of examined data");
+                    }
+                }
+
+                info.Add($"Codestream validated successfully (examined {pos} bytes)");
 
                 return !HasErrors;
             }
             catch (IndexOutOfRangeException ex)
             {
-                // More specific error for array access issues
                 errors.Add($"Codestream truncated or corrupted: {ex.Message}");
                 return false;
             }
             catch (ArgumentOutOfRangeException ex)
             {
-                // Handle out of range access
                 errors.Add($"Invalid marker segment length or position: {ex.Message}");
                 return false;
             }
@@ -115,6 +138,10 @@ namespace CoreJ2K.j2k.codestream
             var hasQCD = false;
             var codCount = 0;
             var qcdCount = 0;
+
+            // Initialize component tracking arrays
+            componentHasCOC = new bool[numComponents];
+            componentHasQCC = new bool[numComponents];
 
             while (pos < maxBytes - 1)
             {
@@ -250,6 +277,217 @@ namespace CoreJ2K.j2k.codestream
             return pos;
         }
 
+        /// <summary>
+        /// Validates tile-part headers and data.
+        /// Returns the position after tile-parts, or -1 on error.
+        /// </summary>
+        private int ValidateTileParts(byte[] data, int startPos, int maxBytes)
+        {
+            var pos = startPos;
+            var tilePartCount = 0;
+            var expectedTileParts = numTilesX * numTilesY;
+
+            info.Add($"Validating tile-parts (expecting {expectedTileParts} tiles)");
+
+            while (pos < maxBytes - 1)
+            {
+                // Check for SOT marker
+                if (pos + 1 < maxBytes && data[pos] == 0xFF && data[pos + 1] == 0x90)
+                {
+                    if (!ValidateSOT(data, ref pos, maxBytes))
+                        return -1;
+                    
+                    tilePartCount++;
+
+                    // Validate tile-part header markers (COD, COC, QCD, QCC, RGN, POC, PPT, PLT, COM)
+                    pos = ValidateTilePartHeader(data, pos, maxBytes);
+                    if (pos < 0)
+                        return -1;
+
+                    // Expect SOD marker
+                    if (pos + 1 < maxBytes && data[pos] == 0xFF && data[pos + 1] == 0x93)
+                    {
+                        if (!ValidateSOD(data, ref pos, maxBytes))
+                            return -1;
+
+                        // Skip tile-part data (we don't validate the bitstream itself)
+                        // The tile-part data continues until the next SOT, EOC, or end of data
+                        pos = SkipTilePartData(data, pos, maxBytes);
+                        if (pos < 0)
+                            return -1;
+                    }
+                    else if (pos + 1 < maxBytes)
+                    {
+                        errors.Add($"Expected SOD marker after tile-part header at position {pos}, found: 0x{data[pos]:X2}{data[pos + 1]:X2}");
+                        return -1;
+                    }
+                }
+                else if (data[pos] == 0xFF && data[pos + 1] == 0xD9) // EOC
+                {
+                    // End of codestream found
+                    break;
+                }
+                else
+                {
+                    // Unexpected marker or data
+                    warnings.Add($"Unexpected data at position {pos} (not SOT or EOC): 0x{data[pos]:X2}{data[pos + 1]:X2}");
+                    break;
+                }
+            }
+
+            if (tilePartCount < expectedTileParts)
+            {
+                warnings.Add($"Only {tilePartCount} of {expectedTileParts} expected tile-parts were found in examined data");
+            }
+            else
+            {
+                info.Add($"Validated {tilePartCount} tile-parts");
+            }
+
+            return pos;
+        }
+
+        /// <summary>
+        /// Validates a tile-part header.
+        /// Returns the position after the header, or -1 on error.
+        /// </summary>
+        private int ValidateTilePartHeader(byte[] data, int startPos, int maxBytes)
+        {
+            var pos = startPos;
+
+            while (pos < maxBytes - 1)
+            {
+                if (data[pos] != 0xFF)
+                {
+                    // End of tile-part header (reached tile data or SOD)
+                    break;
+                }
+
+                var marker = (data[pos] << 8) | data[pos + 1];
+
+                // SOD marks end of tile-part header
+                if (marker == Markers.SOD)
+                    break;
+
+                pos += 2;
+
+                switch (marker)
+                {
+                    case Markers.COD:
+                        if (!ValidateCOD(data, ref pos, maxBytes))
+                            return -1;
+                        break;
+
+                    case Markers.COC:
+                        if (!ValidateCOC(data, ref pos, maxBytes))
+                            return -1;
+                        break;
+
+                    case Markers.QCD:
+                        if (!ValidateQCD(data, ref pos, maxBytes))
+                            return -1;
+                        break;
+
+                    case Markers.QCC:
+                        if (!ValidateQCC(data, ref pos, maxBytes))
+                            return -1;
+                        break;
+
+                    case Markers.RGN:
+                        if (!ValidateRGN(data, ref pos, maxBytes))
+                            return -1;
+                        break;
+
+                    case Markers.POC:
+                        if (!ValidatePOC(data, ref pos, maxBytes))
+                            return -1;
+                        break;
+
+                    case Markers.PPT: // 0xFF61
+                        if (!ValidatePPT(data, ref pos, maxBytes))
+                            return -1;
+                        break;
+
+                    case Markers.PLT: // 0xFF58
+                        if (!ValidatePLT(data, ref pos, maxBytes))
+                            return -1;
+                        break;
+
+                    case Markers.COM:
+                        if (!ValidateCOM(data, ref pos, maxBytes))
+                            return -1;
+                        break;
+
+                    default:
+                        warnings.Add($"Unexpected marker in tile-part header: 0x{marker:X4} at position {pos - 2}");
+                        if (!TrySkipUnknownMarker(data, ref pos, maxBytes))
+                            return -1;
+                        break;
+                }
+            }
+
+            return pos;
+        }
+
+        /// <summary>
+        /// Skips over tile-part data, looking for SOP markers if enabled.
+        /// Returns the position after the tile data, or -1 on error.
+        /// </summary>
+        private int SkipTilePartData(byte[] data, int startPos, int maxBytes)
+        {
+            var pos = startPos;
+            var sopCount = 0;
+            var ephCount = 0;
+
+            // Scan for packet markers if SOP/EPH are used
+            while (pos < maxBytes - 1)
+            {
+                // Check for next marker (SOT, EOC, or packet markers)
+                if (data[pos] == 0xFF)
+                {
+                    var marker = (data[pos] << 8) | data[pos + 1];
+
+                    if (marker == Markers.SOT || marker == Markers.EOC)
+                    {
+                        // Reached next tile or end
+                        return pos;
+                    }
+                    else if (marker == Markers.SOP) // 0xFF91
+                    {
+                        if (!ValidateSOP(data, ref pos, maxBytes))
+                            return -1;
+                        sopCount++;
+                    }
+                    else if (marker == Markers.EPH) // 0xFF92
+                    {
+                        if (!ValidateEPH(data, ref pos, maxBytes))
+                            return -1;
+                        ephCount++;
+                    }
+                    else
+                    {
+                        // Continue through tile data
+                        pos++;
+                    }
+                }
+                else
+                {
+                    pos++;
+                }
+            }
+
+            if (sopCount > 0)
+            {
+                info.Add($"Found {sopCount} SOP markers in tile data");
+            }
+            if (ephCount > 0)
+            {
+                info.Add($"Found {ephCount} EPH markers in tile data");
+            }
+
+            return pos;
+        }
+
         private bool ValidateSOC(byte[] data, ref int pos, int maxBytes)
         {
             if (pos + 1 >= maxBytes)
@@ -311,6 +549,12 @@ namespace CoreJ2K.j2k.codestream
             var rsiz = (data[pos] << 8) | data[pos + 1];
             pos += 2;
 
+            // Validate Rsiz field
+            if (rsiz > 0 && rsiz != Markers.RSIZ_ER_FLAG && rsiz != Markers.RSIZ_ROI && rsiz != (Markers.RSIZ_ER_FLAG | Markers.RSIZ_ROI))
+            {
+                warnings.Add($"Non-standard Rsiz value: 0x{rsiz:X4} (may indicate extended capabilities)");
+            }
+
             // Read image dimensions
             var xsiz = (data[pos] << 24) | (data[pos + 1] << 16) | (data[pos + 2] << 8) | data[pos + 3];
             pos += 4;
@@ -323,8 +567,50 @@ namespace CoreJ2K.j2k.codestream
                 return false;
             }
 
-            // Skip XOsiz, YOsiz, XTsiz, YTsiz, XTOsiz, YTOsiz (24 bytes)
-            pos += 24;
+            if (xsiz > 65535 || ysiz > 65535)
+            {
+                warnings.Add($"Large image dimensions: {xsiz}x{ysiz} (may cause memory issues)");
+            }
+
+            // Read offsets
+            var x0siz = (data[pos] << 24) | (data[pos + 1] << 16) | (data[pos + 2] << 8) | data[pos + 3];
+            pos += 4;
+            var y0siz = (data[pos] << 24) | (data[pos + 1] << 16) | (data[pos + 2] << 8) | data[pos + 3];
+            pos += 4;
+
+            if (x0siz >= xsiz || y0siz >= ysiz)
+            {
+                errors.Add($"Invalid image offsets: ({x0siz},{y0siz}) must be less than image size ({xsiz},{ysiz})");
+                return false;
+            }
+
+            // Read tile dimensions
+            var xtsiz = (data[pos] << 24) | (data[pos + 1] << 16) | (data[pos + 2] << 8) | data[pos + 3];
+            pos += 4;
+            var ytsiz = (data[pos] << 24) | (data[pos + 1] << 16) | (data[pos + 2] << 8) | data[pos + 3];
+            pos += 4;
+
+            if (xtsiz == 0 || ytsiz == 0)
+            {
+                errors.Add($"Invalid tile dimensions in SIZ: {xtsiz}x{ytsiz}");
+                return false;
+            }
+
+            // Read tile offsets
+            var xt0siz = (data[pos] << 24) | (data[pos + 1] << 16) | (data[pos + 2] << 8) | data[pos + 3];
+            pos += 4;
+            var yt0siz = (data[pos] << 24) | (data[pos + 1] << 16) | (data[pos + 2] << 8) | data[pos + 3];
+            pos += 4;
+
+            // Calculate number of tiles
+            numTilesX = (int)Math.Ceiling((double)(xsiz - xt0siz) / xtsiz);
+            numTilesY = (int)Math.Ceiling((double)(ysiz - yt0siz) / ytsiz);
+            var totalTiles = numTilesX * numTilesY;
+
+            if (totalTiles > 65535)
+            {
+                warnings.Add($"Very large number of tiles: {totalTiles} ({numTilesX}x{numTilesY})");
+            }
 
             // Read Csiz (number of components)
             var csiz = (data[pos] << 8) | data[pos + 1];
@@ -336,6 +622,8 @@ namespace CoreJ2K.j2k.codestream
                 return false;
             }
 
+            numComponents = csiz;
+
             // Validate that we have data for all components (3 bytes each)
             var expectedLength = 38 + (3 * csiz);
             if (lsiz != expectedLength)
@@ -344,10 +632,31 @@ namespace CoreJ2K.j2k.codestream
                 return false;
             }
 
-            // Skip component info
-            pos += 3 * csiz;
+            // Validate component bit depths
+            for (int i = 0; i < csiz; i++)
+            {
+                var ssiz = data[pos++];
+                var bitDepth = (ssiz & 0x7F) + 1;
+                var isSigned = (ssiz & 0x80) != 0;
 
-            info.Add($"SIZ marker validated: {xsiz}x{ysiz}, {csiz} components, Rsiz=0x{rsiz:X4}");
+                if (bitDepth > Markers.MAX_COMP_BITDEPTH)
+                {
+                    errors.Add($"Component {i} bit depth {bitDepth} exceeds maximum {Markers.MAX_COMP_BITDEPTH}");
+                    return false;
+                }
+
+                // Read subsampling
+                var xrsiz = data[pos++];
+                var yrsiz = data[pos++];
+
+                if (xrsiz == 0 || yrsiz == 0 || xrsiz > 255 || yrsiz > 255)
+                {
+                    errors.Add($"Invalid subsampling for component {i}: {xrsiz}x{yrsiz}");
+                    return false;
+                }
+            }
+
+            info.Add($"SIZ marker validated: {xsiz}x{ysiz}, {csiz} components, {totalTiles} tiles, Rsiz=0x{rsiz:X4}");
             return true;
         }
 
@@ -376,9 +685,37 @@ namespace CoreJ2K.j2k.codestream
 
             // Read Scod
             var scod = data[pos++];
+            
+            // Check for SOP/EPH usage
+            usesSOP = (scod & Markers.SCOX_USE_SOP) != 0;
+            usesEPH = (scod & Markers.SCOX_USE_EPH) != 0;
+            
+            var precinctUsed = (scod & Markers.SCOX_PRECINCT_PARTITION) != 0;
 
-            // Skip SGcod (4 bytes: progression order, layers, MCT)
-            pos += 4;
+            // Read progression order
+            var progressionOrder = data[pos++];
+            if (progressionOrder > 4)
+            {
+                errors.Add($"Invalid progression order in COD: {progressionOrder} (must be 0-4)");
+                return false;
+            }
+
+            // Read number of layers
+            var numLayers = (data[pos] << 8) | data[pos + 1];
+            pos += 2;
+
+            if (numLayers == 0 || numLayers > 65535)
+            {
+                errors.Add($"Invalid number of layers in COD: {numLayers}");
+                return false;
+            }
+
+            // Read MCT
+            var mct = data[pos++];
+            if (mct > 1)
+            {
+                warnings.Add($"Non-standard MCT value in COD: {mct}");
+            }
 
             // Read decomposition levels
             var levels = data[pos++];
@@ -386,17 +723,118 @@ namespace CoreJ2K.j2k.codestream
             {
                 warnings.Add($"High number of decomposition levels: {levels}");
             }
+            decompositionLevels = levels;
 
-            // Skip rest of marker
-            pos += lcod - 9;
+            // Read code-block dimensions
+            var cbWidth = data[pos++];
+            var cbHeight = data[pos++];
 
-            info.Add($"COD marker validated: {levels} decomposition levels");
+            if (cbWidth > 8 || cbHeight > 8)
+            {
+                errors.Add($"Invalid code-block dimensions: 2^({cbWidth}+2) x 2^({cbHeight}+2) (exponents must be ? 8)");
+                return false;
+            }
+
+            if ((cbWidth + cbHeight) > 12)
+            {
+                errors.Add($"Code-block area too large: 2^({cbWidth}+{cbHeight}+4) (sum must be ? 12)");
+                return false;
+            }
+
+            // Read code-block style
+            var cbStyle = data[pos++];
+            if ((cbStyle & 0xC0) != 0)
+            {
+                warnings.Add($"Reserved bits set in code-block style: 0x{cbStyle:X2}");
+            }
+
+            // Read transformation type
+            var transform = data[pos++];
+            if (transform > 1)
+            {
+                errors.Add($"Invalid wavelet transform in COD: {transform} (must be 0 or 1)");
+                return false;
+            }
+
+            // Read precinct sizes if used
+            if (precinctUsed)
+            {
+                var expectedPrecincts = levels + 1;
+                var remainingBytes = lcod - 11;
+                
+                if (remainingBytes != expectedPrecincts)
+                {
+                    errors.Add($"COD precinct size mismatch: expected {expectedPrecincts} bytes, got {remainingBytes}");
+                    return false;
+                }
+
+                for (int i = 0; i < expectedPrecincts; i++)
+                {
+                    var ppx = data[pos] & 0x0F;
+                    var ppy = (data[pos] >> 4) & 0x0F;
+                    pos++;
+
+                    if (ppx > 15 || ppy > 15)
+                    {
+                        errors.Add($"Invalid precinct size exponents at level {i}: PPx={ppx}, PPy={ppy}");
+                        return false;
+                    }
+                }
+            }
+
+            info.Add($"COD marker validated: {levels} decomposition levels, {numLayers} layers, progression={progressionOrder}");
             return true;
         }
 
         private bool ValidateCOC(byte[] data, ref int pos, int maxBytes)
         {
-            return SkipMarkerSegment(data, ref pos, maxBytes, "COC");
+            if (pos + 2 > maxBytes)
+            {
+                errors.Add("Insufficient data for COC length");
+                return false;
+            }
+
+            var lcoc = (data[pos] << 8) | data[pos + 1];
+            pos += 2;
+
+            var minLength = numComponents < 257 ? 9 : 10;
+            if (lcoc < minLength)
+            {
+                errors.Add($"Invalid COC marker length: {lcoc} (minimum is {minLength})");
+                return false;
+            }
+
+            if (pos + lcoc - 2 > maxBytes)
+            {
+                errors.Add($"Insufficient data for COC marker segment");
+                return false;
+            }
+
+            // Read component index
+            int compIdx;
+            if (numComponents < 257)
+            {
+                compIdx = data[pos++];
+            }
+            else
+            {
+                compIdx = (data[pos] << 8) | data[pos + 1];
+                pos += 2;
+            }
+
+            if (compIdx >= numComponents)
+            {
+                errors.Add($"COC component index {compIdx} exceeds number of components {numComponents}");
+                return false;
+            }
+
+            componentHasCOC[compIdx] = true;
+
+            // Skip rest of COC data (similar structure to COD)
+            pos += lcoc - (numComponents < 257 ? 3 : 4);
+
+            info.Add($"COC marker validated for component {compIdx} ({lcoc} bytes)");
+            return true;
         }
 
         private bool ValidateQCD(byte[] data, ref int pos, int maxBytes)
@@ -433,6 +871,28 @@ namespace CoreJ2K.j2k.codestream
                 return false;
             }
 
+            // Validate quantization parameters based on style
+            var numSubbands = 3 * decompositionLevels + 1;
+            var expectedLength = 0;
+
+            switch (qstyle)
+            {
+                case Markers.SQCX_NO_QUANTIZATION: // Reversible
+                    expectedLength = 4 + numSubbands; // 1 byte per subband
+                    break;
+                case Markers.SQCX_SCALAR_DERIVED: // Irreversible, derived
+                    expectedLength = 5; // Only LL band
+                    break;
+                case Markers.SQCX_SCALAR_EXPOUNDED: // Irreversible, expounded
+                    expectedLength = 4 + (numSubbands * 2); // 2 bytes per subband
+                    break;
+            }
+
+            if (lqcd != expectedLength)
+            {
+                warnings.Add($"QCD length {lqcd} doesn't match expected {expectedLength} for quantization style {qstyle} with {decompositionLevels} levels");
+            }
+
             // Skip rest of marker
             pos += lqcd - 3;
 
@@ -442,7 +902,53 @@ namespace CoreJ2K.j2k.codestream
 
         private bool ValidateQCC(byte[] data, ref int pos, int maxBytes)
         {
-            return SkipMarkerSegment(data, ref pos, maxBytes, "QCC");
+            if (pos + 2 > maxBytes)
+            {
+                errors.Add("Insufficient data for QCC length");
+                return false;
+            }
+
+            var lqcc = (data[pos] << 8) | data[pos + 1];
+            pos += 2;
+
+            var minLength = numComponents < 257 ? 5 : 6;
+            if (lqcc < minLength)
+            {
+                errors.Add($"Invalid QCC marker length: {lqcc} (minimum is {minLength})");
+                return false;
+            }
+
+            if (pos + lqcc - 2 > maxBytes)
+            {
+                errors.Add($"Insufficient data for QCC marker segment");
+                return false;
+            }
+
+            // Read component index
+            int compIdx;
+            if (numComponents < 257)
+            {
+                compIdx = data[pos++];
+            }
+            else
+            {
+                compIdx = (data[pos] << 8) | data[pos + 1];
+                pos += 2;
+            }
+
+            if (compIdx >= numComponents)
+            {
+                errors.Add($"QCC component index {compIdx} exceeds number of components {numComponents}");
+                return false;
+            }
+
+            componentHasQCC[compIdx] = true;
+
+            // Skip rest of QCC data
+            pos += lqcc - (numComponents < 257 ? 3 : 4);
+
+            info.Add($"QCC marker validated for component {compIdx}");
+            return true;
         }
 
         private bool ValidateRGN(byte[] data, ref int pos, int maxBytes)
@@ -452,12 +958,50 @@ namespace CoreJ2K.j2k.codestream
 
         private bool ValidatePOC(byte[] data, ref int pos, int maxBytes)
         {
-            return SkipMarkerSegment(data, ref pos, maxBytes, "POC");
+            if (pos + 2 > maxBytes)
+            {
+                errors.Add("Insufficient data for POC length");
+                return false;
+            }
+
+            var lpoc = (data[pos] << 8) | data[pos + 1];
+            pos += 2;
+
+            if (lpoc < 9)
+            {
+                errors.Add($"Invalid POC marker length: {lpoc}");
+                return false;
+            }
+
+            if (pos + lpoc - 2 > maxBytes)
+            {
+                errors.Add($"Insufficient data for POC marker segment");
+                return false;
+            }
+
+            // POC entries are variable size depending on number of components
+            var entrySize = numComponents < 257 ? 7 : 9;
+            var numEntries = (lpoc - 2) / entrySize;
+
+            if ((lpoc - 2) % entrySize != 0)
+            {
+                errors.Add($"POC marker length {lpoc} is not valid for entry size {entrySize}");
+                return false;
+            }
+
+            pos += lpoc - 2;
+            info.Add($"POC marker validated ({numEntries} progression changes)");
+            return true;
         }
 
         private bool ValidatePPM(byte[] data, ref int pos, int maxBytes)
         {
             return SkipMarkerSegment(data, ref pos, maxBytes, "PPM");
+        }
+
+        private bool ValidatePPT(byte[] data, ref int pos, int maxBytes)
+        {
+            return SkipMarkerSegment(data, ref pos, maxBytes, "PPT");
         }
 
         private bool ValidateTLM(byte[] data, ref int pos, int maxBytes)
@@ -468,6 +1012,11 @@ namespace CoreJ2K.j2k.codestream
         private bool ValidatePLM(byte[] data, ref int pos, int maxBytes)
         {
             return SkipMarkerSegment(data, ref pos, maxBytes, "PLM");
+        }
+
+        private bool ValidatePLT(byte[] data, ref int pos, int maxBytes)
+        {
+            return SkipMarkerSegment(data, ref pos, maxBytes, "PLT");
         }
 
         private bool ValidateCRG(byte[] data, ref int pos, int maxBytes)
@@ -518,6 +1067,131 @@ namespace CoreJ2K.j2k.codestream
                 warnings.Add($"COM marker with non-standard Rcom value: {rcom}");
             }
 
+            return true;
+        }
+
+        private bool ValidateSOT(byte[] data, ref int pos, int maxBytes)
+        {
+            pos += 2; // Skip marker
+
+            if (pos + 2 > maxBytes)
+            {
+                errors.Add("Insufficient data for SOT length");
+                return false;
+            }
+
+            var lsot = (data[pos] << 8) | data[pos + 1];
+            pos += 2;
+
+            if (lsot != 10)
+            {
+                errors.Add($"Invalid SOT marker length: {lsot} (must be 10)");
+                return false;
+            }
+
+            if (pos + 8 > maxBytes)
+            {
+                errors.Add("Insufficient data for SOT marker segment");
+                return false;
+            }
+
+            var isot = (data[pos] << 8) | data[pos + 1];
+            pos += 2;
+
+            var psot = (data[pos] << 24) | (data[pos + 1] << 16) | (data[pos + 2] << 8) | data[pos + 3];
+            pos += 4;
+
+            var tpsot = data[pos++];
+            var tnsot = data[pos++];
+
+            if (tnsot > 0 && tpsot >= tnsot)
+            {
+                errors.Add($"SOT tile-part index {tpsot} must be less than tile-part count {tnsot}");
+                return false;
+            }
+
+            info.Add($"SOT marker validated: tile={isot}, length={psot}, part {tpsot} of {tnsot}");
+            return true;
+        }
+
+        private bool ValidateSOD(byte[] data, ref int pos, int maxBytes)
+        {
+            if (pos + 1 >= maxBytes)
+            {
+                errors.Add("Insufficient data for SOD marker");
+                return false;
+            }
+
+            if (data[pos] != 0xFF || data[pos + 1] != 0x93)
+            {
+                errors.Add($"Expected SOD marker (0xFF93), found: 0x{data[pos]:X2}{data[pos + 1]:X2}");
+                return false;
+            }
+
+            pos += 2;
+            info.Add("SOD marker validated");
+            return true;
+        }
+
+        private bool ValidateSOP(byte[] data, ref int pos, int maxBytes)
+        {
+            pos += 2; // Skip marker
+
+            if (pos + 4 > maxBytes)
+            {
+                warnings.Add("Insufficient data for SOP marker (truncated)");
+                return true; // Don't fail, just warn
+            }
+
+            var lsop = (data[pos] << 8) | data[pos + 1];
+            pos += 2;
+
+            if (lsop != 4)
+            {
+                warnings.Add($"Invalid SOP marker length: {lsop} (should be 4)");
+            }
+
+            var nsop = (data[pos] << 8) | data[pos + 1];
+            pos += 2;
+
+            // SOP packet sequence number
+            // Don't validate sequence here (would need to track)
+
+            return true;
+        }
+
+        private bool ValidateEPH(byte[] data, ref int pos, int maxBytes)
+        {
+            if (pos + 1 >= maxBytes)
+            {
+                warnings.Add("Insufficient data for EPH marker (truncated)");
+                return true;
+            }
+
+            if (data[pos] != 0xFF || data[pos + 1] != 0x92)
+            {
+                warnings.Add($"Expected EPH marker (0xFF92), found: 0x{data[pos]:X2}{data[pos + 1]:X2}");
+                return true;
+            }
+
+            pos += 2;
+            return true;
+        }
+
+        private bool ValidateEOC(byte[] data, ref int pos, int maxBytes)
+        {
+            if (pos + 1 >= maxBytes)
+            {
+                return false;
+            }
+
+            if (data[pos] != 0xFF || data[pos + 1] != 0xD9)
+            {
+                return false;
+            }
+
+            pos += 2;
+            info.Add("EOC marker validated");
             return true;
         }
 
