@@ -94,6 +94,13 @@ namespace CoreJ2K.j2k.fileformat.metadata
         public BitsPerComponentData BitsPerComponent { get; set; }
 
         /// <summary>
+        /// Gets or sets the component registration data (CRG marker from codestream).
+        /// Specifies sub-pixel offsets for precise component spatial registration.
+        /// Per ISO/IEC 15444-1 Annex A.11.3.
+        /// </summary>
+        public ComponentRegistrationData ComponentRegistration { get; set; }
+
+        /// <summary>
         /// Adds a simple text comment to the metadata.
         /// </summary>
         public void AddComment(string text, string language = "en")
@@ -264,6 +271,27 @@ namespace CoreJ2K.j2k.fileformat.metadata
                 ComponentMapping = new ComponentMappingData();
 
             ComponentMapping.AddMapping(componentIndex, mappingType, paletteColumn);
+        }
+
+        /// <summary>
+        /// Sets component registration offsets for precise spatial positioning.
+        /// </summary>
+        /// <param name="numComponents">Number of components.</param>
+        /// <param name="horizontalOffsets">Horizontal offsets in units of 1/65536 of sample separation.</param>
+        /// <param name="verticalOffsets">Vertical offsets in units of 1/65536 of sample separation.</param>
+        public void SetComponentRegistration(int numComponents, int[] horizontalOffsets = null, int[] verticalOffsets = null)
+        {
+            ComponentRegistration = ComponentRegistrationData.Create(numComponents, horizontalOffsets, verticalOffsets);
+        }
+
+        /// <summary>
+        /// Sets component registration with standard chroma positioning.
+        /// </summary>
+        /// <param name="numComponents">Number of components.</param>
+        /// <param name="chromaPosition">Chroma positioning: 0=centered, 1=co-sited.</param>
+        public void SetChromaPosition(int numComponents, int chromaPosition)
+        {
+            ComponentRegistration = ComponentRegistrationData.CreateWithChromaPosition(numComponents, chromaPosition);
         }
 
         /// <summary>
