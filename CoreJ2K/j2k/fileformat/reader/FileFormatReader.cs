@@ -756,7 +756,7 @@ namespace CoreJ2K.j2k.fileformat.reader
                 {
                     var cn = in_Renamed.readShort();    // Channel index
                     var typ = in_Renamed.readShort();   // Channel type
-                    var asoc = in_Renamed.readShort();  // Association
+                    var asoc = in_Renamed.readShort() & 0xFFFF;  // Association (treat as unsigned)
 
                     // Convert typ to ChannelType enum
                     var channelType = ChannelType.Unspecified;

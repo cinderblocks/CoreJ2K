@@ -2,9 +2,13 @@
 // Licensed under the BSD 3-Clause License.
 
 using System;
+using System.IO;
 using System.Linq;
 using Xunit;
 using CoreJ2K.j2k.fileformat.metadata;
+using CoreJ2K.j2k.fileformat.reader;
+using CoreJ2K.j2k.fileformat.writer;
+using CoreJ2K.j2k.util;
 
 namespace CoreJ2K.Tests
 {
@@ -250,5 +254,457 @@ namespace CoreJ2K.Tests
             Assert.NotNull(metadata.ChannelDefinitions);
             Assert.True(metadata.ChannelDefinitions.HasAlphaChannel);
         }
+
+        #region File I/O Integration Tests
+
+        [Fact]
+        public void ChannelDefinitionBox_WriteAndRead_Rgba()
+        {
+            var codestream = CreateMinimalCodestream();
+
+            var metadata = new J2KMetadata();
+            metadata.ChannelDefinitions = ChannelDefinitionData.CreateRgba();
+
+            byte[] jp2Data;
+            using (var ms = new MemoryStream())
+            {
+                // Write codestream first
+                ms.Write(codestream, 0, codestream.Length);
+                ms.Seek(0, SeekOrigin.Begin);
+
+                var writer = new FileFormatWriter(
+                    ms,
+                    height: 64,
+                    width: 64,
+                    nc: 4,
+                    bpc: new[] { 8, 8, 8, 8 },
+                    clength: codestream.Length
+                )
+                {
+                    Metadata = metadata
+                };
+
+                writer.writeFileFormat();
+                jp2Data = ms.ToArray();
+            }
+
+            using (var ms = new MemoryStream(jp2Data))
+            {
+                var raf = new ISRandomAccessIO(ms);
+                var reader = new FileFormatReader(raf);
+                reader.readFileFormat();
+
+                Assert.NotNull(reader.Metadata.ChannelDefinitions);
+                Assert.True(reader.Metadata.ChannelDefinitions.HasDefinitions);
+                Assert.Equal(4, reader.Metadata.ChannelDefinitions.Channels.Count);
+                Assert.True(reader.Metadata.ChannelDefinitions.HasAlphaChannel);
+
+                var ch0 = reader.Metadata.ChannelDefinitions.GetChannel(0);
+                Assert.Equal(0, ch0.ChannelIndex);
+                Assert.Equal(ChannelType.Color, ch0.ChannelType);
+                Assert.Equal(1, ch0.Association);
+
+                var ch3 = reader.Metadata.ChannelDefinitions.GetChannel(3);
+                Assert.Equal(3, ch3.ChannelIndex);
+                Assert.Equal(ChannelType.Opacity, ch3.ChannelType);
+                Assert.Equal(0, ch3.Association);
+            }
+        }
+
+        [Fact]
+        public void ChannelDefinitionBox_WriteAndRead_GrayscaleAlpha()
+        {
+            var codestream = CreateMinimalCodestream();
+
+            var metadata = new J2KMetadata();
+            metadata.ChannelDefinitions = ChannelDefinitionData.CreateGrayscaleAlpha();
+
+            byte[] jp2Data;
+            using (var ms = new MemoryStream())
+            {
+                ms.Write(codestream, 0, codestream.Length);
+                ms.Seek(0, SeekOrigin.Begin);
+
+                var writer = new FileFormatWriter(
+                    ms,
+                    height: 64,
+                    width: 64,
+                    nc: 2,
+                    bpc: new[] { 8, 8 },
+                    clength: codestream.Length
+                )
+                {
+                    Metadata = metadata
+                };
+
+                writer.writeFileFormat();
+                jp2Data = ms.ToArray();
+            }
+
+            using (var ms = new MemoryStream(jp2Data))
+            {
+                var raf = new ISRandomAccessIO(ms);
+                var reader = new FileFormatReader(raf);
+                reader.readFileFormat();
+
+                Assert.NotNull(reader.Metadata.ChannelDefinitions);
+                Assert.Equal(2, reader.Metadata.ChannelDefinitions.Channels.Count);
+                Assert.True(reader.Metadata.ChannelDefinitions.HasAlphaChannel);
+
+                var colorChannels = reader.Metadata.ChannelDefinitions.GetColorChannels().ToList();
+                Assert.Single(colorChannels);
+                Assert.Equal(1, colorChannels[0].Association);
+
+                var opacityChannels = reader.Metadata.ChannelDefinitions.GetOpacityChannels().ToList();
+                Assert.Single(opacityChannels);
+            }
+        }
+
+        [Fact]
+        public void ChannelDefinitionBox_WriteAndRead_RgbWithoutAlpha()
+        {
+            var codestream = CreateMinimalCodestream();
+
+            var metadata = new J2KMetadata();
+            metadata.ChannelDefinitions = ChannelDefinitionData.CreateRgb();
+
+            byte[] jp2Data;
+            using (var ms = new MemoryStream())
+            {
+                ms.Write(codestream, 0, codestream.Length);
+                ms.Seek(0, SeekOrigin.Begin);
+
+                var writer = new FileFormatWriter(
+                    ms,
+                    height: 64,
+                    width: 64,
+                    nc: 3,
+                    bpc: new[] { 8, 8, 8 },
+                    clength: codestream.Length
+                )
+                {
+                    Metadata = metadata
+                };
+
+                writer.writeFileFormat();
+                jp2Data = ms.ToArray();
+            }
+
+            using (var ms = new MemoryStream(jp2Data))
+            {
+                var raf = new ISRandomAccessIO(ms);
+                var reader = new FileFormatReader(raf);
+                reader.readFileFormat();
+
+                Assert.NotNull(reader.Metadata.ChannelDefinitions);
+                Assert.Equal(3, reader.Metadata.ChannelDefinitions.Channels.Count);
+                Assert.False(reader.Metadata.ChannelDefinitions.HasAlphaChannel);
+            }
+        }
+
+        [Fact]
+        public void ChannelDefinitionBox_NotWritten_WhenNoDefinitions()
+        {
+            var codestream = CreateMinimalCodestream();
+
+            var metadata = new J2KMetadata();
+            // Don't set channel definitions
+
+            byte[] jp2Data;
+            using (var ms = new MemoryStream())
+            {
+                ms.Write(codestream, 0, codestream.Length);
+                ms.Seek(0, SeekOrigin.Begin);
+
+                var writer = new FileFormatWriter(
+                    ms,
+                    height: 64,
+                    width: 64,
+                    nc: 3,
+                    bpc: new[] { 8, 8, 8 },
+                    clength: codestream.Length
+                )
+                {
+                    Metadata = metadata
+                };
+
+                writer.writeFileFormat();
+                jp2Data = ms.ToArray();
+            }
+
+            using (var ms = new MemoryStream(jp2Data))
+            {
+                var raf = new ISRandomAccessIO(ms);
+                var reader = new FileFormatReader(raf);
+                reader.readFileFormat();
+
+                Assert.True(reader.Metadata.ChannelDefinitions == null || 
+                           !reader.Metadata.ChannelDefinitions.HasDefinitions);
+            }
+        }
+
+        [Fact]
+        public void ChannelDefinitionBox_WriteAndRead_PremultipliedAlpha()
+        {
+            var codestream = CreateMinimalCodestream();
+
+            var metadata = new J2KMetadata();
+            metadata.ChannelDefinitions = new ChannelDefinitionData();
+            metadata.ChannelDefinitions.AddColorChannel(0, 1);
+            metadata.ChannelDefinitions.AddColorChannel(1, 2);
+            metadata.ChannelDefinitions.AddColorChannel(2, 3);
+            metadata.ChannelDefinitions.AddPremultipliedOpacityChannel(3, 0);
+
+            byte[] jp2Data;
+            using (var ms = new MemoryStream())
+            {
+                ms.Write(codestream, 0, codestream.Length);
+                ms.Seek(0, SeekOrigin.Begin);
+
+                var writer = new FileFormatWriter(
+                    ms,
+                    height: 64,
+                    width: 64,
+                    nc: 4,
+                    bpc: new[] { 8, 8, 8, 8 },
+                    clength: codestream.Length
+                )
+                {
+                    Metadata = metadata
+                };
+
+                writer.writeFileFormat();
+                jp2Data = ms.ToArray();
+            }
+
+            using (var ms = new MemoryStream(jp2Data))
+            {
+                var raf = new ISRandomAccessIO(ms);
+                var reader = new FileFormatReader(raf);
+                reader.readFileFormat();
+
+                Assert.NotNull(reader.Metadata.ChannelDefinitions);
+                Assert.True(reader.Metadata.ChannelDefinitions.HasAlphaChannel);
+
+                var alphaCh = reader.Metadata.ChannelDefinitions.GetChannel(3);
+                Assert.Equal(ChannelType.PremultipliedOpacity, alphaCh.ChannelType);
+            }
+        }
+
+        [Fact]
+        public void ChannelDefinitionBox_WriteAndRead_BgrOrder()
+        {
+            var codestream = CreateMinimalCodestream();
+
+            var metadata = new J2KMetadata();
+            metadata.ChannelDefinitions = new ChannelDefinitionData();
+            metadata.ChannelDefinitions.AddChannel(0, ChannelType.Color, 3); // Blue
+            metadata.ChannelDefinitions.AddChannel(1, ChannelType.Color, 2); // Green
+            metadata.ChannelDefinitions.AddChannel(2, ChannelType.Color, 1); // Red
+
+            byte[] jp2Data;
+            using (var ms = new MemoryStream())
+            {
+                ms.Write(codestream, 0, codestream.Length);
+                ms.Seek(0, SeekOrigin.Begin);
+
+                var writer = new FileFormatWriter(
+                    ms,
+                    height: 64,
+                    width: 64,
+                    nc: 3,
+                    bpc: new[] { 8, 8, 8 },
+                    clength: codestream.Length
+                )
+                {
+                    Metadata = metadata
+                };
+
+                writer.writeFileFormat();
+                jp2Data = ms.ToArray();
+            }
+
+            using (var ms = new MemoryStream(jp2Data))
+            {
+                var raf = new ISRandomAccessIO(ms);
+                var reader = new FileFormatReader(raf);
+                reader.readFileFormat();
+
+                Assert.NotNull(reader.Metadata.ChannelDefinitions);
+                Assert.Equal(3, reader.Metadata.ChannelDefinitions.Channels.Count);
+
+                var ch0 = reader.Metadata.ChannelDefinitions.GetChannel(0);
+                Assert.Equal(3, ch0.Association); // Blue
+
+                var ch2 = reader.Metadata.ChannelDefinitions.GetChannel(2);
+                Assert.Equal(1, ch2.Association); // Red
+            }
+        }
+
+        [Fact]
+        public void ChannelDefinitionBox_WithResolution_BothWritten()
+        {
+            var codestream = CreateMinimalCodestream();
+
+            var metadata = new J2KMetadata();
+            metadata.ChannelDefinitions = ChannelDefinitionData.CreateRgba();
+            metadata.SetResolutionDpi(300, 300, isCapture: true);
+
+            byte[] jp2Data;
+            using (var ms = new MemoryStream())
+            {
+                ms.Write(codestream, 0, codestream.Length);
+                ms.Seek(0, SeekOrigin.Begin);
+
+                var writer = new FileFormatWriter(
+                    ms,
+                    height: 64,
+                    width: 64,
+                    nc: 4,
+                    bpc: new[] { 8, 8, 8, 8 },
+                    clength: codestream.Length
+                )
+                {
+                    Metadata = metadata
+                };
+
+                writer.writeFileFormat();
+                jp2Data = ms.ToArray();
+            }
+
+            using (var ms = new MemoryStream(jp2Data))
+            {
+                var raf = new ISRandomAccessIO(ms);
+                var reader = new FileFormatReader(raf);
+                reader.readFileFormat();
+
+                Assert.NotNull(reader.Metadata.ChannelDefinitions);
+                Assert.NotNull(reader.Metadata.Resolution);
+                Assert.True(reader.Metadata.ChannelDefinitions.HasDefinitions);
+                Assert.True(reader.Metadata.Resolution.HasCaptureResolution);
+            }
+        }
+
+        [Fact]
+        public void ChannelDefinitionBox_UnspecifiedType_RoundTrip()
+        {
+            var codestream = CreateMinimalCodestream();
+
+            var metadata = new J2KMetadata();
+            metadata.ChannelDefinitions = new ChannelDefinitionData();
+            metadata.ChannelDefinitions.AddChannel(0, ChannelType.Unspecified, 65535);
+
+            byte[] jp2Data;
+            using (var ms = new MemoryStream())
+            {
+                ms.Write(codestream, 0, codestream.Length);
+                ms.Seek(0, SeekOrigin.Begin);
+
+                var writer = new FileFormatWriter(
+                    ms,
+                    height: 64,
+                    width: 64,
+                    nc: 1,
+                    bpc: new[] { 8 },
+                    clength: codestream.Length
+                )
+                {
+                    Metadata = metadata
+                };
+
+                writer.writeFileFormat();
+                jp2Data = ms.ToArray();
+            }
+
+            using (var ms = new MemoryStream(jp2Data))
+            {
+                var raf = new ISRandomAccessIO(ms);
+                var reader = new FileFormatReader(raf);
+                reader.readFileFormat();
+
+                Assert.NotNull(reader.Metadata.ChannelDefinitions);
+                var ch = reader.Metadata.ChannelDefinitions.GetChannel(0);
+                Assert.Equal(ChannelType.Unspecified, ch.ChannelType);
+                Assert.Equal(65535, ch.Association);
+            }
+        }
+
+        #endregion
+
+        #region Helper Methods
+
+        /// <summary>
+        /// Creates a minimal valid JPEG2000 codestream for testing.
+        /// </summary>
+        private byte[] CreateMinimalCodestream()
+        {
+            using (var ms = new MemoryStream())
+            using (var writer = new BinaryWriter(ms))
+            {
+                // SOC (Start of Codestream) - 0xFF4F
+                writer.Write((byte)0xFF);
+                writer.Write((byte)0x4F);
+
+                // SIZ (Image and tile size) marker - 0xFF51
+                writer.Write((byte)0xFF);
+                writer.Write((byte)0x51);
+                writer.Write((short)47); // Lsiz
+
+                writer.Write((short)0); // Rsiz
+                writer.Write((int)64); // Xsiz
+                writer.Write((int)64); // Ysiz
+                writer.Write((int)0); // XOsiz
+                writer.Write((int)0); // YOsiz
+                writer.Write((int)64); // XTsiz
+                writer.Write((int)64); // YTsiz
+                writer.Write((int)0); // XTOsiz
+                writer.Write((int)0); // YTOsiz
+                writer.Write((short)3); // Csiz (3 components)
+
+                // Component 0
+                writer.Write((byte)7); // Ssiz (8-bit unsigned)
+                writer.Write((byte)1); // XRsiz
+                writer.Write((byte)1); // YRsiz
+
+                // Component 1
+                writer.Write((byte)7);
+                writer.Write((byte)1);
+                writer.Write((byte)1);
+
+                // Component 2
+                writer.Write((byte)7);
+                writer.Write((byte)1);
+                writer.Write((byte)1);
+
+                // COD (Coding style default) - 0xFF52
+                writer.Write((byte)0xFF);
+                writer.Write((byte)0x52);
+                writer.Write((short)12); // Lcod
+                writer.Write((byte)0); // Scod
+                writer.Write((byte)0); // SGcod - Progression order
+                writer.Write((short)1); // Number of layers
+                writer.Write((byte)0); // Multiple component transform
+                writer.Write((byte)5); // Number of decomposition levels
+                writer.Write((byte)2); // Code-block width
+                writer.Write((byte)2); // Code-block height
+                writer.Write((byte)0); // Code-block style
+                writer.Write((byte)0); // Wavelet transformation
+
+                // QCD (Quantization default) - 0xFF5C
+                writer.Write((byte)0xFF);
+                writer.Write((byte)0x5C);
+                writer.Write((short)4); // Lqcd
+                writer.Write((byte)0); // Sqcd
+                writer.Write((byte)8); // SPqcd
+
+                // EOC (End of Codestream) - 0xFFD9
+                writer.Write((byte)0xFF);
+                writer.Write((byte)0xD9);
+
+                return ms.ToArray();
+            }
+        }
+
+        #endregion
     }
 }
