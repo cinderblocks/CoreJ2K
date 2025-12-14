@@ -3132,5 +3132,18 @@ namespace CoreJ2K.j2k.codestream.reader
         {
             return pltData;
         }
+
+        /// <summary> Returns the TLM (Tile-part Lengths, Main header) data if available.
+        /// TLM markers contain tile-part lengths which can be used for fast random
+        /// tile access without parsing the entire codestream.
+        /// 
+        /// </summary>
+        /// <returns> The TilePartLengthsData object containing TLM information, or null if no TLM data is available
+        /// 
+        /// </returns>
+        public virtual codestream.metadata.TilePartLengthsData GetTLMData()
+        {
+            return hi.tlmValue;
+        }
     }
 }
