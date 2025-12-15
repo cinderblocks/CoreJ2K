@@ -21,18 +21,26 @@ dotnet add package CoreJ2K
 dotnet add package CoreJ2K.Skia
 ```
 
+### Simple API
+
 ```csharp
 using CoreJ2K;
+using CoreJ2K.Configuration;
 
 // Decode
 var image = J2kImage.FromStream(File.OpenRead("image.jp2"));
 var bitmap = image.As<SKBitmap>();
 
-// Encode
+// Encode with modern API (recommended)
+byte[] data = CompleteConfigurationPresets.Web
+    .WithCopyright("© 2025")
+    .Encode(imageSource);
+
+// Or use traditional API
 byte[] j2kData = J2kImage.ToBytes(bitmap);
 ```
 
-**[📖 Full Documentation](#documentation) • [💻 More Examples](#quick-examples) • [📦 All Packages](#installation)**
+**[📖 Full Documentation](#documentation) • [💻 More Examples](#quick-examples) • [🎯 Modern API Guide](#modern-configuration-api) • [📦 All Packages](#installation)**
 
 ---
 
@@ -166,7 +174,112 @@ byte[] compressed = J2kImage.ToBytes(bitmap, lossy);
 
 ## Documentation
 
-### Encoding Guide
+### Modern Configuration API
+
+**CoreJ2K 1.3.0+ includes a comprehensive, fluent configuration API** that makes JPEG 2000 encoding easier and more intuitive than ever.
+
+#### Quick Start with Presets
+
+```csharp
+using CoreJ2K.Configuration;
+
+// One-liner encoding with preset
+byte[] webImage = CompleteConfigurationPresets.Web
+    .WithCopyright("© 2025")
+    .Encode(imageSource);
+
+// Medical imaging (lossless)
+byte[] medical = CompleteConfigurationPresets.Medical
+    .WithMetadata(m => m
+        .WithComment("Patient: Anonymous")
+        .WithComment("Study: CT Scan"))
+    .Encode(dicomImage);
+
+// High-quality photography
+byte[] photo = CompleteConfigurationPresets.Photography
+    .WithCopyright("© 2025 Photographer")
+    .WithComment("Sunset over mountains")
+    .Encode(photograph);
+```
+
+#### Quality Presets
+
+```csharp
+// Lossless (perfect reconstruction)
+var config = new CompleteEncoderConfigurationBuilder()
+    .ForLossless()
+    .Build();
+
+// High quality (90% quality)
+var config = new CompleteEncoderConfigurationBuilder()
+    .ForHighQuality()
+    .Build();
+
+// Balanced (75% quality)
+var config = new CompleteEncoderConfigurationBuilder()
+    .ForBalanced()
+    .Build();
+
+// High compression
+var config = new CompleteEncoderConfigurationBuilder()
+    .ForHighCompression()
+    .Build();
+```
+
+#### Use Case Presets
+
+```csharp
+// Medical imaging - lossless with appropriate settings
+.ForMedical()
+
+// Archival storage - very high quality + error resilience
+.ForArchival()
+
+// Web delivery - progressive + balanced quality
+.ForWeb()
+
+// Thumbnail generation - fast + small
+.ForThumbnail()
+
+// Geospatial/GIS - spatial browsing + tiled
+.ForGeospatial()
+
+// Streaming - quality progressive
+.ForStreaming()
+```
+
+#### Fine-Grained Control
+
+```csharp
+var config = new CompleteEncoderConfigurationBuilder()
+    .WithQuality(0.85)
+    .WithQuantization(q => q
+        .UseExpounded()
+        .WithBaseStepSize(0.008f)
+        .WithGuardBits(2))
+    .WithWavelet(w => w
+        .UseIrreversible_9_7()
+        .WithDecompositionLevels(6))
+    .WithProgression(p => p.UseLRCP())
+    .WithTiles(t => t.SetSize(512, 512))
+    .WithMetadata(m => m
+        .WithComment("Custom configuration")
+        .WithCopyright("© 2025")
+        .WithXml(customMetadata))
+    .Build();
+
+byte[] data = J2kImage.ToBytes(image, config);
+```
+
+**📚 Complete Guides:**
+- [Complete Builder Guide](docs/COMPLETE_BUILDER_GUIDE.md) - Unified API with presets
+- [Encoder Configuration Guide](docs/ENCODER_CONFIGURATION_GUIDE.md) - Encoding parameters
+- [Quantization Configuration Guide](docs/QUANTIZATION_CONFIGURATION_GUIDE.md) - Quality/size trade-offs
+- [Wavelet Configuration Guide](docs/WAVELET_CONFIGURATION_GUIDE.md) - Transform settings
+- [Progression Configuration Guide](docs/PROGRESSION_CONFIGURATION_GUIDE.md) - Data organization
+- [Metadata Configuration Guide](docs/METADATA_CONFIGURATION_GUIDE.md) - Comments, copyright, XML
+
+### Traditional API (Encoding Guide)
 
 #### Lossless
 ```csharp
