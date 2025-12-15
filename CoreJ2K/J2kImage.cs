@@ -45,11 +45,51 @@ namespace CoreJ2K
             }
         }
 
+        /// <summary>
+        /// Decodes a JPEG2000 file using modern configuration API.
+        /// </summary>
+        /// <param name="filename">Path to the JPEG2000 file.</param>
+        /// <param name="configuration">Modern decoder configuration.</param>
+        /// <returns>The decoded image.</returns>
+        public static InterleavedImage FromFile(string filename, Configuration.J2KDecoderConfiguration configuration)
+        {
+            if (configuration == null)
+                throw new ArgumentNullException(nameof(configuration));
+            
+            if (!configuration.IsValid)
+                throw new ArgumentException($"Invalid configuration: {string.Join(", ", configuration.Validate())}");
+            
+            using (var stream = FileStreamFactory.New(filename, "r"))
+            {
+                return FromStream(stream, configuration);
+            }
+        }
+
         public static InterleavedImage FromBytes(byte[] j2kdata, ParameterList parameters = null)
         {
             using (var stream = new MemoryStream(j2kdata))
             {
                 return FromStream(stream, parameters);
+            }
+        }
+
+        /// <summary>
+        /// Decodes JPEG2000 data from a byte array using modern configuration API.
+        /// </summary>
+        /// <param name="j2kdata">The JPEG2000 compressed data.</param>
+        /// <param name="configuration">Modern decoder configuration.</param>
+        /// <returns>The decoded image.</returns>
+        public static InterleavedImage FromBytes(byte[] j2kdata, Configuration.J2KDecoderConfiguration configuration)
+        {
+            if (configuration == null)
+                throw new ArgumentNullException(nameof(configuration));
+            
+            if (!configuration.IsValid)
+                throw new ArgumentException($"Invalid configuration: {string.Join(", ", configuration.Validate())}");
+            
+            using (var stream = new MemoryStream(j2kdata))
+            {
+                return FromStream(stream, configuration);
             }
         }
 
@@ -514,6 +554,47 @@ namespace CoreJ2K
             }
 
             return dst;
+        }
+
+        /// <summary>
+        /// Decodes a JPEG2000 stream using modern configuration API.
+        /// </summary>
+        /// <param name="stream">The stream containing JPEG2000 data.</param>
+        /// <param name="configuration">Modern decoder configuration.</param>
+        /// <returns>The decoded image.</returns>
+        public static InterleavedImage FromStream(Stream stream, Configuration.J2KDecoderConfiguration configuration)
+        {
+            if (configuration == null)
+                throw new ArgumentNullException(nameof(configuration));
+            
+            if (!configuration.IsValid)
+                throw new ArgumentException($"Invalid configuration: {string.Join(", ", configuration.Validate())}");
+            
+            // Convert modern configuration to ParameterList
+            var pl = configuration.ToParameterList();
+            
+            return FromStream(stream, pl);
+        }
+
+        /// <summary>
+        /// Decodes a JPEG2000 stream using modern configuration API and returns metadata.
+        /// </summary>
+        /// <param name="stream">The stream containing JPEG2000 data.</param>
+        /// <param name="metadata">Output parameter that receives the metadata.</param>
+        /// <param name="configuration">Modern decoder configuration.</param>
+        /// <returns>The decoded image.</returns>
+        public static InterleavedImage FromStream(Stream stream, out j2k.fileformat.metadata.J2KMetadata metadata, Configuration.J2KDecoderConfiguration configuration)
+        {
+            if (configuration == null)
+                throw new ArgumentNullException(nameof(configuration));
+            
+            if (!configuration.IsValid)
+                throw new ArgumentException($"Invalid configuration: {string.Join(", ", configuration.Validate())}");
+            
+            // Convert modern configuration to ParameterList
+            var pl = configuration.ToParameterList();
+            
+            return FromStream(stream, out metadata, pl);
         }
 
         #endregion
@@ -1033,6 +1114,69 @@ namespace CoreJ2K
             }
         }
 
+        /// <summary>
+        /// Encodes an image object to JPEG 2000 bytes using modern configuration API.
+        /// </summary>
+        /// <param name="imageObject">The image to encode (SKBitmap, Bitmap, etc.).</param>
+        /// <param name="configuration">Modern encoder configuration.</param>
+        /// <returns>The encoded JPEG 2000 data.</returns>
+        public static byte[] ToBytes(object imageObject, Configuration.J2KEncoderConfiguration configuration)
+        {
+            if (configuration == null)
+                throw new ArgumentNullException(nameof(configuration));
+            
+            if (!configuration.IsValid)
+                throw new ArgumentException($"Invalid configuration: {string.Join(", ", configuration.Validate())}");
+            
+            var imgsrc = ImageFactory.ToPortableImageSource(imageObject);
+            return ToBytes(imgsrc, configuration);
+        }
+        
+        /// <summary>
+        /// Encodes an image source to JPEG 2000 bytes using modern configuration API.
+        /// </summary>
+        /// <param name="imgsrc">The image source to encode.</param>
+        /// <param name="configuration">Modern encoder configuration.</param>
+        /// <returns>The encoded JPEG 2000 data.</returns>
+        public static byte[] ToBytes(BlkImgDataSrc imgsrc, Configuration.J2KEncoderConfiguration configuration)
+        {
+            if (configuration == null)
+                throw new ArgumentNullException(nameof(configuration));
+            
+            if (!configuration.IsValid)
+                throw new ArgumentException($"Invalid configuration: {string.Join(", ", configuration.Validate())}");
+            
+            // Convert modern configuration to ParameterList
+            var pl = configuration.ToParameterList();
+            
+            // Handle ROI if configured
+            j2k.fileformat.metadata.J2KMetadata metadata = null;
+            // Note: ROI is handled through ParameterList in the existing encoding pipeline
+            
+            return ToBytes(imgsrc, metadata, pl);
+        }
+        
+        /// <summary>
+        /// Encodes an image source to JPEG 2000 bytes using modern configuration API with metadata.
+        /// </summary>
+        /// <param name="imgsrc">The image source to encode.</param>
+        /// <param name="metadata">Optional metadata to include in the JP2 file.</param>
+        /// <param name="configuration">Modern encoder configuration.</param>
+        /// <returns>The encoded JPEG 2000 data.</returns>
+        public static byte[] ToBytes(BlkImgDataSrc imgsrc, j2k.fileformat.metadata.J2KMetadata metadata, Configuration.J2KEncoderConfiguration configuration)
+        {
+            if (configuration == null)
+                throw new ArgumentNullException(nameof(configuration));
+            
+            if (!configuration.IsValid)
+                throw new ArgumentException($"Invalid configuration: {string.Join(", ", configuration.Validate())}");
+            
+            // Convert modern configuration to ParameterList
+            var pl = configuration.ToParameterList();
+            
+            return ToBytes(imgsrc, metadata, pl);
+        }
+
         #endregion
 
         #region Default Parameter Loaders
@@ -1154,7 +1298,7 @@ namespace CoreJ2K
                         + "or '+' character. Long lines can be broken into several lines "
                         + "by terminating them with '\\'. Lines starting with '#' are "
                         + "considered as comments. This option is not recursive: any 'pfile' "
-                        + "argument appearing in the file is ignored.",
+                        + "argument appearing in the file is ignored",
                         null
                     },
                 new string[]
