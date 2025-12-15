@@ -11,6 +11,11 @@ using CoreJ2K.Pfim;
 using SkiaSharp;
 using Pfim;
 
+#if NETFRAMEWORK
+using System.Drawing;
+using System.Drawing.Imaging;
+#endif
+
 #if NET8_0_OR_GREATER
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
@@ -47,6 +52,9 @@ namespace codectest
 #if NET8_0_OR_GREATER
             DemonstrateImageSharpIntegration();
 #endif
+            // New: Native plugin conversion demo
+            DemonstrateNativePluginConversions();
+
             DemonstrateDecoding();
             DemonstratePerformance();
 
@@ -255,7 +263,7 @@ namespace codectest
             image.SaveAsJ2KHighQuality(
                 Path.Combine("output", "imagesharp_highquality.jp2"),
                 "© 2025 ImageSharp Demo");
-            Console.WriteLine($"? Saved high quality with copyright (ImageSharp)");
+            Console.WriteLine($"? Saved high quality (ImageSharp)");
 
             // Using builder
             var builder = new CompleteEncoderConfigurationBuilder()
@@ -266,6 +274,183 @@ namespace codectest
 
             image.SaveAsJ2K(Path.Combine("output", "imagesharp_custom.jp2"), builder);
             Console.WriteLine($"? Saved with custom config (ImageSharp)");
+        }
+#endif
+
+        #endregion
+
+        #region Native Plugin Conversions
+
+        /// <summary>
+        /// Decodes JP2/J2K samples and converts them to native plugin formats provided
+        /// by CoreJ2K.Skia, CoreJ2K.Windows, CoreJ2K.ImageSharp and CoreJ2K.Pfim.
+        /// For Pfim the output is written as a TIFF file (Windows/System.Drawing only).
+        /// </summary>
+        static void DemonstrateNativePluginConversions()
+        {
+            Console.WriteLine("\n?? Native Plugin Conversion Demo");
+            Console.WriteLine("--------------------------------");
+
+            var sampleDir = Path.Combine("samples");
+            if (!Directory.Exists(sampleDir))
+            {
+                Console.WriteLine("  Samples directory not found; skipping plugin conversion demo.");
+                return;
+            }
+
+            var jp2 = Directory.GetFiles(sampleDir, "*.jp2");
+            var j2k = Directory.GetFiles(sampleDir, "*.j2k");
+
+            var files = new System.Collections.Generic.List<string>();
+            files.AddRange(jp2);
+            files.AddRange(j2k);
+
+            if (files.Count == 0)
+            {
+                Console.WriteLine("  No JP2/J2K samples found; skipping.");
+                return;
+            }
+
+            foreach (var f in files)
+            {
+                Console.WriteLine($"  Processing: {Path.GetFileName(f)}");
+                try
+                {
+                    var img = J2kImage.FromFile(f);
+                    var name = Path.GetFileNameWithoutExtension(f);
+
+                    // SKIA
+                    try
+                    {
+                        using (var sk = img.As<SKBitmap>())
+                        using (var skimg = SKImage.FromBitmap(sk))
+                        using (var data = skimg.Encode(SKEncodedImageFormat.Png, 90))
+                        {
+                            var outFile = Path.Combine("output", name + ".skia.png");
+                            using (var fs = File.OpenWrite(outFile))
+                                data.SaveTo(fs);
+                        }
+                        Console.WriteLine("    -> SKIA PNG written");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"    SKIA conversion failed: {ex.Message}");
+                    }
+
+#if NETFRAMEWORK
+                    // System.Drawing (Windows) via Windows plugin
+                    try
+                    {
+                        using (var win = img.As<System.Drawing.Image>())
+                        {
+                            var outFile = Path.Combine("output", name + ".windows.png");
+                            win.Save(outFile, System.Drawing.Imaging.ImageFormat.Png);
+                        }
+                        Console.WriteLine("    -> System.Drawing PNG written");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"    System.Drawing conversion failed: {ex.Message}");
+                    }
+#endif
+
+#if NET8_0_OR_GREATER
+                    // ImageSharp
+                    try
+                    {
+                        using (var ish = img.As<SixLabors.ImageSharp.Image>())
+                        {
+                            var outFile = Path.Combine("output", name + ".imagesharp.png");
+                            ish.Save(outFile);
+                        }
+                        Console.WriteLine("    -> ImageSharp PNG written");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"    ImageSharp conversion failed: {ex.Message}");
+                    }
+#endif
+
+#if NETFRAMEWORK
+                    // Pfim -> TIFF (Windows/System.Drawing)
+                    try
+                    {
+                        using (var pimg = img.As<Pfim.IImage>())
+                        {
+                            var outFile = Path.Combine("output", name + ".pfim.tiff");
+                            SavePfimAsTiff(pimg, outFile);
+                        }
+                        Console.WriteLine("    -> Pfim TIFF written");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"    Pfim conversion failed: {ex.Message}");
+                    }
+#else
+                    // Pfim - save raw data as fallback when System.Drawing unavailable
+                    try
+                    {
+                        using (var pimg = img.As<Pfim.IImage>())
+                        {
+                            var outFile = Path.Combine("output", name + ".pfim.raw");
+                            File.WriteAllBytes(outFile, pimg.Data);
+                        }
+                        Console.WriteLine("    -> Pfim raw data written (fallback, TIFF not available on this target)");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"    Pfim fallback write failed: {ex.Message}");
+                    }
+#endif
+
+                    // If the decoded object implements IDisposable the 'using' above will dispose.
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine($"    Error processing file: {e.Message}");
+                }
+            }
+        }
+
+#if NETFRAMEWORK
+        private static void SavePfimAsTiff(Pfim.IImage pimg, string outPath)
+        {
+            if (pimg == null) throw new ArgumentNullException(nameof(pimg));
+
+            var width = pimg.Width;
+            var height = pimg.Height;
+            var data = pimg.Data;
+            var bpp = pimg.BitsPerPixel; // bits per pixel (total)
+            var bytesPerPixel = Math.Max(1, bpp / 8);
+
+            System.Drawing.Imaging.PixelFormat pf;
+            if (bytesPerPixel == 3) pf = PixelFormat.Format24bppRgb;
+            else if (bytesPerPixel >= 4) pf = PixelFormat.Format32bppArgb;
+            else pf = PixelFormat.Format8bppIndexed;
+
+            using (var bmp = new System.Drawing.Bitmap(width, height, pf))
+            {
+                var rect = new System.Drawing.Rectangle(0, 0, width, height);
+                var bmpData = bmp.LockBits(rect, System.Drawing.Imaging.ImageLockMode.WriteOnly, pf);
+                try
+                {
+                    var dstStride = Math.Abs(bmpData.Stride);
+                    var srcStride = pimg.Stride;
+
+                    for (int y = 0; y < height; y++)
+                    {
+                        var srcOff = y * srcStride;
+                        var dstPtr = IntPtr.Add(bmpData.Scan0, y * bmpData.Stride);
+                        System.Runtime.InteropServices.Marshal.Copy(data, srcOff, dstPtr, width * bytesPerPixel);
+                    }
+                }
+                finally
+                {
+                    bmp.UnlockBits(bmpData);
+                }
+
+                bmp.Save(outPath, System.Drawing.Imaging.ImageFormat.Tiff);
+            }
         }
 #endif
 
