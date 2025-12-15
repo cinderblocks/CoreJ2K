@@ -153,6 +153,8 @@ namespace CoreJ2K.Util
         {
             var image = ImageFactory.New<T>(Width, Height, NumberOfComponents,
                 ToBytes(Width, Height, NumberOfComponents, byteScaling, Data));
+            if (image == null)
+                throw new InvalidOperationException($"No image creator registered for target type {typeof(T).FullName}.");
             return image.As<T>();
         }
 
