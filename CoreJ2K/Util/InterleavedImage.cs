@@ -366,12 +366,48 @@ namespace CoreJ2K.Util
 
         internal void FillRow(int rowIndex, int lineIndex, int rowWidth, int[] rowValues)
         {
-            Array.Copy(
-                rowValues,
-                0,
-                Data,
-                NumberOfComponents * (rowIndex + lineIndex * rowWidth),
-                rowValues.Length);
+            if (rowValues == null) throw new ArgumentNullException(nameof(rowValues));
+            if (rowWidth <= 0) throw new ArgumentOutOfRangeException(nameof(rowWidth));
+            if (lineIndex < 0 || lineIndex >= Height) throw new ArgumentOutOfRangeException(nameof(lineIndex));
+            if (NumberOfComponents <= 0) throw new InvalidOperationException("Invalid NumberOfComponents");
+
+            // rowValues holds interleaved samples for a tile row; its length must be a multiple of components
+            if (rowValues.Length % NumberOfComponents != 0)
+                throw new ArgumentException("rowValues length must be a multiple of NumberOfComponents", nameof(rowValues));
+
+            var srcTotalPixels = rowValues.Length / NumberOfComponents;
+
+            // Determine destination X and source X start (handle tiles that start left of image)
+            var dstX = rowIndex;
+            var srcX = 0;
+            if (dstX < 0)
+            {
+                // tile starts before image left edge; skip the leftmost src pixels
+                srcX = -dstX;
+                dstX = 0;
+            }
+
+            // remaining width available in target row (pixels)
+            var remainingDstPixels = rowWidth - dstX;
+            if (remainingDstPixels <= 0) return;
+
+            // remaining source pixels available
+            var remainingSrcPixels = srcTotalPixels - srcX;
+            if (remainingSrcPixels <= 0) return;
+
+            // number of pixels to copy (pixels)
+            var copyPixels = Math.Min(remainingDstPixels, remainingSrcPixels);
+            if (copyPixels <= 0) return;
+
+            var copyLength = copyPixels * NumberOfComponents;
+            var srcOffset = srcX * NumberOfComponents;
+            var dstOffset = NumberOfComponents * (dstX + lineIndex * Width);
+
+            // Bounds-check destination region to avoid ArgumentException from Array.Copy
+            if (dstOffset < 0 || dstOffset + copyLength > Data.Length)
+                throw new ArgumentException("Destination region does not fit within image buffer", nameof(rowValues));
+
+            Array.Copy(rowValues, srcOffset, Data, dstOffset, copyLength);
         }
 
         /// <summary>

@@ -291,6 +291,13 @@ namespace CoreJ2K
 
                     for (var l = 0; l < height; l++)
                     {
+                        // Map tile-local row 'l' to destination image line
+                        var destLine = tOffy + l;
+                        // Skip rows that end up above the destination image
+                        if (destLine < 0) continue;
+                        // Stop processing when we've reached the bottom of destination image
+                        if (destLine >= dst.Height) break;
+
                         // Load each component line into its DataBlk and initialize indices
                         for (var i = 0; i < numComps; i++)
                         {
@@ -315,7 +322,7 @@ namespace CoreJ2K
                             }
                         }
 
-                        dst.FillRow(tOffx, tOffy + l, imgWidth, rowvalues);
+                        dst.FillRow(tOffx, destLine, imgWidth, rowvalues);
                     }
                 }
             }
@@ -524,6 +531,13 @@ namespace CoreJ2K
 
                     for (var l = 0; l < height; l++)
                     {
+                        // Map tile-local row 'l' to destination image line
+                        var destLine = tOffy + l;
+                        // Skip rows that end up above the destination image
+                        if (destLine < 0) continue;
+                        // Stop processing when we've reached the bottom of destination image
+                        if (destLine >= dst.Height) break;
+
                         // Load each component line into its DataBlk and initialize indices
                         for (var i = 0; i < numComps; i++)
                         {
@@ -548,7 +562,7 @@ namespace CoreJ2K
                             }
                         }
 
-                        dst.FillRow(tOffx, tOffy + l, imgWidth, rowvalues);
+                        dst.FillRow(tOffx, destLine, imgWidth, rowvalues);
                     }
                 }
             }

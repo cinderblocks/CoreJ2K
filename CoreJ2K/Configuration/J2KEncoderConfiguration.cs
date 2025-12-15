@@ -249,7 +249,9 @@ namespace CoreJ2K.Configuration
         /// <returns>ParameterList with all configured parameters.</returns>
         public ParameterList ToParameterList()
         {
-            var pl = new ParameterList();
+            // Create parameter list with default parameters as fallback
+            var defaultPl = J2kImage.GetDefaultEncoderParameterList();
+            var pl = new ParameterList(defaultPl);
             
             // File format
             pl["file_format"] = _useFileFormat ? "on" : "off";

@@ -34,10 +34,31 @@ namespace CoreJ2K.j2k.image.input
         public ImgReaderImageSharp(Image img)
         {
             if (img is null) throw new ArgumentNullException(nameof(img));
-            image = img;
-            w = img.Width;
-            h = img.Height;
-            InitializeFormat(img);
+            
+            // Clone the image to take ownership and prevent disposal issues
+            // when the caller disposes their reference
+            var imgType = img.GetType();
+            if (imgType.IsGenericType && imgType.GetGenericTypeDefinition() == typeof(Image<>))
+            {
+                var cloneMethod = imgType.GetMethod("Clone", Type.EmptyTypes);
+                if (cloneMethod != null)
+                {
+                    image = (Image)cloneMethod.Invoke(img, null);
+                }
+                else
+                {
+                    // Fallback: clone as Rgba32 if direct clone fails
+                    image = img.CloneAs<Rgba32>();
+                }
+            }
+            else
+            {
+                image = img.CloneAs<Rgba32>();
+            }
+            
+            w = image.Width;
+            h = image.Height;
+            InitializeFormat(image);
             nc = componentCount;
         }
 

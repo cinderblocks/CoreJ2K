@@ -252,28 +252,27 @@ namespace CoreJ2K.Configuration
             }
             pl["Qtype"] = qtypeValue;
             
-            if (_type != QuantizationType.Reversible)
+            // Always set Qstep parameter, even for reversible quantization
+            // The QuantStepSizeSpec constructor expects it to be present
+            pl["Qstep"] = _baseStepSize.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            
+            // Apply custom subband steps if specified (only for non-reversible)
+            if (_type != QuantizationType.Reversible && !_useDefaultSteps && _subbandSteps.Count > 0)
             {
-                pl["Qstep"] = _baseStepSize.ToString(System.Globalization.CultureInfo.InvariantCulture);
-                
-                // Apply custom subband steps if specified
-                if (!_useDefaultSteps && _subbandSteps.Count > 0)
+                // Build subband step specification string
+                var stepSpecs = new List<string>();
+                foreach (var level in _subbandSteps.Keys)
                 {
-                    // Build subband step specification string
-                    var stepSpecs = new List<string>();
-                    foreach (var level in _subbandSteps.Keys)
+                    foreach (var subband in _subbandSteps[level].Keys)
                     {
-                        foreach (var subband in _subbandSteps[level].Keys)
-                        {
-                            var step = _subbandSteps[level][subband];
-                            stepSpecs.Add($"{level}-{subband}:{step.ToString(System.Globalization.CultureInfo.InvariantCulture)}");
-                        }
+                        var step = _subbandSteps[level][subband];
+                        stepSpecs.Add($"{level}-{subband}:{step.ToString(System.Globalization.CultureInfo.InvariantCulture)}");
                     }
-                    
-                    if (stepSpecs.Count > 0)
-                    {
-                        pl["Qstep_subband"] = string.Join(",", stepSpecs);
-                    }
+                }
+                
+                if (stepSpecs.Count > 0)
+                {
+                    pl["Qstep_subband"] = string.Join(",", stepSpecs);
                 }
             }
             

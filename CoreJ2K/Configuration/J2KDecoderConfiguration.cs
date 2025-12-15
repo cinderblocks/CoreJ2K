@@ -216,7 +216,9 @@ namespace CoreJ2K.Configuration
         /// <returns>ParameterList with all configured parameters.</returns>
         public ParameterList ToParameterList()
         {
-            var pl = new ParameterList();
+            // Create ParameterList with defaults to ensure DefaultParameterList is populated
+            // This is required by FileBitstreamReaderAgent which accesses pl.DefaultParameterList
+            var pl = new ParameterList(J2kImage.GetDefaultDecoderParameterList());
             
             // Resolution level
             if (_resolutionLevel >= 0)
@@ -224,16 +226,10 @@ namespace CoreJ2K.Configuration
                 pl["res"] = _resolutionLevel.ToString();
             }
             
-            // Rate or bytes
-            if (_decodingRate >= 0 && _decodingRate != -1)
-            {
-                pl["rate"] = _decodingRate.ToString(System.Globalization.CultureInfo.InvariantCulture);
-            }
-            
-            if (_decodingBytes >= 0 && _decodingBytes != -1)
-            {
-                pl["nbytes"] = _decodingBytes.ToString();
-            }
+            // Rate and bytes - Override defaults with configured values
+            // A value of -1 means "decode all data"
+            pl["rate"] = _decodingRate.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            pl["nbytes"] = _decodingBytes.ToString();
             
             // Color space
             pl["nocolorspace"] = _useColorSpace ? "off" : "on";
@@ -359,15 +355,9 @@ namespace CoreJ2K.Configuration
         
         internal void ApplyTo(ParameterList pl)
         {
-            if (MaxCodeBlocks >= 0)
-            {
-                pl["ncb_quit"] = MaxCodeBlocks.ToString();
-            }
-            
-            if (MaxLayers >= 0)
-            {
-                pl["l_quit"] = MaxLayers.ToString();
-            }
+            // Always set ncb_quit, l_quit, and m_quit as FileBitstreamReaderAgent expects them
+            pl["ncb_quit"] = MaxCodeBlocks.ToString();
+            pl["l_quit"] = MaxLayers.ToString();
             
             if (MaxBitPlanes >= 0)
             {

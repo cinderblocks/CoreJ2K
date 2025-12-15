@@ -243,7 +243,7 @@ namespace codectest
             Console.WriteLine("\n???  ImageSharp Integration");
             Console.WriteLine("-------------------------");
 
-            var image = SixLabors.ImageSharp.Image.Load<Rgba32>(Path.Combine("samples", "racoon.png"));
+            using var image = SixLabors.ImageSharp.Image.Load<Rgba32>(Path.Combine("samples", "racoon.png"));
 
             // Resize for demo
             image.Mutate(x => x.Resize(800, 600));
@@ -266,8 +266,6 @@ namespace codectest
 
             image.SaveAsJ2K(Path.Combine("output", "imagesharp_custom.jp2"), builder);
             Console.WriteLine($"? Saved with custom config (ImageSharp)");
-
-            image.Dispose();
         }
 #endif
 
