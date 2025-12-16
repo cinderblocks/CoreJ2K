@@ -8,9 +8,10 @@ A Managed and Portable JPEG2000 Codec for .NET Platforms
 ****
 
 [![NuGet](https://img.shields.io/nuget/v/CoreJ2K.svg?label=CoreJ2K&logo=nuget)](https://www.nuget.org/packages/CoreJ2K/) 
-[![Downloads](https://img.shields.io/nuget/dt/CoreJ2K?label=Downloads&logo=nuget)](https://www.nuget.org/packages/CoreJ2K/)  
+[![Downloads](https://img.shields.io/nuget/dt/CoreJ2K?label=Downloads&logo=nuget)](https://www.nuget.org/packages/CoreJ2K/)
 [![Build](https://ci.appveyor.com/api/projects/status/9fr2467p5wxt6qxx?svg=true)](https://ci.appveyor.com/project/cinderblocks57647/corej2k)
 [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](http://www.opensource.org/licenses/bsd-license.php)
+[![Socket Badge](https://badge.socket.dev/nuget/package/corej2k)](https://badge.socket.dev/nuget/package/corej2k)
 
 ---
 
