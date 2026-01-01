@@ -54,7 +54,7 @@ namespace CoreJ2K.j2k.codestream.reader
 {
 
     /// <summary> This class reads the bit stream (with the help of HeaderDecoder for tile
-    /// headers and PktDecoder for packets header and body) and retrives location
+    /// headers and PktDecoder for packets header and body) and retrieves location
     /// of all code-block's codewords.
     /// 
     /// Note: All tile-parts headers are read by the constructor whereas packets
@@ -74,7 +74,7 @@ namespace CoreJ2K.j2k.codestream.reader
         /// <summary>Gets the reference to the CBlkInfo array </summary>
         public virtual CBlkInfo[][][][][] CBlkInfo => cbI;
 
-        /// <summary>Whether or not the last read Psot value was zero. Only the Psot in the
+        /// <summary>Whether the last read Psot value was zero. Only the Psot in the
         /// last tile-part in the codestream can have such a value. 
         /// </summary>
         private bool isPsotEqualsZero = true;
@@ -100,11 +100,9 @@ namespace CoreJ2K.j2k.codestream.reader
         /// </param>
         public virtual int getNumTileParts(int t)
         {
-            if (firstPackOff?[t] == null)
-            {
-                throw new InvalidOperationException($"Tile {t} not found in input codestream.");
-            }
-            return firstPackOff[t].Length;
+            return firstPackOff?[t] == null 
+                ? throw new InvalidOperationException($"Tile {t} not found in input codestream.") 
+                : firstPackOff[t].Length;
         }
 
         /// <summary> Number of bytes allocated to each tile. In parsing mode, this number
@@ -113,7 +111,7 @@ namespace CoreJ2K.j2k.codestream.reader
         /// </summary>
         private readonly int[] nBytes;
 
-        /// <summary>Whether or not to print information found in codestream </summary>
+        /// <summary>Whether to print information found in codestream </summary>
         private readonly bool printInfo = false;
 
         /// <summary> Backup of the number of bytes allocated to each tile. This array is
@@ -160,7 +158,7 @@ namespace CoreJ2K.j2k.codestream.reader
         /// <summary>The number of tile-parts read so far for each tile </summary>
         private readonly int[] tilePartsRead;
 
-        /// <summary>Thetotal  number of tile-parts read so far </summary>
+        /// <summary>The total number of tile-parts read so far </summary>
         private int totTilePartsRead = 0;
 
         /// <summary>The number of found tile-parts in each tile. </summary>
@@ -174,7 +172,7 @@ namespace CoreJ2K.j2k.codestream.reader
         /// </summary>
         private readonly int[][] tilePartNum;
 
-        /// <summary>Whether or not a EOC marker has been found instead of a SOT </summary>
+        /// <summary>Whether a EOC marker has been found instead of a SOT </summary>
         private bool isEOCFound = false;
 
         /// <summary>Reference to the HeaderInfo instance (used when reading SOT marker
@@ -196,11 +194,85 @@ namespace CoreJ2K.j2k.codestream.reader
         /// <summary>The maximum number of layers to decode for any code-block </summary>
         private readonly int lQuit;
 
-        /// <summary>Whether or not to use only first progression order </summary>
+        /// <summary>Whether to use only first progression order </summary>
         private readonly bool usePOCQuit = false;
 
+        /// <summary>
+        /// Checks if fast random tile access is available via TLM markers.
+        /// TLM markers contain tile-part lengths which enable O(1) seeking to any tile
+        /// without parsing intermediate tiles.
+        /// </summary>
+        /// <returns>True if TLM data is available for fast seeking</returns>
+        public virtual bool SupportsFastTileAccess()
+        {
+            var tlmData = hd.GetTLMData();
+            return tlmData != null && tlmData.HasTilePartLengths;
+        }
+
+        /// <summary>
+        /// Calculates the file offset for a specific tile using TLM data.
+        /// This enables fast random tile access without sequential parsing.
+        /// </summary>
+        /// <param name="tileIdx">The tile index (linear, row-major order)</param>
+        /// <returns>File offset in bytes, or -1 if TLM data unavailable or tile index invalid</returns>
+        private long GetTileOffsetFromTLM(int tileIdx)
+        {
+            // Get TLM data from HeaderDecoder
+            var tlmData = hd.GetTLMData();
+
+            if (tlmData == null || !tlmData.HasTilePartLengths)
+            {
+                return -1; // TLM not available, use slow path
+            }
+
+            if (tileIdx < 0 || tileIdx > tlmData.MaxTileIndex)
+            {
+                return -1; // Invalid tile index
+            }
+
+            // Calculate offset: main header + sum of all previous tiles
+            long offset = mainHeadLen;
+
+            for (var t = 0; t < tileIdx; t++)
+            {
+                offset += tlmData.GetTotalTileLength(t);
+            }
+
+            return offset;
+        }
+
+        /// <summary>
+        /// Seeks directly to a specific tile without parsing intermediate tiles.
+        /// Only available when TLM markers are present in the codestream.
+        /// Falls back to sequential tile navigation if TLM data is unavailable.
+        /// </summary>
+        /// <param name="tileIndex">The linear tile index (row-major order: tileIndex = y * numTilesX + x)</param>
+        /// <returns>True if fast seek via TLM succeeded, false if sequential parsing was required</returns>
+        /// <exception cref="ArgumentOutOfRangeException">If tileIndex is out of range</exception>
+        public virtual bool SeekToTile(int tileIndex)
+        {
+            if (tileIndex < 0 || tileIndex >= nt)
+            {
+                throw new ArgumentOutOfRangeException(nameof(tileIndex),
+                    $"Tile index must be between 0 and {nt - 1}");
+            }
+
+            // Convert linear index to x,y coordinates
+            var x = tileIndex % ntX;
+            var y = tileIndex / ntX;
+
+            // Try TLM fast path first
+            var tlmOffset = GetTileOffsetFromTLM(tileIndex);
+            var usedFastPath = tlmOffset >= 0;
+
+            // Use setTile which has TLM fast path integrated
+            setTile(x, y);
+
+            return usedFastPath;
+        }
+
         /// <summary> Reads all tiles headers and keep offset of their first
-        /// packet. Finally it calls the rate allocation method.
+        /// packet. Finally, it calls the rate allocation method.
         /// 
         /// </summary>
         /// <param name="hd">HeaderDecoder of the codestream.
@@ -216,7 +288,7 @@ namespace CoreJ2K.j2k.codestream.reader
         /// command-line arguments.
         /// 
         /// </param>
-        /// <param name="cdstrInfo">Whether or not to print information found in
+        /// <param name="cdstrInfo">Whether to print information found in
         /// codestream. 
         /// 
         /// </param>
@@ -229,7 +301,7 @@ namespace CoreJ2K.j2k.codestream.reader
             this.hi = hi;
             var strInfo = "Codestream elements information in bytes " + "(offset, total length, header length):\n\n";
 
-            // Check whether quit conditiosn used
+            // Check whether quit conditions used
             usePOCQuit = pl.getBooleanParameter("poc_quit");
 
             // Get decoding rate
@@ -2262,8 +2334,6 @@ namespace CoreJ2K.j2k.codestream.reader
             }
         }
 
-
-
         /// <summary> Changes the current tile, given the new indexes. An
         /// IllegalArgumentException is thrown if the indexes do not correspond to
         /// a valid tile.
@@ -2286,62 +2356,180 @@ namespace CoreJ2K.j2k.codestream.reader
             }
             var t = (y * ntX + x);
 
-            // Reset number of read bytes if needed
-            if (t == 0)
+            // TLM Fast Path - O(1) tile access when TLM markers available
+            var tlmOffset = GetTileOffsetFromTLM(t);
+
+            if (tlmOffset >= 0 && !isTruncMode)
             {
-                anbytes = headLen;
-                if (!isTruncMode)
+                // TLM available - attempt fast path
+                try
                 {
-                    anbytes += 2;
+                    // Reset byte counters if starting from tile 0
+                    if (t == 0)
+                    {
+                        anbytes = headLen;
+                        if (!isTruncMode)
+                        {
+                            anbytes += 2;
+                        }
+                        // Restore values of nBytes
+                        for (var tIdx = 0; tIdx < nt; tIdx++)
+                        {
+                            nBytes[tIdx] = baknBytes[tIdx];
+                        }
+                    }
+
+                    // Seek directly to tile start using TLM
+                    in_Renamed.seek((int)tlmOffset);
+
+                    // Verify we're at the correct tile by reading SOT marker
+                    var marker = in_Renamed.readShort();
+                    if (marker != Markers.SOT)
+                    {
+                        // Not at tile start, TLM might be incorrect
+                        throw new System.IO.IOException("Expected SOT marker not found at TLM offset");
+                    }
+
+                    // Read SOT to verify tile index
+                    in_Renamed.readUnsignedShort(); // Lsot
+                    var actualTile = in_Renamed.readUnsignedShort(); // Isot
+
+                    if (actualTile == t)
+                    {
+                        // TLM fast path succeeded!
+                        // Seek back to start of SOT marker for normal processing
+                        in_Renamed.seek((int)tlmOffset);
+
+                        // Set the new current tile
+                        ctX = x;
+                        ctY = y;
+
+                        // Calculate tile relative points
+                        var ctox = (x == 0) ? ax : px + x * ntW;
+                        var ctoy = (y == 0) ? ay : py + y * ntH;
+                        for (i = nc - 1; i >= 0; i--)
+                        {
+                            culx[i] = (ctox + hd.getCompSubsX(i) - 1) / hd.getCompSubsX(i);
+                            culy[i] = (ctoy + hd.getCompSubsY(i) - 1) / hd.getCompSubsY(i);
+                            offX[i] = (px + x * ntW + hd.getCompSubsX(i) - 1) / hd.getCompSubsX(i);
+                            offY[i] = (py + y * ntH + hd.getCompSubsY(i) - 1) / hd.getCompSubsY(i);
+                        }
+
+                        // Initialize subband tree and number of resolution levels
+                        subbTrees = new SubbandSyn[nc];
+                        mdl = new int[nc];
+                        derived = new bool[nc];
+                        params_Renamed = new StdDequantizerParams[nc];
+                        gb = new int[nc];
+
+                        for (var c = 0; c < nc; c++)
+                        {
+                            derived[c] = decSpec.qts.isDerived(t, c);
+                            params_Renamed[c] = (StdDequantizerParams)decSpec.qsss.getTileCompVal(t, c);
+                            gb[c] = ((int)decSpec.gbs.getTileCompVal(t, c));
+                            mdl[c] = ((int)decSpec.dls.getTileCompVal(t, c));
+
+                            subbTrees[c] = new SubbandSyn(
+                                getTileCompWidth(t, c, mdl[c]),
+                                getTileCompHeight(t, c, mdl[c]),
+                                getResULX(c, mdl[c]),
+                                getResULY(c, mdl[c]),
+                                mdl[c],
+                                decSpec.wfs.getHFilters(t, c),
+                                decSpec.wfs.getVFilters(t, c));
+                            initSubbandsFields(c, subbTrees[c]);
+                        }
+
+                        // Read tile's packets
+                        try
+                        {
+                            readTilePkts(t);
+                        }
+                        catch (System.IO.IOException e)
+                        {
+                            SupportClass.WriteStackTrace(e);
+                            throw new InvalidOperationException($"IO Error when reading tile {x} x {y}");
+                        }
+
+                        // Fast path complete - return early
+                        return;
+                    }
+                    else
+                    {
+                        // TLM was incorrect - log warning and fall through to sequential path
+                        FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING,
+                            $"TLM marker data inconsistent for tile {t} (found tile {actualTile}), using sequential parsing");
+                    }
                 }
-                // Restore values of nBytes
-                for (var tIdx = 0; tIdx < nt; tIdx++)
+                catch (System.IO.IOException e)
                 {
-                    nBytes[tIdx] = baknBytes[tIdx];
+                    // TLM seek failed - log warning and fall through to sequential path
+                    FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING,
+                        $"TLM fast seek failed for tile {t}: {e.Message}, using sequential parsing");
                 }
             }
-
-            // Set the new current tile
-            ctX = x;
-            ctY = y;
-            // Calculate tile relative points
-            var ctox = (x == 0) ? ax : px + x * ntW;
-            var ctoy = (y == 0) ? ay : py + y * ntH;
-            for (i = nc - 1; i >= 0; i--)
+            else
             {
-                culx[i] = (ctox + hd.getCompSubsX(i) - 1) / hd.getCompSubsX(i);
-                culy[i] = (ctoy + hd.getCompSubsY(i) - 1) / hd.getCompSubsY(i);
-                offX[i] = (px + x * ntW + hd.getCompSubsX(i) - 1) / hd.getCompSubsX(i);
-                offY[i] = (py + y * ntH + hd.getCompSubsY(i) - 1) / hd.getCompSubsY(i);
-            }
+                // Reset number of read bytes if needed
+                if (t == 0)
+                {
+                    anbytes = headLen;
+                    if (!isTruncMode)
+                    {
+                        anbytes += 2;
+                    }
 
-            // Initialize subband tree and number of resolution levels
-            subbTrees = new SubbandSyn[nc];
-            mdl = new int[nc];
-            derived = new bool[nc];
-            params_Renamed = new StdDequantizerParams[nc];
-            gb = new int[nc];
+                    // Restore values of nBytes
+                    for (var tIdx = 0; tIdx < nt; tIdx++)
+                    {
+                        nBytes[tIdx] = baknBytes[tIdx];
+                    }
+                }
 
-            for (var c = 0; c < nc; c++)
-            {
-                derived[c] = decSpec.qts.isDerived(t, c);
-                params_Renamed[c] = (StdDequantizerParams)decSpec.qsss.getTileCompVal(t, c);
-                gb[c] = ((int)decSpec.gbs.getTileCompVal(t, c));
-                mdl[c] = ((int)decSpec.dls.getTileCompVal(t, c));
+                // Set the new current tile
+                ctX = x;
+                ctY = y;
+                // Calculate tile relative points
+                var ctox = (x == 0) ? ax : px + x * ntW;
+                var ctoy = (y == 0) ? ay : py + y * ntH;
+                for (i = nc - 1; i >= 0; i--)
+                {
+                    culx[i] = (ctox + hd.getCompSubsX(i) - 1) / hd.getCompSubsX(i);
+                    culy[i] = (ctoy + hd.getCompSubsY(i) - 1) / hd.getCompSubsY(i);
+                    offX[i] = (px + x * ntW + hd.getCompSubsX(i) - 1) / hd.getCompSubsX(i);
+                    offY[i] = (py + y * ntH + hd.getCompSubsY(i) - 1) / hd.getCompSubsY(i);
+                }
 
-                subbTrees[c] = new SubbandSyn(getTileCompWidth(t, c, mdl[c]), getTileCompHeight(t, c, mdl[c]), getResULX(c, mdl[c]), getResULY(c, mdl[c]), mdl[c], decSpec.wfs.getHFilters(t, c), decSpec.wfs.getVFilters(t, c));
-                initSubbandsFields(c, subbTrees[c]);
-            }
+                // Initialize subband tree and number of resolution levels
+                subbTrees = new SubbandSyn[nc];
+                mdl = new int[nc];
+                derived = new bool[nc];
+                params_Renamed = new StdDequantizerParams[nc];
+                gb = new int[nc];
 
-            // Read tile's packets
-            try
-            {
-                readTilePkts(t);
-            }
-            catch (System.IO.IOException e)
-            {
-                SupportClass.WriteStackTrace(e);
-                throw new InvalidOperationException($"IO Error when reading tile {x} x {y}");
+                for (var c = 0; c < nc; c++)
+                {
+                    derived[c] = decSpec.qts.isDerived(t, c);
+                    params_Renamed[c] = (StdDequantizerParams)decSpec.qsss.getTileCompVal(t, c);
+                    gb[c] = ((int)decSpec.gbs.getTileCompVal(t, c));
+                    mdl[c] = ((int)decSpec.dls.getTileCompVal(t, c));
+
+                    subbTrees[c] = new SubbandSyn(getTileCompWidth(t, c, mdl[c]), getTileCompHeight(t, c, mdl[c]),
+                        getResULX(c, mdl[c]), getResULY(c, mdl[c]), mdl[c], decSpec.wfs.getHFilters(t, c),
+                        decSpec.wfs.getVFilters(t, c));
+                    initSubbandsFields(c, subbTrees[c]);
+                }
+
+                // Read tile's packets
+                try
+                {
+                    readTilePkts(t);
+                }
+                catch (System.IO.IOException e)
+                {
+                    SupportClass.WriteStackTrace(e);
+                    throw new InvalidOperationException($"IO Error when reading tile {x} x {y}");
+                }
             }
         }
 
