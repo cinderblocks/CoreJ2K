@@ -704,20 +704,10 @@ namespace CoreJ2K.j2k.wavelet.synthesis
                     }
                 }
 
-                // If a reconstructed block exists, update its dimensions and Data pointer to the rented buffer
-                if (reconstructedComps != null && i < reconstructedComps.Length && reconstructedComps[i] != null)
+                // The wavelet data must be reconstructed since we've switched to a different tile.
+                if (reconstructedComps != null && i < reconstructedComps.Length)
                 {
-                    var db = reconstructedComps[i];
-                    db.w = newWidth;
-                    db.h = newHeight;
-                    if (db is DataBlkFloat && rentedFloatBuffers[i] != null)
-                    {
-                        db.Data = rentedFloatBuffers[i];
-                    }
-                    else if (db is DataBlkInt && rentedIntBuffers[i] != null)
-                    {
-                        db.Data = rentedIntBuffers[i];
-                    }
+                    reconstructedComps[i] = null;
                 }
             }
 
@@ -792,19 +782,10 @@ namespace CoreJ2K.j2k.wavelet.synthesis
                     }
                 }
 
-                if (reconstructedComps != null && i < reconstructedComps.Length && reconstructedComps[i] != null)
+                // The wavelet data must be reconstructed since we've switched to a different tile.
+                if (reconstructedComps != null && i < reconstructedComps.Length)
                 {
-                    var db = reconstructedComps[i];
-                    db.w = newWidth;
-                    db.h = newHeight;
-                    if (db is DataBlkFloat && rentedFloatBuffers[i] != null)
-                    {
-                        db.Data = rentedFloatBuffers[i];
-                    }
-                    else if (db is DataBlkInt && rentedIntBuffers[i] != null)
-                    {
-                        db.Data = rentedIntBuffers[i];
-                    }
+                    reconstructedComps[i] = null;
                 }
             }
         }

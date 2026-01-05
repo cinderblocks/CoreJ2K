@@ -1695,11 +1695,9 @@ namespace CoreJ2K.j2k.codestream.reader
             // Read marker into array 'sopArray'
             ehs.readFully(sopArray, 0, Markers.SOP_LENGTH);
 
-            // Check if this is the correct marker
-            val = sopArray[0];
-            val <<= 8;
-            val |= sopArray[1];
-            if (val != Markers.SOP)
+            // Check if this is the correct marker (Markers.EPH is a negative short -> cast to short)
+            var marker = (short)((sopArray[0] << 8) | sopArray[1]);
+            if (marker != Markers.SOP)
             {
                 throw new InvalidOperationException("Corrupted Bitstream: Could not parse SOP " + "marker !");
             }
@@ -1740,7 +1738,6 @@ namespace CoreJ2K.j2k.codestream.reader
         /// </param>
         public virtual void readEPHMarker(PktHeaderBitReader bin)
         {
-            int val;
             var ephArray = new byte[2];
 
             if (bin.usebais)
@@ -1752,11 +1749,9 @@ namespace CoreJ2K.j2k.codestream.reader
                 bin.in_Renamed.readFully(ephArray, 0, Markers.EPH_LENGTH);
             }
 
-            // Check if this is the correct marker
-            val = ephArray[0];
-            val <<= 8;
-            val |= ephArray[1];
-            if (val != Markers.EPH)
+            // Check if this is the correct marker (Markers.EPH is a negative short -> cast to short)
+            var marker = (short)((ephArray[0] << 8) | ephArray[1]);
+            if (marker != Markers.EPH)
             {
                 throw new InvalidOperationException("Corrupted Bitstream: Could not parse EPH " + "marker ! ");
             }

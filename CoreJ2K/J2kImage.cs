@@ -248,7 +248,7 @@ namespace CoreJ2K
             // **** Copy to Bitmap ****
 
             var bitsUsed = new int[numComps];
-            for (var j = 0; j < numComps; ++j) bitsUsed[j] = decodedImage.getNomRangeBits(numComps - 1 - j);
+            for (var j = 0; j < numComps; ++j) bitsUsed[j] = decodedImage.getNomRangeBits(j);
 
             var dst = new InterleavedImage(imgWidth, decodedImage.ImgHeight, numComps, bitsUsed);
 
@@ -488,7 +488,7 @@ namespace CoreJ2K
             // **** Copy to Bitmap ****
 
             var bitsUsed = new int[numComps];
-            for (var j = 0; j < numComps; ++j) bitsUsed[j] = decodedImage.getNomRangeBits(numComps - 1 - j);
+            for (var j = 0; j < numComps; ++j) bitsUsed[j] = decodedImage.getNomRangeBits(j);
 
             var dst = new InterleavedImage(imgWidth, decodedImage.ImgHeight, numComps, bitsUsed);
 
