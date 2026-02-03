@@ -286,7 +286,22 @@ namespace CoreJ2K
                     }
 
                     // Reuse arrays across rows to avoid per-pixel allocations
-                    var rowvalues = new int[width * numComps];
+                    // Use checked block to catch integer overflow for very large images
+                    int rowSize;
+                    try
+                    {
+                        checked
+                        {
+                            rowSize = width * numComps;
+                        }
+                    }
+                    catch (OverflowException)
+                    {
+                        throw new InvalidOperationException(
+                            $"Image tile dimensions too large: width={width}, components={numComps}. " +
+                            $"Row buffer size would exceed maximum array size.");
+                    }
+                    var rowvalues = new int[rowSize];
                     var k = new int[numComps];
 
                     for (var l = 0; l < height; l++)
@@ -312,7 +327,12 @@ namespace CoreJ2K
                         // Fill rowvalues left-to-right, writing component samples interleaved
                         for (var col = 0; col < width; col++)
                         {
-                            var baseOffset = col * numComps;
+                            // Use checked arithmetic to detect overflow in offset calculation
+                            int baseOffset;
+                            checked
+                            {
+                                baseOffset = col * numComps;
+                            }
                             for (var comp = 0; comp < numComps; comp++)
                             {
                                 var v = (db[comp].data_array[k[comp]++] >> fb[comp]) + ls[comp];
@@ -526,7 +546,22 @@ namespace CoreJ2K
                     }
 
                     // Reuse arrays across rows to avoid per-pixel allocations
-                    var rowvalues = new int[width * numComps];
+                    // Use checked block to catch integer overflow for very large images
+                    int rowSize;
+                    try
+                    {
+                        checked
+                        {
+                            rowSize = width * numComps;
+                        }
+                    }
+                    catch (OverflowException)
+                    {
+                        throw new InvalidOperationException(
+                            $"Image tile dimensions too large: width={width}, components={numComps}. " +
+                            $"Row buffer size would exceed maximum array size.");
+                    }
+                    var rowvalues = new int[rowSize];
                     var k = new int[numComps];
 
                     for (var l = 0; l < height; l++)
@@ -552,7 +587,12 @@ namespace CoreJ2K
                         // Fill rowvalues left-to-right, writing component samples interleaved
                         for (var col = 0; col < width; col++)
                         {
-                            var baseOffset = col * numComps;
+                            // Use checked arithmetic to detect overflow in offset calculation
+                            int baseOffset;
+                            checked
+                            {
+                                baseOffset = col * numComps;
+                            }
                             for (var comp = 0; comp < numComps; comp++)
                             {
                                 var v = (db[comp].data_array[k[comp]++] >> fb[comp]) + ls[comp];
