@@ -2598,11 +2598,39 @@ namespace CoreJ2K.j2k.codestream.reader
 
             // Read marker segment length and create corresponding byte buffer
             var markSegLen = ehs.readUnsignedShort();
+
+            // Validate marker segment length
+            if (markSegLen < 2)
+            {
+                throw new CorruptedCodestreamException(
+                    $"Invalid marker segment length {markSegLen} for marker 0x{Convert.ToString(marker, 16)}. " +
+                    "Length must be at least 2 bytes.");
+            }
+
+            // Check for unreasonably large marker segments (prevent DoS)
+            const int maxMarkerSegmentLength = 65535; // Maximum allowed by JPEG 2000 spec
+            if (markSegLen > maxMarkerSegmentLength)
+            {
+                throw new CorruptedCodestreamException(
+                    $"Marker segment length {markSegLen} exceeds maximum allowed size of {maxMarkerSegmentLength} bytes.");
+            }
+
+            // Allocate buffer with validated length
             var buf = new byte[markSegLen];
 
             // Copy data (after re-insertion of marker segment length);
             buf[0] = (byte)((markSegLen >> 8) & 0xFF);
             buf[1] = (byte)(markSegLen & 0xFF);
+            
+            // Validate that sufficient data is available before attempting to read
+            // The readFully operation will throw EndOfStreamException if insufficient data,
+            // but we check markSegLen - 2 is non-negative to prevent integer underflow
+            if (markSegLen - 2 < 0)
+            {
+                throw new CorruptedCodestreamException(
+                    $"Invalid marker segment length calculation for marker 0x{Convert.ToString(marker, 16)}.");
+            }
+            
             ehs.readFully(buf, 2, markSegLen - 2);
 
             if (!htKey.Equals("UNKNOWN"))
