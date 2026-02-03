@@ -60,8 +60,6 @@ jobs:
           languages: ${{ matrix.language }}
           # Use extended query suite for comprehensive security analysis
           queries: security-extended
-          # Optional: Add custom queries for JPEG 2000 specific patterns
-          # queries: +security-and-quality
 
       - name: Restore dependencies
         run: dotnet restore CoreJ2K.sln
@@ -74,11 +72,4 @@ jobs:
         uses: github/codeql-action/analyze@v3
         with:
           category: "/language:${{matrix.language}}"
-          # Upload results even if there are findings
-          upload: true
-
-      # Optional: Fail the build on high-severity findings
-      - name: Check for critical vulnerabilities
-        if: always()
-        uses: github/codeql-action/upload-sarif@v3
-        continue-on-error: true
+          # Results are automatically uploaded to GitHub Security
