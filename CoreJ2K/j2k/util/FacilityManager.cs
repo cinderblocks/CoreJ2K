@@ -34,6 +34,8 @@
  * Copyright (c) 1999/2000 JJ2000 Partners.
  */
 
+using System;
+
 namespace CoreJ2K.j2k.util
 {
     /// <summary> This class manages common facilities for multi-threaded
@@ -58,7 +60,9 @@ namespace CoreJ2K.j2k.util
     {
         #region FIELDS
 
+
         private static IMsgLogger _defMsgLogger;
+        private static readonly object _loggerLock = new object();
 
         #endregion
 
@@ -66,32 +70,57 @@ namespace CoreJ2K.j2k.util
 
         static FacilityManager()
         {
+            // Initialize with platform-specific logger or use null (will be set later)
             _defMsgLogger = J2kSetup.GetSinglePlatformInstance<IMsgLogger>();
+            
+            // If no logger was provided, we'll allow it to be null initially
+            // It will throw when getMsgLogger() is called if never set
         }
 
         #endregion
 
         #region PROPERTIES
 
-        /// <summary>The default logger, for threads that have none associated with them </summary>
+        /// <summary>
+        /// The default logger, for threads that have none associated with them.
+        /// Thread-safe property with locking to prevent race conditions.
+        /// </summary>
         public static IMsgLogger DefaultMsgLogger
         {
-            set => _defMsgLogger = value;
+            set
+            {
+                if (value == null)
+                {
+                    throw new ArgumentNullException(nameof(value), "Logger cannot be null");
+                }
+                
+                lock (_loggerLock)
+                {
+                    _defMsgLogger = value;
+                }
+            }
         }
 
         #endregion
 
-        /// <summary> Returns the MsgLogger registered with the current thread (the
+        /// <summary>
+        /// Returns the MsgLogger registered with the current thread (the
         /// thread that calls this method). If the current thread has no
         /// registered MsgLogger then the default message logger is
         /// returned.
+        /// 
+        /// Thread-safe: Uses locking to ensure consistent reads across threads.
         /// </summary>
-        /// <returns> The MsgLogger registerd for the current thread, or the
-        /// default one if there is none registered for it.
+        /// <returns>
+        /// The MsgLogger registered for the current thread, or the
+        /// default one if there is none registered for it. Never returns null.
         /// </returns>
         public static IMsgLogger getMsgLogger()
         {
-            return _defMsgLogger;
+            lock (_loggerLock)
+            {
+                return _defMsgLogger ?? throw new InvalidOperationException("Logger not properly initialized");
+            }
         }
     }
 }
