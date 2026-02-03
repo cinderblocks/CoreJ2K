@@ -882,6 +882,81 @@ namespace CoreJ2K
             }
             var th = (int)stok.nval;
 
+            // Validate tile dimensions
+            // Both zero means no tiling, which is valid
+            if ((tw == 0 && th != 0) || (tw != 0 && th == 0))
+            {
+                throw new ArgumentException(
+                    $"Invalid tile dimensions: width={tw}, height={th}. " +
+                    "Both dimensions must be zero (no tiling) or both must be positive.");
+            }
+
+            // Check for negative dimensions
+            if (tw < 0 || th < 0)
+            {
+                throw new ArgumentException(
+                    $"Invalid tile dimensions: width={tw}, height={th}. " +
+                    "Tile dimensions cannot be negative.");
+            }
+
+            // Validate against image dimensions if tiling is enabled
+            if (tw > 0 && th > 0)
+            {
+                var imgWidth = imgsrc.ImgWidth;
+                var imgHeight = imgsrc.ImgHeight;
+
+                // Warn if tile dimensions exceed image dimensions
+                if (tw > imgWidth || th > imgHeight)
+                {
+                    warning(
+                        $"Tile dimensions ({tw}x{th}) exceed image dimensions ({imgWidth}x{imgHeight}). " +
+                        "This will result in a single tile.");
+                }
+
+                // Check for unreasonably large tile dimensions that could cause overflow
+                const int maxReasonableTileSize = 65536; // 64K pixels per dimension
+                if (tw > maxReasonableTileSize || th > maxReasonableTileSize)
+                {
+                    throw new ArgumentException(
+                        $"Tile dimensions too large: width={tw}, height={th}. " +
+                        $"Maximum supported tile dimension is {maxReasonableTileSize} pixels.");
+                }
+
+                // Validate that tile size won't cause integer overflow when calculating tile count
+                try
+                {
+                    checked
+                    {
+                        // Test calculation to verify no overflow
+                        var testTileCountX = (imgWidth + tw - 1) / tw;
+                        var testTileCountY = (imgHeight + th - 1) / th;
+                        var testTotalTiles = testTileCountX * testTileCountY;
+                        
+                        // Sanity check on total tile count
+                        if (testTotalTiles > 65535)
+                        {
+                            warning(
+                                $"Image will be split into {testTotalTiles} tiles. " +
+                                "This may result in very large file headers and slow encoding.");
+                        }
+                    }
+                }
+                catch (OverflowException)
+                {
+                    throw new ArgumentException(
+                        $"Tile dimensions ({tw}x{th}) would result in integer overflow when calculating tile count.");
+                }
+
+                // Warn if tiles are very small (performance concern)
+                const int minRecommendedTileSize = 64;
+                if (tw < minRecommendedTileSize || th < minRecommendedTileSize)
+                {
+                    warning(
+                        $"Tile dimensions ({tw}x{th}) are very small. " +
+                        $"Tiles smaller than {minRecommendedTileSize}x{minRecommendedTileSize} may result in poor compression efficiency.");
+                }
+            }
+
             // Get image reference point
             var refs = pl.getParameter("ref").Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
             int refx;
