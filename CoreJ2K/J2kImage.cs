@@ -95,37 +95,42 @@ namespace CoreJ2K
 
         public static InterleavedImage FromStream(Stream stream, ParameterList parameters = null)
         {
-            RandomAccessIO in_stream = new ISRandomAccessIO(stream);
+            RandomAccessIO in_stream = null;
+            InverseWT invWT = null;
 
-            // Create parameter list using defaults
-            var pl = parameters ?? new ParameterList(GetDefaultDecoderParameterList(decoder_pinfo));
-
-            // **** File Format ****
-            // If the codestream is wrapped in the jp2 file format, Read the
-            // file format wrapper
-            var ff = new FileFormatReader(in_stream);
-            ff.readFileFormat();
-            if (ff.JP2FFUsed)
-            {
-                in_stream.seek(ff.FirstCodeStreamPos);
-            }
-
-            // +----------------------------+
-            // | Instantiate decoding chain |
-            // +----------------------------+
-
-            // **** Header decoder ****
-            // Instantiate header decoder and read main header 
-            var hi = new HeaderInfo();
-            HeaderDecoder hd;
             try
             {
-                hd = new HeaderDecoder(in_stream, pl, hi);
-            }
-            catch (EndOfStreamException e)
-            {
-                throw new InvalidOperationException("Codestream too short or bad header, unable to decode.", e);
-            }
+                in_stream = new ISRandomAccessIO(stream);
+
+                // Create parameter list using defaults
+                var pl = parameters ?? new ParameterList(GetDefaultDecoderParameterList(decoder_pinfo));
+
+                // **** File Format ****
+                // If the codestream is wrapped in the jp2 file format, Read the
+                // file format wrapper
+                var ff = new FileFormatReader(in_stream);
+                ff.readFileFormat();
+                if (ff.JP2FFUsed)
+                {
+                    in_stream.seek(ff.FirstCodeStreamPos);
+                }
+
+                // +----------------------------+
+                // | Instantiate decoding chain |
+                // +----------------------------+
+
+                // **** Header decoder ****
+                // Instantiate header decoder and read main header 
+                var hi = new HeaderInfo();
+                HeaderDecoder hd;
+                try
+                {
+                    hd = new HeaderDecoder(in_stream, pl, hi);
+                }
+                catch (EndOfStreamException e)
+                {
+                    throw new InvalidOperationException("Codestream too short or bad header, unable to decode.", e);
+                }
 
             var nCompCod = hd.NumComps;
             var nTiles = hi.sizValue.NumTiles;
@@ -188,7 +193,6 @@ namespace CoreJ2K
 
             // **** Inverse wavelet transform ***
 
-            InverseWT invWT;
             try
             {
                 // full page inverse wavelet transform
@@ -348,6 +352,23 @@ namespace CoreJ2K
             }
 
             return dst;
+            }
+            finally
+            {
+                // Ensure resources are cleaned up even if an exception occurs
+                // InverseWT owns the decoding chain and will clean up all upstream resources
+                if (invWT != null)
+                {
+                    try
+                    {
+                        invWT.Close();
+                    }
+                    catch
+                    {
+                        // Suppress exceptions during cleanup to avoid masking the original exception
+                    }
+                }
+            }
         }
 
         /// <summary>
@@ -359,19 +380,24 @@ namespace CoreJ2K
         /// <returns>The decoded image.</returns>
         public static InterleavedImage FromStream(Stream stream, out j2k.fileformat.metadata.J2KMetadata metadata, ParameterList parameters = null)
         {
-            RandomAccessIO in_stream = new ISRandomAccessIO(stream);
-            var pl = parameters ?? new ParameterList(GetDefaultDecoderParameterList(decoder_pinfo));
+            RandomAccessIO in_stream = null;
+            InverseWT invWT = null;
 
-            var ff = new FileFormatReader(in_stream);
-            ff.readFileFormat();
-            
-            // Extract metadata
-            metadata = ff.Metadata;
-            
-            if (ff.JP2FFUsed)
+            try
             {
-                in_stream.seek(ff.FirstCodeStreamPos);
-            }
+                in_stream = new ISRandomAccessIO(stream);
+                var pl = parameters ?? new ParameterList(GetDefaultDecoderParameterList(decoder_pinfo));
+
+                var ff = new FileFormatReader(in_stream);
+                ff.readFileFormat();
+                
+                // Extract metadata
+                metadata = ff.Metadata;
+                
+                if (ff.JP2FFUsed)
+                {
+                    in_stream.seek(ff.FirstCodeStreamPos);
+                }
 
             // Decode image (rest of existing code)
             // ... continue with existing decoding logic ...
@@ -448,7 +474,6 @@ namespace CoreJ2K
 
             // **** Inverse wavelet transform ***
 
-            InverseWT invWT;
             try
             {
                 // full page inverse wavelet transform
@@ -608,6 +633,23 @@ namespace CoreJ2K
             }
 
             return dst;
+            }
+            finally
+            {
+                // Ensure resources are cleaned up even if an exception occurs
+                // InverseWT owns the decoding chain and will clean up all upstream resources
+                if (invWT != null)
+                {
+                    try
+                    {
+                        invWT.Close();
+                    }
+                    catch
+                    {
+                        // Suppress exceptions during cleanup to avoid masking the original exception
+                    }
+                }
+            }
         }
 
         /// <summary>
@@ -1779,3 +1821,5 @@ namespace CoreJ2K
         }
     }
 }
+
+
