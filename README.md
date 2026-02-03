@@ -475,7 +475,7 @@ Quick comparison with major JPEG 2000 libraries:
 | **Memory Safety** | ✅ Managed | ⚠️ Manual | ⚠️ Manual | ✅ Managed | ⚠️ Manual |
 | **Pointer Markers** | ✅ Full R/W | ✅ Full R/W | ⚠️ Read only | ⚠️ Read only | ✅ Full R/W |
 | **Files >4GB** | ✅ Yes | ✅ Yes | ⚠️ Limited | ❌ No | ✅ Yes |
-| **Active Dev** | ✅ 2025 | ✅ 2024 | ✅ 2024 | ❌ 2010 | ✅ 2024 |
+| **Active Dev** | ✅ 2026 | ✅ 2024 | ✅ 2024 | ❌ 2010 | ✅ 2024 |
 
 **CoreJ2K Unique Advantages:**
 - Only open-source .NET library with full Part 1 compliance
