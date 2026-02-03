@@ -13,6 +13,9 @@ on:
 jobs:
   build:
     runs-on: windows-latest
+    outputs:
+      version: ${{ steps.version.outputs.VERSION }}
+    
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -32,10 +35,8 @@ jobs:
       - name: Cache NuGet packages
         uses: actions/cache@v4
         with:
-          path: |
-            ~/.nuget/packages
-            **/packages.config
-          key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json', '**/packages.config') }}
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
           restore-keys: |
             ${{ runner.os }}-nuget-
 
@@ -51,59 +52,115 @@ jobs:
             VERSION="2.1.0.${GITHUB_RUN_NUMBER}"
           fi
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "Building version $VERSION"
 
       - name: Restore
         run: dotnet restore CoreJ2K.sln
 
       - name: Build
-        run: dotnet build CoreJ2K.sln -c Release --no-restore
+        run: dotnet build CoreJ2K.sln -c Release --no-restore /p:Version=${{ steps.version.outputs.VERSION }}
+
+      - name: Test
+        run: dotnet test CoreJ2K.sln -c Release --no-build --verbosity normal --logger trx --collect:"XPlat Code Coverage"
 
       - name: Pack
         run: |
-          dotnet pack CoreJ2K.sln -c Release --no-build -o ./artifacts /p:Version=${{ steps.version.outputs.VERSION }} /p:PackageVersion=${{ steps.version.outputs.VERSION }} /p:IncludeSymbols=true /p:SymbolPackageFormat=snupkg
+          dotnet pack CoreJ2K.sln -c Release --no-build -o ./artifacts `
+            /p:Version=${{ steps.version.outputs.VERSION }} `
+            /p:PackageVersion=${{ steps.version.outputs.VERSION }} `
+            /p:IncludeSymbols=true `
+            /p:SymbolPackageFormat=snupkg
 
       - name: Upload packages (artifact)
         uses: actions/upload-artifact@v4
         with:
           name: nuget-packages
           path: artifacts/*.nupkg
+          if-no-files-found: error
+
+      - name: Upload symbol packages (artifact)
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuget-symbols
+          path: artifacts/*.snupkg
+          if-no-files-found: warn
 
   publish:
     needs: build
     runs-on: windows-latest
     if: startsWith(github.ref, 'refs/tags/')
+    
     steps:
       - name: Download packages
         uses: actions/download-artifact@v4
         with:
           name: nuget-packages
+          path: ./artifacts
+
+      - name: Download symbol packages
+        uses: actions/download-artifact@v4
+        with:
+          name: nuget-symbols
+          path: ./artifacts
 
       - name: Push to NuGet.org
+        shell: pwsh
         env:
           NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
         run: |
-          for pkg in $(ls artifacts/*.nupkg 2>/dev/null || true); do
-            dotnet nuget push "$pkg" -k "$NUGET_API_KEY" -s https://api.nuget.org/v3/index.json --skip-duplicate
-          done
+          $packages = Get-ChildItem ./artifacts/*.nupkg -ErrorAction SilentlyContinue
+          if ($packages.Count -eq 0) {
+            Write-Error "No packages found to publish!"
+            exit 1
+          }
+          
+          foreach ($pkg in $packages) {
+            Write-Host "Publishing $($pkg.Name)..."
+            dotnet nuget push $pkg.FullName `
+              -k $env:NUGET_API_KEY `
+              -s https://api.nuget.org/v3/index.json `
+              --skip-duplicate `
+              --no-symbols  # Symbols are pushed separately
+            
+            if ($LASTEXITCODE -ne 0) {
+              Write-Error "Failed to push $($pkg.Name)"
+              exit 1
+            }
+          }
+          
+          # Push symbol packages
+          $symbols = Get-ChildItem ./artifacts/*.snupkg -ErrorAction SilentlyContinue
+          foreach ($sym in $symbols) {
+            Write-Host "Publishing symbols $($sym.Name)..."
+            dotnet nuget push $sym.FullName `
+              -k $env:NUGET_API_KEY `
+              -s https://api.nuget.org/v3/index.json `
+              --skip-duplicate
+          }
 
       - name: Create GitHub Release
-        id: create_release
-        uses: actions/create-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
-          release_name: Release ${{ github.ref_name }}
-          body: Release ${{ steps.version.outputs.VERSION }}
+          name: Release ${{ needs.build.outputs.version }}
+          body: |
+            ## CoreJ2K Release ${{ needs.build.outputs.version }}
+            
+            ### Changes in this release
+            See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/master/CHANGELOG.md)
+            
+            ### Installation
+            ```
+            dotnet add package CoreJ2K --version ${{ needs.build.outputs.version }}
+            ```
+            
+            ### NuGet Packages
+            - [CoreJ2K on NuGet.org](https://www.nuget.org/packages/CoreJ2K/${{ needs.build.outputs.version }})
+          files: |
+            ./artifacts/*.nupkg
+            ./artifacts/*.snupkg
           draft: false
           prerelease: false
+          fail_on_unmatched_files: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload Release Assets
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: artifacts
-          asset_name: corej2k-packages-${{ steps.version.outputs.VERSION }}.zip
-          asset_content_type: application/zip
