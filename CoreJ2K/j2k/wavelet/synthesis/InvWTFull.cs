@@ -98,6 +98,16 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         private float[][] rentedFloatBuffers;
         private int[][] rentedIntBuffers;
 
+        /// <summary>
+        /// Configures whether ArrayPool buffers should be cleared when returned.
+        /// Setting this to true improves security by preventing sensitive image data 
+        /// from remaining in memory, but has a small performance cost.
+        /// 
+        /// Default: false (prioritizes performance)
+        /// Recommended: true for sensitive images (medical, personal photos, etc.)
+        /// </summary>
+        public static bool ClearArrayPoolBuffersOnReturn { get; set; } = false;
+
         /// <summary> The reversible flag for each component in each tile. The first index is
         /// the tile index, the second one is the component index. The
         /// reversibility of the components for each tile are calculated on a as
@@ -545,10 +555,11 @@ namespace CoreJ2K.j2k.wavelet.synthesis
             finally
             {
                 // Return rented buffer
+                // Use configurable clearing for security vs performance trade-off
                 if (buf != null)
                 {
-                    if (buf is int[] ai) { try { ArrayPool<int>.Shared.Return(ai, clearArray: false); } catch { } }
-                    else if (buf is float[] af) { try { ArrayPool<float>.Shared.Return(af, clearArray: false); } catch { } }
+                    if (buf is int[] ai) { try { ArrayPool<int>.Shared.Return(ai, clearArray: ClearArrayPoolBuffersOnReturn); } catch { } }
+                    else if (buf is float[] af) { try { ArrayPool<float>.Shared.Return(af, clearArray: ClearArrayPoolBuffersOnReturn); } catch { } }
                 }
             }
         }
@@ -797,6 +808,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         public new void Close()
         {
             // Return any rented buffers
+            // Use configurable clearing for security vs performance trade-off
             if (rentedFloatBuffers != null)
             {
                 for (var i = 0; i < rentedFloatBuffers.Length; i++)
@@ -804,7 +816,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
                     var buf = rentedFloatBuffers[i];
                     if (buf != null)
                     {
-                        try { ArrayPool<float>.Shared.Return(buf, clearArray: false); } catch { }
+                        try { ArrayPool<float>.Shared.Return(buf, clearArray: ClearArrayPoolBuffersOnReturn); } catch { }
                         rentedFloatBuffers[i] = null;
                     }
                 }
@@ -816,7 +828,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
                     var ibuf = rentedIntBuffers[i];
                     if (ibuf != null)
                     {
-                        try { ArrayPool<int>.Shared.Return(ibuf, clearArray: false); } catch { }
+                        try { ArrayPool<int>.Shared.Return(ibuf, clearArray: ClearArrayPoolBuffersOnReturn); } catch { }
                         rentedIntBuffers[i] = null;
                     }
                 }
