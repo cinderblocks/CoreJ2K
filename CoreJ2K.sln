@@ -15,6 +15,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	ProjectSection(SolutionItems) = preProject
 		.github\workflows\ci-and-release.yml = .github\workflows\ci-and-release.yml
 		.github\workflows\ci-tests.yml = .github\workflows\ci-tests.yml
+		.github\workflows\codeql-analysis.yml = .github\workflows\codeql-analysis.yml
 		CoreJ2K.png = CoreJ2K.png
 		Directory.Build.props = Directory.Build.props
 		README.md = README.md

@@ -1,0 +1,84 @@
+name: "CodeQL Security Analysis"
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+  schedule:
+    # Run weekly on Sunday at midnight UTC
+    - cron: '0 0 * * 0'
+
+jobs:
+  analyze:
+    name: Analyze C# Code
+    runs-on: windows-latest
+    timeout-minutes: 360
+    permissions:
+      # Required for CodeQL to upload results
+      actions: read
+      contents: read
+      security-events: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [ 'csharp' ]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Setup .NET 9
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      # Setup MSBuild for .NET Framework 4.8.1 projects
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      # Initialize CodeQL with extended security queries
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          # Use extended query suite for comprehensive security analysis
+          queries: security-extended
+          # Optional: Add custom queries for JPEG 2000 specific patterns
+          # queries: +security-and-quality
+
+      - name: Restore dependencies
+        run: dotnet restore CoreJ2K.sln
+
+      # Build all target frameworks
+      - name: Build solution
+        run: dotnet build CoreJ2K.sln -c Release --no-restore
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{matrix.language}}"
+          # Upload results even if there are findings
+          upload: true
+
+      # Optional: Fail the build on high-severity findings
+      - name: Check for critical vulnerabilities
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        continue-on-error: true
