@@ -93,6 +93,7 @@ namespace CoreJ2K.j2k.codestream.reader
         /// </returns>
         public virtual int NumComps => nc;
 
+
         /// <summary> Returns the index of the current tile, relative to a standard scan-line
         /// order.
         /// 
@@ -100,7 +101,35 @@ namespace CoreJ2K.j2k.codestream.reader
         /// <returns> The current tile's index (starts at 0).
         /// 
         /// </returns>
-        public virtual int TileIdx => ctY * ntX + ctX;
+        /// <exception cref="InvalidOperationException">If tile coordinates are invalid</exception>
+        public virtual int TileIdx
+        {
+            get
+            {
+                // Validate tile coordinates before calculating index
+                if (ctX < 0 || ctX >= ntX)
+                {
+                    throw new InvalidOperationException(
+                        $"Invalid tile X coordinate: {ctX} (must be in range [0, {ntX}))");
+                }
+                if (ctY < 0 || ctY >= ntY)
+                {
+                    throw new InvalidOperationException(
+                        $"Invalid tile Y coordinate: {ctY} (must be in range [0, {ntY}))");
+                }
+                
+                int tileIdx = ctY * ntX + ctX;
+                
+                // Additional sanity check
+                if (tileIdx < 0 || tileIdx >= ntX * ntY)
+                {
+                    throw new InvalidOperationException(
+                        $"Calculated tile index {tileIdx} out of range [0, {ntX * ntY})");
+                }
+                
+                return tileIdx;
+            }
+        }
 
         /// <summary> Returns the parameters that are used in this class and implementing
         /// classes. It returns a 2D String array. Each of the 1D arrays is for a

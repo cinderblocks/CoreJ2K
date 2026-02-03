@@ -393,6 +393,26 @@ namespace CoreJ2K.j2k.util
         /// </exception>
         public virtual void readFully(byte[] b, int off, int n)
         {
+            // Validate parameters to prevent buffer overrun
+            if (b == null)
+            {
+                throw new ArgumentNullException(nameof(b), "Buffer cannot be null");
+            }
+            if (off < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(off), off, "Offset cannot be negative");
+            }
+            if (n < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(n), n, "Length cannot be negative");
+            }
+            if (off + n > b.Length)
+            {
+                throw new ArgumentOutOfRangeException(
+                    $"Buffer overrun: offset={off}, length={n}, buffer size={b.Length}. " +
+                    $"Attempting to write beyond buffer boundary.");
+            }
+
             if (pos + n <= len)
             {
                 // common, fast case
