@@ -341,6 +341,26 @@ namespace CoreJ2K.j2k.codestream.reader
             var defaults = pl.DefaultParameterList;
             rateInBytes = tnbytes != defaults.getFloatParameter("nbytes");
 
+            // Validate HeaderDecoder has been properly initialized with SIZ marker
+            if (hd == null)
+            {
+                throw new ArgumentNullException(nameof(hd), "HeaderDecoder cannot be null");
+            }
+            
+            if (hi == null || hi.sizValue == null)
+            {
+                throw new CorruptedCodestreamException(
+                    "Header information not available. SIZ marker may not have been properly parsed.");
+            }
+            
+            // Validate image dimensions are valid
+            if (hd.MaxCompImgWidth <= 0 || hd.MaxCompImgHeight <= 0)
+            {
+                throw new CorruptedCodestreamException(
+                    $"Invalid image dimensions: width={hd.MaxCompImgWidth}, height={hd.MaxCompImgHeight}. " +
+                    "Image dimensions must be positive.");
+            }
+
             if (rateInBytes)
             {
                 trate = tnbytes * 8f / hd.MaxCompImgWidth / hd.MaxCompImgHeight;
