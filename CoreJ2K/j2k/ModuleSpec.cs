@@ -261,6 +261,44 @@ namespace CoreJ2K.j2k
         /// </param>
         public ModuleSpec(int nt, int nc, byte type)
         {
+            // Validate parameters to prevent overflow and excessive memory allocation
+            if (nt < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(nt),
+                    $"Number of tiles cannot be negative: {nt}");
+            }
+            
+            if (nc < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(nc),
+                    $"Number of components cannot be negative: {nc}");
+            }
+            
+            // Check for reasonable limits to prevent DoS via huge allocations
+            const int maxTiles = 65535; // Practical limit per JPEG 2000 spec
+            const int maxComponents = 16384; // Spec allows up to 16384 components
+            
+            if (nt > maxTiles)
+            {
+                throw new ArgumentOutOfRangeException(nameof(nt),
+                    $"Number of tiles {nt} exceeds maximum allowed {maxTiles}");
+            }
+            
+            if (nc > maxComponents)
+            {
+                throw new ArgumentOutOfRangeException(nameof(nc),
+                    $"Number of components {nc} exceeds maximum allowed {maxComponents}");
+            }
+            
+            // Check for overflow when allocating tile*component arrays
+            long totalElements = (long)nt * nc;
+            if (totalElements > int.MaxValue)
+            {
+                throw new ArgumentException(
+                    $"Tile-component array size would overflow: {nt} tiles × {nc} components = {totalElements} elements. " +
+                    $"Maximum allowed is {int.MaxValue} elements.");
+            }
+            
             nTiles = nt;
             nComp = nc;
             specValType = new byte[nt][];
