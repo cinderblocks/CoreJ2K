@@ -142,7 +142,7 @@ namespace CoreJ2K.j2k.codestream.reader
                 if (marker1 == -1 || marker2 == -1)
                     break; // End of stream
 
-                var marker = (ushort)((marker1 << 8) | marker2);
+                var marker = (short)((marker1 << 8) | marker2);
 
                 // Check if it's a PLT marker (0xFF58)
                 if (marker == Markers.PLT)
