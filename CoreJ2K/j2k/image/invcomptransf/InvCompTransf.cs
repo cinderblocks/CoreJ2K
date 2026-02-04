@@ -680,10 +680,20 @@ namespace CoreJ2K.j2k.image.invcomptransf
                 //Reference to output block data array
                 outdata[c] = (int[])blk.Data;
 
-                //Create data array of blk if necessary
-                if (outdata[c] == null || outdata[c].Length != w * h)
+                // Validate block dimensions to prevent integer overflow
+                long totalSize = (long)w * h;
+                if (totalSize > int.MaxValue)
                 {
-                    outdata[c] = new int[h * w];
+                    throw new InvalidOperationException(
+                        $"Block dimensions too large for inverse ICT: w={w}, h={h}. " +
+                        $"Total size {totalSize} exceeds maximum array size.");
+                }
+                int blockSize = (int)totalSize;
+
+                //Create data array of blk if necessary
+                if (outdata[c] == null || outdata[c].Length != blockSize)
+                {
+                    outdata[c] = new int[blockSize];
                     blk.Data = outdata[c];
                 }
 

@@ -390,8 +390,18 @@ namespace CoreJ2K.j2k.wavelet.analysis
                 {
                     var dbi = new DataBlkInt();
                     dbi.ulx = 0; dbi.uly = 0; dbi.w = w; dbi.h = h; dbi.offset = 0; dbi.scanw = w;
+                    
+                    // Validate buffer size to prevent integer overflow
+                    long bufferSize = (long)w * h;
+                    if (bufferSize > int.MaxValue)
+                    {
+                        throw new InvalidOperationException(
+                            $"Tile component too large: w={w}, h={h}. " +
+                            $"Buffer size {bufferSize} exceeds maximum array size.");
+                    }
+                    
                     // Rent buffer for int data
-                    var intBuf = ArrayPool<int>.Shared.Rent(w * h);
+                    var intBuf = ArrayPool<int>.Shared.Rent((int)bufferSize);
                     dbi.DataInt = intBuf;
                     decomposedComps[c] = dbi;
                     decomposedBuffers[c] = intBuf;
@@ -401,8 +411,18 @@ namespace CoreJ2K.j2k.wavelet.analysis
                 {
                     var dbf = new DataBlkFloat();
                     dbf.ulx = 0; dbf.uly = 0; dbf.w = w; dbf.h = h; dbf.offset = 0; dbf.scanw = w;
+                    
+                    // Validate buffer size to prevent integer overflow
+                    long bufferSize = (long)w * h;
+                    if (bufferSize > int.MaxValue)
+                    {
+                        throw new InvalidOperationException(
+                            $"Tile component too large: w={w}, h={h}. " +
+                            $"Buffer size {bufferSize} exceeds maximum array size.");
+                    }
+                    
                     // Rent buffer for float data
-                    var floatBuf = ArrayPool<float>.Shared.Rent(w * h);
+                    var floatBuf = ArrayPool<float>.Shared.Rent((int)bufferSize);
                     dbf.DataFloat = floatBuf;
                     decomposedComps[c] = dbf;
                     decomposedBuffers[c] = floatBuf;

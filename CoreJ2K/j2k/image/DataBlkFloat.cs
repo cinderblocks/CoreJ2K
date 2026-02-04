@@ -144,7 +144,23 @@ namespace CoreJ2K.j2k.image
             this.h = h;
             offset = 0;
             scanw = w;
-            data = new float[w * h];
+            
+            // Validate dimensions to prevent integer overflow
+            if (w < 0 || h < 0)
+            {
+                throw new ArgumentOutOfRangeException(
+                    $"Block dimensions cannot be negative: w={w}, h={h}");
+            }
+            
+            long totalSize = (long)w * h;
+            if (totalSize > int.MaxValue)
+            {
+                throw new ArgumentException(
+                    $"Block dimensions too large: w={w}, h={h}. " +
+                    $"Total size {totalSize} exceeds maximum array size {int.MaxValue}");
+            }
+            
+            data = new float[(int)totalSize];
         }
 
         /// <summary> Copy constructor. Creates a DataBlkFloat which is the copy of the
