@@ -1,0 +1,109 @@
+name: Fuzzing
+
+on:
+  schedule:
+    # Run fuzzing weekly on Sunday at 2 AM UTC
+    - cron: '0 2 * * 0'
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'Fuzzing target'
+        required: false
+        default: 'decoder'
+        type: choice
+        options:
+          - decoder
+          - encoder
+          - headers
+          - markers
+      iterations:
+        description: 'Number of iterations'
+        required: false
+        default: '1000'
+
+jobs:
+  fuzz:
+    runs-on: windows-latest
+    timeout-minutes: 120
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [decoder, encoder, headers, markers]
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Install SharpFuzz
+        run: dotnet tool install --global SharpFuzz.CommandLine
+
+      - name: Build CoreJ2K.Fuzz
+        run: |
+          cd CoreJ2K.Fuzz
+          dotnet build -c Release
+
+      - name: Instrument CoreJ2K
+        run: sharpfuzz CoreJ2K.Fuzz\bin\Release\net8.0\CoreJ2K.dll
+
+      - name: Download seed corpus
+        run: |
+          # Create testcases directory
+          New-Item -ItemType Directory -Force -Path CoreJ2K.Fuzz\Testcases
+          
+          # Download sample JPEG 2000 files from OpenJPEG test suite
+          # (Public domain test images)
+          Invoke-WebRequest -Uri "https://github.com/uclouvain/openjpeg-data/raw/master/input/conformance/p0_01.j2k" -OutFile "CoreJ2K.Fuzz\Testcases\p0_01.j2k" -ErrorAction SilentlyContinue
+          Invoke-WebRequest -Uri "https://github.com/uclouvain/openjpeg-data/raw/master/input/conformance/p0_02.j2k" -OutFile "CoreJ2K.Fuzz\Testcases\p0_02.j2k" -ErrorAction SilentlyContinue
+
+      - name: Run fuzzing
+        run: |
+          cd CoreJ2K.Fuzz
+          pwsh -File Run-Fuzzing.ps1 -Target ${{ matrix.target }} -Quick
+        continue-on-error: true
+
+      - name: Upload findings
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fuzzing-findings-${{ matrix.target }}
+          path: CoreJ2K.Fuzz/Findings/
+          if-no-files-found: ignore
+
+      - name: Check for crashes
+        run: |
+          $findings = Get-ChildItem -Path CoreJ2K.Fuzz\Findings -Filter "crash_*" -ErrorAction SilentlyContinue
+          if ($findings.Count -gt 0) {
+            Write-Error "Fuzzing found $($findings.Count) crashes! Check artifacts."
+            exit 1
+          }
+
+      - name: Report findings
+        if: always()
+        run: |
+          $crashes = (Get-ChildItem -Path CoreJ2K.Fuzz\Findings -Filter "crash_*" -ErrorAction SilentlyContinue).Count
+          $hangs = (Get-ChildItem -Path CoreJ2K.Fuzz\Findings -Filter "hang_*" -ErrorAction SilentlyContinue).Count
+          
+          Write-Host "Fuzzing Results for ${{ matrix.target }}:"
+          Write-Host "  Crashes: $crashes"
+          Write-Host "  Hangs: $hangs"
+          
+          # Create summary
+          $summary = @"
+          ## Fuzzing Results - ${{ matrix.target }}
+          
+          | Metric | Count |
+          |--------|-------|
+          | Crashes | $crashes |
+          | Hangs | $hangs |
+          
+          "@
+          
+          $summary | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
