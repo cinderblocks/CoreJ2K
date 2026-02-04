@@ -291,10 +291,21 @@ namespace CoreJ2K.j2k.wavelet.synthesis
                     case DataBlk.TYPE_FLOAT:
                         var fwidth = getTileCompWidth(tIdx, compIndex);
                         var fheight = getTileCompHeight(tIdx, compIndex);
+                        
+                        // Validate dimensions to prevent integer overflow
+                        long fBufferSize = (long)fwidth * fheight;
+                        if (fBufferSize > int.MaxValue)
+                        {
+                            throw new InvalidOperationException(
+                                $"Tile component too large for float reconstruction: " +
+                                $"w={fwidth}, h={fheight}. " +
+                                $"Buffer size {fBufferSize} exceeds maximum array size.");
+                        }
+                        
                         reconstructedComps[compIndex] = new DataBlkFloat(0, 0, fwidth, fheight);
                         try
                         {
-                            var rent = ArrayPool<float>.Shared.Rent(fwidth * fheight);
+                            var rent = ArrayPool<float>.Shared.Rent((int)fBufferSize);
                             reconstructedComps[compIndex].Data = rent;
                             rentedFloatBuffers[compIndex] = rent;
                         }
@@ -307,10 +318,21 @@ namespace CoreJ2K.j2k.wavelet.synthesis
                     case DataBlk.TYPE_INT:
                         var iwidth = getTileCompWidth(tIdx, compIndex);
                         var iheight = getTileCompHeight(tIdx, compIndex);
+                        
+                        // Validate dimensions to prevent integer overflow
+                        long iBufferSize = (long)iwidth * iheight;
+                        if (iBufferSize > int.MaxValue)
+                        {
+                            throw new InvalidOperationException(
+                                $"Tile component too large for int reconstruction: " +
+                                $"w={iwidth}, h={iheight}. " +
+                                $"Buffer size {iBufferSize} exceeds maximum array size.");
+                        }
+                        
                         reconstructedComps[compIndex] = new DataBlkInt(0, 0, iwidth, iheight);
                         try
                         {
-                            var irent = ArrayPool<int>.Shared.Rent(iwidth * iheight);
+                            var irent = ArrayPool<int>.Shared.Rent((int)iBufferSize);
                             reconstructedComps[compIndex].Data = irent;
                             rentedIntBuffers[compIndex] = irent;
                         }
@@ -393,19 +415,39 @@ namespace CoreJ2K.j2k.wavelet.synthesis
             {
 
                 case DataBlk.TYPE_INT:
-                    dst_data_int = (int[])blk.Data;
-                    if (dst_data_int == null || dst_data_int.Length < blk.w * blk.h)
+                    // Validate dimensions to prevent integer overflow
+                    long intBufferSize = (long)blk.w * blk.h;
+                    if (intBufferSize > int.MaxValue)
                     {
-                        dst_data_int = new int[blk.w * blk.h];
+                        throw new InvalidOperationException(
+                            $"Block dimensions too large for int buffer: " +
+                            $"w={blk.w}, h={blk.h}. " +
+                            $"Buffer size {intBufferSize} exceeds maximum array size.");
+                    }
+                    
+                    dst_data_int = (int[])blk.Data;
+                    if (dst_data_int == null || dst_data_int.Length < intBufferSize)
+                    {
+                        dst_data_int = new int[(int)intBufferSize];
                     }
                     dst_data = dst_data_int;
                     break;
 
                 case DataBlk.TYPE_FLOAT:
-                    dst_data_float = (float[])blk.Data;
-                    if (dst_data_float == null || dst_data_float.Length < blk.w * blk.h)
+                    // Validate dimensions to prevent integer overflow
+                    long floatBufferSize = (long)blk.w * blk.h;
+                    if (floatBufferSize > int.MaxValue)
                     {
-                        dst_data_float = new float[blk.w * blk.h];
+                        throw new InvalidOperationException(
+                            $"Block dimensions too large for float buffer: " +
+                            $"w={blk.w}, h={blk.h}. " +
+                            $"Buffer size {floatBufferSize} exceeds maximum array size.");
+                    }
+                    
+                    dst_data_float = (float[])blk.Data;
+                    if (dst_data_float == null || dst_data_float.Length < floatBufferSize)
+                    {
+                        dst_data_float = new float[(int)floatBufferSize];
                     }
                     dst_data = dst_data_float;
                     break;
@@ -691,25 +733,35 @@ namespace CoreJ2K.j2k.wavelet.synthesis
             {
                 var newWidth = getTileCompWidth(tIdx, i);
                 var newHeight = getTileCompHeight(tIdx, i);
-                var needed = newWidth * newHeight;
+                
+                // Validate dimensions to prevent integer overflow
+                long needed = (long)newWidth * newHeight;
+                if (needed > int.MaxValue)
+                {
+                    throw new InvalidOperationException(
+                        $"Tile component {i} too large in setTile: " +
+                        $"w={newWidth}, h={newHeight}. " +
+                        $"Buffer size {needed} exceeds maximum array size.");
+                }
+                int neededInt = (int)needed;
 
                 if (rentedFloatBuffers != null && rentedFloatBuffers.Length > i && rentedFloatBuffers[i] != null)
                 {
-                    if (rentedFloatBuffers[i].Length < needed)
+                    if (rentedFloatBuffers[i].Length < neededInt)
                     {
                         // Rent a larger buffer and replace the old one
                         var old = rentedFloatBuffers[i];
-                        var rent = ArrayPool<float>.Shared.Rent(needed);
+                        var rent = ArrayPool<float>.Shared.Rent(neededInt);
                         rentedFloatBuffers[i] = rent;
                         try { ArrayPool<float>.Shared.Return(old, clearArray: false); } catch { }
                     }
                 }
                 if (rentedIntBuffers != null && rentedIntBuffers.Length > i && rentedIntBuffers[i] != null)
                 {
-                    if (rentedIntBuffers[i].Length < needed)
+                    if (rentedIntBuffers[i].Length < neededInt)
                     {
                         var old = rentedIntBuffers[i];
-                        var rent = ArrayPool<int>.Shared.Rent(needed);
+                        var rent = ArrayPool<int>.Shared.Rent(neededInt);
                         rentedIntBuffers[i] = rent;
                         try { ArrayPool<int>.Shared.Return(old, clearArray: false); } catch { }
                     }
@@ -770,24 +822,34 @@ namespace CoreJ2K.j2k.wavelet.synthesis
             {
                 var newWidth = getTileCompWidth(tIdx, i);
                 var newHeight = getTileCompHeight(tIdx, i);
-                var needed = newWidth * newHeight;
+                
+                // Validate dimensions to prevent integer overflow
+                long needed = (long)newWidth * newHeight;
+                if (needed > int.MaxValue)
+                {
+                    throw new InvalidOperationException(
+                        $"Tile component {i} too large in nextTile: " +
+                        $"w={newWidth}, h={newHeight}. " +
+                        $"Buffer size {needed} exceeds maximum array size.");
+                }
+                int neededInt = (int)needed;
 
                 if (rentedFloatBuffers != null && rentedFloatBuffers.Length > i && rentedFloatBuffers[i] != null)
                 {
-                    if (rentedFloatBuffers[i].Length < needed)
+                    if (rentedFloatBuffers[i].Length < neededInt)
                     {
                         var old = rentedFloatBuffers[i];
-                        var rent = ArrayPool<float>.Shared.Rent(needed);
+                        var rent = ArrayPool<float>.Shared.Rent(neededInt);
                         rentedFloatBuffers[i] = rent;
                         try { ArrayPool<float>.Shared.Return(old, clearArray: false); } catch { }
                     }
                 }
                 if (rentedIntBuffers != null && rentedIntBuffers.Length > i && rentedIntBuffers[i] != null)
                 {
-                    if (rentedIntBuffers[i].Length < needed)
+                    if (rentedIntBuffers[i].Length < neededInt)
                     {
                         var old = rentedIntBuffers[i];
-                        var rent = ArrayPool<int>.Shared.Rent(needed);
+                        var rent = ArrayPool<int>.Shared.Rent(neededInt);
                         rentedIntBuffers[i] = rent;
                         try { ArrayPool<int>.Shared.Return(old, clearArray: false); } catch { }
                     }
