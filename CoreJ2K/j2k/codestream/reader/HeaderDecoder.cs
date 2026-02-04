@@ -2449,6 +2449,15 @@ namespace CoreJ2K.j2k.codestream.reader
             {
                 // Read marker segment length and create corresponding byte buffer
                 var markSegLen = ehs.readUnsignedShort();
+                
+                // Validate marker segment length
+                if (markSegLen < 2)
+                {
+                    throw new CorruptedCodestreamException(
+                        $"Invalid marker segment length {markSegLen} for marker 0x{Convert.ToString(marker, 16)}. " +
+                        "Marker segment length must be at least 2 bytes (including the length field itself).");
+                }
+                
                 var buf = new byte[markSegLen];
 
                 // Copy data (after re-insertion of the marker segment length);
