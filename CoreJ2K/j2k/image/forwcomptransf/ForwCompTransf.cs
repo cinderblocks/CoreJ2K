@@ -466,10 +466,30 @@ namespace CoreJ2K.j2k.image.forwcomptransf
                 //Fill in buffer blocks (to be read only)
                 // Returned blocks may have different size and position
                 block0 = (DataBlkInt)src.GetInternCompData(block0, 0);
+                if (block0 == null || block0.Data == null)
+                {
+                    throw new InvalidOperationException(
+                        $"Component 0 data is null or invalid. Cannot perform forward RCT transform. " +
+                        $"Block dimensions: ulx={blk.ulx}, uly={blk.uly}, w={blk.w}, h={blk.h}");
+                }
                 data0 = (int[])block0.Data;
+                
                 block1 = (DataBlkInt)src.GetInternCompData(block1, 1);
+                if (block1 == null || block1.Data == null)
+                {
+                    throw new InvalidOperationException(
+                        $"Component 1 data is null or invalid. Cannot perform forward RCT transform. " +
+                        $"Block dimensions: ulx={blk.ulx}, uly={blk.uly}, w={blk.w}, h={blk.h}");
+                }
                 data1 = (int[])block1.Data;
+                
                 block2 = (DataBlkInt)src.GetInternCompData(block2, 2);
+                if (block2 == null || block2.Data == null)
+                {
+                    throw new InvalidOperationException(
+                        $"Component 2 data is null or invalid. Cannot perform forward RCT transform. " +
+                        $"Block dimensions: ulx={blk.ulx}, uly={blk.uly}, w={blk.w}, h={blk.h}");
+                }
                 bdata = (int[])block2.Data;
 
                 // Set the progressiveness of the output data
@@ -612,10 +632,30 @@ namespace CoreJ2K.j2k.image.forwcomptransf
 
                 // Returned blocks may have different size and position
                 block0 = (DataBlkInt)src.GetInternCompData(block0, 0);
+                if (block0 == null || block0.Data == null)
+                {
+                    throw new InvalidOperationException(
+                        $"Component 0 data is null or invalid. Cannot perform forward ICT transform. " +
+                        $"Block dimensions: ulx={blk.ulx}, uly={blk.uly}, w={blk.w}, h={blk.h}");
+                }
                 data0 = (int[])block0.Data;
+                
                 block1 = (DataBlkInt)src.GetInternCompData(block1, 1);
+                if (block1 == null || block1.Data == null)
+                {
+                    throw new InvalidOperationException(
+                        $"Component 1 data is null or invalid. Cannot perform forward ICT transform. " +
+                        $"Block dimensions: ulx={blk.ulx}, uly={blk.uly}, w={blk.w}, h={blk.h}");
+                }
                 data1 = (int[])block1.Data;
+                
                 block2 = (DataBlkInt)src.GetInternCompData(block2, 2);
+                if (block2 == null || block2.Data == null)
+                {
+                    throw new InvalidOperationException(
+                        $"Component 2 data is null or invalid. Cannot perform forward ICT transform. " +
+                        $"Block dimensions: ulx={blk.ulx}, uly={blk.uly}, w={blk.w}, h={blk.h}");
+                }
                 data2 = (int[])block2.Data;
 
                 // Set the progressiveness of the output data
