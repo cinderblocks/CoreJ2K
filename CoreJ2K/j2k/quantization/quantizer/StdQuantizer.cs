@@ -513,6 +513,20 @@ namespace CoreJ2K.j2k.quantization.quantizer
         /// </returns>
         public static int convertToExpMantissa(float step)
         {
+            // Validate step to prevent Math.Log and division errors
+            if (step <= 0f)
+            {
+                throw new ArgumentException(
+                    $"Quantization step must be positive, got: {step}. " +
+                    "Invalid quantization parameters.", nameof(step));
+            }
+            
+            if (float.IsNaN(step) || float.IsInfinity(step))
+            {
+                throw new ArgumentException(
+                    $"Quantization step must be a finite number, got: {step}", nameof(step));
+            }
+
             int exp;
 
             //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
@@ -544,11 +558,25 @@ namespace CoreJ2K.j2k.quantization.quantizer
         /// </returns>
         private static float convertFromExpMantissa(int ems)
         {
+            // Extract exponent and validate
+            int exponent = (ems >> QSTEP_MANTISSA_BITS) & QSTEP_MAX_EXPONENT;
+            
             // NOTE: this formula does not support more than 5 bits for the
             // exponent, otherwise (-1<<exp) might overflow (the - is used to be
             // able to represent 2**31)
+            int denominator = -1 << exponent;
+            
+            // Validate denominator (should never be zero given the bit manipulation,
+            // but check for safety in case of corrupted data)
+            if (denominator == 0)
+            {
+                throw new InvalidOperationException(
+                    $"Invalid exponent-mantissa representation: exponent={exponent}, " +
+                    "would result in division by zero.");
+            }
+            
             //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
-            return (-1f - (ems & QSTEP_MAX_MANTISSA) / ((float)(1 << QSTEP_MANTISSA_BITS))) / (-1 << ((ems >> QSTEP_MANTISSA_BITS) & QSTEP_MAX_EXPONENT));
+            return (-1f - (ems & QSTEP_MAX_MANTISSA) / ((float)(1 << QSTEP_MANTISSA_BITS))) / denominator;
         }
 
         /// <summary> Returns the maximum number of magnitude bits in any subband of the
