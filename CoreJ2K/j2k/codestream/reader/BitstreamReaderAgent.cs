@@ -1198,10 +1198,46 @@ namespace CoreJ2K.j2k.codestream.reader
                 // Number of magnitude bits
                 if (derived[c])
                 {
+                    // Validate array bounds before accessing
+                    if (params_Renamed[c].exp == null || params_Renamed[c].exp.Length == 0)
+                    {
+                        throw new CorruptedCodestreamException(
+                            $"Quantization exponent array not initialized for component {c}. " +
+                            "QCD or QCC marker may be missing or corrupted.");
+                    }
+                    
+                    if (params_Renamed[c].exp[0] == null || params_Renamed[c].exp[0].Length == 0)
+                    {
+                        throw new CorruptedCodestreamException(
+                            $"Quantization exponent sub-array not initialized for component {c}. " +
+                            "QCD or QCC marker may be missing or corrupted.");
+                    }
+                    
                     sb.magbits = gb[c] + (params_Renamed[c].exp[0][0] - (mdl[c] - sb.level)) - 1;
                 }
                 else
                 {
+                    // Validate array bounds before accessing
+                    if (params_Renamed[c].exp == null || 
+                        sb.resLvl >= params_Renamed[c].exp.Length ||
+                        sb.resLvl < 0)
+                    {
+                        throw new CorruptedCodestreamException(
+                            $"Invalid resolution level {sb.resLvl} for component {c}. " +
+                            $"Exponent array has {params_Renamed[c].exp?.Length ?? 0} elements. " +
+                            "QCD or QCC marker may specify incorrect decomposition levels.");
+                    }
+                    
+                    if (params_Renamed[c].exp[sb.resLvl] == null ||
+                        sb.sbandIdx >= params_Renamed[c].exp[sb.resLvl].Length ||
+                        sb.sbandIdx < 0)
+                    {
+                        throw new CorruptedCodestreamException(
+                            $"Invalid subband index {sb.sbandIdx} at resolution level {sb.resLvl} for component {c}. " +
+                            $"Subband array has {params_Renamed[c].exp[sb.resLvl]?.Length ?? 0} elements. " +
+                            "Subband structure may be corrupted.");
+                    }
+                    
                     sb.magbits = gb[c] + params_Renamed[c].exp[sb.resLvl][sb.sbandIdx] - 1;
                 }
             }
