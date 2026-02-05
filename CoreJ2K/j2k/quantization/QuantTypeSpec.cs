@@ -333,7 +333,17 @@ namespace CoreJ2K.j2k.quantization
         /// </returns>
         public bool isDerived(int t, int c)
         {
-            return ((string)getTileCompVal(t, c)).Equals("derived");
+            var quantType = getTileCompVal(t, c) as string;
+            
+            // Validate that quantization type is set
+            if (quantType == null)
+            {
+                throw new InvalidOperationException(
+                    $"Quantization type not set for tile {t}, component {c}. " +
+                    "QCD or QCC marker must be present before accessing quantization parameters.");
+            }
+            
+            return quantType.Equals("derived");
         }
 
         /// <summary> Check the reversibility of the given tile-component.
@@ -350,7 +360,17 @@ namespace CoreJ2K.j2k.quantization
         /// </returns>
         public bool isReversible(int t, int c)
         {
-            return ((string)getTileCompVal(t, c)).Equals("reversible");
+            var quantType = getTileCompVal(t, c) as string;
+            
+            // Validate that quantization type is set
+            if (quantType == null)
+            {
+                throw new InvalidOperationException(
+                    $"Quantization type not set for tile {t}, component {c}. " +
+                    "QCD or QCC marker must be present before accessing quantization parameters.");
+            }
+            
+            return quantType.Equals("reversible");
         }
     }
 }
