@@ -721,6 +721,34 @@ namespace CoreJ2K.j2k.codestream.reader
                 throw new InvalidOperationException("Requested bitrate is too small for parsing");
             }
 
+            // Validate arrays are initialized
+            if (nBytes == null || totTileLen == null)
+            {
+                throw new InvalidOperationException(
+                    "Tile information not initialized. Internal error in bitstream reader.");
+            }
+            
+            // Validate tile count and array sizes
+            if (nt <= 0)
+            {
+                throw new CorruptedCodestreamException(
+                    $"Invalid number of tiles: {nt}. Must be at least 1.");
+            }
+            
+            if (nBytes.Length < nt)
+            {
+                throw new CorruptedCodestreamException(
+                    $"Tile byte allocation array too small: has {nBytes.Length} elements but need {nt}. " +
+                    "Codestream structure may be corrupted.");
+            }
+            
+            if (totTileLen.Length < nt)
+            {
+                throw new CorruptedCodestreamException(
+                    $"Tile length array too small: has {totTileLen.Length} elements but need {nt}. " +
+                    "Codestream structure may be corrupted.");
+            }
+
             // Calculate bitrate for each tile
             var rem = stopOff - anbytes;
             var totnByte = rem;
