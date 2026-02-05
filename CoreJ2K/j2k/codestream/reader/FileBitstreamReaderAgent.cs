@@ -774,13 +774,30 @@ namespace CoreJ2K.j2k.codestream.reader
                 throw new CorruptedCodestreamException("Tile index too high in " + "tile-part.");
             }
 
-            // Psot
+            // Psot (tile-part length)
+            // This is a 32-bit unsigned value, but we read it as signed int
             var psot = in_Renamed.readInt();
             ms.psot = psot;
             isPsotEqualsZero = (psot == 0);
+            
+            // Validate tile-part length
             if (psot < 0)
             {
-                throw new NotImplementedException("Tile length larger " + "than maximum supported");
+                // When read as signed int, negative means value > int.MaxValue (2GB)
+                // JPEG 2000 spec allows up to 4GB, but we limit to int.MaxValue for practical reasons
+                throw new CorruptedCodestreamException(
+                    $"Tile-part length exceeds maximum supported size. " +
+                    $"Psot value indicates length > {int.MaxValue} bytes (2GB). " +
+                    "This may indicate a corrupted codestream or maliciously crafted file.");
+            }
+            
+            // Additional sanity check for unreasonably large tile-parts
+            const int maxReasonableTilePartSize = 100 * 1024 * 1024; // 100MB
+            if (psot > maxReasonableTilePartSize && psot != 0)
+            {
+                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING,
+                    $"Very large tile-part detected: {psot} bytes ({psot / (1024.0 * 1024.0):F2} MB). " +
+                    "This may indicate a corrupted file or cause memory issues.");
             }
             // TPsot
             int tilePart = in_Renamed.read();
