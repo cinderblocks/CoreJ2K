@@ -893,9 +893,21 @@ namespace CoreJ2K.j2k.codestream.reader
 
             var qParms = new StdDequantizerParams();
 
+
             if (qType == Markers.SQCX_NO_QUANTIZATION)
             {
-                var maxrl = (mainh ? ((int)decSpec.dls.getDefault()) : ((int)decSpec.dls.getTileDef(tileIdx)));
+                // Get maximum resolution level
+                object maxrlObj = mainh ? decSpec.dls.getDefault() : decSpec.dls.getTileDef(tileIdx);
+                
+                // Validate that decomposition level specification exists
+                if (maxrlObj == null)
+                {
+                    throw new CorruptedCodestreamException(
+                        "Decomposition level specification (DLS) not found when reading QCD marker. " +
+                        "COD marker must be present before QCD marker in the header.");
+                }
+                
+                var maxrl = (int)maxrlObj;
                 int j, rl; // i removed
                 int minb, maxb, hpd;
                 int tmp;
@@ -948,7 +960,27 @@ namespace CoreJ2K.j2k.codestream.reader
             }
             else
             {
-                var maxrl = (qType == Markers.SQCX_SCALAR_DERIVED) ? 0 : (mainh ? ((int)decSpec.dls.getDefault()) : ((int)decSpec.dls.getTileDef(tileIdx)));
+                // Get maximum resolution level
+                int maxrl;
+                if (qType == Markers.SQCX_SCALAR_DERIVED)
+                {
+                    maxrl = 0;
+                }
+                else
+                {
+                    object maxrlObj = mainh ? decSpec.dls.getDefault() : decSpec.dls.getTileDef(tileIdx);
+                    
+                    // Validate that decomposition level specification exists
+                    if (maxrlObj == null)
+                    {
+                        throw new CorruptedCodestreamException(
+                            "Decomposition level specification (DLS) not found when reading QCD marker. " +
+                            "COD marker must be present before QCD marker in the header.");
+                    }
+                    
+                    maxrl = (int)maxrlObj;
+                }
+                
                 int j, rl; // i removed
                 int minb, maxb, hpd;
                 int tmp;
