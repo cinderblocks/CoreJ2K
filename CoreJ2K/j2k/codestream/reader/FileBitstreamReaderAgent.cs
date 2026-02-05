@@ -825,7 +825,11 @@ namespace CoreJ2K.j2k.codestream.reader
                 tilePartLen[tile] = new int[nrOfTileParts];
                 for (var i = 0; i < nrOfTileParts - nExtraTp; i++)
                 {
-                    tilePartLen[tile][i] = tmpA[i];
+                    // Validate array bounds to prevent IndexOutOfRangeException
+                    if (tmpA != null && i < tmpA.Length)
+                    {
+                        tilePartLen[tile][i] = tmpA[i];
+                    }
                 }
 
                 // Increase and re-copy tilePartNum array
@@ -833,7 +837,11 @@ namespace CoreJ2K.j2k.codestream.reader
                 tilePartNum[tile] = new int[nrOfTileParts];
                 for (var i = 0; i < nrOfTileParts - nExtraTp; i++)
                 {
-                    tilePartNum[tile][i] = tmpA[i];
+                    // Validate array bounds to prevent IndexOutOfRangeException
+                    if (tmpA != null && i < tmpA.Length)
+                    {
+                        tilePartNum[tile][i] = tmpA[i];
+                    }
                 }
 
                 // Increase and re-copy firsPackOff array
@@ -841,7 +849,11 @@ namespace CoreJ2K.j2k.codestream.reader
                 firstPackOff[tile] = new int[nrOfTileParts];
                 for (var i = 0; i < nrOfTileParts - nExtraTp; i++)
                 {
-                    firstPackOff[tile][i] = tmpA[i];
+                    // Validate array bounds to prevent IndexOutOfRangeException
+                    if (tmpA != null && i < tmpA.Length)
+                    {
+                        firstPackOff[tile][i] = tmpA[i];
+                    }
                 }
 
                 // Increase and re-copy tilePartHeadLen array
@@ -849,7 +861,11 @@ namespace CoreJ2K.j2k.codestream.reader
                 tilePartHeadLen[tile] = new int[nrOfTileParts];
                 for (var i = 0; i < nrOfTileParts - nExtraTp; i++)
                 {
-                    tilePartHeadLen[tile][i] = tmpA[i];
+                    // Validate array bounds to prevent IndexOutOfRangeException
+                    if (tmpA != null && i < tmpA.Length)
+                    {
+                        tilePartHeadLen[tile][i] = tmpA[i];
+                    }
                 }
             }
             else
@@ -888,7 +904,8 @@ namespace CoreJ2K.j2k.codestream.reader
                         // Increase and re-copy tilePartLen array
                         var tmpA = tilePartLen[tile];
                         tilePartLen[tile] = new int[nrOfTileParts];
-                        for (var i = 0; i < tileParts[tile] - 1; i++)
+                        var copyLen = Math.Min(tileParts[tile] - 1, tmpA != null ? tmpA.Length : 0);
+                        for (var i = 0; i < copyLen; i++)
                         {
                             tilePartLen[tile][i] = tmpA[i];
                         }
@@ -896,7 +913,8 @@ namespace CoreJ2K.j2k.codestream.reader
                         // Increase and re-copy tilePartNum array                
                         tmpA = tilePartNum[tile];
                         tilePartNum[tile] = new int[nrOfTileParts];
-                        for (var i = 0; i < tileParts[tile] - 1; i++)
+                        copyLen = Math.Min(tileParts[tile] - 1, tmpA != null ? tmpA.Length : 0);
+                        for (var i = 0; i < copyLen; i++)
                         {
                             tilePartNum[tile][i] = tmpA[i];
                         }
@@ -904,7 +922,8 @@ namespace CoreJ2K.j2k.codestream.reader
                         // Increase and re-copy firstPackOff array
                         tmpA = firstPackOff[tile];
                         firstPackOff[tile] = new int[nrOfTileParts];
-                        for (var i = 0; i < tileParts[tile] - 1; i++)
+                        copyLen = Math.Min(tileParts[tile] - 1, tmpA != null ? tmpA.Length : 0);
+                        for (var i = 0; i < copyLen; i++)
                         {
                             firstPackOff[tile][i] = tmpA[i];
                         }
@@ -912,7 +931,8 @@ namespace CoreJ2K.j2k.codestream.reader
                         // Increase and re-copy tilePartHeadLen array
                         tmpA = tilePartHeadLen[tile];
                         tilePartHeadLen[tile] = new int[nrOfTileParts];
-                        for (var i = 0; i < tileParts[tile] - 1; i++)
+                        copyLen = Math.Min(tileParts[tile] - 1, tmpA != null ? tmpA.Length : 0);
+                        for (var i = 0; i < copyLen; i++)
                         {
                             tilePartHeadLen[tile][i] = tmpA[i];
                         }
