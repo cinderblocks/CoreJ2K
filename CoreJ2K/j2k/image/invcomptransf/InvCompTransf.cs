@@ -41,6 +41,7 @@
 * Copyright (c) 1999/2000 JJ2000 Partners.
 * */
 using CoreJ2K.j2k.decoder;
+using CoreJ2K.j2k.image.Simd;
 using CoreJ2K.j2k.util;
 using CoreJ2K.j2k.wavelet.synthesis;
 using System;
@@ -565,26 +566,22 @@ namespace CoreJ2K.j2k.image.invcomptransf
                 dbi.w = blk.w;
                 dbi.h = blk.h;
 
-                // Perform conversion
-
-                // Initialize general indexes
-                k = w * h - 1;
-                k0 = block0.offset + (h - 1) * block0.scanw + w - 1;
-                k1 = block1.offset + (h - 1) * block1.scanw + w - 1;
-                k2 = block2.offset + (h - 1) * block2.scanw + w - 1;
-
-                for (i = h - 1; i >= 0; i--)
+                // Perform conversion row-by-row using a SIMD-accelerated kernel.
+                // The output buffers (outdata[*]) are contiguous, h*w. The input
+                // blocks may have an arbitrary scanw and offset.
+                for (i = 0; i < h; i++)
                 {
-                    for (mink = k - w; k > mink; k--, k0--, k1--, k2--)
-                    {
-                        outdata[1][k] = (data0[k0] - ((data1[k1] + data2[k2]) >> 2));
-                        outdata[0][k] = data2[k2] + outdata[1][k];
-                        outdata[2][k] = data1[k1] + outdata[1][k];
-                    }
-                    // Jump to beggining of previous line in input
-                    k0 -= (block0.scanw - w);
-                    k1 -= (block1.scanw - w);
-                    k2 -= (block2.scanw - w);
+                    int outRow = i * w;
+                    int inRow0 = block0.offset + i * block0.scanw;
+                    int inRow1 = block1.offset + i * block1.scanw;
+                    int inRow2 = block2.offset + i * block2.scanw;
+                    SimdColorTransform.InvRctRow(
+                        new ReadOnlySpan<int>(data0, inRow0, w),
+                        new ReadOnlySpan<int>(data1, inRow1, w),
+                        new ReadOnlySpan<int>(data2, inRow2, w),
+                        new Span<int>(outdata[0], outRow, w),
+                        new Span<int>(outdata[1], outRow, w),
+                        new Span<int>(outdata[2], outRow, w));
                 }
                 outdata[c] = null;
             }
@@ -751,29 +748,20 @@ namespace CoreJ2K.j2k.image.invcomptransf
                 dbi.w = blk.w;
                 dbi.h = blk.h;
 
-                //Perform conversion
-
-                // Initialize general indexes
-                k = w * h - 1;
-                k0 = block0.offset + (h - 1) * block0.scanw + w - 1;
-                k2 = block2.offset + (h - 1) * block2.scanw + w - 1;
-                k1 = block1.offset + (h - 1) * block1.scanw + w - 1;
-
-                for (i = h - 1; i >= 0; i--)
+                //Perform conversion row-by-row using a SIMD-accelerated kernel.
+                for (i = 0; i < h; i++)
                 {
-                    for (mink = k - w; k > mink; k--, k0--, k2--, k1--)
-                    {
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
-                        outdata[0][k] = (int)(data0[k0] + 1.402f * data1[k1] + 0.5f);
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
-                        outdata[1][k] = (int)(data0[k0] - 0.34413f * data2[k2] - 0.71414f * data1[k1] + 0.5f);
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
-                        outdata[2][k] = (int)(data0[k0] + 1.772f * data2[k2] + 0.5f);
-                    }
-                    // Jump to beggining of previous line in input
-                    k0 -= (block0.scanw - w);
-                    k2 -= (block2.scanw - w);
-                    k1 -= (block1.scanw - w);
+                    int outRow = i * w;
+                    int inRow0 = block0.offset + i * block0.scanw;
+                    int inRow2 = block2.offset + i * block2.scanw;
+                    int inRow1 = block1.offset + i * block1.scanw;
+                    SimdColorTransform.InvIctRow(
+                        new ReadOnlySpan<float>(data0, inRow0, w),  // Y
+                        new ReadOnlySpan<float>(data2, inRow2, w),  // Cb
+                        new ReadOnlySpan<float>(data1, inRow1, w),  // Cr
+                        new Span<int>(outdata[0], outRow, w),       // R
+                        new Span<int>(outdata[1], outRow, w),       // G
+                        new Span<int>(outdata[2], outRow, w));      // B
                 }
                 outdata[c] = null;
             }

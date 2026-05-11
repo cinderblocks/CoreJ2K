@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <Optimize>true</Optimize>
+    <ServerGarbageCollection>true</ServerGarbageCollection>
+    <!--
+      Excluded from the main solution on purpose: BenchmarkDotNet runs Release
+      with its own toolchain, and we don't want benchmarks affecting CI build
+      times. Build manually with `dotnet run -c Release` from this folder.
+    -->
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="BenchmarkDotNet" Version="0.14.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\CoreJ2K\CoreJ2K.csproj" />
+  </ItemGroup>
+</Project>
