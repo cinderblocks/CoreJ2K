@@ -270,7 +270,7 @@ namespace CoreJ2K.j2k.quantization.dequantizer
             var reversible = qts.isReversible(tIdx, c);
             var derived = qts.isDerived(tIdx, c);
             var params_Renamed = (StdDequantizerParams)qsss.getTileCompVal(tIdx, c);
-            var G = ((int)gbs.getTileCompVal(tIdx, c));
+            var G = gbs.GetIntTileCompVal(tIdx, c);
 
             outdtype = cblk.DataType;
 

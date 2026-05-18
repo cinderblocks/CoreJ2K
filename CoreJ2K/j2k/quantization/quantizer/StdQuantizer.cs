@@ -165,7 +165,7 @@ namespace CoreJ2K.j2k.quantization.quantizer
         /// </returns>
         public override int getNumGuardBits(int t, int c)
         {
-            return ((int)gbs.getTileCompVal(t, c));
+            return gbs.GetIntTileCompVal(t, c);
         }
 
         /// <summary> Returns true if the quantized data is reversible, for the specified
@@ -297,7 +297,7 @@ namespace CoreJ2K.j2k.quantization.quantizer
             SubbandAn sb;
             float stepUDR; // The quantization step size (for a dynamic
                            // range of 1, or unit)
-            var g = ((int)gbs.getTileCompVal(tIdx, c));
+            var g = gbs.GetIntTileCompVal(tIdx, c);
 
             // Are we quantizing ints or floats?
             intq = (src.getDataType(tIdx, c) == DataBlk.TYPE_INT);
@@ -389,7 +389,7 @@ namespace CoreJ2K.j2k.quantization.quantizer
             {
                 // Non-reversible, use step size
                 //UPGRADE_TODO: The equivalent in .NET for method 'java.lang.Float.floatValue' may return a different value. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1043'"
-                var baseStep = (float)qsss.getTileCompVal(tIdx, c);
+                var baseStep = qsss.GetFloatTileCompVal(tIdx, c);
 
                 // Calculate magnitude bits and quantization step size 
                 if (isDerived(tIdx, c))
@@ -478,7 +478,7 @@ namespace CoreJ2K.j2k.quantization.quantizer
                 else
                 {
                     //UPGRADE_TODO: The equivalent in .NET for method 'java.lang.Float.floatValue' may return a different value. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1043'"
-                    baseStep = (float)qsss.getTileCompVal(tIdx, c);
+                    baseStep = qsss.GetFloatTileCompVal(tIdx, c);
                     if (isDerived(tIdx, c))
                     {
                         //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
@@ -622,7 +622,7 @@ namespace CoreJ2K.j2k.quantization.quantizer
         private int getMaxMagBitsRev(Subband sb, int c)
         {
             int tmp, max = 0;
-            var g = ((int)gbs.getTileCompVal(tIdx, c));
+            var g = gbs.GetIntTileCompVal(tIdx, c);
 
             if (!sb.isNode)
                 return g - 1 + src.getNomRangeBits(c) + sb.anGainExp;
@@ -660,12 +660,12 @@ namespace CoreJ2K.j2k.quantization.quantizer
         private int getMaxMagBitsDerived(Subband sb, int t, int c)
         {
             int tmp, max = 0;
-            var g = ((int)gbs.getTileCompVal(t, c));
+            var g = gbs.GetIntTileCompVal(t, c);
 
             if (!sb.isNode)
             {
                 //UPGRADE_TODO: The equivalent in .NET for method 'java.lang.Float.floatValue' may return a different value. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1043'"
-                var baseStep = (float)qsss.getTileCompVal(t, c);
+                var baseStep = qsss.GetFloatTileCompVal(t, c);
                 //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                 return g - 1 + sb.level - (int)Math.Floor(Math.Log(baseStep) / log2);
             }
@@ -704,12 +704,12 @@ namespace CoreJ2K.j2k.quantization.quantizer
         private int getMaxMagBitsExpounded(Subband sb, int t, int c)
         {
             int tmp, max = 0;
-            var g = ((int)gbs.getTileCompVal(t, c));
+            var g = gbs.GetIntTileCompVal(t, c);
 
             if (!sb.isNode)
             {
                 //UPGRADE_TODO: The equivalent in .NET for method 'java.lang.Float.floatValue' may return a different value. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1043'"
-                var baseStep = (float)qsss.getTileCompVal(t, c);
+                var baseStep = qsss.GetFloatTileCompVal(t, c);
                 //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                 return g - 1 - (int)Math.Floor(Math.Log(baseStep / (((SubbandAn)sb).l2Norm * (1 << sb.anGainExp))) / log2);
             }

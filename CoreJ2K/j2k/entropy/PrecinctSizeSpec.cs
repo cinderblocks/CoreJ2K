@@ -386,22 +386,22 @@ namespace CoreJ2K.j2k.entropy
             // height) for the specified (or not) tile/component
             if (tileSpecified && compSpecified)
             {
-                mrl = ((int)dls.getTileCompVal(t, c));
+                mrl = dls.GetIntTileCompVal(t, c);
                 v = (List<int>[])getTileCompVal(t, c);
             }
             else if (tileSpecified && !compSpecified)
             {
-                mrl = ((int)dls.getTileDef(t));
+                mrl = dls.GetIntTileDef(t);
                 v = (List<int>[])getTileDef(t);
             }
             else if (!tileSpecified && compSpecified)
             {
-                mrl = ((int)dls.getCompDef(c));
+                mrl = dls.GetIntCompDef(c);
                 v = (List<int>[])getCompDef(c);
             }
             else
             {
-                mrl = ((int)dls.getDefault());
+                mrl = dls.GetIntDefault();
                 v = (List<int>[])getDefault();
             }
             idx = mrl - rl;
@@ -441,22 +441,22 @@ namespace CoreJ2K.j2k.entropy
             // height) for the specified (or not) tile/component
             if (tileSpecified && compSpecified)
             {
-                mrl = ((int)dls.getTileCompVal(t, c));
+                mrl = dls.GetIntTileCompVal(t, c);
                 v = (List<int>[])getTileCompVal(t, c);
             }
             else if (tileSpecified && !compSpecified)
             {
-                mrl = ((int)dls.getTileDef(t));
+                mrl = dls.GetIntTileDef(t);
                 v = (List<int>[])getTileDef(t);
             }
             else if (!tileSpecified && compSpecified)
             {
-                mrl = ((int)dls.getCompDef(c));
+                mrl = dls.GetIntCompDef(c);
                 v = (List<int>[])getCompDef(c);
             }
             else
             {
-                mrl = ((int)dls.getDefault());
+                mrl = dls.GetIntDefault();
                 v = (List<int>[])getDefault();
             }
             idx = mrl - rl;

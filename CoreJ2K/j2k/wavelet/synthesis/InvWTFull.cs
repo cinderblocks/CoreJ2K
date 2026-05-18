@@ -98,6 +98,10 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         private float[][] rentedFloatBuffers;
         private int[][] rentedIntBuffers;
 
+        // Cached DataBlk wrappers for waveletTreeReconstruction leaf nodes – avoids per-subband allocation
+        private DataBlkInt _subbDataInt;
+        private DataBlkFloat _subbDataFloat;
+
         /// <summary>
         /// Configures whether ArrayPool buffers should be cleared when returned.
         /// Setting this to true improves security by preventing sensitive image data 
@@ -281,8 +285,8 @@ namespace CoreJ2K.j2k.wavelet.synthesis
                 ? DataBlk.TYPE_INT
                 : src.getSynSubbandTree(tIdx, compIndex).HorWFilter.DataType;
 
-            //If the source image has not been decomposed 
-            if (reconstructedComps[compIndex] == null)
+            //If the source image has not been decomposed (or was invalidated by a tile change)
+            if (reconstructedComps[compIndex] == null || reconstructedComps[compIndex].Data == null)
             {
                 //Allocate component data buffer
                 switch (dtype)
@@ -291,7 +295,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
                     case DataBlk.TYPE_FLOAT:
                         var fwidth = getTileCompWidth(tIdx, compIndex);
                         var fheight = getTileCompHeight(tIdx, compIndex);
-                        
+
                         // Validate dimensions to prevent integer overflow
                         long fBufferSize = (long)fwidth * fheight;
                         if (fBufferSize > int.MaxValue)
@@ -301,8 +305,23 @@ namespace CoreJ2K.j2k.wavelet.synthesis
                                 $"w={fwidth}, h={fheight}. " +
                                 $"Buffer size {fBufferSize} exceeds maximum array size.");
                         }
-                        
-                        reconstructedComps[compIndex] = new DataBlkFloat(0, 0, fwidth, fheight);
+
+                        // Reuse the existing wrapper if it has the right type; otherwise create a
+                        // new one using the no-arg ctor so no internal float[] is allocated.
+                        if (reconstructedComps[compIndex] is DataBlkFloat existingFloat)
+                        {
+                            existingFloat.ulx = 0; existingFloat.uly = 0;
+                            existingFloat.w = fwidth; existingFloat.h = fheight;
+                            existingFloat.offset = 0; existingFloat.scanw = fwidth;
+                        }
+                        else
+                        {
+                            var dbf = new DataBlkFloat();
+                            dbf.ulx = 0; dbf.uly = 0;
+                            dbf.w = fwidth; dbf.h = fheight;
+                            dbf.offset = 0; dbf.scanw = fwidth;
+                            reconstructedComps[compIndex] = dbf;
+                        }
                         try
                         {
                             var rent = ArrayPool<float>.Shared.Rent((int)fBufferSize);
@@ -312,13 +331,14 @@ namespace CoreJ2K.j2k.wavelet.synthesis
                         catch
                         {
                             // fallback to default allocation if renting fails
+                            reconstructedComps[compIndex].Data = new float[(int)fBufferSize];
                         }
                         break;
 
                     case DataBlk.TYPE_INT:
                         var iwidth = getTileCompWidth(tIdx, compIndex);
                         var iheight = getTileCompHeight(tIdx, compIndex);
-                        
+
                         // Validate dimensions to prevent integer overflow
                         long iBufferSize = (long)iwidth * iheight;
                         if (iBufferSize > int.MaxValue)
@@ -328,8 +348,23 @@ namespace CoreJ2K.j2k.wavelet.synthesis
                                 $"w={iwidth}, h={iheight}. " +
                                 $"Buffer size {iBufferSize} exceeds maximum array size.");
                         }
-                        
-                        reconstructedComps[compIndex] = new DataBlkInt(0, 0, iwidth, iheight);
+
+                        // Reuse the existing wrapper if it has the right type; otherwise create a
+                        // new one using the no-arg ctor so no internal int[] is allocated.
+                        if (reconstructedComps[compIndex] is DataBlkInt existingInt)
+                        {
+                            existingInt.ulx = 0; existingInt.uly = 0;
+                            existingInt.w = iwidth; existingInt.h = iheight;
+                            existingInt.offset = 0; existingInt.scanw = iwidth;
+                        }
+                        else
+                        {
+                            var dbi = new DataBlkInt();
+                            dbi.ulx = 0; dbi.uly = 0;
+                            dbi.w = iwidth; dbi.h = iheight;
+                            dbi.offset = 0; dbi.scanw = iwidth;
+                            reconstructedComps[compIndex] = dbi;
+                        }
                         try
                         {
                             var irent = ArrayPool<int>.Shared.Rent((int)iBufferSize);
@@ -339,6 +374,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
                         catch
                         {
                             // fallback to default allocation
+                            reconstructedComps[compIndex].Data = new int[(int)iBufferSize];
                         }
                         break;
                 }
@@ -642,11 +678,13 @@ namespace CoreJ2K.j2k.wavelet.synthesis
                 // Get all code-blocks in subband
                 if (dtype == DataBlk.TYPE_INT)
                 {
-                    subbData = new DataBlkInt();
+                    if (_subbDataInt == null) _subbDataInt = new DataBlkInt();
+                    subbData = _subbDataInt;
                 }
                 else
                 {
-                    subbData = new DataBlkFloat();
+                    if (_subbDataFloat == null) _subbDataFloat = new DataBlkFloat();
+                    subbData = _subbDataFloat;
                 }
                 ncblks = sb.numCb;
                 dst_data = img.Data;
@@ -768,9 +806,11 @@ namespace CoreJ2K.j2k.wavelet.synthesis
                 }
 
                 // The wavelet data must be reconstructed since we've switched to a different tile.
-                if (reconstructedComps != null && i < reconstructedComps.Length)
+                // Null only the backing Data array so the wrapper object itself can be reused,
+                // avoiding a fresh DataBlkFloat/DataBlkInt allocation per tile per component.
+                if (reconstructedComps != null && i < reconstructedComps.Length && reconstructedComps[i] != null)
                 {
-                    reconstructedComps[i] = null;
+                    reconstructedComps[i].Data = null;
                 }
             }
 
@@ -856,9 +896,11 @@ namespace CoreJ2K.j2k.wavelet.synthesis
                 }
 
                 // The wavelet data must be reconstructed since we've switched to a different tile.
-                if (reconstructedComps != null && i < reconstructedComps.Length)
+                // Null only the backing Data array so the wrapper object itself can be reused,
+                // avoiding a fresh DataBlkFloat/DataBlkInt allocation per tile per component.
+                if (reconstructedComps != null && i < reconstructedComps.Length && reconstructedComps[i] != null)
                 {
-                    reconstructedComps[i] = null;
+                    reconstructedComps[i].Data = null;
                 }
             }
         }

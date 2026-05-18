@@ -23,11 +23,33 @@ namespace CoreJ2K.Util
 
         #endregion
 
+        #region PROPERTIES
+
+        /// <summary>
+        /// Minimum severity level for messages to be printed.
+        /// Messages with a severity below this value are silently discarded,
+        /// eliminating all string-processing and I/O overhead for suppressed levels.
+        /// Defaults to <see cref="MsgLogger_Fields.WARNING"/> so routine INFO-level
+        /// validation chatter does not generate allocations during normal decoding.
+        /// Set to <see cref="MsgLogger_Fields.INFO"/> or <see cref="MsgLogger_Fields.LOG"/>
+        /// to restore verbose output.
+        /// </summary>
+        public static int MinSeverity { get; set; } = MsgLogger_Fields.WARNING;
+
+        #endregion
+
         #region METHODS
 
         public static void Register()
         {
             FacilityManager.DefaultMsgLogger = Instance;
+        }
+
+        /// <inheritdoc/>
+        public override void printmsg(int sev, string msg)
+        {
+            if (sev < MinSeverity) return;
+            base.printmsg(sev, msg);
         }
 
         #endregion

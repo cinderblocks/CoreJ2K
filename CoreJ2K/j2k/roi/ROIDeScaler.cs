@@ -279,7 +279,7 @@ namespace CoreJ2K.j2k.roi
             // Scale coefficients according to magnitude. If the magnitude of a
             // coefficient is lower than 2 pow 31-magbits then it is a background
             // coeff and should be up-scaled
-            var boost = ((int)mss.getTileCompVal(TileIdx, c));
+            var boost = mss.GetIntTileCompVal(TileIdx, c);
             var mask = ((1 << sb.magbits) - 1) << (31 - sb.magbits);
             var mask2 = (~mask) & 0x7FFFFFFF;
 

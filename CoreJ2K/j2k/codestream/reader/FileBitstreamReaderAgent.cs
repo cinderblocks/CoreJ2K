@@ -299,7 +299,11 @@ namespace CoreJ2K.j2k.codestream.reader
             this.pl = pl;
             printInfo = cdstrInfo;
             this.hi = hi;
-            var strInfo = "Codestream elements information in bytes " + "(offset, total length, header length):\n\n";
+            string strInfo = null;
+            if (printInfo)
+            {
+                strInfo = "Codestream elements information in bytes " + "(offset, total length, header length):\n\n";
+            }
 
             // Check whether quit conditions used
             usePOCQuit = pl.getBooleanParameter("poc_quit");
@@ -434,7 +438,7 @@ namespace CoreJ2K.j2k.codestream.reader
             // If ncb and lbody quit conditions are used, headers are not counted
             anbytes = ncbQuit == -1 ? mainHeadLen : 0;
 
-            strInfo += ("Main header length    : " + cdstreamStart + ", " + mainHeadLen + ", " + mainHeadLen + "\n");
+            if (printInfo) strInfo += ("Main header length    : " + cdstreamStart + ", " + mainHeadLen + ", " + mainHeadLen + "\n");
 
             // If cannot even read the first tile-part
             if (anbytes > tnbytes)
@@ -501,7 +505,7 @@ namespace CoreJ2K.j2k.codestream.reader
                     firstPackOff[t][tp] = pos;
                     tilePartHeadLen[t][tp] = (pos - tilePartStart);
 
-                    strInfo += ("Tile-part " + tp + " of tile " + t + " : " + tilePartStart + ", " + tilePartLen[t][tp] + ", " + tilePartHeadLen[t][tp] + "\n");
+                    if (printInfo) strInfo += ("Tile-part " + tp + " of tile " + t + " : " + tilePartStart + ", " + tilePartLen[t][tp] + ", " + tilePartHeadLen[t][tp] + "\n");
 
                     // Update length counters
                     totTileLen[t] += tilePartLen[t][tp];
@@ -1064,8 +1068,8 @@ namespace CoreJ2K.j2k.codestream.reader
             var numLayers = ((int)decSpec.nls.getTileDef(t));
             var nPrec = 1;
             int hlen, plen;
-            var strInfo = $"Tile {TileIdx} (tile-part:{curTilePart}): offset, length, header length\n";
-            var pph = false || ((bool)decSpec.pphs.getTileDef(t));
+            string strInfo = printInfo ? $"Tile {TileIdx} (tile-part:{curTilePart}): offset, length, header length\n" : null;
+            var pph = decSpec.pphs.GetBoolTileDef(t);
             for (var l = minlys; l < lye; l++)
             {
                 // loop on layers
@@ -1141,8 +1145,8 @@ namespace CoreJ2K.j2k.codestream.reader
 
                             // Reads packet's body
                             status = pktDec.readPktBody(l, r, c, p, cbI[c][r], nBytes);
-                            plen = in_Renamed.Pos - start;
-                            strInfo += (" Pkt l=" + l + ",r=" + r + ",c=" + c + ",p=" + p + ": " + start + ", " + plen + ", " + hlen + "\n");
+                                                plen = in_Renamed.Pos - start;
+                            if (printInfo) strInfo += (" Pkt l=" + l + ",r=" + r + ",c=" + c + ",p=" + p + ": " + start + ", " + plen + ", " + hlen + "\n");
 
                             if (status)
                             {
@@ -1215,9 +1219,9 @@ namespace CoreJ2K.j2k.codestream.reader
                 }
             }
 
-            var strInfo = $"Tile {TileIdx} (tile-part:{curTilePart}): offset, length, header length\n";
+            string strInfo = printInfo ? $"Tile {TileIdx} (tile-part:{curTilePart}): offset, length, header length\n" : null;
             var numLayers = ((int)decSpec.nls.getTileDef(t));
-            var pph = false || ((bool)decSpec.pphs.getTileDef(t));
+            var pph = decSpec.pphs.GetBoolTileDef(t);
             var nPrec = 1;
             int start;
             int hlen, plen;
@@ -1298,29 +1302,29 @@ namespace CoreJ2K.j2k.codestream.reader
 
                             // Reads packet's body
                             status = pktDec.readPktBody(l, r, c, p, cbI[c][r], nBytes);
-                            plen = in_Renamed.Pos - start;
-                            strInfo += (" Pkt l=" + l + ",r=" + r + ",c=" + c + ",p=" + p + ": " + start + ", " + plen + ", " + hlen + "\n");
+                                                plen = in_Renamed.Pos - start;
+                                                if (printInfo) strInfo += (" Pkt l=" + l + ",r=" + r + ",c=" + c + ",p=" + p + ": " + start + ", " + plen + ", " + hlen + "\n");
 
-                            if (status)
-                            {
+                                                if (status)
+                                                {
+                                                    if (printInfo)
+                                                    {
+                                                        FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO, strInfo);
+                                                    }
+                                                    // Output rate or EOF reached
+                                                    return true;
+                                                }
+                                            } // end loop on precincts
+                                        } // end loop on components
+                                    } // end loop on layers
+                                } // end loop on resolution levels
+
                                 if (printInfo)
                                 {
                                     FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO, strInfo);
                                 }
-                                // Output rate or EOF reached
-                                return true;
+                                return false; // Decoding rate was not reached
                             }
-                        } // end loop on precincts
-                    } // end loop on components
-                } // end loop on layers
-            } // end loop on resolution levels
-
-            if (printInfo)
-            {
-                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO, strInfo);
-            }
-            return false; // Decoding rate was not reached
-        }
 
         /// <summary> Reads packets of the current tile according to the
         /// resolution-position-component-layer progressiveness.
@@ -1447,8 +1451,8 @@ namespace CoreJ2K.j2k.codestream.reader
             var status = false;
             var lastByte = firstPackOff[t][curTilePart] + tilePartLen[t][curTilePart] - 1 - tilePartHeadLen[t][curTilePart];
             var numLayers = ((int)decSpec.nls.getTileDef(t));
-            var strInfo = $"Tile {TileIdx} (tile-part:{curTilePart}): offset, length, header length\n";
-            var pph = false || ((bool)decSpec.pphs.getTileDef(t));
+            string strInfo = printInfo ? $"Tile {TileIdx} (tile-part:{curTilePart}): offset, length, header length\n" : null;
+            var pph = decSpec.pphs.GetBoolTileDef(t);
             for (var r = ress; r < rese; r++)
             {
                 // loop on resolution levels
@@ -1536,45 +1540,45 @@ namespace CoreJ2K.j2k.codestream.reader
                                 // Reads packet's body
                                 status = pktDec.readPktBody(l, r, c, nextPrec[c][r], cbI[c][r], nBytes);
                                 plen = in_Renamed.Pos - start;
-                                strInfo += (" Pkt l=" + l + ",r=" + r + ",c=" + c + ",p=" + nextPrec[c][r] + ": " + start + ", " + plen + ", " + hlen + "\n");
+                                 if (printInfo) strInfo += (" Pkt l=" + l + ",r=" + r + ",c=" + c + ",p=" + nextPrec[c][r] + ": " + start + ", " + plen + ", " + hlen + "\n");
 
-                                if (status)
-                                {
-                                    if (printInfo)
-                                    {
-                                        FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO, strInfo);
-                                    }
-                                    return true;
-                                }
-                            } // layers
-                            nextPrec[c][r]++;
-                        } // Components
-                        if (px != pxend)
-                        {
-                            x = minx + px * gcd_x;
-                        }
-                        else
-                        {
-                            x = tx0;
-                        }
-                    } // Horizontal precincts
-                    if (py != pyend)
-                    {
-                        y = miny + py * gcd_y;
-                    }
-                    else
-                    {
-                        y = ty0;
-                    }
-                } // Vertical precincts
-            } // end loop on resolution levels
+                                 if (status)
+                                 {
+                                     if (printInfo)
+                                     {
+                                         FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO, strInfo);
+                                     }
+                                     return true;
+                                 }
+                             } // layers
+                             nextPrec[c][r]++;
+                         } // Components
+                         if (px != pxend)
+                         {
+                             x = minx + px * gcd_x;
+                         }
+                         else
+                         {
+                             x = tx0;
+                         }
+                     } // Horizontal precincts
+                     if (py != pyend)
+                     {
+                         y = miny + py * gcd_y;
+                     }
+                     else
+                     {
+                         y = ty0;
+                     }
+                 } // Vertical precincts
+             } // end loop on resolution levels
 
-            if (printInfo)
-            {
-                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO, strInfo);
-            }
-            return false; // Decoding rate was not reached
-        }
+             if (printInfo)
+             {
+                 FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO, strInfo);
+             }
+             return false; // Decoding rate was not reached
+         }
 
         /// <summary> Reads packets of the current tile according to the
         /// position-component-resolution-layer progressiveness.
@@ -1698,8 +1702,8 @@ namespace CoreJ2K.j2k.codestream.reader
             var status = false;
             var lastByte = firstPackOff[t][curTilePart] + tilePartLen[t][curTilePart] - 1 - tilePartHeadLen[t][curTilePart];
             var numLayers = ((int)decSpec.nls.getTileDef(t));
-            var strInfo = $"Tile {TileIdx} (tile-part:{curTilePart}): offset, length, header length\n";
-            var pph = false || ((bool)decSpec.pphs.getTileDef(t));
+            string strInfo = printInfo ? $"Tile {TileIdx} (tile-part:{curTilePart}): offset, length, header length\n" : null;
+            var pph = decSpec.pphs.GetBoolTileDef(t);
 
             var y = ty0;
             var x = tx0;
@@ -1788,7 +1792,7 @@ namespace CoreJ2K.j2k.codestream.reader
                                 // Reads packet's body
                                 status = pktDec.readPktBody(l, r, c, nextPrec[c][r], cbI[c][r], nBytes);
                                 plen = in_Renamed.Pos - start;
-                                strInfo += (" Pkt l=" + l + ",r=" + r + ",c=" + c + ",p=" + nextPrec[c][r] + ": " + start + ", " + plen + ", " + hlen + "\n");
+                                if (printInfo) strInfo += (" Pkt l=" + l + ",r=" + r + ",c=" + c + ",p=" + nextPrec[c][r] + ": " + start + ", " + plen + ", " + hlen + "\n");
 
                                 if (status)
                                 {
@@ -1950,8 +1954,8 @@ namespace CoreJ2K.j2k.codestream.reader
             var status = false;
             var lastByte = firstPackOff[t][curTilePart] + tilePartLen[t][curTilePart] - 1 - tilePartHeadLen[t][curTilePart];
             var numLayers = ((int)decSpec.nls.getTileDef(t));
-            var strInfo = $"Tile {TileIdx} (tile-part:{curTilePart}): offset, length, header length\n";
-            var pph = ((bool)decSpec.pphs.getTileDef(t));
+            string strInfo = printInfo ? $"Tile {TileIdx} (tile-part:{curTilePart}): offset, length, header length\n" : null;
+            var pph = decSpec.pphs.GetBoolTileDef(t);
 
             int x, y;
             for (var c = comps; c < compe; c++)
@@ -2041,21 +2045,21 @@ namespace CoreJ2K.j2k.codestream.reader
 
                                 // Reads packet's body
                                 status = pktDec.readPktBody(l, r, c, nextPrec[c][r], cbI[c][r], nBytes);
-                                plen = in_Renamed.Pos - start;
-                                strInfo += (" Pkt l=" + l + ",r=" + r + ",c=" + c + ",p=" + nextPrec[c][r] + ": " + start + ", " + plen + ", " + hlen + "\n");
+                                        plen = in_Renamed.Pos - start;
+                                        if (printInfo) strInfo += (" Pkt l=" + l + ",r=" + r + ",c=" + c + ",p=" + nextPrec[c][r] + ": " + start + ", " + plen + ", " + hlen + "\n");
 
-                                if (status)
-                                {
-                                    if (printInfo)
-                                    {
-                                        FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO, strInfo);
-                                    }
-                                    return true;
-                                }
-                            } // layers                        
-                            nextPrec[c][r]++;
-                        } // Resolution levels
-                        if (px != pxend)
+                                        if (status)
+                                        {
+                                            if (printInfo)
+                                            {
+                                                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO, strInfo);
+                                            }
+                                            return true;
+                                        }
+                                    } // layers                        
+                                    nextPrec[c][r]++;
+                                } // Resolution levels
+                                if (px != pxend)
                         {
                             x = minx + px * gcd_x;
                         }
@@ -2105,7 +2109,7 @@ namespace CoreJ2K.j2k.codestream.reader
 
             // If packed packet headers was used, get the packet headers for this
             // tile
-            if (((bool)decSpec.pphs.getTileDef(t)))
+            if (decSpec.pphs.GetBoolTileDef(t))
             {
                 // Gets packed headers as separate input stream
                 var pphbais = hd.getPackedPktHead(t);

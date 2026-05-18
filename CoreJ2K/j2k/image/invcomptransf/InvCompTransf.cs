@@ -148,6 +148,13 @@ namespace CoreJ2K.j2k.image.invcomptransf
         /// <summary>Buffer for each component of output data </summary>
         private readonly int[][] outdata = new int[3][];
 
+        /// <summary>Cached auxiliary output buffers for component transforms – reused when large enough to avoid per-block allocations.</summary>
+        private int[] _auxOut1;
+        private int[] _auxOut2;
+
+        /// <summary>Cached DataBlkFloat wrapper for the c&gt;=3 invICT branch – avoids a per-call wrapper allocation.</summary>
+        private DataBlkFloat _indbICT;
+
         /// <summary>Block used to request component 0 </summary>
         private DataBlk block0;
 
@@ -512,8 +519,11 @@ namespace CoreJ2K.j2k.image.invcomptransf
                     blk.Data = outdata[c];
                 }
 
-                outdata[(c + 1) % 3] = new int[outdata[c].Length];
-                outdata[(c + 2) % 3] = new int[outdata[c].Length];
+                var auxSize = outdata[c].Length;
+                if (_auxOut1 == null || _auxOut1.Length < auxSize) _auxOut1 = new int[auxSize];
+                if (_auxOut2 == null || _auxOut2.Length < auxSize) _auxOut2 = new int[auxSize];
+                outdata[(c + 1) % 3] = _auxOut1;
+                outdata[(c + 2) % 3] = _auxOut2;
 
                 if (block0 == null || block0.DataType != DataBlk.TYPE_INT) block0 = new DataBlkInt();
                 if (block1 == null || block1.DataType != DataBlk.TYPE_INT) block1 = new DataBlkInt();
@@ -638,7 +648,12 @@ namespace CoreJ2K.j2k.image.invcomptransf
                 }
 
                 // Variables
-                var indb = new DataBlkFloat(blk.ulx, blk.uly, w, h);
+                if (_indbICT == null) _indbICT = new DataBlkFloat();
+                _indbICT.ulx = blk.ulx;
+                _indbICT.uly = blk.uly;
+                _indbICT.w = w;
+                _indbICT.h = h;
+                var indb = _indbICT;
                 float[] indata; // input data array
 
                 // Get the input data
@@ -694,8 +709,11 @@ namespace CoreJ2K.j2k.image.invcomptransf
                     blk.Data = outdata[c];
                 }
 
-                outdata[(c + 1) % 3] = new int[outdata[c].Length];
-                outdata[(c + 2) % 3] = new int[outdata[c].Length];
+                var auxSize = outdata[c].Length;
+                if (_auxOut1 == null || _auxOut1.Length < auxSize) _auxOut1 = new int[auxSize];
+                if (_auxOut2 == null || _auxOut2.Length < auxSize) _auxOut2 = new int[auxSize];
+                outdata[(c + 1) % 3] = _auxOut1;
+                outdata[(c + 2) % 3] = _auxOut2;
 
                 if (block0 == null || block0.DataType != DataBlk.TYPE_FLOAT) block0 = new DataBlkFloat();
                 if (block2 == null || block2.DataType != DataBlk.TYPE_FLOAT) block2 = new DataBlkFloat();
@@ -803,7 +821,7 @@ namespace CoreJ2K.j2k.image.invcomptransf
             tIdx = TileIdx; // index of the current tile
 
             // initializations
-            if (((int)cts.getTileDef(tIdx)) == NONE) transfType = NONE;
+            if (cts.GetIntTileDef(tIdx) == NONE) transfType = NONE;
             else
             {
                 var nc = src.NumComps > 3 ? 3 : src.NumComps;
@@ -847,7 +865,7 @@ namespace CoreJ2K.j2k.image.invcomptransf
             tIdx = TileIdx; // index of the current tile
 
             // initializations
-            if (((int)cts.getTileDef(tIdx)) == NONE) transfType = NONE;
+            if (cts.GetIntTileDef(tIdx) == NONE) transfType = NONE;
             else
             {
                 var nc = src.NumComps > 3 ? 3 : src.NumComps;

@@ -134,6 +134,24 @@ namespace CoreJ2K.j2k.codestream
             }
         }
 
+        /// <summary>Resets all coordinate fields of this instance for reuse on the next
+        /// tile. Existing <c>cblk</c> and <c>nblk</c> arrays are kept so callers
+        /// can overwrite the slots without reallocating the outer arrays.</summary>
+        public void Reset(int r, int ulx, int uly, int w, int h, int rgulx, int rguly, int rgw, int rgh)
+        {
+            this.r = r;
+            this.ulx = ulx;
+            this.uly = uly;
+            this.w = w;
+            this.h = h;
+            this.rgulx = rgulx;
+            this.rguly = rguly;
+            this.rgw = rgw;
+            this.rgh = rgh;
+            // cblk and nblk arrays are the right length for this r-level;
+            // callers replace individual cblk[s] entries and nblk[s] values directly.
+        }
+
         /// <summary> Returns PrecInfo object information in a String
         /// 
         /// </summary>

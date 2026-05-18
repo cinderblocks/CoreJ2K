@@ -78,6 +78,14 @@ namespace CoreJ2K.j2k.codestream
             idx = new Coord(n, m);
         }
 
+        /// <summary>Resets this instance for reuse with the given vertical/horizontal
+        /// index, avoiding a new allocation and a new <see cref="Coord"/>.</summary>
+        public void Reset(int m, int n)
+        {
+            idx.x = n;
+            idx.y = m;
+        }
+
         /// <summary> Returns code-block's information in a String 
         /// 
         /// </summary>

@@ -212,7 +212,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// </returns>
         public override int getDecompLevels(int t, int c)
         {
-            return ((int)dls.getTileCompVal(t, c));
+            return dls.GetIntTileCompVal(t, c);
         }
 
         /// <summary> Returns the wavelet tree decomposition. Actually JPEG 2000 part 1 only

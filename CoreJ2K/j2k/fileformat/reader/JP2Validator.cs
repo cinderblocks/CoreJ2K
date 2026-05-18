@@ -190,21 +190,45 @@ namespace CoreJ2K.j2k.fileformat.reader
             }
         }
 
+        // Ordered box names matching the expected ISO/IEC 15444-1 sequence.  Kept as a
+        // static readonly to avoid allocating a new List<string> on every decode call.
+        private static readonly string[] ExpectedBoxOrder =
+            { "Signature", "FileType", "JP2Header", "Codestream" };
+
         /// <summary>
         /// Validates the overall box ordering per ISO/IEC 15444-1.
         /// </summary>
         private void ValidateBoxOrdering(JP2Structure structure)
         {
-            // Validate top-level box order: Signature -> FileType -> JP2Header -> Codestream
-            var expectedOrder = new List<string> { "Signature", "FileType", "JP2Header", "Codestream" };
-            var actualOrder = structure.GetTopLevelBoxOrder();
+            // Compare box positions directly instead of building and sorting a List<string>.
+            // The canonical order is: Signature(0) < FileType < JP2Header < Codestream.
+            // We validate each consecutive pair that is actually present.
 
-            for (int i = 0; i < Math.Min(expectedOrder.Count, actualOrder.Count); i++)
+            // Signature must be first (position 0)
+            if (structure.HasSignatureBox && structure.SignatureBoxPosition != 0)
             {
-                if (expectedOrder[i] != actualOrder[i])
-                {
-                    warnings.Add($"Unexpected box ordering: expected {expectedOrder[i]} at position {i}, found {actualOrder[i]}");
-                }
+                warnings.Add($"Unexpected box ordering: expected Signature at position 0, found it at byte offset {structure.SignatureBoxPosition}");
+            }
+
+            // FileType must come after Signature
+            if (structure.HasSignatureBox && structure.HasFileTypeBox &&
+                structure.FileTypeBoxPosition < structure.SignatureBoxPosition)
+            {
+                warnings.Add($"Unexpected box ordering: expected FileType after Signature");
+            }
+
+            // JP2Header must come after FileType (when both present)
+            if (structure.HasFileTypeBox && structure.HasJP2HeaderBox &&
+                structure.JP2HeaderBoxPosition < structure.FileTypeBoxPosition)
+            {
+                warnings.Add($"Unexpected box ordering: expected JP2Header after FileType");
+            }
+
+            // Codestream must come after JP2Header (when both present)
+            if (structure.HasJP2HeaderBox && structure.HasContiguousCodestreamBox &&
+                structure.ContiguousCodestreamBoxPosition < structure.JP2HeaderBoxPosition)
+            {
+                warnings.Add($"Unexpected box ordering: expected Codestream after JP2Header");
             }
 
             // Check for multiple JP2 Header boxes

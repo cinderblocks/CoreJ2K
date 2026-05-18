@@ -230,7 +230,7 @@ namespace CoreJ2K.j2k.quantization.dequantizer
 
             // initializations
             var cttype = 0;
-            if (((int)cts.getTileDef(tIdx)) == InvCompTransf.NONE)
+            if (cts.GetIntTileDef(tIdx) == InvCompTransf.NONE)
                 cttype = InvCompTransf.NONE;
             else
             {
@@ -291,7 +291,7 @@ namespace CoreJ2K.j2k.quantization.dequantizer
             tIdx = TileIdx; // index of the current tile
 
             // initializations
-            var cttype = ((int)cts.getTileDef(tIdx));
+            var cttype = cts.GetIntTileDef(tIdx);
             switch (cttype)
             {
 

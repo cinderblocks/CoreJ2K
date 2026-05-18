@@ -202,6 +202,13 @@ namespace CoreJ2K.j2k.codestream.reader
         /// <summary>True if truncation mode is used. False if it is parsing mode </summary>
         private readonly bool isTruncMode;
 
+        /// <summary>Cached decomposition levels from the previous tile, used to skip
+        /// scaffold reallocation when the tile geometry is identical.</summary>
+        private int[] _prevMdl;
+
+        /// <summary>Cached numPrec grid from the previous tile for geometry comparison.</summary>
+        private Coord[][] _prevNumPrec;
+
         /// <summary>PLT (Packet Length) marker segment data for fast packet access</summary>
         private readonly PacketLengthsData pltData;
 
@@ -276,9 +283,9 @@ namespace CoreJ2K.j2k.codestream.reader
             this.pph = pph;
             this.pphbais = pphbais;
 
-            sopUsed = ((bool)decSpec.sops.getTileDef(tIdx));
+            sopUsed = decSpec.sops.GetBoolTileDef(tIdx);
             pktIdx = 0;
-            ephUsed = ((bool)decSpec.ephs.getTileDef(tIdx));
+            ephUsed = decSpec.ephs.GetBoolTileDef(tIdx);
 
             currentPacketIndex = 0;
 
@@ -287,12 +294,39 @@ namespace CoreJ2K.j2k.codestream.reader
                               pltData.HasPacketLengths &&
                               pltData.GetPacketCount(tIdx) > 0);
 
-            cbI = new CBlkInfo[nc][][][][];
-            lblock = new int[nc][][][][];
-            ttIncl = new TagTreeDecoder[nc][][][];
-            ttMaxBP = new TagTreeDecoder[nc][][][];
-            numPrec = new Coord[nc][];
-            ppinfo = new PrecInfo[nc][][];
+            // Check whether the tile geometry matches the previous tile so we can
+            // reuse the TagTreeDecoder scaffold instead of reallocating it.
+            bool sameGeometry = (ttIncl != null) && (_prevMdl != null) &&
+                                 (numPrec != null) && (_prevNumPrec != null) &&
+                                 (_prevMdl.Length == nc);
+            if (sameGeometry)
+            {
+                for (var c2 = 0; c2 < nc && sameGeometry; c2++)
+                {
+                    if (_prevMdl[c2] != mdl[c2] ||
+                        _prevNumPrec[c2].Length != mdl[c2] + 1)
+                    {
+                        sameGeometry = false;
+                        break;
+                    }
+                    for (var r2 = 0; r2 <= mdl[c2] && sameGeometry; r2++)
+                    {
+                        if (_prevNumPrec[c2][r2].x != numPrec[c2][r2].x ||
+                            _prevNumPrec[c2][r2].y != numPrec[c2][r2].y)
+                            sameGeometry = false;
+                    }
+                }
+            }
+
+            if (!sameGeometry)
+            {
+                cbI = new CBlkInfo[nc][][][][];
+                lblock = new int[nc][][][][];
+                ttIncl = new TagTreeDecoder[nc][][][];
+                ttMaxBP = new TagTreeDecoder[nc][][][];
+                numPrec = new Coord[nc][];
+                ppinfo = new PrecInfo[nc][][];
+            }
 
             // Used to compute the maximum number of precincts for each resolution
             // level
@@ -310,12 +344,15 @@ namespace CoreJ2K.j2k.codestream.reader
 
             for (var c = 0; c < nc; c++)
             {
-                cbI[c] = new CBlkInfo[mdl[c] + 1][][][];
-                lblock[c] = new int[mdl[c] + 1][][][];
-                ttIncl[c] = new TagTreeDecoder[mdl[c] + 1][][];
-                ttMaxBP[c] = new TagTreeDecoder[mdl[c] + 1][][];
-                numPrec[c] = new Coord[mdl[c] + 1];
-                ppinfo[c] = new PrecInfo[mdl[c] + 1][];
+                if (!sameGeometry)
+                {
+                    cbI[c] = new CBlkInfo[mdl[c] + 1][][][];
+                    lblock[c] = new int[mdl[c] + 1][][][];
+                    ttIncl[c] = new TagTreeDecoder[mdl[c] + 1][][];
+                    ttMaxBP[c] = new TagTreeDecoder[mdl[c] + 1][][];
+                    numPrec[c] = new Coord[mdl[c] + 1];
+                    ppinfo[c] = new PrecInfo[mdl[c] + 1][];
+                }
 
                 // Get the tile-component coordinates on the reference grid
                 tcx0 = src.getResULX(c, mdl[c]);
@@ -325,7 +362,6 @@ namespace CoreJ2K.j2k.codestream.reader
 
                 for (var r = 0; r <= mdl[c]; r++)
                 {
-
                     // Tile's coordinates in the reduced resolution image domain
                     //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                     trx0 = (int)Math.Ceiling(tcx0 / (double)(1 << (mdl[c] - r)));
@@ -340,7 +376,10 @@ namespace CoreJ2K.j2k.codestream.reader
                     // resolution level taking into account tile specific options.
                     double twoppx = getPPX(tIdx, c, r);
                     double twoppy = getPPY(tIdx, c, r);
-                    numPrec[c][r] = new Coord();
+                    if (!sameGeometry)
+                    {
+                        numPrec[c][r] = new Coord();
+                    }
                     if (trx1 > trx0)
                     {
                         //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
@@ -366,20 +405,19 @@ namespace CoreJ2K.j2k.codestream.reader
 
                     var maxPrec = numPrec[c][r].x * numPrec[c][r].y;
 
-                    ttIncl[c][r] = new TagTreeDecoder[maxPrec][];
-                    for (var i = 0; i < maxPrec; i++)
+                    if (!sameGeometry)
                     {
-                        ttIncl[c][r][i] = new TagTreeDecoder[maxs + 1];
+                        ttIncl[c][r] = new TagTreeDecoder[maxPrec][];
+                        for (var i = 0; i < maxPrec; i++)
+                            ttIncl[c][r][i] = new TagTreeDecoder[maxs + 1];
+                        ttMaxBP[c][r] = new TagTreeDecoder[maxPrec][];
+                        for (var i2 = 0; i2 < maxPrec; i2++)
+                            ttMaxBP[c][r][i2] = new TagTreeDecoder[maxs + 1];
+                        lblock[c][r] = new int[maxs + 1][][];
+                        ppinfo[c][r] = new PrecInfo[maxPrec];
+                        cbI[c][r] = new CBlkInfo[maxs + 1][][];
                     }
-                    ttMaxBP[c][r] = new TagTreeDecoder[maxPrec][];
-                    for (var i2 = 0; i2 < maxPrec; i2++)
-                    {
-                        ttMaxBP[c][r][i2] = new TagTreeDecoder[maxs + 1];
-                    }
-                    cbI[c][r] = new CBlkInfo[maxs + 1][][];
-                    lblock[c][r] = new int[maxs + 1][][];
 
-                    ppinfo[c][r] = new PrecInfo[maxPrec];
                     fillPrecInfo(c, r, mdl[c]);
 
                     root = src.getSynSubbandTree(tIdx, c);
@@ -388,15 +426,32 @@ namespace CoreJ2K.j2k.codestream.reader
                         sb = (SubbandSyn)root.getSubbandByIdx(r, s);
                         nBlk = sb.numCb;
 
-                        cbI[c][r][s] = new CBlkInfo[nBlk.y][];
-                        for (var i3 = 0; i3 < nBlk.y; i3++)
+                        if (!sameGeometry)
                         {
-                            cbI[c][r][s][i3] = new CBlkInfo[nBlk.x];
+                            cbI[c][r][s] = new CBlkInfo[nBlk.y][];
+                            for (var i3 = 0; i3 < nBlk.y; i3++)
+                            {
+                                cbI[c][r][s][i3] = new CBlkInfo[nBlk.x];
+                            }
+                            lblock[c][r][s] = new int[nBlk.y][];
+                            for (var i4 = 0; i4 < nBlk.y; i4++)
+                            {
+                                lblock[c][r][s][i4] = new int[nBlk.x];
+                            }
                         }
-                        lblock[c][r][s] = new int[nBlk.y][];
-                        for (var i4 = 0; i4 < nBlk.y; i4++)
+                        else
                         {
-                            lblock[c][r][s][i4] = new int[nBlk.x];
+                            // Reuse scaffold: reset existing CBlkInfo objects in-place
+                            // so readPkt can reuse them without allocating new instances.
+                            for (var i3 = 0; i3 < nBlk.y; i3++)
+                            {
+                                var row = cbI[c][r][s][i3];
+                                if (row == null) continue;
+                                for (var i4 = 0; i4 < nBlk.x; i4++)
+                                {
+                                    row[i4]?.Reset(nl);
+                                }
+                            }
                         }
 
                         for (var i = nBlk.y - 1; i >= 0; i--)
@@ -407,499 +462,292 @@ namespace CoreJ2K.j2k.codestream.reader
                 } // End loop on resolution levels
             } // End loop on components
 
+            // Save geometry for next tile comparison
+            if (_prevMdl == null || _prevMdl.Length != nc)
+                _prevMdl = new int[nc];
+            mdl.CopyTo(_prevMdl, 0);
+            _prevNumPrec = numPrec;
+
             return cbI;
         }
 
+        /// <summary>Resets an existing TagTreeDecoder in-place or creates a new one if the
+        /// slot is null. Avoids allocation when dimensions are unchanged.</summary>
+        private static void ResetOrCreate(ref TagTreeDecoder slot, int h, int w)
+        {
+            if (slot == null)
+                slot = new TagTreeDecoder(h, w);
+            else
+                slot.Reset(h, w);
+        }
+
+        /// <summary>Integer floor division for positive divisor.</summary>
+        private static int FloorDiv(int a, int b) => a / b - (a % b != 0 && (a ^ b) < 0 ? 1 : 0);
+
+        /// <summary>Integer ceiling division for positive divisor.</summary>
+        private static int CeilDiv(int a, int b) => a / b + (a % b != 0 && (a ^ b) > 0 ? 1 : 0);
+
         /// <summary> Retrieves precincts and code-blocks coordinates in the given resolution,
-        /// level and component. Finishes TagTreeEncoder initialization as well.
-        /// 
-        /// </summary>
-        /// <param name="c">Component index.
-        /// 
-        /// </param>
-        /// <param name="r">Resolution level index.
-        /// 
-        /// </param>
-        /// <param name="mdl">Number of decomposition level in component <tt>c</tt>.
-        /// 
-        /// </param>
+        /// level and component. Finishes TagTreeEncoder initialization as well.</summary>
+        /// <param name="c">Component index.</param>
+        /// <param name="r">Resolution level index.</param>
+        /// <param name="mdl">Number of decomposition level in component <tt>c</tt>.</param>
         private void fillPrecInfo(int c, int r, int mdl)
         {
             if (ppinfo[c][r].Length == 0)
-                return; // No precinct in this
-                        // resolution level
+                return;
 
             var tileI = src.getTile(null);
             var nTiles = src.getNumTiles(null);
 
-            int xsiz, ysiz, x0siz, y0siz;
-            int xt0siz, yt0siz;
-            int xtsiz, ytsiz;
-
-            xt0siz = src.TilePartULX;
-            yt0siz = src.TilePartULY;
-            xtsiz = src.NomTileWidth;
-            ytsiz = src.NomTileHeight;
-            x0siz = hd.ImgULX;
-            y0siz = hd.ImgULY;
-            xsiz = hd.ImgWidth;
-            ysiz = hd.ImgHeight;
+            int xt0siz = src.TilePartULX;
+            int yt0siz = src.TilePartULY;
+            int xtsiz  = src.NomTileWidth;
+            int ytsiz  = src.NomTileHeight;
+            int x0siz  = hd.ImgULX;
+            int y0siz  = hd.ImgULY;
+            int xsiz   = hd.ImgWidth;
+            int ysiz   = hd.ImgHeight;
 
             var tx0 = (tileI.x == 0) ? x0siz : xt0siz + tileI.x * xtsiz;
             var ty0 = (tileI.y == 0) ? y0siz : yt0siz + tileI.y * ytsiz;
             var tx1 = (tileI.x != nTiles.x - 1) ? xt0siz + (tileI.x + 1) * xtsiz : xsiz;
             var ty1 = (tileI.y != nTiles.y - 1) ? yt0siz + (tileI.y + 1) * ytsiz : ysiz;
 
-            var xrsiz = hd.getCompSubsX(c);
-            var yrsiz = hd.getCompSubsY(c);
+            int xrsiz = hd.getCompSubsX(c);
+            int yrsiz = hd.getCompSubsY(c);
 
-            var tcx0 = src.getResULX(c, mdl);
-            var tcy0 = src.getResULY(c, mdl);
-            var tcx1 = tcx0 + src.getTileCompWidth(tIdx, c, mdl);
-            var tcy1 = tcy0 + src.getTileCompHeight(tIdx, c, mdl);
+            int tcx0 = src.getResULX(c, mdl);
+            int tcy0 = src.getResULY(c, mdl);
+            int tcx1 = tcx0 + src.getTileCompWidth(tIdx, c, mdl);
+            int tcy1 = tcy0 + src.getTileCompHeight(tIdx, c, mdl);
 
-            var ndl = mdl - r;
-            //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
-            var trx0 = (int)Math.Ceiling(tcx0 / (double)(1 << ndl));
-            //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
-            var try0 = (int)Math.Ceiling(tcy0 / (double)(1 << ndl));
-            //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
-            var trx1 = (int)Math.Ceiling(tcx1 / (double)(1 << ndl));
-            //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
-            var try1 = (int)Math.Ceiling(tcy1 / (double)(1 << ndl));
+            int ndl  = mdl - r;
+            int shift = 1 << ndl;
+            int trx0 = CeilDiv(tcx0, shift);
+            int try0 = CeilDiv(tcy0, shift);
+            int trx1 = CeilDiv(tcx1, shift);
+            int try1 = CeilDiv(tcy1, shift);
 
-            var cb0x = src.CbULX;
-            var cb0y = src.CbULY;
+            int cb0x = src.CbULX;
+            int cb0y = src.CbULY;
 
-            double twoppx = getPPX(tIdx, c, r);
-            double twoppy = getPPY(tIdx, c, r);
-            //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
-            var twoppx2 = (int)(twoppx / 2);
-            //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
-            var twoppy2 = (int)(twoppy / 2);
+            // getPPX/getPPY always return powers of two
+            int twoppx  = getPPX(tIdx, c, r);
+            int twoppy  = getPPY(tIdx, c, r);
+            int twoppx2 = twoppx >> 1;
+            int twoppy2 = twoppy >> 1;
 
-            // Precincts are located at (cb0x+i*twoppx,cb0y+j*twoppy)
-            // Valid precincts are those which intersect with the current
-            // resolution level
-            var maxPrec = ppinfo[c][r].Length;
-            var nPrec = 0;
+            int maxPrec = ppinfo[c][r].Length;
+            int nPrec   = 0;
 
-            //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
-            var istart = (int)Math.Floor((try0 - cb0y) / twoppy);
-            //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
-            var iend = (int)Math.Floor((try1 - 1 - cb0y) / twoppy);
-            //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
-            var jstart = (int)Math.Floor((trx0 - cb0x) / twoppx);
-            //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
-            var jend = (int)Math.Floor((trx1 - 1 - cb0x) / twoppx);
+            int istart = FloorDiv(try0 - cb0y, twoppy);
+            int iend   = FloorDiv(try1 - 1 - cb0y, twoppy);
+            int jstart = FloorDiv(trx0 - cb0x, twoppx);
+            int jend   = FloorDiv(trx1 - 1 - cb0x, twoppx);
+
+            int prg_w = twoppx << ndl;
+            int prg_h = twoppy << ndl;
 
             int acb0x, acb0y;
-
-            var root = src.getSynSubbandTree(tIdx, c);
             SubbandSyn sb = null;
+            var root = src.getSynSubbandTree(tIdx, c);
 
-            int p0x, p0y, p1x, p1y; // Precinct projection in subband
-            int s0x, s0y, s1x, s1y; // Active subband portion
+            int p0x, p0y, p1x, p1y;
+            int s0x, s0y, s1x, s1y;
             int cw, ch;
             int kstart, kend, lstart, lend, k0, l0;
             int prg_ulx, prg_uly;
-            //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
-            var prg_w = (int)twoppx << ndl;
-            //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
-            var prg_h = (int)twoppy << ndl;
             int tmp1, tmp2;
-
             CBlkCoordInfo cb;
 
             for (var i = istart; i <= iend; i++)
             {
-                // Vertical precincts
                 for (var j = jstart; j <= jend; j++, nPrec++)
                 {
-                    // Horizontal precincts
-                    //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
-                    if (j == jstart && (trx0 - cb0x) % (xrsiz * ((int)twoppx)) != 0)
-                    {
-                        prg_ulx = tx0;
-                    }
-                    else
-                    {
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
-                        prg_ulx = cb0x + j * xrsiz * ((int)twoppx << ndl);
-                    }
-                    //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
-                    if (i == istart && (try0 - cb0y) % (yrsiz * ((int)twoppy)) != 0)
-                    {
-                        prg_uly = ty0;
-                    }
-                    else
-                    {
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
-                        prg_uly = cb0y + i * yrsiz * ((int)twoppy << ndl);
-                    }
+                    prg_ulx = (j == jstart && (trx0 - cb0x) % (xrsiz * twoppx) != 0)
+                        ? tx0
+                        : cb0x + j * xrsiz * (twoppx << ndl);
+                    prg_uly = (i == istart && (try0 - cb0y) % (yrsiz * twoppy) != 0)
+                        ? ty0
+                        : cb0y + i * yrsiz * (twoppy << ndl);
 
-                    //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
-                    ppinfo[c][r][nPrec] = new PrecInfo(r, (int)(cb0x + j * twoppx), (int)(cb0y + i * twoppy), (int)twoppx, (int)twoppy, prg_ulx, prg_uly, prg_w, prg_h);
+                    // Reuse or create the PrecInfo slot
+                    if (ppinfo[c][r][nPrec] == null)
+                        ppinfo[c][r][nPrec] = new PrecInfo(r, cb0x + j * twoppx, cb0y + i * twoppy, twoppx, twoppy, prg_ulx, prg_uly, prg_w, prg_h);
+                    else
+                        ppinfo[c][r][nPrec].Reset(r, cb0x + j * twoppx, cb0y + i * twoppy, twoppx, twoppy, prg_ulx, prg_uly, prg_w, prg_h);
 
                     if (r == 0)
                     {
-                        // LL subband
                         acb0x = cb0x;
                         acb0y = cb0y;
 
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
-                        p0x = acb0x + j * (int)twoppx;
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
-                        p1x = p0x + (int)twoppx;
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
-                        p0y = acb0y + i * (int)twoppy;
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
-                        p1y = p0y + (int)twoppy;
+                        p0x = acb0x + j * twoppx;
+                        p1x = p0x + twoppx;
+                        p0y = acb0y + i * twoppy;
+                        p1y = p0y + twoppy;
 
-                        sb = (SubbandSyn)root.getSubbandByIdx(0, 0);
+                        sb  = (SubbandSyn)root.getSubbandByIdx(0, 0);
                         s0x = (p0x < sb.ulcx) ? sb.ulcx : p0x;
                         s1x = (p1x > sb.ulcx + sb.w) ? sb.ulcx + sb.w : p1x;
                         s0y = (p0y < sb.ulcy) ? sb.ulcy : p0y;
                         s1y = (p1y > sb.ulcy + sb.h) ? sb.ulcy + sb.h : p1y;
 
-                        // Code-blocks are located at (acb0x+k*cw,acb0y+l*ch)
-                        cw = sb.nomCBlkW;
-                        ch = sb.nomCBlkH;
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
-                        k0 = (int)Math.Floor((sb.ulcy - acb0y) / (double)ch);
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
-                        kstart = (int)Math.Floor((s0y - acb0y) / (double)ch);
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
-                        kend = (int)Math.Floor((s1y - 1 - acb0y) / (double)ch);
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
-                        l0 = (int)Math.Floor((sb.ulcx - acb0x) / (double)cw);
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
-                        lstart = (int)Math.Floor((s0x - acb0x) / (double)cw);
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
-                        lend = (int)Math.Floor((s1x - 1 - acb0x) / (double)cw);
+                        cw  = sb.nomCBlkW;
+                        ch  = sb.nomCBlkH;
+                        k0     = FloorDiv(sb.ulcy - acb0y, ch);
+                        kstart = FloorDiv(s0y - acb0y, ch);
+                        kend   = FloorDiv(s1y - 1 - acb0y, ch);
+                        l0     = FloorDiv(sb.ulcx - acb0x, cw);
+                        lstart = FloorDiv(s0x - acb0x, cw);
+                        lend   = FloorDiv(s1x - 1 - acb0x, cw);
 
                         if (s1x - s0x <= 0 || s1y - s0y <= 0)
                         {
                             ppinfo[c][r][nPrec].nblk[0] = 0;
-                            ttIncl[c][r][nPrec][0] = new TagTreeDecoder(0, 0);
-                            ttMaxBP[c][r][nPrec][0] = new TagTreeDecoder(0, 0);
+                            ResetOrCreate(ref ttIncl[c][r][nPrec][0], 0, 0);
+                            ResetOrCreate(ref ttMaxBP[c][r][nPrec][0], 0, 0);
                         }
                         else
                         {
-                            ttIncl[c][r][nPrec][0] = new TagTreeDecoder(kend - kstart + 1, lend - lstart + 1);
-                            ttMaxBP[c][r][nPrec][0] = new TagTreeDecoder(kend - kstart + 1, lend - lstart + 1);
-                            var tmpArray = new CBlkCoordInfo[kend - kstart + 1][];
-                            for (var i2 = 0; i2 < kend - kstart + 1; i2++)
+                            int kRows = kend - kstart + 1;
+                            int lCols = lend - lstart + 1;
+                            ResetOrCreate(ref ttIncl[c][r][nPrec][0], kRows, lCols);
+                            ResetOrCreate(ref ttMaxBP[c][r][nPrec][0], kRows, lCols);
+                            ppinfo[c][r][nPrec].nblk[0] = kRows * lCols;
+
+                            var existing0 = ppinfo[c][r][nPrec].cblk[0];
+                            if (existing0 == null || existing0.Length != kRows || (kRows > 0 && existing0[0]?.Length != lCols))
                             {
-                                tmpArray[i2] = new CBlkCoordInfo[lend - lstart + 1];
+                                existing0 = new CBlkCoordInfo[kRows][];
+                                for (var i2 = 0; i2 < kRows; i2++)
+                                    existing0[i2] = new CBlkCoordInfo[lCols];
+                                ppinfo[c][r][nPrec].cblk[0] = existing0;
                             }
-                            ppinfo[c][r][nPrec].cblk[0] = tmpArray;
-                            ppinfo[c][r][nPrec].nblk[0] = (kend - kstart + 1) * (lend - lstart + 1);
 
                             for (var k = kstart; k <= kend; k++)
                             {
-                                // Vertical cblks
                                 for (var l = lstart; l <= lend; l++)
                                 {
-                                    // Horiz. cblks
-                                    cb = new CBlkCoordInfo(k - k0, l - l0);
-                                    if (l == l0)
-                                    {
-                                        cb.ulx = sb.ulx;
-                                    }
+                                    var slot = existing0[k - kstart][l - lstart];
+                                    if (slot == null)
+                                        slot = existing0[k - kstart][l - lstart] = new CBlkCoordInfo(k - k0, l - l0);
                                     else
-                                    {
-                                        cb.ulx = sb.ulx + l * cw - (sb.ulcx - acb0x);
-                                    }
-                                    if (k == k0)
-                                    {
-                                        cb.uly = sb.uly;
-                                    }
-                                    else
-                                    {
-                                        cb.uly = sb.uly + k * ch - (sb.ulcy - acb0y);
-                                    }
-                                    tmp1 = acb0x + l * cw;
-                                    tmp1 = (tmp1 > sb.ulcx) ? tmp1 : sb.ulcx;
-                                    tmp2 = acb0x + (l + 1) * cw;
-                                    tmp2 = (tmp2 > sb.ulcx + sb.w) ? sb.ulcx + sb.w : tmp2;
-                                    cb.w = tmp2 - tmp1;
-                                    tmp1 = acb0y + k * ch;
-                                    tmp1 = (tmp1 > sb.ulcy) ? tmp1 : sb.ulcy;
-                                    tmp2 = acb0y + (k + 1) * ch;
-                                    tmp2 = (tmp2 > sb.ulcy + sb.h) ? sb.ulcy + sb.h : tmp2;
-                                    cb.h = tmp2 - tmp1;
-                                    ppinfo[c][r][nPrec].cblk[0][k - kstart][l - lstart] = cb;
-                                } // Horizontal code-blocks
-                            } // Vertical code-blocks
+                                        slot.Reset(k - k0, l - l0);
+
+                                    slot.ulx = (l == l0) ? sb.ulx : sb.ulx + l * cw - (sb.ulcx - acb0x);
+                                    slot.uly = (k == k0) ? sb.uly : sb.uly + k * ch - (sb.ulcy - acb0y);
+
+                                    tmp1 = acb0x + l * cw;       tmp1 = (tmp1 > sb.ulcx) ? tmp1 : sb.ulcx;
+                                    tmp2 = acb0x + (l + 1) * cw; tmp2 = (tmp2 > sb.ulcx + sb.w) ? sb.ulcx + sb.w : tmp2;
+                                    slot.w = tmp2 - tmp1;
+                                    tmp1 = acb0y + k * ch;       tmp1 = (tmp1 > sb.ulcy) ? tmp1 : sb.ulcy;
+                                    tmp2 = acb0y + (k + 1) * ch; tmp2 = (tmp2 > sb.ulcy + sb.h) ? sb.ulcy + sb.h : tmp2;
+                                    slot.h = tmp2 - tmp1;
+                                }
+                            }
                         }
                     }
                     else
                     {
-                        // HL, LH and HH subbands
-                        // HL subband
-                        acb0x = 0;
-                        acb0y = cb0y;
-
-                        p0x = acb0x + j * twoppx2;
-                        p1x = p0x + twoppx2;
-                        p0y = acb0y + i * twoppy2;
-                        p1y = p0y + twoppy2;
-
-                        sb = (SubbandSyn)root.getSubbandByIdx(r, 1);
+                        // HL subband (s=1)
+                        acb0x = 0; acb0y = cb0y;
+                        p0x = acb0x + j * twoppx2; p1x = p0x + twoppx2;
+                        p0y = acb0y + i * twoppy2; p1y = p0y + twoppy2;
+                        sb  = (SubbandSyn)root.getSubbandByIdx(r, 1);
                         s0x = (p0x < sb.ulcx) ? sb.ulcx : p0x;
                         s1x = (p1x > sb.ulcx + sb.w) ? sb.ulcx + sb.w : p1x;
                         s0y = (p0y < sb.ulcy) ? sb.ulcy : p0y;
                         s1y = (p1y > sb.ulcy + sb.h) ? sb.ulcy + sb.h : p1y;
+                        cw = sb.nomCBlkW; ch = sb.nomCBlkH;
+                        k0 = FloorDiv(sb.ulcy - acb0y, ch); kstart = FloorDiv(s0y - acb0y, ch); kend = FloorDiv(s1y - 1 - acb0y, ch);
+                        l0 = FloorDiv(sb.ulcx - acb0x, cw); lstart = FloorDiv(s0x - acb0x, cw); lend = FloorDiv(s1x - 1 - acb0x, cw);
+                        FillSubband(c, r, nPrec, 1, sb, acb0x, acb0y, k0, l0, kstart, kend, lstart, lend, s0x, s1x, s0y, s1y);
 
-                        // Code-blocks are located at (acb0x+k*cw,acb0y+l*ch)
-                        cw = sb.nomCBlkW;
-                        ch = sb.nomCBlkH;
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
-                        k0 = (int)Math.Floor((sb.ulcy - acb0y) / (double)ch);
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
-                        kstart = (int)Math.Floor((s0y - acb0y) / (double)ch);
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
-                        kend = (int)Math.Floor((s1y - 1 - acb0y) / (double)ch);
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
-                        l0 = (int)Math.Floor((sb.ulcx - acb0x) / (double)cw);
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
-                        lstart = (int)Math.Floor((s0x - acb0x) / (double)cw);
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
-                        lend = (int)Math.Floor((s1x - 1 - acb0x) / (double)cw);
-
-                        if (s1x - s0x <= 0 || s1y - s0y <= 0)
-                        {
-                            ppinfo[c][r][nPrec].nblk[1] = 0;
-                            ttIncl[c][r][nPrec][1] = new TagTreeDecoder(0, 0);
-                            ttMaxBP[c][r][nPrec][1] = new TagTreeDecoder(0, 0);
-                        }
-                        else
-                        {
-                            ttIncl[c][r][nPrec][1] = new TagTreeDecoder(kend - kstart + 1, lend - lstart + 1);
-                            ttMaxBP[c][r][nPrec][1] = new TagTreeDecoder(kend - kstart + 1, lend - lstart + 1);
-                            var tmpArray2 = new CBlkCoordInfo[kend - kstart + 1][];
-                            for (var i3 = 0; i3 < kend - kstart + 1; i3++)
-                            {
-                                tmpArray2[i3] = new CBlkCoordInfo[lend - lstart + 1];
-                            }
-                            ppinfo[c][r][nPrec].cblk[1] = tmpArray2;
-                            ppinfo[c][r][nPrec].nblk[1] = (kend - kstart + 1) * (lend - lstart + 1);
-
-                            for (var k = kstart; k <= kend; k++)
-                            {
-                                // Vertical cblks
-                                for (var l = lstart; l <= lend; l++)
-                                {
-                                    // Horiz. cblks
-                                    cb = new CBlkCoordInfo(k - k0, l - l0);
-                                    if (l == l0)
-                                    {
-                                        cb.ulx = sb.ulx;
-                                    }
-                                    else
-                                    {
-                                        cb.ulx = sb.ulx + l * cw - (sb.ulcx - acb0x);
-                                    }
-                                    if (k == k0)
-                                    {
-                                        cb.uly = sb.uly;
-                                    }
-                                    else
-                                    {
-                                        cb.uly = sb.uly + k * ch - (sb.ulcy - acb0y);
-                                    }
-                                    tmp1 = acb0x + l * cw;
-                                    tmp1 = (tmp1 > sb.ulcx) ? tmp1 : sb.ulcx;
-                                    tmp2 = acb0x + (l + 1) * cw;
-                                    tmp2 = (tmp2 > sb.ulcx + sb.w) ? sb.ulcx + sb.w : tmp2;
-                                    cb.w = tmp2 - tmp1;
-                                    tmp1 = acb0y + k * ch;
-                                    tmp1 = (tmp1 > sb.ulcy) ? tmp1 : sb.ulcy;
-                                    tmp2 = acb0y + (k + 1) * ch;
-                                    tmp2 = (tmp2 > sb.ulcy + sb.h) ? sb.ulcy + sb.h : tmp2;
-                                    cb.h = tmp2 - tmp1;
-                                    ppinfo[c][r][nPrec].cblk[1][k - kstart][l - lstart] = cb;
-                                } // Horizontal code-blocks
-                            } // Vertical code-blocks
-                        }
-
-                        // LH subband
-                        acb0x = cb0x;
-                        acb0y = 0;
-
-                        p0x = acb0x + j * twoppx2;
-                        p1x = p0x + twoppx2;
-                        p0y = acb0y + i * twoppy2;
-                        p1y = p0y + twoppy2;
-
-                        sb = (SubbandSyn)root.getSubbandByIdx(r, 2);
+                        // LH subband (s=2)
+                        acb0x = cb0x; acb0y = 0;
+                        p0x = acb0x + j * twoppx2; p1x = p0x + twoppx2;
+                        p0y = acb0y + i * twoppy2; p1y = p0y + twoppy2;
+                        sb  = (SubbandSyn)root.getSubbandByIdx(r, 2);
                         s0x = (p0x < sb.ulcx) ? sb.ulcx : p0x;
                         s1x = (p1x > sb.ulcx + sb.w) ? sb.ulcx + sb.w : p1x;
                         s0y = (p0y < sb.ulcy) ? sb.ulcy : p0y;
                         s1y = (p1y > sb.ulcy + sb.h) ? sb.ulcy + sb.h : p1y;
+                        cw = sb.nomCBlkW; ch = sb.nomCBlkH;
+                        k0 = FloorDiv(sb.ulcy - acb0y, ch); kstart = FloorDiv(s0y - acb0y, ch); kend = FloorDiv(s1y - 1 - acb0y, ch);
+                        l0 = FloorDiv(sb.ulcx - acb0x, cw); lstart = FloorDiv(s0x - acb0x, cw); lend = FloorDiv(s1x - 1 - acb0x, cw);
+                        FillSubband(c, r, nPrec, 2, sb, acb0x, acb0y, k0, l0, kstart, kend, lstart, lend, s0x, s1x, s0y, s1y);
 
-                        // Code-blocks are located at (acb0x+k*cw,acb0y+l*ch)
-                        cw = sb.nomCBlkW;
-                        ch = sb.nomCBlkH;
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
-                        k0 = (int)Math.Floor((sb.ulcy - acb0y) / (double)ch);
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
-                        kstart = (int)Math.Floor((s0y - acb0y) / (double)ch);
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
-                        kend = (int)Math.Floor((s1y - 1 - acb0y) / (double)ch);
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
-                        l0 = (int)Math.Floor((sb.ulcx - acb0x) / (double)cw);
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
-                        lstart = (int)Math.Floor((s0x - acb0x) / (double)cw);
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
-                        lend = (int)Math.Floor((s1x - 1 - acb0x) / (double)cw);
-
-                        if (s1x - s0x <= 0 || s1y - s0y <= 0)
-                        {
-                            ppinfo[c][r][nPrec].nblk[2] = 0;
-                            ttIncl[c][r][nPrec][2] = new TagTreeDecoder(0, 0);
-                            ttMaxBP[c][r][nPrec][2] = new TagTreeDecoder(0, 0);
-                        }
-                        else
-                        {
-                            ttIncl[c][r][nPrec][2] = new TagTreeDecoder(kend - kstart + 1, lend - lstart + 1);
-                            ttMaxBP[c][r][nPrec][2] = new TagTreeDecoder(kend - kstart + 1, lend - lstart + 1);
-                            var tmpArray3 = new CBlkCoordInfo[kend - kstart + 1][];
-                            for (var i4 = 0; i4 < kend - kstart + 1; i4++)
-                            {
-                                tmpArray3[i4] = new CBlkCoordInfo[lend - lstart + 1];
-                            }
-                            ppinfo[c][r][nPrec].cblk[2] = tmpArray3;
-                            ppinfo[c][r][nPrec].nblk[2] = (kend - kstart + 1) * (lend - lstart + 1);
-
-                            for (var k = kstart; k <= kend; k++)
-                            {
-                                // Vertical cblks
-                                for (var l = lstart; l <= lend; l++)
-                                {
-                                    // Horiz cblks
-                                    cb = new CBlkCoordInfo(k - k0, l - l0);
-                                    if (l == l0)
-                                    {
-                                        cb.ulx = sb.ulx;
-                                    }
-                                    else
-                                    {
-                                        cb.ulx = sb.ulx + l * cw - (sb.ulcx - acb0x);
-                                    }
-                                    if (k == k0)
-                                    {
-                                        cb.uly = sb.uly;
-                                    }
-                                    else
-                                    {
-                                        cb.uly = sb.uly + k * ch - (sb.ulcy - acb0y);
-                                    }
-                                    tmp1 = acb0x + l * cw;
-                                    tmp1 = (tmp1 > sb.ulcx) ? tmp1 : sb.ulcx;
-                                    tmp2 = acb0x + (l + 1) * cw;
-                                    tmp2 = (tmp2 > sb.ulcx + sb.w) ? sb.ulcx + sb.w : tmp2;
-                                    cb.w = tmp2 - tmp1;
-                                    tmp1 = acb0y + k * ch;
-                                    tmp1 = (tmp1 > sb.ulcy) ? tmp1 : sb.ulcy;
-                                    tmp2 = acb0y + (k + 1) * ch;
-                                    tmp2 = (tmp2 > sb.ulcy + sb.h) ? sb.ulcy + sb.h : tmp2;
-                                    cb.h = tmp2 - tmp1;
-                                    ppinfo[c][r][nPrec].cblk[2][k - kstart][l - lstart] = cb;
-                                } // Horizontal code-blocks
-                            } // Vertical code-blocks
-                        }
-
-                        // HH subband
-                        acb0x = 0;
-                        acb0y = 0;
-
-                        p0x = acb0x + j * twoppx2;
-                        p1x = p0x + twoppx2;
-                        p0y = acb0y + i * twoppy2;
-                        p1y = p0y + twoppy2;
-
-                        sb = (SubbandSyn)root.getSubbandByIdx(r, 3);
+                        // HH subband (s=3)
+                        acb0x = 0; acb0y = 0;
+                        p0x = acb0x + j * twoppx2; p1x = p0x + twoppx2;
+                        p0y = acb0y + i * twoppy2; p1y = p0y + twoppy2;
+                        sb  = (SubbandSyn)root.getSubbandByIdx(r, 3);
                         s0x = (p0x < sb.ulcx) ? sb.ulcx : p0x;
                         s1x = (p1x > sb.ulcx + sb.w) ? sb.ulcx + sb.w : p1x;
                         s0y = (p0y < sb.ulcy) ? sb.ulcy : p0y;
                         s1y = (p1y > sb.ulcy + sb.h) ? sb.ulcy + sb.h : p1y;
-
-                        // Code-blocks are located at (acb0x+k*cw,acb0y+l*ch)
-                        cw = sb.nomCBlkW;
-                        ch = sb.nomCBlkH;
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
-                        k0 = (int)Math.Floor((sb.ulcy - acb0y) / (double)ch);
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
-                        kstart = (int)Math.Floor((s0y - acb0y) / (double)ch);
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
-                        kend = (int)Math.Floor((s1y - 1 - acb0y) / (double)ch);
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
-                        l0 = (int)Math.Floor((sb.ulcx - acb0x) / (double)cw);
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
-                        lstart = (int)Math.Floor((s0x - acb0x) / (double)cw);
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
-                        lend = (int)Math.Floor((s1x - 1 - acb0x) / (double)cw);
-
-                        if (s1x - s0x <= 0 || s1y - s0y <= 0)
-                        {
-                            ppinfo[c][r][nPrec].nblk[3] = 0;
-                            ttIncl[c][r][nPrec][3] = new TagTreeDecoder(0, 0);
-                            ttMaxBP[c][r][nPrec][3] = new TagTreeDecoder(0, 0);
-                        }
-                        else
-                        {
-                            ttIncl[c][r][nPrec][3] = new TagTreeDecoder(kend - kstart + 1, lend - lstart + 1);
-                            ttMaxBP[c][r][nPrec][3] = new TagTreeDecoder(kend - kstart + 1, lend - lstart + 1);
-                            var tmpArray4 = new CBlkCoordInfo[kend - kstart + 1][];
-                            for (var i5 = 0; i5 < kend - kstart + 1; i5++)
-                            {
-                                tmpArray4[i5] = new CBlkCoordInfo[lend - lstart + 1];
-                            }
-                            ppinfo[c][r][nPrec].cblk[3] = tmpArray4;
-                            ppinfo[c][r][nPrec].nblk[3] = (kend - kstart + 1) * (lend - lstart + 1);
-
-                            for (var k = kstart; k <= kend; k++)
-                            {
-                                // Vertical cblks
-                                for (var l = lstart; l <= lend; l++)
-                                {
-                                    // Horiz cblks
-                                    cb = new CBlkCoordInfo(k - k0, l - l0);
-                                    if (l == l0)
-                                    {
-                                        cb.ulx = sb.ulx;
-                                    }
-                                    else
-                                    {
-                                        cb.ulx = sb.ulx + l * cw - (sb.ulcx - acb0x);
-                                    }
-                                    if (k == k0)
-                                    {
-                                        cb.uly = sb.uly;
-                                    }
-                                    else
-                                    {
-                                        cb.uly = sb.uly + k * ch - (sb.ulcy - acb0y);
-                                    }
-                                    tmp1 = acb0x + l * cw;
-                                    tmp1 = (tmp1 > sb.ulcx) ? tmp1 : sb.ulcx;
-                                    tmp2 = acb0x + (l + 1) * cw;
-                                    tmp2 = (tmp2 > sb.ulcx + sb.w) ? sb.ulcx + sb.w : tmp2;
-                                    cb.w = tmp2 - tmp1;
-                                    tmp1 = acb0y + k * ch;
-                                    tmp1 = (tmp1 > sb.ulcy) ? tmp1 : sb.ulcy;
-                                    tmp2 = acb0y + (k + 1) * ch;
-                                    tmp2 = (tmp2 > sb.ulcy + sb.h) ? sb.ulcy + sb.h : tmp2;
-                                    cb.h = tmp2 - tmp1;
-                                    ppinfo[c][r][nPrec].cblk[3][k - kstart][l - lstart] = cb;
-                                } // Horizontal code-blocks
-                            } // Vertical code-blocks
-                        }
+                        cw = sb.nomCBlkW; ch = sb.nomCBlkH;
+                        k0 = FloorDiv(sb.ulcy - acb0y, ch); kstart = FloorDiv(s0y - acb0y, ch); kend = FloorDiv(s1y - 1 - acb0y, ch);
+                        l0 = FloorDiv(sb.ulcx - acb0x, cw); lstart = FloorDiv(s0x - acb0x, cw); lend = FloorDiv(s1x - 1 - acb0x, cw);
+                        FillSubband(c, r, nPrec, 3, sb, acb0x, acb0y, k0, l0, kstart, kend, lstart, lend, s0x, s1x, s0y, s1y);
                     }
-                } // Horizontal precincts
-            } // Vertical precincts
+                }
+            }
+        }
+
+        /// <summary>Fills one subband slot within a precinct, reusing existing
+        /// <see cref="CBlkCoordInfo"/> instances in-place when the grid dimensions match.</summary>
+        private void FillSubband(int c, int r, int nPrec, int s, SubbandSyn sb,
+            int acb0x, int acb0y, int k0, int l0, int kstart, int kend, int lstart, int lend,
+            int s0x, int s1x, int s0y, int s1y)
+        {
+            int cw = sb.nomCBlkW, ch = sb.nomCBlkH;
+            if (s1x - s0x <= 0 || s1y - s0y <= 0)
+            {
+                ppinfo[c][r][nPrec].nblk[s] = 0;
+                ResetOrCreate(ref ttIncl[c][r][nPrec][s], 0, 0);
+                ResetOrCreate(ref ttMaxBP[c][r][nPrec][s], 0, 0);
+                return;
+            }
+
+            int kRows = kend - kstart + 1;
+            int lCols = lend - lstart + 1;
+            ResetOrCreate(ref ttIncl[c][r][nPrec][s], kRows, lCols);
+            ResetOrCreate(ref ttMaxBP[c][r][nPrec][s], kRows, lCols);
+            ppinfo[c][r][nPrec].nblk[s] = kRows * lCols;
+
+            var existing = ppinfo[c][r][nPrec].cblk[s];
+            if (existing == null || existing.Length != kRows || (kRows > 0 && existing[0]?.Length != lCols))
+            {
+                existing = new CBlkCoordInfo[kRows][];
+                for (var i = 0; i < kRows; i++)
+                    existing[i] = new CBlkCoordInfo[lCols];
+                ppinfo[c][r][nPrec].cblk[s] = existing;
+            }
+
+            for (var k = kstart; k <= kend; k++)
+            {
+                for (var l = lstart; l <= lend; l++)
+                {
+                    var slot = existing[k - kstart][l - lstart];
+                    if (slot == null)
+                        slot = existing[k - kstart][l - lstart] = new CBlkCoordInfo(k - k0, l - l0);
+                    else
+                        slot.Reset(k - k0, l - l0);
+
+                    slot.ulx = (l == l0) ? sb.ulx : sb.ulx + l * cw - (sb.ulcx - acb0x);
+                    slot.uly = (k == k0) ? sb.uly : sb.uly + k * ch - (sb.ulcy - acb0y);
+
+                    int tmp1 = acb0x + l * cw;       tmp1 = (tmp1 > sb.ulcx) ? tmp1 : sb.ulcx;
+                    int tmp2 = acb0x + (l + 1) * cw; tmp2 = (tmp2 > sb.ulcx + sb.w) ? sb.ulcx + sb.w : tmp2;
+                    slot.w = tmp2 - tmp1;
+                    tmp1 = acb0y + k * ch;       tmp1 = (tmp1 > sb.ulcy) ? tmp1 : sb.ulcy;
+                    tmp2 = acb0y + (k + 1) * ch; tmp2 = (tmp2 > sb.ulcy + sb.h) ? sb.ulcy + sb.h : tmp2;
+                    slot.h = tmp2 - tmp1;
+                }
+            }
         }
 
         /// <summary> Gets the number of precincts in a given component and resolution level.

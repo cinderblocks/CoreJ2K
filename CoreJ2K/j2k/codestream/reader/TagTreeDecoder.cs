@@ -162,6 +162,62 @@ namespace CoreJ2K.j2k.codestream.reader
             }
         }
 
+        /// <summary> Resets this tag tree for re-use with the given dimensions.
+        /// If the dimensions match the current tree exactly, existing arrays are
+        /// cleared in-place (no allocation). Otherwise the tree is rebuilt.
+        /// </summary>
+        /// <param name="h">The number of elements along the vertical direction.</param>
+        /// <param name="w">The number of elements along the horizontal direction.</param>
+        public void Reset(int h, int w)
+        {
+            if (this.h == h && this.w == w)
+            {
+                // Same shape — reinitialize arrays in-place, zero allocations.
+                int ch = h, cw = w;
+                for (var i = 0; i < lvls; i++)
+                {
+                    ArrayUtil.intArraySet(treeV[i], int.MaxValue);
+                    ArrayUtil.intArraySet(treeS[i], 0);
+                    cw = (cw + 1) >> 1;
+                    ch = (ch + 1) >> 1;
+                }
+            }
+            else
+            {
+                // Different shape — full rebuild (mirrors constructor logic).
+                this.w = w;
+                this.h = h;
+                if (w == 0 || h == 0)
+                {
+                    lvls = 0;
+                    treeV = new int[0][];
+                    treeS = new int[0][];
+                    return;
+                }
+
+                int tw = w, th = h;
+                lvls = 1;
+                while (th != 1 || tw != 1)
+                {
+                    tw = (tw + 1) >> 1;
+                    th = (th + 1) >> 1;
+                    lvls++;
+                }
+
+                treeV = new int[lvls][];
+                treeS = new int[lvls][];
+                tw = w; th = h;
+                for (var i = 0; i < lvls; i++)
+                {
+                    treeV[i] = new int[th * tw];
+                    ArrayUtil.intArraySet(treeV[i], int.MaxValue);
+                    treeS[i] = new int[th * tw];
+                    tw = (tw + 1) >> 1;
+                    th = (th + 1) >> 1;
+                }
+            }
+        }
+
         /// <summary> Decodes information for the specified element of the tree, given the
         /// threshold, and updates its value. The information that can be decoded
         /// is whether or not the value of the element is greater than, or equal

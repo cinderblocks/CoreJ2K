@@ -1346,15 +1346,14 @@ namespace CoreJ2K.j2k.codestream.reader
                 if ((cstyle & Markers.SCOX_USE_SOP) != 0)
                 {
                     // SOP markers are used
-                    decSpec.sops.setDefault("true".ToUpper().Equals("TRUE"));
-                    //sopUsed = true;
+                    decSpec.sops.SetBoolDefault(true);
                     // Remove flag
                     cstyle &= ~(Markers.SCOX_USE_SOP);
                 }
                 else
                 {
                     // SOP markers are not used
-                    decSpec.sops.setDefault("false".ToUpper().Equals("TRUE"));
+                    decSpec.sops.SetBoolDefault(false);
                 }
             }
             else
@@ -1364,15 +1363,14 @@ namespace CoreJ2K.j2k.codestream.reader
                 if ((cstyle & Markers.SCOX_USE_SOP) != 0)
                 {
                     // SOP markers are used
-                    decSpec.sops.setTileDef(tileIdx, "true".ToUpper().Equals("TRUE"));
-                    //sopUsed = true;
+                    decSpec.sops.SetBoolTileDef(tileIdx, true);
                     // Remove flag
                     cstyle &= ~(Markers.SCOX_USE_SOP);
                 }
                 else
                 {
                     // SOP markers are not used
-                    decSpec.sops.setTileDef(tileIdx, "false".ToUpper().Equals("TRUE"));
+                    decSpec.sops.SetBoolTileDef(tileIdx, false);
                 }
             }
 
@@ -1382,15 +1380,14 @@ namespace CoreJ2K.j2k.codestream.reader
                 if ((cstyle & Markers.SCOX_USE_EPH) != 0)
                 {
                     // EPH markers are used
-                    decSpec.ephs.setDefault("true".ToUpper().Equals("TRUE"));
-                    //ephUsed = true;
+                    decSpec.ephs.SetBoolDefault(true);
                     // Remove flag
                     cstyle &= ~(Markers.SCOX_USE_EPH);
                 }
                 else
                 {
                     // EPH markers are not used
-                    decSpec.ephs.setDefault("false".ToUpper().Equals("TRUE"));
+                    decSpec.ephs.SetBoolDefault(false);
                 }
             }
             else
@@ -1398,15 +1395,14 @@ namespace CoreJ2K.j2k.codestream.reader
                 if ((cstyle & Markers.SCOX_USE_EPH) != 0)
                 {
                     // EPH markers are used
-                    decSpec.ephs.setTileDef(tileIdx, "true".ToUpper().Equals("TRUE"));
-                    //ephUsed = true;
+                    decSpec.ephs.SetBoolTileDef(tileIdx, true);
                     // Remove flag
                     cstyle &= ~(Markers.SCOX_USE_EPH);
                 }
                 else
                 {
                     // EPH markers are not used
-                    decSpec.ephs.setTileDef(tileIdx, "false".ToUpper().Equals("TRUE"));
+                    decSpec.ephs.SetBoolTileDef(tileIdx, false);
                 }
             }
 
@@ -2249,7 +2245,7 @@ namespace CoreJ2K.j2k.codestream.reader
             {
                 pPMMarkerData = new byte[nPPMMarkSeg][];
                 tileOfTileParts = new List<int>(10);
-                decSpec.pphs.setDefault(true);
+                decSpec.pphs.SetBoolDefault(true);
             }
 
             // Lppm (marker length)
@@ -2315,7 +2311,7 @@ namespace CoreJ2K.j2k.codestream.reader
             // Check marker length
             checkMarkerLength(ehs, "PPT marker");
 
-            decSpec.pphs.setTileDef(tile, true);
+            decSpec.pphs.SetBoolTileDef(tile, true);
         }
 
         /// <summary> This method extract a marker segment from the main header and stores it

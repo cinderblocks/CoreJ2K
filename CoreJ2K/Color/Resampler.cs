@@ -182,7 +182,8 @@ namespace CoreJ2K.Color
 
                 case DataBlk.TYPE_INT:
 
-                    var inblkInt = new DataBlkInt(x0In, y0In, reqW, reqH);
+                    var inblkInt = inInt[compIndex];
+                    inblkInt.ulx = x0In; inblkInt.uly = y0In; inblkInt.w = reqW; inblkInt.h = reqH;
                     inblkInt = (DataBlkInt)src.GetInternCompData(inblkInt, compIndex);
                     dataInt[compIndex] = inblkInt.DataInt;
 
@@ -243,7 +244,8 @@ namespace CoreJ2K.Color
 
                 case DataBlk.TYPE_FLOAT:
 
-                    var inblkFloat = new DataBlkFloat(x0In, y0In, reqW, reqH);
+                    var inblkFloat = inFloat[compIndex];
+                    inblkFloat.ulx = x0In; inblkFloat.uly = y0In; inblkFloat.w = reqW; inblkFloat.h = reqH;
                     inblkFloat = (DataBlkFloat)src.GetInternCompData(inblkFloat, compIndex);
                     dataFloat[compIndex] = inblkFloat.DataFloat;
 

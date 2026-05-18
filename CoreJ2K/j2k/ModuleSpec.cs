@@ -331,6 +331,36 @@ namespace CoreJ2K.j2k
             def = value_Renamed;
         }
 
+        /// <summary>Cached boxed <c>true</c> to avoid repeated boxing allocations.</summary>
+        private static readonly object BoxedTrue = true;
+
+        /// <summary>Cached boxed <c>false</c> to avoid repeated boxing allocations.</summary>
+        private static readonly object BoxedFalse = false;
+
+        /// <summary>Sets the default value for this module using a pre-boxed bool singleton,
+        /// eliminating a heap allocation compared to passing a bool literal directly.</summary>
+        public void SetBoolDefault(bool value)
+        {
+            def = value ? BoxedTrue : BoxedFalse;
+        }
+
+        /// <summary>Sets the tile-level default using a pre-boxed bool singleton.</summary>
+        public void SetBoolTileDef(int t, bool value)
+        {
+            setTileDef(t, value ? BoxedTrue : BoxedFalse);
+        }
+
+        /// <summary>Returns the tile default as a <c>bool</c> without unboxing overhead on
+        /// a freshly allocated object. The stored value must have been set via
+        /// <see cref="SetBoolDefault"/> or <see cref="setDefault"/> with a bool.</summary>
+        public bool GetBoolTileDef(int t)
+        {
+            if (specType == SPEC_TYPE_COMP)
+                throw new InvalidOperationException("Illegal use of ModuleSpec class");
+            var v = tileDef?[t] ?? def;
+            return v != null && (bool)v;
+        }
+
         /// <summary> Gets default value for this module. 
         /// 
         /// </summary>
@@ -341,6 +371,33 @@ namespace CoreJ2K.j2k
         {
             return def;
         }
+
+        /// <summary>Returns the default value as an <c>int</c> without allocating a boxing wrapper.</summary>
+        public int GetIntDefault() => (int)def;
+
+        /// <summary>Returns the tile default as an <c>int</c> without allocating a boxing wrapper.</summary>
+        public int GetIntTileDef(int t)
+        {
+            if (specType == SPEC_TYPE_COMP)
+                throw new InvalidOperationException("Illegal use of ModuleSpec class");
+            return (int)(tileDef?[t] ?? def);
+        }
+
+        /// <summary>Returns the component default as an <c>int</c> without allocating a boxing wrapper.</summary>
+        public int GetIntCompDef(int c)
+        {
+            if (specType == SPEC_TYPE_TILE)
+                throw new InvalidOperationException("Illegal use of ModuleSpec class");
+            return (int)(compDef?[c] ?? def);
+        }
+
+        /// <summary>Returns the tile-component value as an <c>int</c>, falling back through
+        /// the priority chain (tile-comp → tile → comp → default) without extra allocation.</summary>
+        public int GetIntTileCompVal(int t, int c) => (int)getSpec(t, c);
+
+        /// <summary>Returns the tile-component value as a <c>float</c>, falling back through
+        /// the priority chain without extra allocation.</summary>
+        public float GetFloatTileCompVal(int t, int c) => (float)getSpec(t, c);
 
         /// <summary> Sets default value for specified component and specValType tag if
         /// allowed by its priority.

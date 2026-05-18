@@ -41,6 +41,8 @@
 * Copyright (c) 1999/2000 JJ2000 Partners.
 * */
 
+using System;
+
 namespace CoreJ2K.j2k.codestream.reader
 {
 
@@ -122,6 +124,67 @@ namespace CoreJ2K.j2k.codestream.reader
             for (var i = nl - 1; i >= 0; i--)
             {
                 pktIdx[i] = -1;
+            }
+        }
+
+        /// <summary>Resets this instance for reuse with the given code-block coordinates
+        /// and layer count. Reuses existing arrays when the layer count is unchanged
+        /// to avoid heap allocations on repeated tile decodes.</summary>
+        public void Reset(int ulx, int uly, int w, int h, int nl)
+        {
+            this.ulx = ulx;
+            this.uly = uly;
+            this.w = w;
+            this.h = h;
+            msbSkipped = 0;
+            ctp = 0;
+            if (len != null && len.Length == nl)
+            {
+                Array.Clear(off, 0, nl);
+                Array.Clear(len, 0, nl);
+                Array.Clear(ntp, 0, nl);
+                Array.Clear(segLen, 0, nl);
+                for (var i = nl - 1; i >= 0; i--)
+                    pktIdx[i] = -1;
+            }
+            else
+            {
+                off = new int[nl];
+                len = new int[nl];
+                ntp = new int[nl];
+                segLen = new int[nl][];
+                pktIdx = new int[nl];
+                for (var i = nl - 1; i >= 0; i--)
+                    pktIdx[i] = -1;
+            }
+        }
+
+        /// <summary>Resets this instance for reuse with the same code-block coordinates
+        /// and a (potentially new) layer count. Coordinates are preserved because the
+        /// caller guarantees same-geometry tiles. Arrays are reused when layer count
+        /// is unchanged.</summary>
+        public void Reset(int nl)
+        {
+            msbSkipped = 0;
+            ctp = 0;
+            if (len != null && len.Length == nl)
+            {
+                Array.Clear(off, 0, nl);
+                Array.Clear(len, 0, nl);
+                Array.Clear(ntp, 0, nl);
+                Array.Clear(segLen, 0, nl);
+                for (var i = nl - 1; i >= 0; i--)
+                    pktIdx[i] = -1;
+            }
+            else
+            {
+                off = new int[nl];
+                len = new int[nl];
+                ntp = new int[nl];
+                segLen = new int[nl][];
+                pktIdx = new int[nl];
+                for (var i = nl - 1; i >= 0; i--)
+                    pktIdx[i] = -1;
             }
         }
 
