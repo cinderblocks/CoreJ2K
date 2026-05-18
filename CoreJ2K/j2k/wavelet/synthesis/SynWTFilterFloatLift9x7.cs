@@ -183,6 +183,17 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// <summary>The value of the high-pass subband normalization factor </summary>
         public const float KH = 1.230174106f;
 
+        // Precomputed reciprocals and combined coefficients used in synthetize_lpf/hpf
+        // to replace runtime divisions with multiplications.
+        private const float INV_KL = 1.0f / KL;
+        private const float INV_KH = 1.0f / KH;
+        private const float DELTA_OVER_KH = DELTA * INV_KH;
+        private const float TWO_DELTA_OVER_KH = 2.0f * DELTA * INV_KH;
+        private const float TWO_DELTA = 2.0f * DELTA;
+        private const float TWO_BETA = 2.0f * BETA;
+        private const float TWO_GAMMA = 2.0f * GAMMA;
+        private const float TWO_ALPHA = 2.0f * ALPHA;
+
         /// <summary> An implementation of the synthetize_lpf() method that works on int
         /// data, for the inverse 9x7 wavelet transform using the lifting
         /// scheme. See the general description of the synthetize_lpf() method in
@@ -256,7 +267,6 @@ namespace CoreJ2K.j2k.wavelet.synthesis
             int hk; //Indexing highSig
 
             // Generate intermediate low frequency subband
-            //float sample = 0;
 
             //Initialize counters
             lk = lowOff;
@@ -266,7 +276,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
             //Handle tail boundary effect. Use symmetric extension
             if (outLen > 1)
             {
-                outSig[ik] = lowSig[lk] / KL - 2 * DELTA * highSig[hk] / KH;
+                outSig[ik] = lowSig[lk] * INV_KL - TWO_DELTA_OVER_KH * highSig[hk];
             }
             else
             {
@@ -280,7 +290,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
             //Apply lifting step to each "inner" sample
             for (i = 2; i < outLen - 1; i += 2, ik += iStep, lk += lowStep, hk += highStep)
             {
-                outSig[ik] = lowSig[lk] / KL - DELTA * (highSig[hk - highStep] + highSig[hk]) / KH;
+                outSig[ik] = lowSig[lk] * INV_KL - DELTA_OVER_KH * (highSig[hk - highStep] + highSig[hk]);
             }
 
             //Handle head boundary effect if input signal has odd length
@@ -288,7 +298,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
             {
                 if (outLen > 2)
                 {
-                    outSig[ik] = lowSig[lk] / KL - 2 * DELTA * highSig[hk - highStep] / KH;
+                    outSig[ik] = lowSig[lk] * INV_KL - TWO_DELTA_OVER_KH * highSig[hk - highStep];
                 }
             }
 
@@ -302,13 +312,13 @@ namespace CoreJ2K.j2k.wavelet.synthesis
             //Apply lifting step to each "inner" sample
             for (i = 1; i < outLen - 1; i += 2, ik += iStep, hk += highStep, lk += lowStep)
             {
-                outSig[ik] = highSig[hk] / KH - GAMMA * (outSig[ik - outStep] + outSig[ik + outStep]);
+                outSig[ik] = highSig[hk] * INV_KH - GAMMA * (outSig[ik - outStep] + outSig[ik + outStep]);
             }
 
             //Handle head boundary effect if output signal has even length
             if (outLen % 2 == 0)
             {
-                outSig[ik] = highSig[hk] / KH - 2 * GAMMA * outSig[ik - outStep];
+                outSig[ik] = highSig[hk] * INV_KH - TWO_GAMMA * outSig[ik - outStep];
             }
 
             // Generate even samples (inverse low-pass filter)
@@ -317,10 +327,9 @@ namespace CoreJ2K.j2k.wavelet.synthesis
             ik = outOff;
 
             //Handle tail boundary effect
-            //If access the overlap then perform the lifting step.
             if (outLen > 1)
             {
-                outSig[ik] -= 2 * BETA * outSig[ik + outStep];
+                outSig[ik] -= TWO_BETA * outSig[ik + outStep];
             }
             ik += iStep;
 
@@ -333,7 +342,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
             //Handle head boundary effect if input signal has odd length
             if (outLen % 2 == 1 && outLen > 2)
             {
-                outSig[ik] -= 2 * BETA * outSig[ik - outStep];
+                outSig[ik] -= TWO_BETA * outSig[ik - outStep];
             }
 
             // Generate odd samples (inverse high pass-filter)
@@ -350,7 +359,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
             //Handle head boundary effect if input signal has even length
             if (outLen % 2 == 0)
             {
-                outSig[ik] -= 2 * ALPHA * outSig[ik - outStep];
+                outSig[ik] -= TWO_ALPHA * outSig[ik - outStep];
             }
         }
 
@@ -436,15 +445,15 @@ namespace CoreJ2K.j2k.wavelet.synthesis
                 // "Inverse normalize" each sample
                 for (i = 0; i < outLen2; i++)
                 {
-                    lowSig[lk] /= KL;
-                    highSig[hk] /= KH;
+                    lowSig[lk] *= INV_KL;
+                    highSig[hk] *= INV_KH;
                     lk += lowStep;
                     hk += highStep;
                 }
                 // "Inverse normalise" last high pass coefficient
                 if (outLen % 2 == 1)
                 {
-                    highSig[hk] /= KH;
+                    highSig[hk] *= INV_KH;
                 }
             }
             else
@@ -472,7 +481,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
             if (outLen % 2 == 0 && outLen > 1)
             {
                 //Use symmetric extension
-                outSig[ik] = lowSig[lk] - 2 * DELTA * highSig[hk];
+                outSig[ik] = lowSig[lk] - TWO_DELTA * highSig[hk];
             }
 
             // Generate intermediate high frequency subband
@@ -483,7 +492,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
 
             if (outLen > 1)
             {
-                outSig[ik] = highSig[hk] - 2 * GAMMA * outSig[ik + outStep];
+                outSig[ik] = highSig[hk] - TWO_GAMMA * outSig[ik + outStep];
             }
             else
             {
@@ -505,7 +514,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
             if (outLen % 2 == 1 && outLen > 1)
             {
                 //Use symmetric extension
-                outSig[ik] = highSig[hk] - 2 * GAMMA * outSig[ik - outStep];
+                outSig[ik] = highSig[hk] - TWO_GAMMA * outSig[ik - outStep];
             }
 
             // Generate even samples (inverse low-pass filter)
@@ -523,7 +532,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
             if (outLen % 2 == 0 && outLen > 1)
             {
                 // symmetric extension.
-                outSig[ik] -= 2 * BETA * outSig[ik - outStep];
+                outSig[ik] -= TWO_BETA * outSig[ik - outStep];
             }
 
             // Generate odd samples (inverse high pass-filter)
@@ -534,7 +543,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
             if (outLen > 1)
             {
                 // symmetric extension.
-                outSig[ik] -= 2 * ALPHA * outSig[ik + outStep];
+                outSig[ik] -= TWO_ALPHA * outSig[ik + outStep];
             }
             ik += iStep;
 
@@ -549,7 +558,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
             if ((outLen % 2 == 1) && (outLen > 1))
             {
                 //Use symmetric extension 
-                outSig[ik] -= 2 * ALPHA * outSig[ik - outStep];
+                outSig[ik] -= TWO_ALPHA * outSig[ik - outStep];
             }
         }
 
