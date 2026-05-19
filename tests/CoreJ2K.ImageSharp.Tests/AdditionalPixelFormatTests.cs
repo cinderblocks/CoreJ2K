@@ -2,6 +2,7 @@ using System;
 using Xunit;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
+using CoreJ2K.j2k.image;
 using CoreJ2K.j2k.image.input;
 
 namespace CoreJ2K.ImageSharp.Tests
@@ -13,7 +14,7 @@ namespace CoreJ2K.ImageSharp.Tests
         {
             var img = new Image<L8>(1,1);
             img[0,0] = new L8(150);
-            using var reader = new ImgReaderImageSharp(img);
+            var reader = new ImgReaderImageSharp(img);
             var blk = new DataBlkInt(0,0,1,1);
             var db = reader.GetInternCompData(blk, 0);
             var v = ((DataBlkInt)db).DataInt[0];
@@ -25,7 +26,7 @@ namespace CoreJ2K.ImageSharp.Tests
         {
             var img = new Image<L16>(1,1);
             img[0,0] = new L16(0x1234);
-            using var reader = new ImgReaderImageSharp(img);
+            var reader = new ImgReaderImageSharp(img);
             var blk = new DataBlkInt(0,0,1,1);
             var db = reader.GetInternCompData(blk, 0);
             var v = ((DataBlkInt)db).DataInt[0];
@@ -40,7 +41,7 @@ namespace CoreJ2K.ImageSharp.Tests
             var px = img[0,0];
             px.R = 11; px.G = 22; px.B = 33;
             img[0,0] = px;
-            using var reader = new ImgReaderImageSharp(img);
+            var reader = new ImgReaderImageSharp(img);
             var blk = new DataBlkInt(0,0,1,1);
             var r = ((DataBlkInt)reader.GetInternCompData(blk,0)).DataInt[0];
             var g = ((DataBlkInt)reader.GetInternCompData(blk,1)).DataInt[0];
@@ -57,7 +58,7 @@ namespace CoreJ2K.ImageSharp.Tests
             var px = img[0,0];
             px.R = 45; px.G = 46; px.B = 47; px.A = 48;
             img[0,0] = px;
-            using var reader = new ImgReaderImageSharp(img);
+            var reader = new ImgReaderImageSharp(img);
             var blk = new DataBlkInt(0,0,1,1);
             Assert.Equal(45 - 128, ((DataBlkInt)reader.GetInternCompData(blk,0)).DataInt[0]);
             Assert.Equal(46 - 128, ((DataBlkInt)reader.GetInternCompData(blk,1)).DataInt[0]);
@@ -72,7 +73,7 @@ namespace CoreJ2K.ImageSharp.Tests
             var px = img[0,0];
             px.R = 70; px.G = 71; px.B = 72; px.A = 73;
             img[0,0] = px;
-            using var reader = new ImgReaderImageSharp(img);
+            var reader = new ImgReaderImageSharp(img);
             var blk = new DataBlkInt(0,0,1,1);
             Assert.Equal(70 - 128, ((DataBlkInt)reader.GetInternCompData(blk,0)).DataInt[0]);
             Assert.Equal(71 - 128, ((DataBlkInt)reader.GetInternCompData(blk,1)).DataInt[0]);
@@ -87,7 +88,7 @@ namespace CoreJ2K.ImageSharp.Tests
             var px = img[0,0];
             px.R = 0x1234; px.G = 0x2345; px.B = 0x3456;
             img[0,0] = px;
-            using var reader = new ImgReaderImageSharp(img);
+            var reader = new ImgReaderImageSharp(img);
             var blk = new DataBlkInt(0,0,1,1);
             Assert.Equal((0x1234 >> 8) - 128, ((DataBlkInt)reader.GetInternCompData(blk,0)).DataInt[0]);
             Assert.Equal((0x2345 >> 8) - 128, ((DataBlkInt)reader.GetInternCompData(blk,1)).DataInt[0]);
@@ -101,7 +102,7 @@ namespace CoreJ2K.ImageSharp.Tests
             var px = img[0,0];
             px.R = 0x1111; px.G = 0x2222; px.B = 0x3333; px.A = 0x4444;
             img[0,0] = px;
-            using var reader = new ImgReaderImageSharp(img);
+            var reader = new ImgReaderImageSharp(img);
             var blk = new DataBlkInt(0,0,1,1);
             Assert.Equal((0x1111 >> 8) - 128, ((DataBlkInt)reader.GetInternCompData(blk,0)).DataInt[0]);
             Assert.Equal((0x2222 >> 8) - 128, ((DataBlkInt)reader.GetInternCompData(blk,1)).DataInt[0]);

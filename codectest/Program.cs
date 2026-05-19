@@ -2,9 +2,11 @@
 // Licensed under the BSD 3-Clause License.
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using CoreJ2K;
 using CoreJ2K.Configuration;
 using CoreJ2K.Skia;
@@ -31,10 +33,19 @@ namespace codectest
     /// </summary>
     internal class Program
     {
+        /// <summary>Tracks results for the final summary report.</summary>
+        private static readonly List<DemoResult> Results = new List<DemoResult>();
+
         private static void Main(string[] args)
         {
-            Console.WriteLine("CoreJ2K Modern API Demo");
-            Console.WriteLine("=======================\n");
+            var runtimeVersion = RuntimeInformation.FrameworkDescription;
+            var os = RuntimeInformation.OSDescription;
+
+            Console.WriteLine("CoreJ2K Codec Test");
+            Console.WriteLine("==================");
+            Console.WriteLine($"Runtime : {runtimeVersion}");
+            Console.WriteLine($"OS      : {os}");
+            Console.WriteLine($"Started : {DateTime.Now:yyyy-MM-dd HH:mm:ss}\n");
 
             // Clean output directory
             if (Directory.Exists("output"))
@@ -45,28 +56,103 @@ namespace codectest
             Directory.CreateDirectory("output");
 
             // Run all demonstrations
-            DemonstrateTraditionalEncoding();
-            DemonstrateModernEncodingPresets();
-            DemonstrateModernEncodingCustom();
-            DemonstrateSkiaIntegration();
-            DemonstratePfimIntegration();
+            RunDemo("Traditional Encoding",        DemonstrateTraditionalEncoding);
+            RunDemo("Modern Encoding Presets",     DemonstrateModernEncodingPresets);
+            RunDemo("Modern Encoding Custom",      DemonstrateModernEncodingCustom);
+            RunDemo("SkiaSharp Integration",       DemonstrateSkiaIntegration);
+            RunDemo("Pfim Integration",            DemonstratePfimIntegration);
 #if NET8_0_OR_GREATER
-            DemonstrateImageSharpIntegration();
+            RunDemo("ImageSharp Integration",      DemonstrateImageSharpIntegration);
 #endif
-            // New: Native plugin conversion demo
-            DemonstrateNativePluginConversions();
+            RunDemo("Native Plugin Conversions",   DemonstrateNativePluginConversions);
+            RunDemo("TLM Fast Random Tile Access", DemonstrateTLMFastAccess);
+            RunDemo("PLT Fast Packet Access",      DemonstratePLTFastAccess);
+            RunDemo("Decoding",                    DemonstrateDecoding);
+            RunDemo("Performance Comparison",      DemonstratePerformance);
 
-            // NEW: TLM Fast Random Tile Access Demo
-            DemonstrateTLMFastAccess();
-            
-            // NEW: PLT Fast Packet Access Demo
-            DemonstratePLTFastAccess();
+            PrintSummary();
+        }
 
-            DemonstrateDecoding();
-            DemonstratePerformance();
+        /// <summary>
+        /// Executes a demo, captures elapsed time, and records pass/fail.
+        /// </summary>
+        private static void RunDemo(string name, Action demo)
+        {
+            var sw = Stopwatch.StartNew();
+            string error = null;
+            try
+            {
+                demo();
+            }
+            catch (Exception ex)
+            {
+                error = ex.Message;
+                Console.WriteLine($"  [ERROR] {ex.Message}");
+            }
+            sw.Stop();
+            Results.Add(new DemoResult(name, sw.Elapsed, error));
+        }
 
-            Console.WriteLine("\n✅ All demonstrations complete!");
-            Console.WriteLine($"Check the 'output' directory for generated files.");
+        /// <summary>
+        /// Prints a structured summary table of all demo results.
+        /// </summary>
+        private static void PrintSummary()
+        {
+            int passed  = Results.Count(r => r.Passed);
+            int failed  = Results.Count(r => !r.Passed);
+            var total   = Results.Aggregate(TimeSpan.Zero, (acc, r) => acc + r.Elapsed);
+            var outputFiles = Directory.Exists("output")
+                ? Directory.GetFiles("output", "*", SearchOption.AllDirectories)
+                : Array.Empty<string>();
+            long outputBytes = outputFiles.Sum(f => new FileInfo(f).Length);
+
+            Console.WriteLine("\n");
+            Console.WriteLine("╔══════════════════════════════════════════════════════════════╗");
+            Console.WriteLine("║                     CODECTEST SUMMARY                       ║");
+            Console.WriteLine("╠══════════════════════════════════════════════════════════════╣");
+
+            foreach (var r in Results)
+            {
+                var status = r.Passed ? "PASS" : "FAIL";
+                var time   = $"{r.Elapsed.TotalMilliseconds,7:F0} ms";
+                var label  = r.Name.PadRight(34);
+                Console.WriteLine($"║  [{status}]  {label}  {time}  ║");
+                if (!r.Passed)
+                    Console.WriteLine($"║         └─ {r.Error.PadRight(52)}  ║");
+            }
+
+            Console.WriteLine("╠══════════════════════════════════════════════════════════════╣");
+            Console.WriteLine($"║  Results  : {passed} passed, {failed} failed out of {Results.Count} demos{"".PadRight(Math.Max(0, 18 - Results.Count.ToString().Length - passed.ToString().Length - failed.ToString().Length))}║");
+            Console.WriteLine($"║  Duration : {total.TotalMilliseconds:F0} ms total{"".PadRight(Math.Max(0, 40 - total.TotalMilliseconds.ToString("F0").Length))}║");
+            Console.WriteLine($"║  Output   : {outputFiles.Length} files, {outputBytes / 1024.0:F1} KB{"".PadRight(Math.Max(0, 36 - outputFiles.Length.ToString().Length - (outputBytes / 1024.0).ToString("F1").Length))}║");
+            Console.WriteLine("╚══════════════════════════════════════════════════════════════╝");
+
+            if (failed > 0)
+            {
+                Console.WriteLine("\n[FAILED DEMOS]");
+                foreach (var r in Results.Where(r => !r.Passed))
+                    Console.WriteLine($"  • {r.Name}: {r.Error}");
+            }
+
+            // Exit with non-zero code when any demo failed (useful for CI)
+            if (failed > 0)
+                Environment.Exit(1);
+        }
+
+        /// <summary>Immutable record of a single demo's outcome.</summary>
+        private sealed class DemoResult
+        {
+            public string   Name    { get; }
+            public TimeSpan Elapsed { get; }
+            public string   Error   { get; }
+            public bool     Passed  => Error == null;
+
+            public DemoResult(string name, TimeSpan elapsed, string error)
+            {
+                Name    = name;
+                Elapsed = elapsed;
+                Error   = error;
+            }
         }
 
         #region Traditional API Demo

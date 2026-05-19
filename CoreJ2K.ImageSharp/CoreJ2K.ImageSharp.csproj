@@ -3,7 +3,7 @@
     <AssemblyName>CoreJ2K.ImageSharp</AssemblyName>
     <PackageId>CoreJ2K.ImageSharp-Official</PackageId>
     <Description>Official CoreJ2K .NETStandard JPEG-2000 codec library with ImageSharp support</Description>
-    <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
+    <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
     <DefineConstants>$(DefineConstants);NETSTANDARD</DefineConstants>
     <IncludeSymbols>true</IncludeSymbols>

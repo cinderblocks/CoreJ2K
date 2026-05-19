@@ -2,6 +2,7 @@ using System;
 using Xunit;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
+using CoreJ2K.j2k.image;
 using CoreJ2K.j2k.image.input;
 
 namespace CoreJ2K.ImageSharp.Tests
@@ -18,7 +19,7 @@ namespace CoreJ2K.ImageSharp.Tests
             img[0,1] = new Rgb24(70,80,90);
             img[1,1] = new Rgb24(100,110,120);
 
-            using var reader = new ImgReaderImageSharp(img);
+            var reader = new ImgReaderImageSharp(img);
 
             var blk = new DataBlkInt(0,0,2,2);
             var db = reader.GetInternCompData(blk, 0); // red component
@@ -36,7 +37,7 @@ namespace CoreJ2K.ImageSharp.Tests
         {
             var img = new Image<Rgba32>(1,1);
             img[0,0] = new Rgba32(200,201,202,203);
-            using var reader = new ImgReaderImageSharp(img);
+            var reader = new ImgReaderImageSharp(img);
             var blk = new DataBlkInt(0,0,1,1);
             var alpha = reader.GetInternCompData(blk, 3);
             var a = ((DataBlkInt)alpha).DataInt[0];

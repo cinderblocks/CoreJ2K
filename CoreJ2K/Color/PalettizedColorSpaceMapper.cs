@@ -322,6 +322,11 @@ namespace CoreJ2K.Color
             return pbox?.getBitDepth(compIndex) ?? src.getNomRangeBits(compIndex);
         }
 
+        public override int GetFixedPoint(int compIndex)
+        {
+            return src.GetFixedPoint(pbox != null ? srcChannel : compIndex);
+        }
+
 
         /// <summary> Returns the component subsampling factor in the horizontal direction,
         /// for the specified component. This is, approximately, the ratio of
