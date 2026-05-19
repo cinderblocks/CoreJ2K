@@ -162,7 +162,7 @@ namespace CoreJ2K.j2k.codestream.writer
             {
                 // End of current byte => goto next
                 // We don't need bit stuffing
-                avbits = buf[curbyte] != (byte)SupportClass.Identity(0xFF) ? 8 :
+                avbits = buf[curbyte] != 0xFF ? 8 :
                     // We need to stuff a bit (next MSBit is 0)
                     7;
                 curbyte++;
@@ -212,7 +212,7 @@ namespace CoreJ2K.j2k.codestream.writer
                 n -= avbits;
                 buf[curbyte] |= (byte)(bits >> n);
                 // We don't need bit stuffing
-                avbits = buf[curbyte] != (byte)SupportClass.Identity(0xFF) ? 8 :
+                avbits = buf[curbyte] != 0xFF ? 8 :
                     // We need to stuff a bit (next MSBit is 0)
                     7;
                 curbyte++;
@@ -224,7 +224,7 @@ namespace CoreJ2K.j2k.codestream.writer
                     buf[curbyte] |= (byte)((bits >> n) & (~(1 << avbits)));
                     // We don't need bit
                     // stuffing
-                    avbits = buf[curbyte] != (byte)SupportClass.Identity(0xFF) ? 8 :
+                    avbits = buf[curbyte] != 0xFF ? 8 :
                         // We need to stuff a bit (next MSBit is 0)
                         7;
                     curbyte++;
@@ -240,7 +240,7 @@ namespace CoreJ2K.j2k.codestream.writer
             {
                 // Last byte is full
                 // We don't need bit stuffing
-                avbits = buf[curbyte] != (byte)SupportClass.Identity(0xFF) ? 8 :
+                avbits = buf[curbyte] != 0xFF ? 8 :
                     // We need to stuff a bit (next MSBit is 0)
                     7;
                 curbyte++; // We already ensured that we have enough place

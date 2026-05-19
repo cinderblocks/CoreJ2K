@@ -253,7 +253,7 @@ namespace CoreJ2K.j2k.image.output
         /// <exception cref="IOException">If an I/O error occurs.
         /// 
         /// </exception>
-        public override void close()
+        public override void Close()
         {
             int i;
             // Finish writing the file, writing 0s at the end if the data at end
@@ -280,7 +280,7 @@ namespace CoreJ2K.j2k.image.output
         /// <exception cref="IOException">If an I/O error occurs.
         /// 
         /// </exception>
-        public override void flush()
+        public override void Flush()
         {
             // No flush is needed since we use RandomAccessFile
             // Get rid of line buffer (is this a good choice?)

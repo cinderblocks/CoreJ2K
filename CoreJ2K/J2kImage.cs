@@ -1196,7 +1196,7 @@ namespace CoreJ2K
                 ralloc.runAndWrite();
 
                 // **** Done ****
-                bwriter.close();
+                bwriter.Close();
 
                 // **** Calculate file length ****
                 var fileLength = bwriter.Length;

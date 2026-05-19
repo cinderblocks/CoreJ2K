@@ -316,7 +316,7 @@ namespace CoreJ2K.j2k.codestream.writer
         /// stream.
         /// 
         /// </exception>
-        public override void close()
+        public override void Close()
         {
 
             // Write the EOC marker and close the codestream.
@@ -360,7 +360,7 @@ namespace CoreJ2K.j2k.codestream.writer
             // modified
             sopMarker = new byte[Markers.SOP_LENGTH];
             sopMarker[0] = unchecked((byte)(Markers.SOP >> 8));
-            sopMarker[1] = (byte)SupportClass.Identity(Markers.SOP);
+            sopMarker[1] = (byte)(Markers.SOP & 0xFF);
             sopMarker[2] = 0x00;
             sopMarker[3] = 0x04;
 
@@ -368,7 +368,7 @@ namespace CoreJ2K.j2k.codestream.writer
             // modified
             ephMarker = new byte[Markers.EPH_LENGTH];
             ephMarker[0] = unchecked((byte)(Markers.EPH >> 8));
-            ephMarker[1] = (byte)SupportClass.Identity(Markers.EPH);
+            ephMarker[1] = (byte)(Markers.EPH & 0xFF);
         }
     }
 }

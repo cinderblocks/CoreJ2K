@@ -63,7 +63,7 @@ namespace CoreJ2K.j2k.image.input
     /// and that there is no component subsampling (all components are the same
     /// size), but they can be overloaded by the implementating class if need
     /// be.</summary>
-    public abstract class ImgReader : BlkImgDataSrc
+    public abstract class ImgReader : BlkImgDataSrc, IDisposable
     {
         /// <summary> Returns the width of the current tile in pixels, assuming there is
         /// no-tiling. Since no-tiling is assumed this is the same as the width of
@@ -161,6 +161,17 @@ namespace CoreJ2K.j2k.image.input
         /// image data is being read.</summary>
         /// <exception cref="IOException">If an I/O error occurs.</exception>
         public abstract void Close();
+
+        /// <summary>
+        /// Releases resources held by this reader. The default implementation
+        /// delegates to <see cref="Close"/> so existing subclasses that override
+        /// <see cref="Close"/> continue to work unchanged.
+        /// </summary>
+        public virtual void Dispose()
+        {
+            Close();
+            GC.SuppressFinalize(this);
+        }
 
         /// <summary> Returns the component subsampling factor in the horizontal direction,
         /// for the specified component. This is, approximately, the ratio of

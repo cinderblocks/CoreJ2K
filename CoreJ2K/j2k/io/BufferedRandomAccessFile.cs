@@ -332,14 +332,23 @@ namespace CoreJ2K.j2k.io
         /// <exception cref="IOException">If an I/O error ocurred.
         /// 
         /// </exception>
-        public virtual void close()
-        {
-            /* If the buffer has been changed, it need to be saved before
+		public virtual void Close()
+		{
+			/* If the buffer has been changed, it need to be saved before
 			* closing
 			*/
-            flush();
-            byteBuffer = null; // Release the byte-buffer reference
-        }
+			flush();
+			byteBuffer = null; // Release the byte-buffer reference
+		}
+
+		/// <summary>
+		/// Releases the resources held by this object. Calls <see cref="Close"/>.
+		/// </summary>
+		public void Dispose()
+		{
+			Close();
+			GC.SuppressFinalize(this);
+		}
 
         /// <summary> Returns the current length of the stream, in bytes, taking into
         /// account any buffering.

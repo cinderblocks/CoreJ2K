@@ -204,7 +204,7 @@ namespace CoreJ2K.j2k.util
             // Close file
             fi.flush();
             addedHeaderBytes += fi.length();
-            fi.close();
+            fi.Close();
 
             return addedHeaderBytes;
         }
@@ -547,7 +547,7 @@ namespace CoreJ2K.j2k.util
                         tempByteArr[7] = (byte)(SupportClass.URShift(length, 16));
                         tempByteArr[8] = (byte)(SupportClass.URShift(length, 8));
                         tempByteArr[9] = (byte)(length);
-                        tempByteArr[10] = (byte)SupportClass.Identity((0)); // TPsot
+                        tempByteArr[10] = 0; // TPsot
                         tempByteArr[11] = (byte)(numTileParts); // TNsot
                     }
                     else
@@ -555,8 +555,8 @@ namespace CoreJ2K.j2k.util
                         // Edit tile part header
                         tempByteArr[0] = (byte)(SupportClass.URShift(codestream.Markers.SOT, 8)); // SOT
                         tempByteArr[1] = codestream.Markers.SOT & 0x00FF;
-                        tempByteArr[2] = (byte)SupportClass.Identity((0)); // Lsot
-                        tempByteArr[3] = (byte)SupportClass.Identity((10));
+                        tempByteArr[2] = 0; // Lsot
+                        tempByteArr[3] = 10;
                         tempByteArr[4] = (byte)(SupportClass.URShift(t, 8)); // Isot
                         tempByteArr[5] = (byte)(t); // 
                         tempByteArr[6] = (byte)(SupportClass.URShift(length, 24)); // Psot

@@ -183,7 +183,7 @@ namespace CoreJ2K.j2k.fileformat.writer
                 // Write the Codestream box 
                 writeContiguousCodeStreamBox(codestream);
 
-                fi.close();
+                fi.Close();
             }
             catch (Exception e)
             {

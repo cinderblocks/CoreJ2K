@@ -43,6 +43,7 @@
 
 namespace CoreJ2K.j2k.io
 {
+    using System;
 
     /// <summary> This abstract class defines the interface to perform random access I/O. It
     /// implements the <tt>BinaryDataInput</tt> and <tt>BinaryDataOutput</tt>
@@ -53,7 +54,7 @@ namespace CoreJ2K.j2k.io
     /// </summary>
     /// <seealso cref="BinaryDataInput" />
     /// <seealso cref="BinaryDataOutput" />
-    public interface RandomAccessIO : BinaryDataInput, BinaryDataOutput
+    public interface RandomAccessIO : BinaryDataInput, BinaryDataOutput, IDisposable
     {
         /// <summary> Returns the current position in the stream, which is the position from
         /// where the next byte of data would be read. The first byte in the stream
@@ -79,7 +80,7 @@ namespace CoreJ2K.j2k.io
         /// <exception cref="IOException">If an I/O error ocurred. 
         /// 
         /// </exception>
-        void close();
+        void Close();
 
         /// <summary> Returns the current length of the stream, in bytes, taking into account
         /// any buffering.

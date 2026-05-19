@@ -61,7 +61,7 @@ namespace CoreJ2K.j2k.image.output
     /// will write 3 components (normally R,G,B).
     /// 
     /// </summary>
-    public abstract class ImgWriter
+    public abstract class ImgWriter : IDisposable
     {
 
         /// <summary>The defaukt height used when writing strip by strip in the 'write()'
@@ -87,7 +87,7 @@ namespace CoreJ2K.j2k.image.output
         /// <exception cref="IOException">If an I/O error occurs.
         /// 
         /// </exception>
-        public abstract void close();
+        public abstract void Close();
 
         /// <summary> Writes all buffered data to the file or resource. If the implementing
         /// class does onot use buffering nothing should be done.
@@ -96,21 +96,17 @@ namespace CoreJ2K.j2k.image.output
         /// <exception cref="IOException">If an I/O error occurs.
         /// 
         /// </exception>
-        public abstract void flush();
+        public abstract void Flush();
 
-        /// <summary> Flushes the buffered data before the object is garbage collected. If an
-        /// exception is thrown the object finalization is halted, but is otherwise
-        /// ignored.
-        /// 
+        /// <summary>
+        /// Releases resources held by this writer. The default implementation
+        /// flushes any buffered data and then closes the underlying resource.
         /// </summary>
-        /// <exception cref="IOException">If an I/O error occurs. It halts the
-        /// finalization of the object, but is otherwise ignored.
-        /// 
-        /// </exception>
-        /// <seealso cref="Object.finalize" />
-        ~ImgWriter()
+        public virtual void Dispose()
         {
-            flush();
+            try { Flush(); } catch { /* ignore on dispose */ }
+            try { Close(); } catch { /* ignore on dispose */ }
+            GC.SuppressFinalize(this);
         }
 
         /// <summary> Writes the source's current tile to the output. The requests of data

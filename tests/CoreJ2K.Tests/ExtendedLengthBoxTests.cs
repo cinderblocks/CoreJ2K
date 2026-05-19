@@ -158,22 +158,22 @@ namespace CoreJ2K.Tests
                     writer.writeLong(contentLength + 16);         // XLBox (includes 16-byte header)
                 }
                 writer.flush();
-                writer.close();
-                
+                writer.Close();
+
                 // Read back and verify
                 ms.Seek(0, SeekOrigin.Begin);
                 var reader = new BEBufferedRandomAccessFile(ms, true);
-                
+
                 var lbox = reader.readInt();
                 Assert.Equal(1, lbox);
-                
+
                 var tbox = reader.readInt();
                 Assert.Equal(FileFormatBoxes.CONTIGUOUS_CODESTREAM_BOX, tbox);
-                
+
                 var xlbox = reader.readLong();
                 Assert.Equal(5L * 1024 * 1024 * 1024 + 16, xlbox);
-                
-                reader.close();
+
+                reader.Close();
             }
         }
 
@@ -195,7 +195,7 @@ namespace CoreJ2K.Tests
                 writer.writeInt(totalLength);  // LBox
                 writer.writeInt(FileFormatBoxes.XML_BOX); // TBox
                 writer.flush();
-                writer.close();
+                writer.Close();
                 
                 // Read back and verify
                 ms.Seek(0, SeekOrigin.Begin);
@@ -209,8 +209,8 @@ namespace CoreJ2K.Tests
                 
                 // LBox should not be 1 (standard format)
                 Assert.NotEqual(1, lbox);
-                
-                reader.close();
+
+                reader.Close();
             }
         }
 

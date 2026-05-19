@@ -310,7 +310,7 @@ namespace CoreJ2K.j2k.util
         /// underlying InputStream.  
         /// 
         /// </exception>
-        public virtual void close()
+        public virtual void Close()
         {
             buf = null;
             if (!complete)
@@ -318,6 +318,15 @@ namespace CoreJ2K.j2k.util
                 is_Renamed.Dispose();
                 is_Renamed = null;
             }
+        }
+
+        /// <summary>
+        /// Releases the resources held by this object. Calls <see cref="Close"/>.
+        /// </summary>
+        public void Dispose()
+        {
+            Close();
+            GC.SuppressFinalize(this);
         }
 
         /// <summary> Moves the current position for the next read operation to offset. The

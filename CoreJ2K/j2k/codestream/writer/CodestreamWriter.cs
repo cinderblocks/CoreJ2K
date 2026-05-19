@@ -64,7 +64,7 @@ namespace CoreJ2K.j2k.codestream.writer
     /// 
     /// </summary>
     /// <seealso cref="HeaderEncoder" />
-    public abstract class CodestreamWriter
+    public abstract class CodestreamWriter : System.IDisposable
     {
         /// <summary> Returns the number of bytes remaining available in the codestream. This
         /// is the maximum allowed number of bytes minus the number of bytes that
@@ -207,7 +207,17 @@ namespace CoreJ2K.j2k.codestream.writer
         /// resource.
         /// 
         /// </exception>
-        public abstract void close();
+        public abstract void Close();
+
+        /// <summary>
+        /// Releases resources held by this writer. The default implementation
+        /// delegates to <see cref="Close"/>.
+        /// </summary>
+        public virtual void Dispose()
+        {
+            Close();
+            System.GC.SuppressFinalize(this);
+        }
 
         /// <summary> Writes the header data to the bit stream, if it has not been already
         /// done. In some implementations this method can be called only once, and
