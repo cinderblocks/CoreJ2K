@@ -43,6 +43,7 @@
 * */
 using CoreJ2K.j2k.util;
 using System;
+using System.Runtime.CompilerServices;
 
 namespace CoreJ2K.j2k.entropy.decoder
 {
@@ -473,15 +474,18 @@ namespace CoreJ2K.j2k.entropy.decoder
         /// <returns> The decoded symbol, 0 or 1.
         /// 
         /// </returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int decodeSymbol(int context)
         {
-            uint q;
+            // Pin I[context] and mPS[context] as ref locals: single bounds check each,
+            // all subsequent reads/writes go through the pinned reference.
+            ref int iCtx = ref I[context];
+            ref int mpsCtx = ref mPS[context];
+            int index = iCtx;
+            int curMps = mpsCtx;        // hoist: avoids a second indexed read on every path
+            uint q = qe[index];
             uint la;
-            int index;
             int decision;
-
-            index = I[context];
-            q = qe[index];
 
             // NOTE: (a < 0x8000) is equivalent to ((a & 0x8000)==0)
             // since 'a' is always less than or equal to 0xFFFF
@@ -496,7 +500,8 @@ namespace CoreJ2K.j2k.entropy.decoder
             {
                 if (a >= 0x8000)
                 {
-                    decision = mPS[context];
+                    // Most common fast path: MPS, interval already large — no renorm
+                    decision = curMps;
                 }
                 else
                 {
@@ -504,8 +509,8 @@ namespace CoreJ2K.j2k.entropy.decoder
                     // -- MPS Exchange
                     if (la >= q)
                     {
-                        decision = mPS[context];
-                        I[context] = nMPS[index];
+                        decision = curMps;
+                        iCtx = nMPS[index];
                         // -- Renormalize (MPS: no need for while loop)
                         if (cT == 0)
                             byteIn();
@@ -516,10 +521,10 @@ namespace CoreJ2K.j2k.entropy.decoder
                     }
                     else
                     {
-                        decision = 1 - mPS[context];
+                        decision = 1 - curMps;
                         if (switchLM[index] == 1)
-                            mPS[context] = 1 - mPS[context];
-                        I[context] = nLPS[index];
+                            mpsCtx = 1 - curMps;
+                        iCtx = nLPS[index];
                         // -- Renormalize
                         do
                         {
@@ -544,8 +549,8 @@ namespace CoreJ2K.j2k.entropy.decoder
                 if (la < q)
                 {
                     la = q;
-                    decision = mPS[context];
-                    I[context] = nMPS[index];
+                    decision = curMps;
+                    iCtx = nMPS[index];
                     // -- Renormalize (MPS: no need for while loop)
                     if (cT == 0)
                         byteIn();
@@ -557,10 +562,10 @@ namespace CoreJ2K.j2k.entropy.decoder
                 else
                 {
                     la = q;
-                    decision = 1 - mPS[context];
+                    decision = 1 - curMps;
                     if (switchLM[index] == 1)
-                        mPS[context] = 1 - mPS[context];
-                    I[context] = nLPS[index];
+                        mpsCtx = 1 - curMps;
+                    iCtx = nLPS[index];
                     // -- Renormalize
                     do
                     {
@@ -680,6 +685,7 @@ namespace CoreJ2K.j2k.entropy.decoder
         /// than 0x8F, the byte after 0xFF is a marker.
         /// 
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void byteIn()
         {
             if (!markerFound)

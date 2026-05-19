@@ -165,13 +165,54 @@ namespace CoreJ2K.j2k.util
         /// <summary> Creates a new RandomAccessIO wrapper for the given InputStream
         /// 'is'. The internal cache buffer size and increment is to to 256 kB. The
         /// maximum buffer size is set to Integer.MAX_VALUE (2 GB).
+        /// If 'is' is a <see cref="System.IO.MemoryStream"/> whose length is known,
+        /// the entire content is read eagerly in one shot so that all subsequent
+        /// reads hit the in-memory fast path and never call back into the stream.
         /// 
         /// </summary>
         /// <param name="is">The input from where to get the data.
         /// 
         /// </param>
-        public ISRandomAccessIO(System.IO.Stream is_Renamed) : this(is_Renamed, 1 << 18, 1 << 18, int.MaxValue)
+        public ISRandomAccessIO(System.IO.Stream is_Renamed)
         {
+            if (is_Renamed == null)
+                throw new ArgumentException();
+
+            // When the full length is known upfront (e.g. MemoryStream) bulk-load
+            // everything now so that readInput() is never called during decode.
+            if (is_Renamed.CanSeek && is_Renamed.CanRead && is_Renamed.Length <= int.MaxValue - 1)
+            {
+                int streamLen = (int)(is_Renamed.Length - is_Renamed.Position);
+                // +1 to account for the EOF sentinel used by readInput()
+                buf = new byte[streamLen + 1];
+                int offset = 0;
+                int remaining = streamLen;
+                while (remaining > 0)
+                {
+                    int read = is_Renamed.Read(buf, offset, remaining);
+                    if (read <= 0) break;
+                    offset += read;
+                    remaining -= read;
+                }
+                len = offset;
+                complete = true;
+                // Do not dispose: the caller owns the stream's lifetime.
+                this.is_Renamed = null;
+                inc = 1 << 18;
+                maxsize = int.MaxValue;
+                pos = 0;
+                return;
+            }
+
+            // Fallback: incremental buffering for non-seekable or very large streams.
+            this.is_Renamed = is_Renamed;
+            int size = (1 << 18) + 1;
+            buf = new byte[size];
+            inc = 1 << 18;
+            maxsize = int.MaxValue;
+            pos = 0;
+            len = 0;
+            complete = false;
         }
 
         /// <summary> Grows the cache buffer by 'inc', upto a maximum of 'maxsize'. The

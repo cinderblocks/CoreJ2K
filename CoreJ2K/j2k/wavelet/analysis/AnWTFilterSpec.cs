@@ -312,7 +312,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
 
                         case SPEC_TILE_COMP:
                             specValType[0][0] = SPEC_DEF;
-                            tileCompVal["t0c0"] = null;
+                            tileCompVal[0] = null;
                             break;
                     }
                 }

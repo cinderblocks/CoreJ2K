@@ -23,6 +23,9 @@ namespace CoreJ2K.Color
     /// </author>
     public class ChannelDefinitionMapper : ColorSpaceMapper
     {
+        // Channel definition mapping cached at construction; csMap.getChannelDefinition
+        // calls into the cdef box on every invocation and is called per-row per-component.
+        private readonly int[] _channelDef;
         /// <summary> Factory method for creating instances of this class.</summary>
         /// <param name="src">-- source of image data
         /// </param>
@@ -48,6 +51,9 @@ namespace CoreJ2K.Color
         /// </param>
         protected internal ChannelDefinitionMapper(BlkImgDataSrc src, ColorSpace csMap) : base(src, csMap)
         {
+            _channelDef = new int[ncomps];
+            for (var i = 0; i < ncomps; i++)
+                _channelDef[i] = csMap.getChannelDefinition(i);
             /* end ChannelDefinitionMapper ctor */
         }
 
@@ -88,7 +94,7 @@ namespace CoreJ2K.Color
         /// <seealso cref="GetInternCompData" />
         public override DataBlk GetCompData(DataBlk out_Renamed, int c)
         {
-            return src.GetCompData(out_Renamed, csMap.getChannelDefinition(c));
+            return src.GetCompData(out_Renamed, _channelDef[c]);
         }
 
         /// <summary> Returns, in the blk argument, a block of image data containing the
@@ -129,7 +135,7 @@ namespace CoreJ2K.Color
         /// <seealso cref="GetCompData" />
         public override DataBlk GetInternCompData(DataBlk out_Renamed, int compIndex)
         {
-            return src.GetInternCompData(out_Renamed, csMap.getChannelDefinition(compIndex));
+            return src.GetInternCompData(out_Renamed, _channelDef[compIndex]);
         }
 
         /// <summary> Returns the number of bits, referred to as the "range bits",
@@ -149,52 +155,52 @@ namespace CoreJ2K.Color
         /// </returns>
         public override int GetFixedPoint(int compIndex)
         {
-            return src.GetFixedPoint(csMap.getChannelDefinition(compIndex));
+            return src.GetFixedPoint(_channelDef[compIndex]);
         }
 
         public override int getNomRangeBits(int compIndex)
         {
-            return src.getNomRangeBits(csMap.getChannelDefinition(compIndex));
+            return src.getNomRangeBits(_channelDef[compIndex]);
         }
 
         public override int getCompImgHeight(int c)
         {
-            return src.getCompImgHeight(csMap.getChannelDefinition(c));
+            return src.getCompImgHeight(_channelDef[c]);
         }
 
         public override int getCompImgWidth(int c)
         {
-            return src.getCompImgWidth(csMap.getChannelDefinition(c));
+            return src.getCompImgWidth(_channelDef[c]);
         }
 
         public override int getCompSubsX(int c)
         {
-            return src.getCompSubsX(csMap.getChannelDefinition(c));
+            return src.getCompSubsX(_channelDef[c]);
         }
 
         public override int getCompSubsY(int c)
         {
-            return src.getCompSubsY(csMap.getChannelDefinition(c));
+            return src.getCompSubsY(_channelDef[c]);
         }
 
         public override int getCompULX(int c)
         {
-            return src.getCompULX(csMap.getChannelDefinition(c));
+            return src.getCompULX(_channelDef[c]);
         }
 
         public override int getCompULY(int c)
         {
-            return src.getCompULY(csMap.getChannelDefinition(c));
+            return src.getCompULY(_channelDef[c]);
         }
 
         public override int getTileCompHeight(int t, int c)
         {
-            return src.getTileCompHeight(t, csMap.getChannelDefinition(c));
+            return src.getTileCompHeight(t, _channelDef[c]);
         }
 
         public override int getTileCompWidth(int t, int c)
         {
-            return src.getTileCompWidth(t, csMap.getChannelDefinition(c));
+            return src.getTileCompWidth(t, _channelDef[c]);
         }
 
         public override string ToString()
@@ -204,7 +210,7 @@ namespace CoreJ2K.Color
 
             for (i = 0; i < ncomps; ++i)
             {
-                rep.Append(Environment.NewLine).Append("  component[").Append(i).Append("] mapped to channel[").Append(csMap.getChannelDefinition(i)).Append("]");
+                rep.Append(Environment.NewLine).Append("  component[").Append(i).Append("] mapped to channel[").Append(_channelDef[i]).Append("]");
             }
 
             return rep.Append("]").ToString();

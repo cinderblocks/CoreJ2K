@@ -120,11 +120,11 @@ namespace CoreJ2K.j2k
         /// </summary>
         protected internal object[] tileDef = null;
 
-        /// <summary>The specific value for each tile-component. Value of tile 16 component
-        /// 3 is accessible through the hash value "t16c3". Null if no
-        /// tile-component specific value is defined 
+        /// <summary>The specific value for each tile-component, stored as a flat array
+        /// indexed by <c>t * nComp + c</c>. Null if no tile-component specific value
+        /// has been defined.
         /// </summary>
-        protected internal Dictionary<string, object> tileCompVal;
+        protected internal object[] tileCompVal;
 
         public virtual object Clone()
         {
@@ -163,13 +163,7 @@ namespace CoreJ2K.j2k
             // Create a copy of tileCompVal
             if (tileCompVal != null)
             {
-                ms.tileCompVal = new Dictionary<string, object>();
-                //UPGRADE_TODO: Method 'java.util.Enumeration.hasMoreElements' was converted to 'System.Collections.IEnumerator.MoveNext' which has a different behavior. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1073_javautilEnumerationhasMoreElements'"
-                for (IEnumerator<string> e = tileCompVal.Keys.GetEnumerator(); e.MoveNext();)
-                {
-                    //UPGRADE_TODO: Method 'java.util.Enumeration.nextElement' was converted to 'System.Collections.IEnumerator.Current' which has a different behavior. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1073_javautilEnumerationnextElement'"
-                    ms.tileCompVal[e.Current] = tileCompVal[e.Current];
-                }
+                ms.tileCompVal = (object[])tileCompVal.Clone();
             }
             return ms;
         }
@@ -216,29 +210,22 @@ namespace CoreJ2K.j2k
             }
 
             // Rotate tileCompVal
-            if (tileCompVal != null && tileCompVal.Count > 0)
+            if (tileCompVal != null)
             {
-                var tmptcv = new Dictionary<string, object>();
-                string tmpKey;
-                object tmpVal;
-                int btIdx, atIdx;
-                int i1, i2;
-                int bx, by;
-                //UPGRADE_TODO: Method 'java.util.Enumeration.hasMoreElements' was converted to 'System.Collections.IEnumerator.MoveNext' which has a different behavior. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1073_javautilEnumerationhasMoreElements'"
-                for (System.Collections.IEnumerator e = tileCompVal.Keys.GetEnumerator(); e.MoveNext();)
+                var tmptcv = new object[nTiles * nComp];
+                for (var by = 0; by < bnT.y; by++)
                 {
-                    //UPGRADE_TODO: Method 'java.util.Enumeration.nextElement' was converted to 'System.Collections.IEnumerator.Current' which has a different behavior. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1073_javautilEnumerationnextElement'"
-                    tmpKey = ((string)e.Current);
-                    tmpVal = tileCompVal[tmpKey];
-                    i1 = tmpKey.IndexOf('t');
-                    i2 = tmpKey.IndexOf('c');
-                    btIdx = (int.Parse(tmpKey.Substring(i1 + 1, (i2) - (i1 + 1))));
-                    bx = btIdx % bnT.x;
-                    by = btIdx / bnT.x;
-                    ay = bx;
-                    ax = bnT.y - by - 1;
-                    atIdx = ax + ay * anT.x;
-                    tmptcv[$"t{atIdx}{tmpKey.Substring(i2)}"] = tmpVal;
+                    for (var bx = 0; bx < bnT.x; bx++)
+                    {
+                        ay = bx;
+                        ax = bnT.y - by - 1;
+                        var btIdx = by * bnT.x + bx;
+                        var atIdx = ay * anT.x + ax;
+                        for (var c2 = 0; c2 < nComp; c2++)
+                        {
+                            tmptcv[atIdx * nComp + c2] = tileCompVal[btIdx * nComp + c2];
+                        }
+                    }
                 }
                 tileCompVal = tmptcv;
             }
@@ -531,9 +518,9 @@ namespace CoreJ2K.j2k
                 throw new InvalidOperationException(errMsg);
             }
             if (tileCompVal == null)
-                tileCompVal = new Dictionary<string, object>();
+                tileCompVal = new object[nTiles * nComp];
             specValType[t][c] = SPEC_TILE_COMP;
-            tileCompVal[$"t{t}c{c}"] = value_Renamed;
+            tileCompVal[t * nComp + c] = value_Renamed;
         }
 
         /// <summary> Gets value of specified tile-component. This method calls getSpec but
@@ -591,7 +578,7 @@ namespace CoreJ2K.j2k
                     return getTileDef(t);
 
                 case SPEC_TILE_COMP:
-                    return tileCompVal[$"t{t}c{c}"];
+                    return tileCompVal[t * nComp + c];
 
                 default:
                     throw new ArgumentException("Not recognized spec type");
@@ -656,7 +643,7 @@ namespace CoreJ2K.j2k
         /// </returns>
         public virtual bool isTileCompSpecified(int t, int c)
         {
-            return tileCompVal?[$"t{t}c{c}"] != null;
+            return tileCompVal != null && tileCompVal[t * nComp + c] != null;
         }
 
         /// <summary> This method is responsible for parsing tile indexes set and component

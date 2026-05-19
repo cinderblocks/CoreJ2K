@@ -12,6 +12,7 @@
 using CoreJ2K.j2k.util;
 using CoreJ2K.Util;
 using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 /// <summary>
@@ -223,6 +224,7 @@ internal static class SupportClass
     /// <param name="number">Number to operate on</param>
     /// <param name="bits">Amount of bits to shift</param>
     /// <returns>The resulting number from the shift operation</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int URShift(int number, int bits)
     {
         // Use unsigned shift via cast to uint for correct semantics
@@ -235,6 +237,7 @@ internal static class SupportClass
     /// <param name="number">Number to operate on</param>
     /// <param name="bits">Amount of bits to shift</param>
     /// <returns>The resulting number from the shift operation</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int URShift(int number, long bits)
     {
         return URShift(number, (int)bits);
@@ -246,6 +249,7 @@ internal static class SupportClass
     /// <param name="number">Number to operate on</param>
     /// <param name="bits">Amount of bits to shift</param>
     /// <returns>The resulting number from the shift operation</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static long URShift(long number, int bits)
     {
         // Use unsigned shift via cast to ulong for correct semantics
@@ -258,6 +262,7 @@ internal static class SupportClass
     /// <param name="number">Number to operate on</param>
     /// <param name="bits">Amount of bits to shift</param>
     /// <returns>The resulting number from the shift operation</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static long URShift(long number, long bits)
     {
         return URShift(number, (int)bits);

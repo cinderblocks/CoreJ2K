@@ -102,6 +102,27 @@ namespace CoreJ2K.j2k.quantization.dequantizer
         /// <summary>Type of the current output data </summary>
         private int outdtype;
 
+        // Cache for the isReversible / isDerived results per (tile, component).
+        // QuantTypeSpec.isReversible / isDerived perform a string equality check on
+        // every call; caching avoids repeating that per code-block.
+        private int _cachedRevTile = -1;
+        private int _cachedRevComp = -1;
+        private bool _cachedReversible;
+
+        private int _cachedDerTile = -1;
+        private int _cachedDerComp = -1;
+        private bool _cachedDerived;
+
+        // Cache for StdDequantizerParams (step sizes) and guard-bits per (tile, component).
+        // Both are set once at header decode time and are constant during decode.
+        private int _cachedParamsTile = -1;
+        private int _cachedParamsComp = -1;
+        private StdDequantizerParams _cachedParams;
+
+        private int _cachedGTile = -1;
+        private int _cachedGComp = -1;
+        private int _cachedG;
+
         /// <summary> Initializes the source of compressed data. And sets the number of range
         /// bits and fraction bits and receives the parameters for the dequantizer.
         /// 
@@ -267,10 +288,43 @@ namespace CoreJ2K.j2k.quantization.dequantizer
             int[] outiarr, inarr;
             float[] outfarr;
             int w, h;
-            var reversible = qts.isReversible(tIdx, c);
-            var derived = qts.isDerived(tIdx, c);
-            var params_Renamed = (StdDequantizerParams)qsss.getTileCompVal(tIdx, c);
-            var G = gbs.GetIntTileCompVal(tIdx, c);
+            bool reversible;
+            if (_cachedRevTile == tIdx && _cachedRevComp == c)
+            {
+                reversible = _cachedReversible;
+            }
+            else
+            {
+                reversible = qts.isReversible(tIdx, c);
+                _cachedReversible = reversible;
+                _cachedRevTile = tIdx;
+                _cachedRevComp = c;
+            }
+
+            bool derived;
+            if (_cachedDerTile == tIdx && _cachedDerComp == c)
+            {
+                derived = _cachedDerived;
+            }
+            else
+            {
+                derived = qts.isDerived(tIdx, c);
+                _cachedDerived = derived;
+                _cachedDerTile = tIdx;
+                _cachedDerComp = c;
+            }
+            StdDequantizerParams params_Renamed;
+            if (_cachedParamsTile == tIdx && _cachedParamsComp == c)
+            {
+                params_Renamed = _cachedParams;
+            }
+            else
+            {
+                params_Renamed = (StdDequantizerParams)qsss.getTileCompVal(tIdx, c);
+                _cachedParams = params_Renamed;
+                _cachedParamsTile = tIdx;
+                _cachedParamsComp = c;
+            }
 
             outdtype = cblk.DataType;
 

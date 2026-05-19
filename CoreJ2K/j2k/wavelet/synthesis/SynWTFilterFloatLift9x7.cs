@@ -42,6 +42,8 @@
 * Copyright (c) 1999/2000 JJ2000 Partners.
 *  */
 
+using System.Runtime.CompilerServices;
+
 namespace CoreJ2K.j2k.wavelet.synthesis
 {
 
@@ -256,24 +258,23 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// 
         /// </param>
         /// <seealso cref="SynWTFilter.synthetize_lpf" />
-        public override void synthetize_lpf(float[] lowSig, int lowOff, int lowLen, int lowStep, float[] highSig, int highOff, int highLen, int highStep, float[] outSig, int outOff, int outStep)
+        public sealed override void synthetize_lpf(float[] lowSig, int lowOff, int lowLen, int lowStep, float[] highSig, int highOff, int highLen, int highStep, float[] outSig, int outOff, int outStep)
         {
+            // Fast path for unit strides (the common case from InvWTFull).
+            // Sequential access lets the JIT auto-vectorize and eliminate index arithmetic.
+            if (lowStep == 1 && highStep == 1 && outStep == 1)
+            {
+                Synthetize_lpf_step1(lowSig, lowOff, lowLen, highSig, highOff, highLen, outSig, outOff);
+                return;
+            }
 
             int i;
-            var outLen = lowLen + highLen; //Length of the output signal
-            var iStep = 2 * outStep; //Upsampling in outSig
-            int ik; //Indexing outSig
-            int lk; //Indexing lowSig
-            int hk; //Indexing highSig
+            var outLen = lowLen + highLen;
+            var iStep = 2 * outStep;
+            int ik, lk, hk;
 
             // Generate intermediate low frequency subband
-
-            //Initialize counters
-            lk = lowOff;
-            hk = highOff;
-            ik = outOff;
-
-            //Handle tail boundary effect. Use symmetric extension
+            lk = lowOff; hk = highOff; ik = outOff;
             if (outLen > 1)
             {
                 outSig[ik] = lowSig[lk] * INV_KL - TWO_DELTA_OVER_KH * highSig[hk];
@@ -282,84 +283,145 @@ namespace CoreJ2K.j2k.wavelet.synthesis
             {
                 outSig[ik] = lowSig[lk];
             }
-
-            lk += lowStep;
-            hk += highStep;
-            ik += iStep;
-
-            //Apply lifting step to each "inner" sample
+            lk += lowStep; hk += highStep; ik += iStep;
             for (i = 2; i < outLen - 1; i += 2, ik += iStep, lk += lowStep, hk += highStep)
             {
                 outSig[ik] = lowSig[lk] * INV_KL - DELTA_OVER_KH * (highSig[hk - highStep] + highSig[hk]);
             }
-
-            //Handle head boundary effect if input signal has odd length
-            if (outLen % 2 == 1)
+            if (outLen % 2 == 1 && outLen > 2)
             {
-                if (outLen > 2)
-                {
-                    outSig[ik] = lowSig[lk] * INV_KL - TWO_DELTA_OVER_KH * highSig[hk - highStep];
-                }
+                outSig[ik] = lowSig[lk] * INV_KL - TWO_DELTA_OVER_KH * highSig[hk - highStep];
             }
 
             // Generate intermediate high frequency subband
-
-            //Initialize counters
-            lk = lowOff;
-            hk = highOff;
-            ik = outOff + outStep;
-
-            //Apply lifting step to each "inner" sample
+            lk = lowOff; hk = highOff; ik = outOff + outStep;
             for (i = 1; i < outLen - 1; i += 2, ik += iStep, hk += highStep, lk += lowStep)
             {
                 outSig[ik] = highSig[hk] * INV_KH - GAMMA * (outSig[ik - outStep] + outSig[ik + outStep]);
             }
-
-            //Handle head boundary effect if output signal has even length
             if (outLen % 2 == 0)
             {
                 outSig[ik] = highSig[hk] * INV_KH - TWO_GAMMA * outSig[ik - outStep];
             }
 
             // Generate even samples (inverse low-pass filter)
-
-            //Initialize counters
             ik = outOff;
-
-            //Handle tail boundary effect
             if (outLen > 1)
             {
                 outSig[ik] -= TWO_BETA * outSig[ik + outStep];
             }
             ik += iStep;
-
-            //Apply lifting step to each "inner" sample
             for (i = 2; i < outLen - 1; i += 2, ik += iStep)
             {
                 outSig[ik] -= BETA * (outSig[ik - outStep] + outSig[ik + outStep]);
             }
-
-            //Handle head boundary effect if input signal has odd length
             if (outLen % 2 == 1 && outLen > 2)
             {
                 outSig[ik] -= TWO_BETA * outSig[ik - outStep];
             }
 
             // Generate odd samples (inverse high pass-filter)
-
-            //Initialize counters
             ik = outOff + outStep;
-
-            //Apply first lifting step to each "inner" sample
             for (i = 1; i < outLen - 1; i += 2, ik += iStep)
             {
                 outSig[ik] -= ALPHA * (outSig[ik - outStep] + outSig[ik + outStep]);
             }
-
-            //Handle head boundary effect if input signal has even length
             if (outLen % 2 == 0)
             {
                 outSig[ik] -= TWO_ALPHA * outSig[ik - outStep];
+            }
+        }
+
+        /// <summary>
+        /// Optimized synthetize_lpf for the common case where lowStep=highStep=outStep=1.
+        /// Sequential (stride-1) access enables JIT auto-vectorization and removes index arithmetic.
+        /// </summary>
+#if NET5_0_OR_GREATER || NETCOREAPP3_0_OR_GREATER
+        [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+#endif
+        private static void Synthetize_lpf_step1(
+            float[] lowSig, int lowOff, int lowLen,
+            float[] highSig, int highOff, int highLen,
+            float[] outSig, int outOff)
+        {
+            int outLen = lowLen + highLen;
+
+            // ---- Phase 1: Generate intermediate low-frequency subband (even positions) ----
+            // Even output positions (0, 2, 4, ...) come from lowSig.
+            // The interleaved output step is 2, so even[n] = outSig[outOff + 2*n].
+            int lk = lowOff;
+            int hk = highOff;
+            int ik = outOff; // current even output index (stride=2 in output)
+
+            if (outLen > 1)
+            {
+                // tail boundary: only right neighbour high sample exists
+                outSig[ik] = lowSig[lk] * INV_KL - TWO_DELTA_OVER_KH * highSig[hk];
+            }
+            else
+            {
+                outSig[ik] = lowSig[lk];
+            }
+            lk++; hk++; ik += 2;
+
+            int evenEnd = outOff + 2 * (lowLen - 1); // last even output index
+            while (ik < evenEnd)
+            {
+                outSig[ik] = lowSig[lk] * INV_KL - DELTA_OVER_KH * (highSig[hk - 1] + highSig[hk]);
+                lk++; hk++; ik += 2;
+            }
+            // head boundary (only when lowLen > highLen, i.e. odd outLen > 2)
+            if (outLen % 2 == 1 && outLen > 2)
+            {
+                outSig[ik] = lowSig[lk] * INV_KL - TWO_DELTA_OVER_KH * highSig[hk - 1];
+            }
+
+            // ---- Phase 2: Generate intermediate high-frequency subband (odd positions) ----
+            hk = highOff;
+            ik = outOff + 1; // first odd output index
+
+            int oddEnd = outOff + 2 * highLen - 1; // last odd output index (before possible boundary)
+            while (ik < oddEnd)
+            {
+                outSig[ik] = highSig[hk] * INV_KH - GAMMA * (outSig[ik - 1] + outSig[ik + 1]);
+                hk++; ik += 2;
+            }
+            // head boundary: no right neighbour when outLen is even
+            if (outLen % 2 == 0)
+            {
+                outSig[ik] = highSig[hk] * INV_KH - TWO_GAMMA * outSig[ik - 1];
+            }
+
+            // ---- Phase 3: Even samples — inverse low-pass (BETA update) ----
+            ik = outOff;
+            if (outLen > 1)
+            {
+                outSig[ik] -= TWO_BETA * outSig[ik + 1];
+            }
+            ik += 2;
+
+            int evenBetaEnd = outOff + 2 * (lowLen - 1);
+            while (ik < evenBetaEnd)
+            {
+                outSig[ik] -= BETA * (outSig[ik - 1] + outSig[ik + 1]);
+                ik += 2;
+            }
+            if (outLen % 2 == 1 && outLen > 2)
+            {
+                outSig[ik] -= TWO_BETA * outSig[ik - 1];
+            }
+
+            // ---- Phase 4: Odd samples — inverse high-pass (ALPHA update) ----
+            ik = outOff + 1;
+            int oddAlphaEnd = outOff + 2 * highLen - 1;
+            while (ik < oddAlphaEnd)
+            {
+                outSig[ik] -= ALPHA * (outSig[ik - 1] + outSig[ik + 1]);
+                ik += 2;
+            }
+            if (outLen % 2 == 0)
+            {
+                outSig[ik] -= TWO_ALPHA * outSig[ik - 1];
             }
         }
 
@@ -425,7 +487,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// 
         /// </param>
         /// <seealso cref="SynWTFilter.synthetize_hpf" />
-        public override void synthetize_hpf(float[] lowSig, int lowOff, int lowLen, int lowStep, float[] highSig, int highOff, int highLen, int highStep, float[] outSig, int outOff, int outStep)
+        public sealed override void synthetize_hpf(float[] lowSig, int lowOff, int lowLen, int lowStep, float[] highSig, int highOff, int highLen, int highStep, float[] outSig, int outOff, int outStep)
         {
 
             int i;

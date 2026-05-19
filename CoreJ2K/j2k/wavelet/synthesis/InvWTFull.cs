@@ -102,6 +102,12 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         private DataBlkInt _subbDataInt;
         private DataBlkFloat _subbDataFloat;
 
+        // Grow-only scratch line buffers for wavelet2DReconstruction.
+        // Sized to max(w,h) of the largest subband seen so far; never returned to a pool,
+        // so every subband reconstruction reuses the same allocation with zero rent/return overhead.
+        private int[]   _waveletScratchInt;
+        private float[] _waveletScratchFloat;
+
         /// <summary>
         /// Configures whether ArrayPool buffers should be cleared when returned.
         /// Setting this to true improves security by preventing sensitive image data 
@@ -281,13 +287,16 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         public override DataBlk GetInternCompData(DataBlk blk, int compIndex)
         {
             var tIdx = TileIdx;
-            dtype = src.getSynSubbandTree(tIdx, compIndex).HorWFilter == null
-                ? DataBlk.TYPE_INT
-                : src.getSynSubbandTree(tIdx, compIndex).HorWFilter.DataType;
 
             //If the source image has not been decomposed (or was invalidated by a tile change)
             if (reconstructedComps[compIndex] == null || reconstructedComps[compIndex].Data == null)
             {
+                // Call getSynSubbandTree exactly once on the slow path; reuse for both
+                // dtype determination and waveletTreeReconstruction — avoids the extra
+                // virtual dispatch that was occurring on every call in the original code.
+                var synTree = src.getSynSubbandTree(tIdx, compIndex);
+                dtype = synTree.HorWFilter == null ? DataBlk.TYPE_INT : synTree.HorWFilter.DataType;
+
                 //Allocate component data buffer
                 switch (dtype)
                 {
@@ -378,8 +387,14 @@ namespace CoreJ2K.j2k.wavelet.synthesis
                         }
                         break;
                 }
-                //Reconstruct source image
-                waveletTreeReconstruction(reconstructedComps[compIndex], src.getSynSubbandTree(tIdx, compIndex), compIndex);
+                //Reconstruct source image — reuse the synTree reference already fetched above
+                waveletTreeReconstruction(reconstructedComps[compIndex], synTree, compIndex);
+            }
+            else
+            {
+                // Fast path: reconstruction already cached. Derive dtype from the concrete
+                // type of the cached block — zero virtual calls to getSynSubbandTree.
+                dtype = reconstructedComps[compIndex] is DataBlkInt ? DataBlk.TYPE_INT : DataBlk.TYPE_FLOAT;
             }
 
             if (blk.DataType != dtype)
@@ -537,15 +552,127 @@ namespace CoreJ2K.j2k.wavelet.synthesis
 
             buf = null; // To keep compiler happy
 
+            // Fast path: both filters are the concrete 5x3 int type – call typed methods
+            // directly to eliminate the object-typed virtual dispatch chain and the slower
+            // Array.Copy(Array,...) overload used in the generic fallback.
+            if (sb.hFilter is SynWTFilterIntLift5x3 hf5x3 && sb.vFilter is SynWTFilterIntLift5x3 vf5x3)
+            {
+                int[] data_int5x3 = (int[])data;
+                int need5x3 = (w >= h) ? w : h;
+                if (_waveletScratchInt == null || _waveletScratchInt.Length < need5x3)
+                    _waveletScratchInt = new int[need5x3];
+                int[] buf_int5x3 = _waveletScratchInt;
+                {
+                    // Horizontal reconstruction
+                    offset = (uly - db.uly) * db.w + ulx - db.ulx;
+                    if (sb.ulcx % 2 == 0)
+                    {
+                        for (i = 0; i < h; i++, offset += db.w)
+                        {
+                            Array.Copy(data_int5x3, offset, buf_int5x3, 0, w);
+                            hf5x3.synthetize_lpf(buf_int5x3, 0, (w + 1) / 2, 1, buf_int5x3, (w + 1) / 2, w / 2, 1, data_int5x3, offset, 1);
+                        }
+                    }
+                    else
+                    {
+                        for (i = 0; i < h; i++, offset += db.w)
+                        {
+                            Array.Copy(data_int5x3, offset, buf_int5x3, 0, w);
+                            hf5x3.synthetize_hpf(buf_int5x3, 0, w / 2, 1, buf_int5x3, w / 2, (w + 1) / 2, 1, data_int5x3, offset, 1);
+                        }
+                    }
+
+                    // Vertical reconstruction
+                    offset = (uly - db.uly) * db.w + ulx - db.ulx;
+                    if (sb.ulcy % 2 == 0)
+                    {
+                        for (j = 0; j < w; j++, offset++)
+                        {
+                            for (i = h - 1, k = offset + i * db.w; i >= 0; i--, k -= db.w)
+                                buf_int5x3[i] = data_int5x3[k];
+                            vf5x3.synthetize_lpf(buf_int5x3, 0, (h + 1) / 2, 1, buf_int5x3, (h + 1) / 2, h / 2, 1, data_int5x3, offset, db.w);
+                        }
+                    }
+                    else
+                    {
+                        for (j = 0; j < w; j++, offset++)
+                        {
+                            for (i = h - 1, k = offset + i * db.w; i >= 0; i--, k -= db.w)
+                                buf_int5x3[i] = data_int5x3[k];
+                            vf5x3.synthetize_hpf(buf_int5x3, 0, h / 2, 1, buf_int5x3, h / 2, (h + 1) / 2, 1, data_int5x3, offset, db.w);
+                        }
+                    }
+                }
+                return;
+            }
+
+            // Fast path: both filters are the concrete 9x7 float type – call typed sealed
+            // methods directly to eliminate the object-typed virtual dispatch chain.
+            if (sb.hFilter is SynWTFilterFloatLift9x7 hf9x7 && sb.vFilter is SynWTFilterFloatLift9x7 vf9x7)
+            {
+                float[] data_float = (float[])data;
+                int need9x7 = (w >= h) ? w : h;
+                if (_waveletScratchFloat == null || _waveletScratchFloat.Length < need9x7)
+                    _waveletScratchFloat = new float[need9x7];
+                float[] buf_float = _waveletScratchFloat;
+                {
+                    // Horizontal reconstruction
+                    offset = (uly - db.uly) * db.w + ulx - db.ulx;
+                    if (sb.ulcx % 2 == 0)
+                    {
+                        for (i = 0; i < h; i++, offset += db.w)
+                        {
+                            Array.Copy(data_float, offset, buf_float, 0, w);
+                            hf9x7.synthetize_lpf(buf_float, 0, (w + 1) / 2, 1, buf_float, (w + 1) / 2, w / 2, 1, data_float, offset, 1);
+                        }
+                    }
+                    else
+                    {
+                        for (i = 0; i < h; i++, offset += db.w)
+                        {
+                            Array.Copy(data_float, offset, buf_float, 0, w);
+                            hf9x7.synthetize_hpf(buf_float, 0, w / 2, 1, buf_float, w / 2, (w + 1) / 2, 1, data_float, offset, 1);
+                        }
+                    }
+
+                    // Vertical reconstruction
+                    offset = (uly - db.uly) * db.w + ulx - db.ulx;
+                    if (sb.ulcy % 2 == 0)
+                    {
+                        for (j = 0; j < w; j++, offset++)
+                        {
+                            for (i = h - 1, k = offset + i * db.w; i >= 0; i--, k -= db.w)
+                                buf_float[i] = data_float[k];
+                            vf9x7.synthetize_lpf(buf_float, 0, (h + 1) / 2, 1, buf_float, (h + 1) / 2, h / 2, 1, data_float, offset, db.w);
+                        }
+                    }
+                    else
+                    {
+                        for (j = 0; j < w; j++, offset++)
+                        {
+                            for (i = h - 1, k = offset + i * db.w; i >= 0; i--, k -= db.w)
+                                buf_float[i] = data_float[k];
+                            vf9x7.synthetize_hpf(buf_float, 0, h / 2, 1, buf_float, h / 2, (h + 1) / 2, 1, data_float, offset, db.w);
+                        }
+                    }
+                }
+                return;
+            }
+
+            int needGen = (w >= h) ? w : h;
             switch (sb.HorWFilter.DataType)
             {
 
                 case DataBlk.TYPE_INT:
-                    buf = ArrayPool<int>.Shared.Rent((w >= h) ? w : h);
+                    if (_waveletScratchInt == null || _waveletScratchInt.Length < needGen)
+                        _waveletScratchInt = new int[needGen];
+                    buf = _waveletScratchInt;
                     break;
 
                 case DataBlk.TYPE_FLOAT:
-                    buf = ArrayPool<float>.Shared.Rent((w >= h) ? w : h);
+                    if (_waveletScratchFloat == null || _waveletScratchFloat.Length < needGen)
+                        _waveletScratchFloat = new float[needGen];
+                    buf = _waveletScratchFloat;
                     break;
             }
 
@@ -604,16 +731,16 @@ namespace CoreJ2K.j2k.wavelet.synthesis
                         break;
 
                     case DataBlk.TYPE_FLOAT:
-                        float[] data_float, buf_float;
-                        data_float = (float[])data;
-                        buf_float = (float[])buf;
+                        float[] data_float2, buf_float2;
+                        data_float2 = (float[])data;
+                        buf_float2 = (float[])buf;
                         if (sb.ulcy % 2 == 0)
                         {
                             // start index is even => use LPF
                             for (j = 0; j < w; j++, offset++)
                             {
                                 for (i = h - 1, k = offset + i * db.w; i >= 0; i--, k -= db.w)
-                                    buf_float[i] = data_float[k];
+                                    buf_float2[i] = data_float2[k];
                                 sb.vFilter.synthetize_lpf(buf, 0, (h + 1) / 2, 1, buf, (h + 1) / 2, h / 2, 1, data, offset, db.w);
                             }
                         }
@@ -623,7 +750,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
                             for (j = 0; j < w; j++, offset++)
                             {
                                 for (i = h - 1, k = offset + i * db.w; i >= 0; i--, k -= db.w)
-                                    buf_float[i] = data_float[k];
+                                    buf_float2[i] = data_float2[k];
                                 sb.vFilter.synthetize_hpf(buf, 0, h / 2, 1, buf, h / 2, (h + 1) / 2, 1, data, offset, db.w);
                             }
                         }
@@ -632,13 +759,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
             }
             finally
             {
-                // Return rented buffer
-                // Use configurable clearing for security vs performance trade-off
-                if (buf != null)
-                {
-                    if (buf is int[] ai) { try { ArrayPool<int>.Shared.Return(ai, clearArray: ClearArrayPoolBuffersOnReturn); } catch { } }
-                    else if (buf is float[] af) { try { ArrayPool<float>.Shared.Return(af, clearArray: ClearArrayPoolBuffersOnReturn); } catch { } }
-                }
+                // buf points to an instance-level scratch field; nothing to return.
             }
         }
 
@@ -667,7 +788,6 @@ namespace CoreJ2K.j2k.wavelet.synthesis
             if (!sb.isNode)
             {
                 int i, m, n;
-                object src_data, dst_data;
                 Coord ncblks;
 
                 if (sb.w == 0 || sb.h == 0)
@@ -687,19 +807,39 @@ namespace CoreJ2K.j2k.wavelet.synthesis
                     subbData = _subbDataFloat;
                 }
                 ncblks = sb.numCb;
-                dst_data = img.Data;
-                for (m = 0; m < ncblks.y; m++)
+                if (dtype == DataBlk.TYPE_INT)
                 {
-                    for (n = 0; n < ncblks.x; n++)
+                    int[] dstArr = (int[])img.Data;
+                    for (m = 0; m < ncblks.y; m++)
                     {
-                        subbData = src.getInternCodeBlock(c, m, n, sb, subbData);
-                        src_data = subbData.Data;
-
-                        // Copy the data line by line
-                        for (i = subbData.h - 1; i >= 0; i--)
+                        for (n = 0; n < ncblks.x; n++)
                         {
-                            // CONVERSION PROBLEM
-                            Array.Copy((Array)src_data, subbData.offset + i * subbData.scanw, (Array)dst_data, (subbData.uly + i) * img.w + subbData.ulx, subbData.w);
+                            subbData = src.getInternCodeBlock(c, m, n, sb, subbData);
+                            int[] srcArr = (int[])subbData.Data;
+                            int dstBase = subbData.uly * img.w + subbData.ulx;
+                            for (i = subbData.h - 1; i >= 0; i--)
+                            {
+                                new ReadOnlySpan<int>(srcArr, subbData.offset + i * subbData.scanw, subbData.w)
+                                    .CopyTo(dstArr.AsSpan(dstBase + i * img.w, subbData.w));
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    float[] dstArr = (float[])img.Data;
+                    for (m = 0; m < ncblks.y; m++)
+                    {
+                        for (n = 0; n < ncblks.x; n++)
+                        {
+                            subbData = src.getInternCodeBlock(c, m, n, sb, subbData);
+                            float[] srcArr = (float[])subbData.Data;
+                            int dstBase = subbData.uly * img.w + subbData.ulx;
+                            for (i = subbData.h - 1; i >= 0; i--)
+                            {
+                                new ReadOnlySpan<float>(srcArr, subbData.offset + i * subbData.scanw, subbData.w)
+                                    .CopyTo(dstArr.AsSpan(dstBase + i * img.w, subbData.w));
+                            }
                         }
                     }
                 }

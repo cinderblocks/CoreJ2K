@@ -29,6 +29,11 @@ namespace CoreJ2K.Color
         private int maxCompSubsX;
         private int maxCompSubsY;
 
+        // Per-component subsampling factors cached at construction;
+        // these come from the SIZ marker and are image-level constants.
+        private readonly int[] _subsX;
+        private readonly int[] _subsY;
+
         internal int wspan = 0;
         internal int hspan = 0;
 
@@ -60,20 +65,30 @@ namespace CoreJ2K.Color
 
             int c;
 
+            // Cache per-component subsampling factors; these are image-level
+            // constants read from the SIZ marker and never change after construction.
+            _subsX = new int[ncomps];
+            _subsY = new int[ncomps];
+            for (c = 0; c < ncomps; ++c)
+            {
+                _subsX[c] = src.getCompSubsX(c);
+                _subsY[c] = src.getCompSubsY(c);
+            }
+
             // Calculate the minimum and maximum subsampling factor
             // across all channels.
 
-            var minX = src.getCompSubsX(0);
-            var minY = src.getCompSubsY(0);
+            var minX = _subsX[0];
+            var minY = _subsY[0];
             var maxX = minX;
             var maxY = minY;
 
             for (c = 1; c < ncomps; ++c)
             {
-                minX = Math.Min(minX, src.getCompSubsX(c));
-                minY = Math.Min(minY, src.getCompSubsY(c));
-                maxX = Math.Max(maxX, src.getCompSubsX(c));
-                maxY = Math.Max(maxY, src.getCompSubsY(c));
+                minX = Math.Min(minX, _subsX[c]);
+                minY = Math.Min(minY, _subsY[c]);
+                maxX = Math.Max(maxX, _subsX[c]);
+                maxY = Math.Max(maxY, _subsY[c]);
             }
 
             // Throw an exception for other than 2:1 sampling.
@@ -132,14 +147,12 @@ namespace CoreJ2K.Color
         public override DataBlk GetInternCompData(DataBlk outblk, int compIndex)
         {
 
-            // If the scaling factor of this channel is 1 in both
-            // directions, simply return the source DataBlk.
-
-            if (src.getCompSubsX(compIndex) == 1 && src.getCompSubsY(compIndex) == 1)
+            // Fast path: both subsample factors are 1 — pass straight through.
+            if (_subsX[compIndex] == 1 && _subsY[compIndex] == 1)
                 return src.GetInternCompData(outblk, compIndex);
 
-            var wfactor = src.getCompSubsX(compIndex);
-            var hfactor = src.getCompSubsY(compIndex);
+            var wfactor = _subsX[compIndex];
+            var hfactor = _subsY[compIndex];
             if ((wfactor != 2 && wfactor != 1) || (hfactor != 2 && hfactor != 1))
                 throw new ArgumentException("Upsampling by other than 2:1" + " not supported");
 
@@ -326,9 +339,9 @@ namespace CoreJ2K.Color
                 body.Append("comp[");
                 body.Append(i);
                 body.Append("] xscale= ");
-                body.Append(imgdatasrc.getCompSubsX(i));
+                body.Append(_subsX[i]);
                 body.Append(", yscale= ");
-                body.Append(imgdatasrc.getCompSubsY(i));
+                body.Append(_subsY[i]);
             }
 
             rep.Append(ColorSpace.indent("  ", body));
@@ -382,7 +395,7 @@ namespace CoreJ2K.Color
         /// </summary>
         public override int getCompImgHeight(int c)
         {
-            return src.getCompImgHeight(c) * src.getCompSubsY(c);
+            return src.getCompImgHeight(c) * _subsY[c];
         }
 
         /// <summary> Returns the width in pixels of the specified component in the
@@ -390,7 +403,7 @@ namespace CoreJ2K.Color
         /// </summary>
         public override int getCompImgWidth(int c)
         {
-            return src.getCompImgWidth(c) * src.getCompSubsX(c);
+            return src.getCompImgWidth(c) * _subsX[c];
         }
 
         /// <summary> Returns the component subsampling factor in the horizontal

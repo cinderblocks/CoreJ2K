@@ -482,10 +482,12 @@ namespace CoreJ2K.j2k.codestream.reader
         }
 
         /// <summary>Integer floor division for positive divisor.</summary>
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private static int FloorDiv(int a, int b) => a / b - (a % b != 0 && (a ^ b) < 0 ? 1 : 0);
 
-        /// <summary>Integer ceiling division for positive divisor.</summary>
-        private static int CeilDiv(int a, int b) => a / b + (a % b != 0 && (a ^ b) > 0 ? 1 : 0);
+        /// <summary>Integer ceiling division for non-negative numerator and positive divisor.</summary>
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        private static int CeilDiv(int a, int b) => (a + b - 1) / b;
 
         /// <summary> Retrieves precincts and code-blocks coordinates in the given resolution,
         /// level and component. Finishes TagTreeEncoder initialization as well.</summary>

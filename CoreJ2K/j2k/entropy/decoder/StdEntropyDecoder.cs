@@ -108,6 +108,11 @@ namespace CoreJ2K.j2k.entropy.decoder
         /// <seealso cref="StdEntropyCoderOptions" />
         private int options;
 
+        // Cache for options lookup — avoids a virtual ModuleSpec.getSpec dispatch per code-block.
+        private int _cachedOptsTile = -1;
+        private int _cachedOptsComp = -1;
+        private int _cachedOptions;
+
         /// <summary>Flag to indicate if we should try to detect errors or just ignore any
         /// error resilient information 
         /// </summary>
@@ -589,11 +594,23 @@ namespace CoreJ2K.j2k.entropy.decoder
 			stime = (System.DateTime.Now.Ticks - 621355968000000000) / 10000;
 #endif
 
-            // Retrieve options from decSpec
-            options = ((int)decSpec.ecopts.getTileCompVal(tIdx, c));
+            // Retrieve options from decSpec — cached per (tIdx, c) to avoid a virtual
+            // ModuleSpec.getSpec dispatch on every code-block invocation.
+            if (_cachedOptsTile == tIdx && _cachedOptsComp == c)
+            {
+                options = _cachedOptions;
+            }
+            else
+            {
+                options = ((int)decSpec.ecopts.getTileCompVal(tIdx, c));
+                _cachedOptions = options;
+                _cachedOptsTile = tIdx;
+                _cachedOptsComp = c;
+            }
 
-            // Reset state
-            ArrayUtil.intArraySet(state, 0);
+            // Reset state — Array.Clear is JIT-intrinsified to a single memset call,
+            // which is faster than the manual doubling-copy loop in ArrayUtil.intArraySet.
+            Array.Clear(state, 0, state.Length);
 
             // Initialize output code-block
             if (cblk == null)
@@ -614,8 +631,9 @@ namespace CoreJ2K.j2k.entropy.decoder
             }
             else
             {
-                // Set data values to 0
-                ArrayUtil.intArraySet(out_data, 0);
+                // Zero only the pixels used by this code-block, not the entire
+                // (potentially larger, reused) buffer. Array.Clear is intrinsified.
+                Array.Clear(out_data, 0, srcblk.w * srcblk.h);
             }
 
             if (srcblk.nl <= 0 || srcblk.nTrunc <= 0)
@@ -777,8 +795,14 @@ namespace CoreJ2K.j2k.entropy.decoder
             {
                 if (verber)
                 {
+                    // Use string.Concat with explicit ToString() conversions to avoid
+                    // DefaultInterpolatedStringHandler and its ArrayPool<char> rent/return
+                    // overhead on every concealed code-block (was measured at ~12% self-CPU).
                     FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING,
-                        $"Error detected at bit-plane {curbp} in code-block ({m},{n}), sb_idx {sb.sbandIdx}, res. level {sb.resLvl}. Concealing...");
+                        string.Concat("Error detected at bit-plane ", curbp.ToString(),
+                            " in code-block (", m.ToString(), ",", n.ToString(),
+                            "), sb_idx ", sb.sbandIdx.ToString(),
+                            ", res. level ", sb.resLvl.ToString(), ". Concealing..."));
                 }
                 conceal(cblk, curbp);
             }
@@ -963,31 +987,17 @@ namespace CoreJ2K.j2k.entropy.decoder
                                     state[j + off_ul] |= STATE_NZ_CTXT_R2 | STATE_D_DR_R2;
                                     state[j + off_ur] |= STATE_NZ_CTXT_R2 | STATE_D_DL_R2;
                                 }
-                                // Update sign state information of neighbors
-                                if (sym != 0)
+                                // Update sign state information of neighbors (branchless)
+                                int signMask = -sym;
+                                csj |= STATE_SIG_R1 | STATE_VISITED_R1 | STATE_NZ_CTXT_R2 | STATE_V_U_R2 | (STATE_V_U_SIGN_R2 & signMask);
+                                if (!causal)
                                 {
-                                    csj |= STATE_SIG_R1 | STATE_VISITED_R1 | STATE_NZ_CTXT_R2 | STATE_V_U_R2 | STATE_V_U_SIGN_R2;
-                                    if (!causal)
-                                    {
-                                        // If in causal mode do not change
-                                        // contexts of previous stripe.
-                                        state[j - sscanw] |= STATE_NZ_CTXT_R2 | STATE_V_D_R2 | STATE_V_D_SIGN_R2;
-                                    }
-                                    state[j + 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_H_L_R1 | STATE_H_L_SIGN_R1 | STATE_D_UL_R2;
-                                    state[j - 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_H_R_R1 | STATE_H_R_SIGN_R1 | STATE_D_UR_R2;
+                                    // If in causal mode do not change
+                                    // contexts of previous stripe.
+                                    state[j - sscanw] |= STATE_NZ_CTXT_R2 | STATE_V_D_R2 | (STATE_V_D_SIGN_R2 & signMask);
                                 }
-                                else
-                                {
-                                    csj |= STATE_SIG_R1 | STATE_VISITED_R1 | STATE_NZ_CTXT_R2 | STATE_V_U_R2;
-                                    if (!causal)
-                                    {
-                                        // If in causal mode do not change
-                                        // contexts of previous stripe.
-                                        state[j - sscanw] |= STATE_NZ_CTXT_R2 | STATE_V_D_R2;
-                                    }
-                                    state[j + 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_H_L_R1 | STATE_D_UL_R2;
-                                    state[j - 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_H_R_R1 | STATE_D_UR_R2;
-                                }
+                                state[j + 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_H_L_R1 | (STATE_H_L_SIGN_R1 & signMask) | STATE_D_UL_R2;
+                                state[j - 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_H_R_R1 | (STATE_H_R_SIGN_R1 & signMask) | STATE_D_UR_R2;
                             }
                             else
                             {
@@ -1018,20 +1028,13 @@ namespace CoreJ2K.j2k.entropy.decoder
                                 // of neighbors)
                                 state[j + off_dl] |= STATE_NZ_CTXT_R1 | STATE_D_UR_R1;
                                 state[j + off_dr] |= STATE_NZ_CTXT_R1 | STATE_D_UL_R1;
-                                // Update sign state information of neighbors
-                                if (sym != 0)
+                                // Update sign state information of neighbors (branchless)
                                 {
-                                    csj |= STATE_SIG_R2 | STATE_VISITED_R2 | STATE_NZ_CTXT_R1 | STATE_V_D_R1 | STATE_V_D_SIGN_R1;
-                                    state[j + sscanw] |= STATE_NZ_CTXT_R1 | STATE_V_U_R1 | STATE_V_U_SIGN_R1;
-                                    state[j + 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_D_DL_R1 | STATE_H_L_R2 | STATE_H_L_SIGN_R2;
-                                    state[j - 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_D_DR_R1 | STATE_H_R_R2 | STATE_H_R_SIGN_R2;
-                                }
-                                else
-                                {
-                                    csj |= STATE_SIG_R2 | STATE_VISITED_R2 | STATE_NZ_CTXT_R1 | STATE_V_D_R1;
-                                    state[j + sscanw] |= STATE_NZ_CTXT_R1 | STATE_V_U_R1;
-                                    state[j + 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_D_DL_R1 | STATE_H_L_R2;
-                                    state[j - 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_D_DR_R1 | STATE_H_R_R2;
+                                    int signMask = -sym;
+                                    csj |= STATE_SIG_R2 | STATE_VISITED_R2 | STATE_NZ_CTXT_R1 | STATE_V_D_R1 | (STATE_V_D_SIGN_R1 & signMask);
+                                    state[j + sscanw] |= STATE_NZ_CTXT_R1 | STATE_V_U_R1 | (STATE_V_U_SIGN_R1 & signMask);
+                                    state[j + 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_D_DL_R1 | STATE_H_L_R2 | (STATE_H_L_SIGN_R2 & signMask);
+                                    state[j - 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_D_DR_R1 | STATE_H_R_R2 | (STATE_H_R_SIGN_R2 & signMask);
                                 }
                             }
                             else
@@ -1070,21 +1073,12 @@ namespace CoreJ2K.j2k.entropy.decoder
                                 // of neighbors)
                                 state[j + off_ul] |= STATE_NZ_CTXT_R2 | STATE_D_DR_R2;
                                 state[j + off_ur] |= STATE_NZ_CTXT_R2 | STATE_D_DL_R2;
-                                // Update sign state information of neighbors
-                                if (sym != 0)
-                                {
-                                    csj |= STATE_SIG_R1 | STATE_VISITED_R1 | STATE_NZ_CTXT_R2 | STATE_V_U_R2 | STATE_V_U_SIGN_R2;
-                                    state[j - sscanw] |= STATE_NZ_CTXT_R2 | STATE_V_D_R2 | STATE_V_D_SIGN_R2;
-                                    state[j + 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_H_L_R1 | STATE_H_L_SIGN_R1 | STATE_D_UL_R2;
-                                    state[j - 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_H_R_R1 | STATE_H_R_SIGN_R1 | STATE_D_UR_R2;
-                                }
-                                else
-                                {
-                                    csj |= STATE_SIG_R1 | STATE_VISITED_R1 | STATE_NZ_CTXT_R2 | STATE_V_U_R2;
-                                    state[j - sscanw] |= STATE_NZ_CTXT_R2 | STATE_V_D_R2;
-                                    state[j + 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_H_L_R1 | STATE_D_UL_R2;
-                                    state[j - 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_H_R_R1 | STATE_D_UR_R2;
-                                }
+                                // Update sign state information of neighbors (branchless)
+                                int signMask = -sym;
+                                csj |= STATE_SIG_R1 | STATE_VISITED_R1 | STATE_NZ_CTXT_R2 | STATE_V_U_R2 | (STATE_V_U_SIGN_R2 & signMask);
+                                state[j - sscanw] |= STATE_NZ_CTXT_R2 | STATE_V_D_R2 | (STATE_V_D_SIGN_R2 & signMask);
+                                state[j + 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_H_L_R1 | (STATE_H_L_SIGN_R1 & signMask) | STATE_D_UL_R2;
+                                state[j - 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_H_R_R1 | (STATE_H_R_SIGN_R1 & signMask) | STATE_D_UR_R2;
                             }
                             else
                             {
@@ -1115,20 +1109,13 @@ namespace CoreJ2K.j2k.entropy.decoder
                                 // of neighbors)
                                 state[j + off_dl] |= STATE_NZ_CTXT_R1 | STATE_D_UR_R1;
                                 state[j + off_dr] |= STATE_NZ_CTXT_R1 | STATE_D_UL_R1;
-                                // Update sign state information of neighbors
-                                if (sym != 0)
+                                // Update sign state information of neighbors (branchless)
                                 {
-                                    csj |= STATE_SIG_R2 | STATE_VISITED_R2 | STATE_NZ_CTXT_R1 | STATE_V_D_R1 | STATE_V_D_SIGN_R1;
-                                    state[j + sscanw] |= STATE_NZ_CTXT_R1 | STATE_V_U_R1 | STATE_V_U_SIGN_R1;
-                                    state[j + 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_D_DL_R1 | STATE_H_L_R2 | STATE_H_L_SIGN_R2;
-                                    state[j - 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_D_DR_R1 | STATE_H_R_R2 | STATE_H_R_SIGN_R2;
-                                }
-                                else
-                                {
-                                    csj |= STATE_SIG_R2 | STATE_VISITED_R2 | STATE_NZ_CTXT_R1 | STATE_V_D_R1;
-                                    state[j + sscanw] |= STATE_NZ_CTXT_R1 | STATE_V_U_R1;
-                                    state[j + 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_D_DL_R1 | STATE_H_L_R2;
-                                    state[j - 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_D_DR_R1 | STATE_H_R_R2;
+                                    int signMask = -sym;
+                                    csj |= STATE_SIG_R2 | STATE_VISITED_R2 | STATE_NZ_CTXT_R1 | STATE_V_D_R1 | (STATE_V_D_SIGN_R1 & signMask);
+                                    state[j + sscanw] |= STATE_NZ_CTXT_R1 | STATE_V_U_R1 | (STATE_V_U_SIGN_R1 & signMask);
+                                    state[j + 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_D_DL_R1 | STATE_H_L_R2 | (STATE_H_L_SIGN_R2 & signMask);
+                                    state[j - 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_D_DR_R1 | STATE_H_R_R2 | (STATE_H_R_SIGN_R2 & signMask);
                                 }
                             }
                             else
@@ -1276,30 +1263,18 @@ namespace CoreJ2K.j2k.entropy.decoder
                                     state[j + off_ul] |= STATE_NZ_CTXT_R2 | STATE_D_DR_R2;
                                     state[j + off_ur] |= STATE_NZ_CTXT_R2 | STATE_D_DL_R2;
                                 }
-                                // Update sign state information of neighbors
-                                if (sym != 0)
+                                // Update sign state information of neighbors (branchless)
                                 {
-                                    csj |= STATE_SIG_R1 | STATE_VISITED_R1 | STATE_NZ_CTXT_R2 | STATE_V_U_R2 | STATE_V_U_SIGN_R2;
+                                    int signMask = -sym;
+                                    csj |= STATE_SIG_R1 | STATE_VISITED_R1 | STATE_NZ_CTXT_R2 | STATE_V_U_R2 | (STATE_V_U_SIGN_R2 & signMask);
                                     if (!causal)
                                     {
                                         // If in causal mode do not change
                                         // contexts of previous stripe.
-                                        state[j - sscanw] |= STATE_NZ_CTXT_R2 | STATE_V_D_R2 | STATE_V_D_SIGN_R2;
+                                        state[j - sscanw] |= STATE_NZ_CTXT_R2 | STATE_V_D_R2 | (STATE_V_D_SIGN_R2 & signMask);
                                     }
-                                    state[j + 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_H_L_R1 | STATE_H_L_SIGN_R1 | STATE_D_UL_R2;
-                                    state[j - 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_H_R_R1 | STATE_H_R_SIGN_R1 | STATE_D_UR_R2;
-                                }
-                                else
-                                {
-                                    csj |= STATE_SIG_R1 | STATE_VISITED_R1 | STATE_NZ_CTXT_R2 | STATE_V_U_R2;
-                                    if (!causal)
-                                    {
-                                        // If in causal mode do not change
-                                        // contexts of previous stripe.
-                                        state[j - sscanw] |= STATE_NZ_CTXT_R2 | STATE_V_D_R2;
-                                    }
-                                    state[j + 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_H_L_R1 | STATE_D_UL_R2;
-                                    state[j - 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_H_R_R1 | STATE_D_UR_R2;
+                                    state[j + 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_H_L_R1 | (STATE_H_L_SIGN_R1 & signMask) | STATE_D_UL_R2;
+                                    state[j - 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_H_R_R1 | (STATE_H_R_SIGN_R1 & signMask) | STATE_D_UR_R2;
                                 }
                             }
                             else
@@ -1329,20 +1304,13 @@ namespace CoreJ2K.j2k.entropy.decoder
                                 // of neighbors)
                                 state[j + off_dl] |= STATE_NZ_CTXT_R1 | STATE_D_UR_R1;
                                 state[j + off_dr] |= STATE_NZ_CTXT_R1 | STATE_D_UL_R1;
-                                // Update sign state information of neighbors
-                                if (sym != 0)
+                                // Update sign state information of neighbors (branchless)
                                 {
-                                    csj |= STATE_SIG_R2 | STATE_VISITED_R2 | STATE_NZ_CTXT_R1 | STATE_V_D_R1 | STATE_V_D_SIGN_R1;
-                                    state[j + sscanw] |= STATE_NZ_CTXT_R1 | STATE_V_U_R1 | STATE_V_U_SIGN_R1;
-                                    state[j + 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_D_DL_R1 | STATE_H_L_R2 | STATE_H_L_SIGN_R2;
-                                    state[j - 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_D_DR_R1 | STATE_H_R_R2 | STATE_H_R_SIGN_R2;
-                                }
-                                else
-                                {
-                                    csj |= STATE_SIG_R2 | STATE_VISITED_R2 | STATE_NZ_CTXT_R1 | STATE_V_D_R1;
-                                    state[j + sscanw] |= STATE_NZ_CTXT_R1 | STATE_V_U_R1;
-                                    state[j + 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_D_DL_R1 | STATE_H_L_R2;
-                                    state[j - 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_D_DR_R1 | STATE_H_R_R2;
+                                    int signMask = -sym;
+                                    csj |= STATE_SIG_R2 | STATE_VISITED_R2 | STATE_NZ_CTXT_R1 | STATE_V_D_R1 | (STATE_V_D_SIGN_R1 & signMask);
+                                    state[j + sscanw] |= STATE_NZ_CTXT_R1 | STATE_V_U_R1 | (STATE_V_U_SIGN_R1 & signMask);
+                                    state[j + 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_D_DL_R1 | STATE_H_L_R2 | (STATE_H_L_SIGN_R2 & signMask);
+                                    state[j - 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_D_DR_R1 | STATE_H_R_R2 | (STATE_H_R_SIGN_R2 & signMask);
                                 }
                             }
                             else
@@ -1380,20 +1348,13 @@ namespace CoreJ2K.j2k.entropy.decoder
                                 // of neighbors)
                                 state[j + off_ul] |= STATE_NZ_CTXT_R2 | STATE_D_DR_R2;
                                 state[j + off_ur] |= STATE_NZ_CTXT_R2 | STATE_D_DL_R2;
-                                // Update sign state information of neighbors
-                                if (sym != 0)
+                                // Update sign state information of neighbors (branchless)
                                 {
-                                    csj |= STATE_SIG_R1 | STATE_VISITED_R1 | STATE_NZ_CTXT_R2 | STATE_V_U_R2 | STATE_V_U_SIGN_R2;
-                                    state[j - sscanw] |= STATE_NZ_CTXT_R2 | STATE_V_D_R2 | STATE_V_D_SIGN_R2;
-                                    state[j + 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_H_L_R1 | STATE_H_L_SIGN_R1 | STATE_D_UL_R2;
-                                    state[j - 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_H_R_R1 | STATE_H_R_SIGN_R1 | STATE_D_UR_R2;
-                                }
-                                else
-                                {
-                                    csj |= STATE_SIG_R1 | STATE_VISITED_R1 | STATE_NZ_CTXT_R2 | STATE_V_U_R2;
-                                    state[j - sscanw] |= STATE_NZ_CTXT_R2 | STATE_V_D_R2;
-                                    state[j + 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_H_L_R1 | STATE_D_UL_R2;
-                                    state[j - 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_H_R_R1 | STATE_D_UR_R2;
+                                    int signMask = -sym;
+                                    csj |= STATE_SIG_R1 | STATE_VISITED_R1 | STATE_NZ_CTXT_R2 | STATE_V_U_R2 | (STATE_V_U_SIGN_R2 & signMask);
+                                    state[j - sscanw] |= STATE_NZ_CTXT_R2 | STATE_V_D_R2 | (STATE_V_D_SIGN_R2 & signMask);
+                                    state[j + 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_H_L_R1 | (STATE_H_L_SIGN_R1 & signMask) | STATE_D_UL_R2;
+                                    state[j - 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_H_R_R1 | (STATE_H_R_SIGN_R1 & signMask) | STATE_D_UR_R2;
                                 }
                             }
                             else
@@ -1424,20 +1385,13 @@ namespace CoreJ2K.j2k.entropy.decoder
                                 // of neighbors)
                                 state[j + off_dl] |= STATE_NZ_CTXT_R1 | STATE_D_UR_R1;
                                 state[j + off_dr] |= STATE_NZ_CTXT_R1 | STATE_D_UL_R1;
-                                // Update sign state information of neighbors
-                                if (sym != 0)
+                                // Update sign state information of neighbors (branchless)
                                 {
-                                    csj |= STATE_SIG_R2 | STATE_VISITED_R2 | STATE_NZ_CTXT_R1 | STATE_V_D_R1 | STATE_V_D_SIGN_R1;
-                                    state[j + sscanw] |= STATE_NZ_CTXT_R1 | STATE_V_U_R1 | STATE_V_U_SIGN_R1;
-                                    state[j + 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_D_DL_R1 | STATE_H_L_R2 | STATE_H_L_SIGN_R2;
-                                    state[j - 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_D_DR_R1 | STATE_H_R_R2 | STATE_H_R_SIGN_R2;
-                                }
-                                else
-                                {
-                                    csj |= STATE_SIG_R2 | STATE_VISITED_R2 | STATE_NZ_CTXT_R1 | STATE_V_D_R1;
-                                    state[j + sscanw] |= STATE_NZ_CTXT_R1 | STATE_V_U_R1;
-                                    state[j + 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_D_DL_R1 | STATE_H_L_R2;
-                                    state[j - 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_D_DR_R1 | STATE_H_R_R2;
+                                    int signMask = -sym;
+                                    csj |= STATE_SIG_R2 | STATE_VISITED_R2 | STATE_NZ_CTXT_R1 | STATE_V_D_R1 | (STATE_V_D_SIGN_R1 & signMask);
+                                    state[j + sscanw] |= STATE_NZ_CTXT_R1 | STATE_V_U_R1 | (STATE_V_U_SIGN_R1 & signMask);
+                                    state[j + 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_D_DL_R1 | STATE_H_L_R2 | (STATE_H_L_SIGN_R2 & signMask);
+                                    state[j - 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_D_DR_R1 | STATE_H_R_R2 | (STATE_H_R_SIGN_R2 & signMask);
                                 }
                             }
                             else
@@ -1936,31 +1890,17 @@ namespace CoreJ2K.j2k.entropy.decoder
                                     state[j + off_ul] |= STATE_NZ_CTXT_R2 | STATE_D_DR_R2;
                                     state[j + off_ur] |= STATE_NZ_CTXT_R2 | STATE_D_DL_R2;
                                 }
-                                // Update sign state information of neighbors
-                                if (sym != 0)
+                                // Update sign state information of neighbors (branchless: signMask=0xFFFFFFFF when sym=1, 0 when sym=0)
+                                int signMask = -sym;
+                                csj |= STATE_SIG_R1 | STATE_VISITED_R1 | STATE_NZ_CTXT_R2 | STATE_V_U_R2 | (STATE_V_U_SIGN_R2 & signMask);
+                                if (rlclen != 0 || !causal)
                                 {
-                                    csj |= STATE_SIG_R1 | STATE_VISITED_R1 | STATE_NZ_CTXT_R2 | STATE_V_U_R2 | STATE_V_U_SIGN_R2;
-                                    if (rlclen != 0 || !causal)
-                                    {
-                                        // If in causal mode do not change
-                                        // contexts of previous stripe.
-                                        state[j - sscanw] |= STATE_NZ_CTXT_R2 | STATE_V_D_R2 | STATE_V_D_SIGN_R2;
-                                    }
-                                    state[j + 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_H_L_R1 | STATE_H_L_SIGN_R1 | STATE_D_UL_R2;
-                                    state[j - 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_H_R_R1 | STATE_H_R_SIGN_R1 | STATE_D_UR_R2;
+                                    // If in causal mode do not change
+                                    // contexts of previous stripe.
+                                    state[j - sscanw] |= STATE_NZ_CTXT_R2 | STATE_V_D_R2 | (STATE_V_D_SIGN_R2 & signMask);
                                 }
-                                else
-                                {
-                                    csj |= STATE_SIG_R1 | STATE_VISITED_R1 | STATE_NZ_CTXT_R2 | STATE_V_U_R2;
-                                    if (rlclen != 0 || !causal)
-                                    {
-                                        // If in causal mode do not change
-                                        // contexts of previous stripe.
-                                        state[j - sscanw] |= STATE_NZ_CTXT_R2 | STATE_V_D_R2;
-                                    }
-                                    state[j + 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_H_L_R1 | STATE_D_UL_R2;
-                                    state[j - 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_H_R_R1 | STATE_D_UR_R2;
-                                }
+                                state[j + 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_H_L_R1 | (STATE_H_L_SIGN_R1 & signMask) | STATE_D_UL_R2;
+                                state[j - 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_H_R_R1 | (STATE_H_R_SIGN_R1 & signMask) | STATE_D_UR_R2;
                                 // Changes to csj are saved later
                                 if ((rlclen >> 1) != 0)
                                 {
@@ -1986,21 +1926,12 @@ namespace CoreJ2K.j2k.entropy.decoder
                                 // context of neighbors, sign of neighbors)
                                 state[j + off_dl] |= STATE_NZ_CTXT_R1 | STATE_D_UR_R1;
                                 state[j + off_dr] |= STATE_NZ_CTXT_R1 | STATE_D_UL_R1;
-                                // Update sign state information of neighbors
-                                if (sym != 0)
-                                {
-                                    csj |= STATE_SIG_R2 | STATE_NZ_CTXT_R1 | STATE_V_D_R1 | STATE_V_D_SIGN_R1;
-                                    state[j + sscanw] |= STATE_NZ_CTXT_R1 | STATE_V_U_R1 | STATE_V_U_SIGN_R1;
-                                    state[j + 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_D_DL_R1 | STATE_H_L_R2 | STATE_H_L_SIGN_R2;
-                                    state[j - 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_D_DR_R1 | STATE_H_R_R2 | STATE_H_R_SIGN_R2;
-                                }
-                                else
-                                {
-                                    csj |= STATE_SIG_R2 | STATE_NZ_CTXT_R1 | STATE_V_D_R1;
-                                    state[j + sscanw] |= STATE_NZ_CTXT_R1 | STATE_V_U_R1;
-                                    state[j + 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_D_DL_R1 | STATE_H_L_R2;
-                                    state[j - 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_D_DR_R1 | STATE_H_R_R2;
-                                }
+                                // Update sign state information of neighbors (branchless)
+                                int signMask = -sym;
+                                csj |= STATE_SIG_R2 | STATE_NZ_CTXT_R1 | STATE_V_D_R1 | (STATE_V_D_SIGN_R1 & signMask);
+                                state[j + sscanw] |= STATE_NZ_CTXT_R1 | STATE_V_U_R1 | (STATE_V_U_SIGN_R1 & signMask);
+                                state[j + 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_D_DL_R1 | STATE_H_L_R2 | (STATE_H_L_SIGN_R2 & signMask);
+                                state[j - 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_D_DR_R1 | STATE_H_R_R2 | (STATE_H_R_SIGN_R2 & signMask);
                                 // Save changes to csj
                                 state[j] = csj;
                                 if ((rlclen >> 1) != 0)
@@ -2049,31 +1980,17 @@ namespace CoreJ2K.j2k.entropy.decoder
                                         state[j + off_ul] |= STATE_NZ_CTXT_R2 | STATE_D_DR_R2;
                                         state[j + off_ur] |= STATE_NZ_CTXT_R2 | STATE_D_DL_R2;
                                     }
-                                    // Update sign state information of neighbors
-                                    if (sym != 0)
+                                    // Update sign state information of neighbors (branchless)
+                                    int signMask = -sym;
+                                    csj |= STATE_SIG_R1 | STATE_VISITED_R1 | STATE_NZ_CTXT_R2 | STATE_V_U_R2 | (STATE_V_U_SIGN_R2 & signMask);
+                                    if (!causal)
                                     {
-                                        csj |= STATE_SIG_R1 | STATE_VISITED_R1 | STATE_NZ_CTXT_R2 | STATE_V_U_R2 | STATE_V_U_SIGN_R2;
-                                        if (!causal)
-                                        {
-                                            // If in causal mode do not change
-                                            // contexts of previous stripe.
-                                            state[j - sscanw] |= STATE_NZ_CTXT_R2 | STATE_V_D_R2 | STATE_V_D_SIGN_R2;
-                                        }
-                                        state[j + 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_H_L_R1 | STATE_H_L_SIGN_R1 | STATE_D_UL_R2;
-                                        state[j - 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_H_R_R1 | STATE_H_R_SIGN_R1 | STATE_D_UR_R2;
+                                        // If in causal mode do not change
+                                        // contexts of previous stripe.
+                                        state[j - sscanw] |= STATE_NZ_CTXT_R2 | STATE_V_D_R2 | (STATE_V_D_SIGN_R2 & signMask);
                                     }
-                                    else
-                                    {
-                                        csj |= STATE_SIG_R1 | STATE_VISITED_R1 | STATE_NZ_CTXT_R2 | STATE_V_U_R2;
-                                        if (!causal)
-                                        {
-                                            // If in causal mode do not change
-                                            // contexts of previous stripe.
-                                            state[j - sscanw] |= STATE_NZ_CTXT_R2 | STATE_V_D_R2;
-                                        }
-                                        state[j + 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_H_L_R1 | STATE_D_UL_R2;
-                                        state[j - 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_H_R_R1 | STATE_D_UR_R2;
-                                    }
+                                    state[j + 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_H_L_R1 | (STATE_H_L_SIGN_R1 & signMask) | STATE_D_UL_R2;
+                                    state[j - 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_H_R_R1 | (STATE_H_R_SIGN_R1 & signMask) | STATE_D_UR_R2;
                                 }
                             }
                             if (sheight < 2)
@@ -2101,21 +2018,12 @@ namespace CoreJ2K.j2k.entropy.decoder
                                     // sign of neighbors)
                                     state[j + off_dl] |= STATE_NZ_CTXT_R1 | STATE_D_UR_R1;
                                     state[j + off_dr] |= STATE_NZ_CTXT_R1 | STATE_D_UL_R1;
-                                    // Update sign state information of neighbors
-                                    if (sym != 0)
-                                    {
-                                        csj |= STATE_SIG_R2 | STATE_VISITED_R2 | STATE_NZ_CTXT_R1 | STATE_V_D_R1 | STATE_V_D_SIGN_R1;
-                                        state[j + sscanw] |= STATE_NZ_CTXT_R1 | STATE_V_U_R1 | STATE_V_U_SIGN_R1;
-                                        state[j + 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_D_DL_R1 | STATE_H_L_R2 | STATE_H_L_SIGN_R2;
-                                        state[j - 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_D_DR_R1 | STATE_H_R_R2 | STATE_H_R_SIGN_R2;
-                                    }
-                                    else
-                                    {
-                                        csj |= STATE_SIG_R2 | STATE_VISITED_R2 | STATE_NZ_CTXT_R1 | STATE_V_D_R1;
-                                        state[j + sscanw] |= STATE_NZ_CTXT_R1 | STATE_V_U_R1;
-                                        state[j + 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_D_DL_R1 | STATE_H_L_R2;
-                                        state[j - 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_D_DR_R1 | STATE_H_R_R2;
-                                    }
+                                    // Update sign state information of neighbors (branchless)
+                                    int signMask = -sym;
+                                    csj |= STATE_SIG_R2 | STATE_VISITED_R2 | STATE_NZ_CTXT_R1 | STATE_V_D_R1 | (STATE_V_D_SIGN_R1 & signMask);
+                                    state[j + sscanw] |= STATE_NZ_CTXT_R1 | STATE_V_U_R1 | (STATE_V_U_SIGN_R1 & signMask);
+                                    state[j + 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_D_DL_R1 | STATE_H_L_R2 | (STATE_H_L_SIGN_R2 & signMask);
+                                    state[j - 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_D_DR_R1 | STATE_H_R_R2 | (STATE_H_R_SIGN_R2 & signMask);
                                 }
                             }
                         }
@@ -2155,21 +2063,12 @@ namespace CoreJ2K.j2k.entropy.decoder
                                 // sign of neighbors)
                                 state[j + off_ul] |= STATE_NZ_CTXT_R2 | STATE_D_DR_R2;
                                 state[j + off_ur] |= STATE_NZ_CTXT_R2 | STATE_D_DL_R2;
-                                // Update sign state information of neighbors
-                                if (sym != 0)
-                                {
-                                    csj |= STATE_SIG_R1 | STATE_VISITED_R1 | STATE_NZ_CTXT_R2 | STATE_V_U_R2 | STATE_V_U_SIGN_R2;
-                                    state[j - sscanw] |= STATE_NZ_CTXT_R2 | STATE_V_D_R2 | STATE_V_D_SIGN_R2;
-                                    state[j + 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_H_L_R1 | STATE_H_L_SIGN_R1 | STATE_D_UL_R2;
-                                    state[j - 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_H_R_R1 | STATE_H_R_SIGN_R1 | STATE_D_UR_R2;
-                                }
-                                else
-                                {
-                                    csj |= STATE_SIG_R1 | STATE_VISITED_R1 | STATE_NZ_CTXT_R2 | STATE_V_U_R2;
-                                    state[j - sscanw] |= STATE_NZ_CTXT_R2 | STATE_V_D_R2;
-                                    state[j + 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_H_L_R1 | STATE_D_UL_R2;
-                                    state[j - 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_H_R_R1 | STATE_D_UR_R2;
-                                }
+                                // Update sign state information of neighbors (branchless)
+                                int signMask = -sym;
+                                csj |= STATE_SIG_R1 | STATE_VISITED_R1 | STATE_NZ_CTXT_R2 | STATE_V_U_R2 | (STATE_V_U_SIGN_R2 & signMask);
+                                state[j - sscanw] |= STATE_NZ_CTXT_R2 | STATE_V_D_R2 | (STATE_V_D_SIGN_R2 & signMask);
+                                state[j + 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_H_L_R1 | (STATE_H_L_SIGN_R1 & signMask) | STATE_D_UL_R2;
+                                state[j - 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_H_R_R1 | (STATE_H_R_SIGN_R1 & signMask) | STATE_D_UR_R2;
                             }
                         }
                         if (sheight < 4)
@@ -2197,21 +2096,12 @@ namespace CoreJ2K.j2k.entropy.decoder
                                 // sign of neighbors)
                                 state[j + off_dl] |= STATE_NZ_CTXT_R1 | STATE_D_UR_R1;
                                 state[j + off_dr] |= STATE_NZ_CTXT_R1 | STATE_D_UL_R1;
-                                // Update sign state information of neighbors
-                                if (sym != 0)
-                                {
-                                    csj |= STATE_SIG_R2 | STATE_VISITED_R2 | STATE_NZ_CTXT_R1 | STATE_V_D_R1 | STATE_V_D_SIGN_R1;
-                                    state[j + sscanw] |= STATE_NZ_CTXT_R1 | STATE_V_U_R1 | STATE_V_U_SIGN_R1;
-                                    state[j + 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_D_DL_R1 | STATE_H_L_R2 | STATE_H_L_SIGN_R2;
-                                    state[j - 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_D_DR_R1 | STATE_H_R_R2 | STATE_H_R_SIGN_R2;
-                                }
-                                else
-                                {
-                                    csj |= STATE_SIG_R2 | STATE_VISITED_R2 | STATE_NZ_CTXT_R1 | STATE_V_D_R1;
-                                    state[j + sscanw] |= STATE_NZ_CTXT_R1 | STATE_V_U_R1;
-                                    state[j + 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_D_DL_R1 | STATE_H_L_R2;
-                                    state[j - 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_D_DR_R1 | STATE_H_R_R2;
-                                }
+                                // Update sign state information of neighbors (branchless)
+                                int signMask = -sym;
+                                csj |= STATE_SIG_R2 | STATE_VISITED_R2 | STATE_NZ_CTXT_R1 | STATE_V_D_R1 | (STATE_V_D_SIGN_R1 & signMask);
+                                state[j + sscanw] |= STATE_NZ_CTXT_R1 | STATE_V_U_R1 | (STATE_V_U_SIGN_R1 & signMask);
+                                state[j + 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_D_DL_R1 | STATE_H_L_R2 | (STATE_H_L_SIGN_R2 & signMask);
+                                state[j - 1] |= STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2 | STATE_D_DR_R1 | STATE_H_R_R2 | (STATE_H_R_SIGN_R2 & signMask);
                             }
                         }
                     }

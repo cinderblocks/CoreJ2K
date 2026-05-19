@@ -375,7 +375,7 @@ namespace CoreJ2K.j2k.entropy
 
                         case SPEC_TILE_COMP:
                             specValType[0][0] = SPEC_DEF;
-                            tileCompVal["t0c0"] = null;
+                            tileCompVal[0] = null;
                             break;
                     }
                 }
