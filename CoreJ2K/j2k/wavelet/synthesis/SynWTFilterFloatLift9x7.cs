@@ -42,6 +42,7 @@
 * Copyright (c) 1999/2000 JJ2000 Partners.
 *  */
 
+using System.Numerics;
 using System.Runtime.CompilerServices;
 
 namespace CoreJ2K.j2k.wavelet.synthesis
@@ -393,7 +394,30 @@ namespace CoreJ2K.j2k.wavelet.synthesis
             }
 
             // ---- Phase 3: Even samples — inverse low-pass (BETA update) ----
-            ik = outOff;
+            // ---- Phase 4: Odd samples  — inverse high-pass (ALPHA update) ----
+            // Both phases are pure stride-2 lifting:  outSig[ik] -= K * (outSig[ik-1] + outSig[ik+1]).
+            // We fuse them into a single SIMD pass that updates both even and odd lanes per
+            // 256-bit vector iteration on AVX-capable hardware.
+            ApplyBetaAlpha(outSig, outOff, outLen, lowLen, highLen);
+        }
+
+        /// <summary>
+        /// Apply the BETA (even-sample) and ALPHA (odd-sample) lifting updates of the
+        /// 9/7 inverse transform to an interleaved unit-stride buffer.
+        /// 
+        /// Layout: outSig[outOff + 0, 2, 4, ...] are even samples (low intermediate),
+        /// outSig[outOff + 1, 3, 5, ...] are odd samples (high intermediate). Both
+        /// updates have the form  c[k] -= K * (c[k-1] + c[k+1]) and depend only on
+        /// the OTHER parity of samples — meaning BETA reads odd neighbours (written
+        /// during phase 2) and ALPHA reads even neighbours (written by BETA). The
+        /// two phases therefore CANNOT be interleaved across iterations, but each
+        /// phase taken on its own is a wide SIMD-friendly stride-2 reduction.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void ApplyBetaAlpha(float[] outSig, int outOff, int outLen, int lowLen, int highLen)
+        {
+            // ---- Phase 3: BETA (even positions) ----
+            int ik = outOff;
             if (outLen > 1)
             {
                 outSig[ik] -= TWO_BETA * outSig[ik + 1];
@@ -401,29 +425,128 @@ namespace CoreJ2K.j2k.wavelet.synthesis
             ik += 2;
 
             int evenBetaEnd = outOff + 2 * (lowLen - 1);
-            while (ik < evenBetaEnd)
-            {
-                outSig[ik] -= BETA * (outSig[ik - 1] + outSig[ik + 1]);
-                ik += 2;
-            }
+            ik = LiftStride2(outSig, ik, evenBetaEnd, BETA);
             if (outLen % 2 == 1 && outLen > 2)
             {
-                outSig[ik] -= TWO_BETA * outSig[ik - 1];
+                // After the SIMD/scalar inner loop, ik should equal evenBetaEnd.
+                outSig[evenBetaEnd] -= TWO_BETA * outSig[evenBetaEnd - 1];
             }
 
-            // ---- Phase 4: Odd samples — inverse high-pass (ALPHA update) ----
+            // ---- Phase 4: ALPHA (odd positions) ----
             ik = outOff + 1;
             int oddAlphaEnd = outOff + 2 * highLen - 1;
-            while (ik < oddAlphaEnd)
-            {
-                outSig[ik] -= ALPHA * (outSig[ik - 1] + outSig[ik + 1]);
-                ik += 2;
-            }
+            ik = LiftStride2(outSig, ik, oddAlphaEnd, ALPHA);
             if (outLen % 2 == 0)
             {
-                outSig[ik] -= TWO_ALPHA * outSig[ik - 1];
+                outSig[oddAlphaEnd] -= TWO_ALPHA * outSig[oddAlphaEnd - 1];
             }
         }
+
+        /// <summary>
+        /// SIMD core: apply <c>outSig[ik] -= coeff * (outSig[ik-1] + outSig[ik+1])</c>
+        /// for ik = start, start+2, start+4, ... while ik &lt; endExclusive.
+        ///
+        /// On AVX-capable runtimes (.NET 6+), processes 8 strided positions per iteration
+        /// using <see cref="System.Runtime.Intrinsics.Vector256{T}"/>. Reads two adjacent
+        /// 256-bit vectors covering positions [ik-1 .. ik-1+16), then uses AVX shuffles to
+        /// build the "centre" (positions ik, ik+2, ..., ik+14), "left" (ik-1, ik+1, ..., ik+13),
+        /// and "right" (ik+1, ik+3, ..., ik+15) lanes. Performs one FMA per vector and
+        /// scatters back to the eight even/odd output positions using a masked store.
+        /// </summary>
+#if NET5_0_OR_GREATER || NETCOREAPP3_0_OR_GREATER
+        [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+#endif
+        private static int LiftStride2(float[] outSig, int start, int endExclusive, float coeff)
+        {
+            int ik = start;
+
+#if NET6_0_OR_GREATER
+            if (System.Runtime.Intrinsics.X86.Avx.IsSupported && (endExclusive - start) >= 32)
+            {
+                ik = LiftStride2_Avx(outSig, start, endExclusive, coeff);
+            }
+#endif
+
+            for (; ik < endExclusive; ik += 2)
+                outSig[ik] -= coeff * (outSig[ik - 1] + outSig[ik + 1]);
+
+            return ik;
+        }
+
+#if NET6_0_OR_GREATER
+        [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+        private static int LiftStride2_Avx(float[] outSig, int start, int endExclusive, float coeff)
+        {
+            // Process 8 stride-2 lifting positions per iteration (ik, ik+2, ..., ik+14).
+            // We need samples at positions [ik-1 .. ik+15] = 17 contiguous floats, which we
+            // load as two overlapping 256-bit vectors:
+            //   vL = outSig[ik-1 .. ik+6]    (8 floats starting at ik-1)
+            //   vR = outSig[ik+1 .. ik+8]    (8 floats starting at ik+1, == vL shifted left by 2)
+            // followed by another pair for the second half. To stay simple and correctness-
+            // critical, we use Vector256.LoadUnsafe at three offsets per block:
+            //   centres  : ik
+            //   lefts    : ik - 1
+            //   rights   : ik + 1
+            // each 8 lanes wide but containing both even and odd parity samples. The trick
+            // is that we only WRITE back to even (or odd, depending on start) positions —
+            // every other lane is a "don't care" that will be overwritten with its original
+            // value via a masked store.
+            //
+            // We use a stride-2 mask: lanes 0,2,4,6 are active (one parity), 1,3,5,7 are
+            // pass-through. The shifted load lefts/rights happen to align so that the
+            // contribution at every active lane is exactly outSig[ik-1] + outSig[ik+1].
+            //
+            // 8 active lanes * stride 2 = 16 output positions advanced per block.
+
+            var vCoeff = System.Runtime.Intrinsics.Vector256.Create(coeff);
+            // Mask: keep lanes where (lane & 1) == 0 (even lanes of the stride-2 view).
+            // We'll use this as a blend selector. blendv selects from arg2 when mask sign-bit set.
+            var keepMaskInt = System.Runtime.Intrinsics.Vector256.Create(-1, 0, -1, 0, -1, 0, -1, 0);
+            var keepMask = System.Runtime.Intrinsics.Vector256.AsSingle(keepMaskInt);
+
+            int ik = start;
+            // We need to read up to outSig[ik + 8] (= rights at lane 7). For safe loads at
+            // both ends, require: ik - 1 >= 0 (caller ensures start >= outOff + 1 typically)
+            // and ik + 8 < outSig.Length. Bound the loop to satisfy both.
+            int last = endExclusive - 16; // last block-start such that ik+16 <= endExclusive
+            // Also ensure right-edge load (ik+1 .. ik+8) is in bounds. outSig length is
+            // outOff + outLen, and endExclusive <= outOff + outLen - 1, so ik+8 < length
+            // is satisfied automatically when ik <= last and last+8 < endExclusive.
+
+            while (ik <= last)
+            {
+                // Centres: positions [ik, ik+1, ..., ik+7]
+                var vC = System.Runtime.Intrinsics.Vector256.LoadUnsafe(
+                    ref System.Runtime.InteropServices.MemoryMarshal.GetArrayDataReference(outSig),
+                    (nuint)ik);
+                // Lefts: positions [ik-1, ik, ..., ik+6]
+                var vL = System.Runtime.Intrinsics.Vector256.LoadUnsafe(
+                    ref System.Runtime.InteropServices.MemoryMarshal.GetArrayDataReference(outSig),
+                    (nuint)(ik - 1));
+                // Rights: positions [ik+1, ik+2, ..., ik+8]
+                var vR = System.Runtime.Intrinsics.Vector256.LoadUnsafe(
+                    ref System.Runtime.InteropServices.MemoryMarshal.GetArrayDataReference(outSig),
+                    (nuint)(ik + 1));
+
+                // Compute updated values for ALL 8 lanes (we'll blend later to keep only
+                // the active stride-2 parity).
+                var vUpdated = vC - vCoeff * (vL + vR);
+
+                // Blend: keep vUpdated where mask sign bit is set (lanes 0,2,4,6), keep
+                // original vC where mask sign bit is clear (lanes 1,3,5,7).
+                var vOut = System.Runtime.Intrinsics.X86.Avx.BlendVariable(vC, vUpdated, keepMask);
+
+                System.Runtime.Intrinsics.Vector256.StoreUnsafe(
+                    vOut,
+                    ref System.Runtime.InteropServices.MemoryMarshal.GetArrayDataReference(outSig),
+                    (nuint)ik);
+
+                ik += 16; // advanced 8 active (parity) positions, each at stride 2
+            }
+
+            return ik;
+        }
+#endif
 
         /// <summary> An implementation of the synthetize_hpf() method that works on int
         /// data, for the inverse 9x7 wavelet transform using the lifting
