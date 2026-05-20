@@ -55,7 +55,6 @@ namespace CoreJ2K.j2k.util
     /// </summary>
     public class MsgPrinter
     {
-        //UPGRADE_NOTE: Respective javadoc comments were merged.  It should be changed in order to comply with .NET documentation conventions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1199'"
         /// <summary> Returns the line width that is used for formatting.
         /// 
         /// </summary>
@@ -152,12 +151,10 @@ namespace CoreJ2K.j2k.util
                     {
                         out_Renamed.Write(" ");
                     }
-                    //UPGRADE_TODO: Method 'java.io.PrintWriter.println' was converted to 'System.IO.TextWriter.WriteLine' which has a different behavior. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1073_javaioPrintWriterprintln_javalangString'"
                     out_Renamed.WriteLine(msg.Substring(start, (pend) - (start)));
                     if (nextWord(msg, pend) == msg.Length)
                     {
                         // Traling newline => print it and done
-                        //UPGRADE_TODO: Method 'java.io.PrintWriter.println' was converted to 'System.IO.TextWriter.WriteLine' which has a different behavior. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1073_javaioPrintWriterprintln_javalangString'"
                         out_Renamed.WriteLine("");
                         start = pend;
                         break;
@@ -183,13 +180,11 @@ namespace CoreJ2K.j2k.util
                         {
                             // Word larger than line width
                             // Print anyways
-                            //UPGRADE_TODO: Method 'java.io.PrintWriter.println' was converted to 'System.IO.TextWriter.WriteLine' which has a different behavior. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1073_javaioPrintWriterprintln_javalangString'"
                             out_Renamed.WriteLine(msg.Substring(start, (end) - (start)));
                             pend = end;
                         }
                         else
                         {
-                            //UPGRADE_TODO: Method 'java.io.PrintWriter.println' was converted to 'System.IO.TextWriter.WriteLine' which has a different behavior. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1073_javaioPrintWriterprintln_javalangString'"
                             out_Renamed.WriteLine(msg.Substring(start, (pend) - (start)));
                         }
                     }
@@ -211,7 +206,6 @@ namespace CoreJ2K.j2k.util
                 {
                     out_Renamed.Write(" ");
                 }
-                //UPGRADE_TODO: Method 'java.io.PrintWriter.println' was converted to 'System.IO.TextWriter.WriteLine' which has a different behavior. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1073_javaioPrintWriterprintln_javalangString'"
                 out_Renamed.WriteLine(msg.Substring(start, (pend) - (start)));
             }
         }
@@ -244,7 +238,6 @@ namespace CoreJ2K.j2k.util
         /// </returns>
         private int nextLineEnd(string str, int from)
         {
-            //UPGRADE_NOTE: Final was removed from the declaration of 'len '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
             var len = str.Length;
             var c = '\x0000';
             // First skip all whitespace, except new line
@@ -294,7 +287,6 @@ namespace CoreJ2K.j2k.util
         /// </returns>
         private int nextWord(string str, int from)
         {
-            //UPGRADE_NOTE: Final was removed from the declaration of 'len '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
             var len = str.Length;
             var c = '\x0000';
             // First skip all whitespace, but new lines

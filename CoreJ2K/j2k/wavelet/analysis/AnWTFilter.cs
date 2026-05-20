@@ -126,7 +126,6 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// <summary>The list of parameters that is accepted for wavelet filters. Options
         /// for wavelet filters start with a 'F'. 
         /// </summary>
-        //UPGRADE_NOTE: Final was removed from the declaration of 'pinfo'. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
         private static readonly string[][] pinfo = { new string[] { "Ffilters", "[<tile-component idx>] <id> " + "[ [<tile-component idx>] <id> ...]", "Specifies which filters to use for specified tile-component. " + "If this option is not used, the encoder choses the filters " + " of the tile-components according to their quantization  type." + " If this option is used, a component transformation is applied " + "to the three first components.\n" + "<tile-component idx>: see general note\n" + "<id>: ',' separates horizontal and vertical filters, ':' separates" + " decomposition levels filters. JPEG 2000 part 1 only supports w5x3" + " and w9x7 filters.", null } };
 
         /// <summary> Filters the input signal by this analysis filter, decomposing it in a

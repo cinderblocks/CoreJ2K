@@ -130,7 +130,6 @@ namespace CoreJ2K.j2k.codestream.writer
         /// 
         /// </summary>
         /// <seealso cref="baos" />
-        //UPGRADE_TODO: Class 'java.io.DataOutputStream' was converted to 'System.IO.BinaryWriter' which has a different behavior. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1073_javaioDataOutputStream'"
         protected internal System.IO.BinaryWriter hbuf;
 
         /// <summary>The image data reader. Source of original data info </summary>
@@ -288,11 +287,9 @@ namespace CoreJ2K.j2k.codestream.writer
         /// </summary>
         public virtual void reset()
         {
-            //UPGRADE_ISSUE: Method 'java.io.ByteArrayOutputStream.reset' was not converted. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1000_javaioByteArrayOutputStreamreset'"
             // CONVERSION PROBLEM?
             //baos.reset();
             baos.SetLength(0);
-            //UPGRADE_TODO: Class 'java.io.DataOutputStream' was converted to 'System.IO.BinaryWriter' which has a different behavior. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1073_javaioDataOutputStream'"
             hbuf = new Util.EndianBinaryWriter(baos, true); //new System.IO.BinaryWriter(baos);
         }
 

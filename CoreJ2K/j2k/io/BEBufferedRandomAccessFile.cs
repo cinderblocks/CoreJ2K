@@ -209,7 +209,6 @@ namespace CoreJ2K.j2k.io
             //byte[] floatbytes = BitConverter.GetBytes(v);
             //for (int i = floatbytes.Length-1; i >= 0 ; i--) write(floatbytes[i]);
 
-            //UPGRADE_ISSUE: Method 'java.lang.Float.floatToIntBits' was not converted. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1000_javalangFloatfloatToIntBits_float'"
             //int intV = Float.floatToIntBits(v);
             var intV = BitConverter.ToInt32(BitConverter.GetBytes(v), 0);
             write(SupportClass.URShift(intV, 24));
@@ -234,7 +233,6 @@ namespace CoreJ2K.j2k.io
             //byte[] doublebytes = BitConverter.GetBytes(v);
             //for (int i = doublebytes.Length-1; i >= 0 ; i--) write(doublebytes[i]);
 
-            //UPGRADE_ISSUE: Method 'java.lang.Double.doubleToLongBits' was not converted. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1000_javalangDoubledoubleToLongBits_double'"
             //long longV = Double.doubleToLongBits(v);
             var longV = BitConverter.ToInt64(BitConverter.GetBytes(v), 0);
             write((int)(SupportClass.URShift(longV, 56)));
@@ -373,7 +371,6 @@ namespace CoreJ2K.j2k.io
             //for (int i = floatbytes.Length-1; i >= 0 ; i--) floatbytes[i] = (byte)read();
             //return BitConverter.ToSingle(floatbytes, 0);
 
-            //UPGRADE_ISSUE: Method 'java.lang.Float.intBitsToFloat' was not converted. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1000_javalangFloatintBitsToFloat_int'"
             //return Float.intBitsToFloat((read() << 24) | (read() << 16) | (read() << 8) | (read()));
             return BitConverter.ToSingle(BitConverter.GetBytes((read() << 24) | (read() << 16) | (read() << 8) | (read())), 0);
 
@@ -401,7 +398,6 @@ namespace CoreJ2K.j2k.io
             //for (int i = doublebytes.Length-1; i >=0 ; i--) doublebytes[i] = (byte)read();
             //return BitConverter.ToDouble(doublebytes, 0);
 
-            //UPGRADE_ISSUE: Method 'java.lang.Double.longBitsToDouble' was not converted. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1000_javalangDoublelongBitsToDouble_long'"
             //return Double.longBitsToDouble(((long) read() << 56) | ((long) read() << 48) | ((long) read() << 40) | ((long) read() << 32) | ((long) read() << 24) | ((long) read() << 16) | ((long) read() << 8) | ((long) read()));
 
             return BitConverter.ToDouble(BitConverter.GetBytes(((long)read() << 56) | ((long)read() << 48) | ((long)read() << 40) | ((long)read() << 32) | ((long)read() << 24) | ((long)read() << 16) | ((long)read() << 8) | read()), 0);

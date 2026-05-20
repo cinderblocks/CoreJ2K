@@ -743,7 +743,6 @@ namespace CoreJ2K.j2k.image.forwcomptransf
                 {
                     for (mink = k - w; k > mink; k--, k0--)
                     {
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                         outdata[k] = indata[k0];
                     }
                     // Jump to beginning of next line in input

@@ -127,7 +127,6 @@ namespace CoreJ2K.j2k.quantization
                     default:  // Step size value
                         try
                         {
-                            //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                             value_Renamed = float.Parse(word);
                         }
                         catch (FormatException)
@@ -135,10 +134,8 @@ namespace CoreJ2K.j2k.quantization
                             throw new ArgumentException($"Bad parameter for -Qstep option : {word}");
                         }
 
-                        //UPGRADE_TODO: The equivalent in .NET for method 'java.lang.Float.floatValue' may return a different value. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1043'"
                         if (value_Renamed <= 0.0f)
                         {
-                            //UPGRADE_TODO: The equivalent in .NET for method 'java.lang.Float.toString' may return a different value. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1043'"
                             throw new ArgumentException($"Normalized base step must be positive : {value_Renamed}");
                         }
 
@@ -205,7 +202,6 @@ namespace CoreJ2K.j2k.quantization
                 // the default value defined in ParameterList
                 if (ndefspec != 0)
                 {
-                    //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                     setDefault(float.Parse(pl.DefaultParameterList.getParameter("Qstep")));
                 }
                 else

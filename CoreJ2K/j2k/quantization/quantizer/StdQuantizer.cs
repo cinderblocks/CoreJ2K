@@ -388,19 +388,16 @@ namespace CoreJ2K.j2k.quantization.quantizer
             else
             {
                 // Non-reversible, use step size
-                //UPGRADE_TODO: The equivalent in .NET for method 'java.lang.Float.floatValue' may return a different value. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1043'"
                 var baseStep = qsss.GetFloatTileCompVal(tIdx, c);
 
                 // Calculate magnitude bits and quantization step size 
                 if (isDerived(tIdx, c))
                 {
-                    //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                     cblk.magbits = g - 1 + sb.level - (int)Math.Floor(Math.Log(baseStep) / log2);
                     stepUDR = baseStep / (1 << sb.level);
                 }
                 else
                 {
-                    //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                     cblk.magbits = g - 1 - (int)Math.Floor(Math.Log(baseStep / (sb.l2Norm * (1 << sb.anGainExp))) / log2);
                     stepUDR = baseStep / (sb.l2Norm * (1 << sb.anGainExp));
                 }
@@ -423,7 +420,6 @@ namespace CoreJ2K.j2k.quantization.quantizer
                     // The input and output arrays are the same (i.e. "in place")
                     for (j = w * h - 1; j >= 0; j--)
                     {
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                         tmp = (int)(outarr[j] * invstep);
                         outarr[j] = ((tmp < 0) ? (1 << 31) | (-tmp) : tmp);
                     }
@@ -435,7 +431,6 @@ namespace CoreJ2K.j2k.quantization.quantizer
                     {
                         for (; j >= jmin; k--, j--)
                         {
-                            //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                             tmp = (int)(infarr[k] * invstep);
                             outarr[j] = ((tmp < 0) ? (1 << 31) | (-tmp) : tmp);
                         }
@@ -472,16 +467,13 @@ namespace CoreJ2K.j2k.quantization.quantizer
             {
                 if (isReversible(tIdx, c))
                 {
-                    //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                     sb.stepWMSE = (float)Math.Pow(2, -(src.getNomRangeBits(c) << 1)) * sb.l2Norm * sb.l2Norm;
                 }
                 else
                 {
-                    //UPGRADE_TODO: The equivalent in .NET for method 'java.lang.Float.floatValue' may return a different value. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1043'"
                     baseStep = qsss.GetFloatTileCompVal(tIdx, c);
                     if (isDerived(tIdx, c))
                     {
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                         sb.stepWMSE = baseStep * baseStep * (float)Math.Pow(2, (sb.anGainExp - sb.level) << 1) * sb.l2Norm * sb.l2Norm;
                     }
                     else
@@ -529,7 +521,6 @@ namespace CoreJ2K.j2k.quantization.quantizer
 
             int exp;
 
-            //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
             exp = (int)Math.Ceiling((-Math.Log(step)) / log2);
             if (exp > QSTEP_MAX_EXPONENT)
             {
@@ -540,7 +531,6 @@ namespace CoreJ2K.j2k.quantization.quantizer
             // NOTE: this formula does not support more than 5 bits for the
             // exponent, otherwise (-1<<exp) might overflow (the - is used to be
             // able to represent 2**31)
-            //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
             return (exp << QSTEP_MANTISSA_BITS) | ((int)(((-step) * (-1 << exp) - 1f) * (1 << QSTEP_MANTISSA_BITS) + 0.5f));
         }
 
@@ -575,7 +565,6 @@ namespace CoreJ2K.j2k.quantization.quantizer
                     "would result in division by zero.");
             }
             
-            //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
             return (-1f - (ems & QSTEP_MAX_MANTISSA) / ((float)(1 << QSTEP_MANTISSA_BITS))) / denominator;
         }
 
@@ -664,9 +653,7 @@ namespace CoreJ2K.j2k.quantization.quantizer
 
             if (!sb.isNode)
             {
-                //UPGRADE_TODO: The equivalent in .NET for method 'java.lang.Float.floatValue' may return a different value. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1043'"
                 var baseStep = qsss.GetFloatTileCompVal(t, c);
-                //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                 return g - 1 + sb.level - (int)Math.Floor(Math.Log(baseStep) / log2);
             }
 
@@ -708,9 +695,7 @@ namespace CoreJ2K.j2k.quantization.quantizer
 
             if (!sb.isNode)
             {
-                //UPGRADE_TODO: The equivalent in .NET for method 'java.lang.Float.floatValue' may return a different value. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1043'"
                 var baseStep = qsss.GetFloatTileCompVal(t, c);
-                //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                 return g - 1 - (int)Math.Floor(Math.Log(baseStep / (((SubbandAn)sb).l2Norm * (1 << sb.anGainExp))) / log2);
             }
 

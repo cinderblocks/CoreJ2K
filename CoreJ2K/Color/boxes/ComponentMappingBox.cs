@@ -81,10 +81,8 @@ namespace CoreJ2K.Color.Boxes
             var rep = new System.Text.StringBuilder("[ComponentMappingBox ").Append("  ");
             rep.Append("nChannels= ").Append(Convert.ToString(NChannels));
             System.Collections.IEnumerator Enum = map.GetEnumerator();
-            //UPGRADE_TODO: Method 'java.util.Enumeration.hasMoreElements' was converted to 'System.Collections.IEnumerator.MoveNext' which has a different behavior. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1073_javautilEnumerationhasMoreElements'"
             while (Enum.MoveNext())
             {
-                //UPGRADE_TODO: Method 'java.util.Enumeration.nextElement' was converted to 'System.Collections.IEnumerator.Current' which has a different behavior. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1073_javautilEnumerationnextElement'"
                 var bfr = (byte[])Enum.Current;
                 rep.Append(Environment.NewLine).Append("  ").Append("CMP= ").Append(Convert.ToString(getCMP(bfr))).Append(", ");
                 rep.Append("MTYP= ").Append(Convert.ToString(getMTYP(bfr))).Append(", ");

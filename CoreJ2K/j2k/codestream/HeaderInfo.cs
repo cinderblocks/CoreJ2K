@@ -116,7 +116,6 @@ namespace CoreJ2K.j2k.codestream
                         compWidth = new int[csiz];
                         for (var cc = 0; cc < csiz; cc++)
                         {
-                            //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                             compWidth[cc] = (int)(Math.Ceiling((xsiz) / (double)xrsiz[cc]) - Math.Ceiling(x0siz / (double)xrsiz[cc]));
                         }
                     }
@@ -143,7 +142,6 @@ namespace CoreJ2K.j2k.codestream
                         compHeight = new int[csiz];
                         for (var cc = 0; cc < csiz; cc++)
                         {
-                            //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                             compHeight[cc] = (int)(Math.Ceiling((ysiz) / (double)yrsiz[cc]) - Math.Ceiling(y0siz / (double)yrsiz[cc]));
                         }
                     }
@@ -231,7 +229,6 @@ namespace CoreJ2K.j2k.codestream
                     compWidth = new int[csiz];
                     for (var cc = 0; cc < csiz; cc++)
                     {
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                         compWidth[cc] = (int)(Math.Ceiling((xsiz) / (double)xrsiz[cc]) - Math.Ceiling(x0siz / (double)xrsiz[cc]));
                     }
                 }
@@ -244,7 +241,6 @@ namespace CoreJ2K.j2k.codestream
                     compHeight = new int[csiz];
                     for (var cc = 0; cc < csiz; cc++)
                     {
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                         compHeight[cc] = (int)(Math.Ceiling((ysiz) / (double)yrsiz[cc]) - Math.Ceiling(y0siz / (double)yrsiz[cc]));
                     }
                 }
@@ -306,7 +302,6 @@ namespace CoreJ2K.j2k.codestream
                 str += "\n";
                 return str;
             }
-            //UPGRADE_TODO: The following method was automatically generated, and it must be implemented in order to preserve the class logic. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1232'"
             public virtual object Clone()
             {
                 return null;
@@ -482,7 +477,6 @@ namespace CoreJ2K.j2k.codestream
                 str += "\n";
                 return str;
             }
-            //UPGRADE_TODO: The following method was automatically generated, and it must be implemented in order to preserve the class logic. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1232'"
             public virtual object Clone()
             {
                 return null;
@@ -705,14 +699,12 @@ namespace CoreJ2K.j2k.codestream
                             if (i == 0 && j == 0)
                             {
                                 exp = (spqcd[0][0] >> 11) & 0x1f;
-                                //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                                 mantissa = (-1f - ((float)(spqcd[0][0] & 0x07ff)) / (1 << 11)) / (-1 << exp);
                                 str += ("\tr=0 : " + exp + " / " + mantissa + "\n");
                             }
                             else if (i != 0 && j > 0)
                             {
                                 exp = (spqcd[i][j] >> 11) & 0x1f;
-                                //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                                 mantissa = (-1f - ((float)(spqcd[i][j] & 0x07ff)) / (1 << 11)) / (-1 << exp);
                                 str += ("\tr=" + i + ",s=" + j + " : " + exp + " / " + mantissa + "\n");
                             }
@@ -817,14 +809,12 @@ namespace CoreJ2K.j2k.codestream
                             if (i == 0 && j == 0)
                             {
                                 exp = (spqcc[0][0] >> 11) & 0x1f;
-                                //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                                 mantissa = (-1f - ((float)(spqcc[0][0] & 0x07ff)) / (1 << 11)) / (-1 << exp);
                                 str += ("\tr=0 : " + exp + " / " + mantissa + "\n");
                             }
                             else if (i != 0 && j > 0)
                             {
                                 exp = (spqcc[i][j] >> 11) & 0x1f;
-                                //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                                 mantissa = (-1f - ((float)(spqcc[i][j] & 0x07ff)) / (1 << 11)) / (-1 << exp);
                                 str += ("\tr=" + i + ",s=" + j + " : " + exp + " / " + mantissa + "\n");
                             }
@@ -1230,7 +1220,6 @@ namespace CoreJ2K.j2k.codestream
             }
             return nhi;
         }
-        //UPGRADE_TODO: The following method was automatically generated and it must be implemented in order to preserve the class logic. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1232'"
         public virtual object Clone()
         {
             return null;

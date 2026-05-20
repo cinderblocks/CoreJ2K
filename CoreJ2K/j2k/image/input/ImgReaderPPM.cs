@@ -64,7 +64,6 @@ namespace CoreJ2K.j2k.image.input
         private const int DC_OFFSET = 128;
 
         /// <summary>Where to read the data from </summary>
-        //UPGRADE_TODO: Class 'java.io.RandomAccessFile' was converted to 'System.IO.FileStream' which has a different behavior. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1073_javaioRandomAccessFile'"
         private System.IO.Stream inRenamed;
 
         /// <summary>The offset of the raw pixel data in the PPM file </summary>
@@ -108,7 +107,6 @@ namespace CoreJ2K.j2k.image.input
         /// <param name="inRenamed">From where to read the data</param>
         /// <exception cref="EOFException">if an EOF is read</exception>
         /// <exception cref="IOException">if an error occurs when opening the file</exception>
-        //UPGRADE_TODO: Class 'java.io.RandomAccessFile' was converted to 'System.IO.FileStream' which has a different behavior. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1073_javaioRandomAccessFile'"
         public ImgReaderPPM(System.IO.Stream inRenamed)
         {
             this.inRenamed = inRenamed;
@@ -516,7 +514,6 @@ namespace CoreJ2K.j2k.image.input
         /// <returns> A string of information about the object.</returns>
         public override string ToString()
         {
-            //UPGRADE_TODO: The equivalent in .NET for method 'java.lang.Object.toString' may return a different value. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1043'"
             return $"ImgReaderPPM: WxH = {w}x{h}, Component = 0,1,2\nUnderlying RandomAccessFile:\n{inRenamed}";
         }
     }

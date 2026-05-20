@@ -353,10 +353,8 @@ namespace CoreJ2K.j2k.util
         {
             System.Collections.IEnumerator args = Keys.GetEnumerator();
 
-            //UPGRADE_TODO: Method 'java.util.Enumeration.hasMoreElements' was converted to 'System.Collections.IEnumerator.MoveNext' which has a different behavior. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1073_javautilEnumerationhasMoreElements'"
             while (args.MoveNext())
             {
-                //UPGRADE_TODO: Method 'java.util.Enumeration.nextElement' was converted to 'System.Collections.IEnumerator.Current' which has a different behavior. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1073_javautilEnumerationnextElement'"
                 var val = (string)args.Current;
                 if (!string.IsNullOrEmpty(val) && val[0] == prfx)
                 {

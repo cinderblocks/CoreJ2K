@@ -62,7 +62,6 @@ namespace CoreJ2K.j2k.wavelet
     }
     public interface FilterTypes
     {
-        //UPGRADE_NOTE: Members of interface 'FilterTypes' were extracted into structure 'FilterTypes_Fields'. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1045'"
 
     }
 }

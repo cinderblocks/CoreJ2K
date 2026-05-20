@@ -81,14 +81,12 @@ namespace CoreJ2K.j2k
 
             // Print the Exception message and stack to standard error
             // including this method in the stack.
-            //UPGRADE_ISSUE: Method 'java.lang.Throwable.fillInStackTrace' was not converted. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1000_javalangThrowablefillInStackTrace'"
             //e.fillInStackTrace();
             SupportClass.WriteStackTrace(e);
             // Print an explicative message
             FacilityManager.getMsgLogger().println("The Thread is being terminated bacause an Exception (shown above)\nhas been thrown and no special action was defined for this Thread.", 0, 0);
             // Stop the thread (do not use stop, since it's deprecated in
             // Java 1.2)
-            //UPGRADE_NOTE: Exception 'java.lang.ThreadDeath' was converted to 'System.InvalidOperationException' which has different behavior. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1100'"
             throw new InvalidOperationException();
         }
     }

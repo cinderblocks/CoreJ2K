@@ -64,7 +64,6 @@ namespace CoreJ2K.Icc.Lut
             // Generate the final linear-sRGB to non-linear sRGB LUT    
 
             // calculate where shadow portion of lut ends.
-            //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
             var cutOff = (int)Math.Floor(shadowCutoff * inMax);
 
             // Scale to account for output
@@ -75,7 +74,6 @@ namespace CoreJ2K.Icc.Lut
 
             for (i = 0; i <= cutOff; i++)
             {
-                //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                 lut[i] = (int)(Math.Floor(shadowSlope * (i * normalize) + 0.5) - shift);
             }
 
@@ -86,7 +84,6 @@ namespace CoreJ2K.Icc.Lut
             // Now calculate the rest
             for (; i <= inMax; i++)
             {
-                //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                 lut[i] = (int)(Math.Floor(scaleAfterExp * Math.Pow(i * normalize, exponent) - reduceAfterExp + 0.5) - shift);
             }
         }

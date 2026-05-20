@@ -96,7 +96,6 @@ namespace CoreJ2K.j2k.util
         private int maxtp;
 
         /// <summary>The number of packets per tile </summary>
-        //UPGRADE_NOTE: The initialization of  'ppt' was moved to method 'InitBlock'. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1005'"
         private int[] ppt;
 
         /// <summary>The positions of the SOT, SOP and EPH markers </summary>
@@ -435,7 +434,6 @@ namespace CoreJ2K.j2k.util
                 if (pptp == 0)
                     pptp = ppt[t];
                 prem = ppt[t];
-                //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                 numTileParts = (int)System.Math.Ceiling(((double)prem) / pptp);
                 numPackets = packetHeaders[t].Length;
                 maxtp = (numTileParts > maxtp) ? numTileParts : maxtp;
@@ -566,7 +564,6 @@ namespace CoreJ2K.j2k.util
                         tempByteArr[10] = (byte)(tilePart); //TPsot
                         tempByteArr[11] = (byte)(numTileParts); // TNsot
                     }
-                    //UPGRADE_ISSUE: Method 'java.io.ByteArrayOutputStream.reset' was not converted. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1000_javaioByteArrayOutputStreamreset'"
                     //temp.reset();
                     temp.SetLength(0);
                     prem -= np;
@@ -681,7 +678,6 @@ namespace CoreJ2K.j2k.util
                                 fi.write(temp, 0, length + 2);
 
                                 // Start new PPM marker segment
-                                //UPGRADE_ISSUE: Method 'java.io.ByteArrayOutputStream.reset' was not converted. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1000_javaioByteArrayOutputStreamreset'"
                                 //ppmMarkerSegment.reset();
                                 ppmMarkerSegment.SetLength(0);
                                 ppmMarkerSegment.WriteByte((byte)SupportClass.URShift(codestream.Markers.PPM, 8));
@@ -718,7 +714,6 @@ namespace CoreJ2K.j2k.util
                                     fi.write(temp, 0, length + 2);
 
                                     // Start new PPM marker segment
-                                    //UPGRADE_ISSUE: Method 'java.io.ByteArrayOutputStream.reset' was not converted. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1000_javaioByteArrayOutputStreamreset'"
                                     //ppmMarkerSegment.reset();
                                     ppmMarkerSegment.SetLength(0);
                                     ppmMarkerSegment.WriteByte((byte)SupportClass.URShift(codestream.Markers.PPM, 8));

@@ -132,7 +132,6 @@ namespace CoreJ2K.j2k.entropy.encoder
         private EBCOTLayer[] layers;
 
         /// <summary>The log of 2, natural base </summary>
-        //UPGRADE_NOTE: Final was removed from the declaration of 'LOG2 '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
         private static readonly double LOG2 = Math.Log(2);
 
         /// <summary>The normalization offset for the R-D summary table </summary>
@@ -211,7 +210,6 @@ namespace CoreJ2K.j2k.entropy.encoder
             // If we do timing create necessary structures
 #if DO_TIMING
 			// If we are timing make sure that 'finalize' gets called.
-			//UPGRADE_ISSUE: Method 'java.lang.System.runFinalizersOnExit' was not converted. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1000_javalangSystem'"
 			// CONVERSION PROBLEM?
             //System_Renamed.runFinalizersOnExit(true);
 			// The System.runFinalizersOnExit() method is deprecated in Java
@@ -320,13 +318,9 @@ namespace CoreJ2K.j2k.entropy.encoder
                     yrsiz = src.getCompSubsY(c);
 
                     // Tile's coordinates in the image component domain
-                    //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                     tcx0 = (int)Math.Ceiling(tx0 / (double)(xrsiz));
-                    //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                     tcy0 = (int)Math.Ceiling(ty0 / (double)(yrsiz));
-                    //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                     tcx1 = (int)Math.Ceiling(tx1 / (double)(xrsiz));
-                    //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                     tcy1 = (int)Math.Ceiling(ty1 / (double)(yrsiz));
 
                     cblks[t][c] = new CBlkRateDistStats[mrl][][];
@@ -342,13 +336,9 @@ namespace CoreJ2K.j2k.entropy.encoder
 
                         // Tile's coordinates in the reduced resolution image
                         // domain
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                         trx0 = (int)Math.Ceiling(tcx0 / (double)(1 << (mrl - 1 - r)));
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                         try0 = (int)Math.Ceiling(tcy0 / (double)(1 << (mrl - 1 - r)));
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                         trx1 = (int)Math.Ceiling(tcx1 / (double)(1 << (mrl - 1 - r)));
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                         try1 = (int)Math.Ceiling(tcy1 / (double)(1 << (mrl - 1 - r)));
 
                         // Calculate the maximum number of precincts for each
@@ -359,7 +349,6 @@ namespace CoreJ2K.j2k.entropy.encoder
                         numPrec[t][c][r] = new Coord();
                         if (trx1 > trx0)
                         {
-                            //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                             numPrec[t][c][r].x = (int)Math.Ceiling((trx1 - cb0x) / twoppx) - (int)Math.Floor((trx0 - cb0x) / twoppx);
                         }
                         else
@@ -368,7 +357,6 @@ namespace CoreJ2K.j2k.entropy.encoder
                         }
                         if (try1 > try0)
                         {
-                            //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                             numPrec[t][c][r].y = (int)Math.Ceiling((try1 - cb0y) / twoppy) - (int)Math.Floor((try0 - cb0y) / twoppy);
                         }
                         else
@@ -439,7 +427,6 @@ namespace CoreJ2K.j2k.entropy.encoder
             sb.Append(writeTime);
             sb.Append(" ms");
             FacilityManager.getMsgLogger().printmsg(CoreJ2K.j2k.util.MsgLogger_Fields.INFO, sb.ToString());
-            //UPGRADE_NOTE: Call to 'super.finalize()' was removed. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1124'"
         }
 #endif
         /// <summary> Runs the rate allocation algorithm and writes the data to the bit
@@ -587,7 +574,6 @@ namespace CoreJ2K.j2k.entropy.encoder
                 basebytes = Math.Floor(lyrSpec.getTargetBitrate(i) * np);
                 if (i < lyrSpec.NOptPoints - 1)
                 {
-                    //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                     nextbytes = (int)(lyrSpec.getTargetBitrate(i + 1) * np);
                     // Limit target length to 'totenclength'
                     if (nextbytes > totenclength)
@@ -602,7 +588,6 @@ namespace CoreJ2K.j2k.entropy.encoder
                 layers[n].optimize = true;
                 for (l = 0; l < loopnlyrs; l++)
                 {
-                    //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                     newbytes = (int)basebytes - lastbytes - ho;
                     if (newbytes < minlsz)
                     {
@@ -611,7 +596,6 @@ namespace CoreJ2K.j2k.entropy.encoder
                         num_Layers--;
                         continue;
                     }
-                    //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                     lastbytes = (int)basebytes - ho;
                     layers[n].maxBytes = lastbytes;
                     basebytes *= ls;
@@ -623,7 +607,6 @@ namespace CoreJ2K.j2k.entropy.encoder
             // Ensure minimum size of last layer (this one determines overall
             // bitrate)
             n = num_Layers - 2;
-            //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
             nextbytes = (int)(lyrSpec.TotBitrate * np) - ho;
             newbytes = nextbytes - ((n >= 0) ? layers[n].maxBytes : 0);
             while (newbytes < minlsz)
@@ -2169,29 +2152,20 @@ namespace CoreJ2K.j2k.entropy.encoder
                 // Pathological case, we can not use log of 0. Add
                 // RDSlopesRates[sidx]+1 bytes to the rates (just a crude simple
                 // solution to this rare case)
-                //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                 log_len1 = (float)Math.Log((RDSlopesRates[sidx] << 1) + 1);
-                //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                 log_len2 = (float)Math.Log(RDSlopesRates[sidx] + 1);
-                //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                 log_ab = (float)Math.Log(lastLayer.actualBytes + RDSlopesRates[sidx] + 1);
             }
             else
             {
-                //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                 log_len1 = (float)Math.Log(RDSlopesRates[sidx]);
-                //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                 log_len2 = (float)Math.Log(RDSlopesRates[sidx + 1]);
-                //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                 log_ab = (float)Math.Log(lastLayer.actualBytes);
             }
 
-            //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
             log_sl1 = (float)Math.Log(getSlopeFromSIndex(sidx));
-            //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
             log_sl2 = (float)Math.Log(getSlopeFromSIndex(sidx + 1));
 
-            //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
             log_isl = (float)Math.Log(lthresh);
 
             log_ilen = log_len1 + (log_isl - log_sl1) * (log_len1 - log_len2) / (log_sl1 - log_sl2);
@@ -2206,7 +2180,6 @@ namespace CoreJ2K.j2k.entropy.encoder
 
             // 2) Correct the target layer length by the offset.
 
-            //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
             tlen = (int)(targetBytes / (float)Math.Exp(log_off));
 
             // 3) Find, from the summary R-D info, the thresholds that generate
@@ -2234,34 +2207,25 @@ namespace CoreJ2K.j2k.entropy.encoder
                 // Pathological case, we can not use log of 0. Add
                 // RDSlopesRates[sidx-1]+1 bytes to the rates (just a crude simple 
                 // solution to this rare case)
-                //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                 log_len1 = (float)Math.Log(RDSlopesRates[sidx - 1] + 1);
-                //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                 log_len2 = (float)Math.Log((RDSlopesRates[sidx - 1] << 1) + 1);
-                //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                 log_ilen = (float)Math.Log(tlen + RDSlopesRates[sidx - 1] + 1);
             }
             else
             {
                 // Normal case, we can safely take the logs.
-                //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                 log_len1 = (float)Math.Log(RDSlopesRates[sidx]);
-                //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                 log_len2 = (float)Math.Log(RDSlopesRates[sidx - 1]);
-                //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                 log_ilen = (float)Math.Log(tlen);
             }
 
-            //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
             log_sl1 = (float)Math.Log(getSlopeFromSIndex(sidx));
-            //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
             log_sl2 = (float)Math.Log(getSlopeFromSIndex(sidx - 1));
 
             // 4) Interpolate the two thresholds to find the target threshold.
 
             log_isl = log_sl1 + (log_ilen - log_len1) * (log_sl1 - log_sl2) / (log_len1 - log_len2);
 
-            //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
             eth = (float)Math.Exp(log_isl);
 
             // Correct out of bounds results
@@ -2373,7 +2337,6 @@ namespace CoreJ2K.j2k.entropy.encoder
         {
             int idx;
 
-            //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
             idx = (int)Math.Floor(Math.Log(slope) / LOG2) + RD_SUMMARY_OFF;
 
             if (idx < 0)
@@ -2402,7 +2365,6 @@ namespace CoreJ2K.j2k.entropy.encoder
         /// </returns>
         private static float getSlopeFromSIndex(int index)
         {
-            //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
             return (float)Math.Pow(2, (index - RD_SUMMARY_OFF));
         }
     }

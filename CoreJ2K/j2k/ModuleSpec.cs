@@ -133,7 +133,6 @@ namespace CoreJ2K.j2k
             {
                 ms = (ModuleSpec)MemberwiseClone();
             }
-            //UPGRADE_NOTE: Exception 'java.lang.CloneNotSupportedException' was converted to 'System.Exception' which has different behavior. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1100'"
             catch (Exception)
             {
                 throw new InvalidOperationException("Error when cloning ModuleSpec instance");
@@ -397,7 +396,6 @@ namespace CoreJ2K.j2k
         {
             if (specType == SPEC_TYPE_TILE)
             {
-                //UPGRADE_TODO: The equivalent in .NET for method 'java.lang.Object.toString' may return a different value. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1043'"
                 var errMsg =
                     $"Option whose value is '{value_Renamed}' cannot be specified for components as it is a 'tile only' specific option";
                 throw new InvalidOperationException(errMsg);
@@ -449,7 +447,6 @@ namespace CoreJ2K.j2k
         {
             if (specType == SPEC_TYPE_COMP)
             {
-                //UPGRADE_TODO: The equivalent in .NET for method 'java.lang.Object.toString' may return a different value. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1043'"
                 var errMsg =
                     $"Option whose value is '{value_Renamed}' cannot be specified for tiles as it is a 'component only' specific option";
                 throw new InvalidOperationException(errMsg);
@@ -502,7 +499,6 @@ namespace CoreJ2K.j2k
         {
             if (specType != SPEC_TYPE_TILE_COMP)
             {
-                //UPGRADE_TODO: The equivalent in .NET for method 'java.lang.Object.toString' may return a different value. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1043'"
                 var errMsg = $"Option whose value is '{value_Renamed}' cannot be specified for ";
                 switch (specType)
                 {

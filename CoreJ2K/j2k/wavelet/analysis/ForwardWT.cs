@@ -94,7 +94,6 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// <summary>The list of parameters that is accepted for wavelet transform. Options
         /// for the wavelet transform start with 'W'. 
         /// </summary>
-        //UPGRADE_NOTE: Final was removed from the declaration of 'pinfo'. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
         private static readonly string[][] pinfo = { new string[] { "Wlev", "<number of decomposition levels>", "Specifies the number of wavelet decomposition levels to apply to " + "the image. If 0 no wavelet transform is performed. All components " + "and all tiles have the same number of decomposition levels.", "5" }, new string[] { "Wwt", "[full]", "Specifies the wavelet transform to be used. Possible value is: " + "'full' (full page). The value 'full' performs a normal DWT.", "full" }, new string[] { "Wcboff", "<x y>", "Code-blocks partition offset in the reference grid. Allowed for " + "<x> and <y> are 0 and 1.\n" + "Note: This option is defined in JPEG 2000 part 2 and may not" + " be supported by all JPEG 2000 decoders.", "0 0" } };
 
         /// <summary> Initializes this object for the specified number of tiles 'nt' and

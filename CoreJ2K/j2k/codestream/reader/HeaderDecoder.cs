@@ -54,6 +54,7 @@ using CoreJ2K.j2k.wavelet;
 using CoreJ2K.j2k.wavelet.synthesis;
 using System;
 using System.Collections.Generic;
+using CoreJ2K;
 
 namespace CoreJ2K.j2k.codestream.reader
 {
@@ -561,7 +562,6 @@ namespace CoreJ2K.j2k.codestream.reader
         /// wavelet filter.
         /// 
         /// </param>
-        //UPGRADE_TODO: Class 'java.io.DataInputStream' was converted to 'System.IO.BinaryReader' which has a different behavior. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1073_javaioDataInputStream'"
         private SynWTFilter readFilter(System.IO.BinaryReader ehs, int[] filtIdx)
         {
             var kid = // the filter id
@@ -598,7 +598,6 @@ namespace CoreJ2K.j2k.codestream.reader
         /// <exception cref="IOException">If an I/O error occurs
         /// 
         /// </exception>
-        //UPGRADE_TODO: Class 'java.io.DataInputStream' was converted to 'System.IO.BinaryReader' which has a different behavior. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1073_javaioDataInputStream'"
         public virtual void checkMarkerLength(System.IO.BinaryReader ehs, string str)
         {
             var available = ehs.BaseStream.Length - ehs.BaseStream.Position;
@@ -624,7 +623,6 @@ namespace CoreJ2K.j2k.codestream.reader
         /// encoded header stream
         /// 
         /// </exception>
-        //UPGRADE_TODO: Class 'java.io.DataInputStream' was converted to 'System.IO.BinaryReader' which has a different behavior. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1073_javaioDataInputStream'"
         private void readSIZ(System.IO.BinaryReader ehs)
         {
             var ms = hi.NewSIZ;
@@ -709,7 +707,6 @@ namespace CoreJ2K.j2k.codestream.reader
         /// <param name="ehs">The encoded header stream
         /// 
         /// </param>
-        //UPGRADE_TODO: Class 'java.io.DataInputStream' was converted to 'System.IO.BinaryReader' which has a different behavior. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1073_javaioDataInputStream'"
         private void readCRG(System.IO.BinaryReader ehs)
         {
             var ms = hi.NewCRG;
@@ -754,7 +751,6 @@ namespace CoreJ2K.j2k.codestream.reader
         /// encoded header stream
         /// 
         /// </exception>
-        //UPGRADE_TODO: Class 'java.io.DataInputStream' was converted to 'System.IO.BinaryReader' which has a different behavior. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1073_javaioDataInputStream'"
         private void readCOM(System.IO.BinaryReader ehs, bool mainh, int tileIdx, int comIdx)
         {
             var ms = hi.NewCOM;
@@ -824,7 +820,6 @@ namespace CoreJ2K.j2k.codestream.reader
         /// encoded header stream.
         /// 
         /// </exception>
-        //UPGRADE_TODO: Class 'java.io.DataInputStream' was converted to 'System.IO.BinaryReader' which has a different behavior. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1073_javaioDataInputStream'"
         private void readQCD(System.IO.BinaryReader ehs, bool mainh, int tileIdx, int tpIdx)
         {
             int[][] exp;
@@ -1033,7 +1028,6 @@ namespace CoreJ2K.j2k.codestream.reader
                         // NOTE: the formula below does not support more than 5
                         // bits for the exponent, otherwise (-1<<exp) might
                         // overflow (the - is used to be able to represent 2**31)
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                         nStep[rl][j] = (-1f - ((float)(tmp & 0x07ff)) / (1 << 11)) / (-1 << exp[rl][j]);
                     }
                 } // end for rl
@@ -1077,7 +1071,6 @@ namespace CoreJ2K.j2k.codestream.reader
         /// encoded header stream.
         /// 
         /// </exception>
-        //UPGRADE_TODO: Class 'java.io.DataInputStream' was converted to 'System.IO.BinaryReader' which has a different behavior. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1073_javaioDataInputStream'"
         private void readQCC(System.IO.BinaryReader ehs, bool mainh, int tileIdx, int tpIdx)
         {
             int cComp; // current component
@@ -1268,7 +1261,6 @@ namespace CoreJ2K.j2k.codestream.reader
                         // NOTE: the formula below does not support more than 5
                         // bits for the exponent, otherwise (-1<<exp) might
                         // overflow (the - is used to be able to represent 2**31)
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                         nStepC[rl][j] = (-1f - ((float)(tmp & 0x07ff)) / (1 << 11)) / (-1 << expC[rl][j]);
                     }
                 } // end for rl
@@ -1311,7 +1303,6 @@ namespace CoreJ2K.j2k.codestream.reader
         /// encoder header stream
         /// 
         /// </exception>
-        //UPGRADE_TODO: Class 'java.io.DataInputStream' was converted to 'System.IO.BinaryReader' which has a different behavior. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1073_javaioDataInputStream'"
         private void readCOD(System.IO.BinaryReader ehs, bool mainh, int tileIdx, int tpIdx)
         {
             //int l;
@@ -1598,7 +1589,6 @@ namespace CoreJ2K.j2k.codestream.reader
         /// encoder header stream
         /// 
         /// </exception>
-        //UPGRADE_TODO: Class 'java.io.DataInputStream' was converted to 'System.IO.BinaryReader' which has a different behavior. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1073_javaioDataInputStream'"
         private void readCOC(System.IO.BinaryReader ehs, bool mainh, int tileIdx, int tpIdx)
         {
             int cComp; // current component
@@ -1767,7 +1757,6 @@ namespace CoreJ2K.j2k.codestream.reader
         /// encoder header stream
         /// 
         /// </exception>
-        //UPGRADE_TODO: Class 'java.io.DataInputStream' was converted to 'System.IO.BinaryReader' which has a different behavior. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1073_javaioDataInputStream'"
         private void readPOC(System.IO.BinaryReader ehs, bool mainh, int t, int tpIdx)
         {
 
@@ -1935,7 +1924,6 @@ namespace CoreJ2K.j2k.codestream.reader
         /// encoder header stream
         /// 
         /// </exception>
-        //UPGRADE_TODO: Class 'java.io.DataInputStream' was converted to 'System.IO.BinaryReader' which has a different behavior. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1073_javaioDataInputStream'"
         private codestream.metadata.TilePartLengthsData readTLM(System.IO.BinaryReader ehs)
         {
             try
@@ -2084,7 +2072,6 @@ namespace CoreJ2K.j2k.codestream.reader
         /// encoder header stream
         /// 
         /// </exception>
-        //UPGRADE_TODO: Class 'java.io.DataInputStream' was converted to 'System.IO.BinaryReader' which has a different behavior. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1073_javaioDataInputStream'"
         private void readPLM(System.IO.BinaryReader ehs)
         {
             int length = ehs.ReadUInt16();
@@ -2110,7 +2097,6 @@ namespace CoreJ2K.j2k.codestream.reader
         /// encoder header stream
         /// 
         /// </exception>
-        //UPGRADE_TODO: Class 'java.io.DataInputStream' was converted to 'System.IO.BinaryReader' which has a different behavior. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1073_javaioDataInputStream'"
         private void readPLTFields(System.IO.BinaryReader ehs)
         {
             // Initialize PLT data structure if needed
@@ -2174,7 +2160,6 @@ namespace CoreJ2K.j2k.codestream.reader
         /// encoder header stream
         /// 
         /// </exception>
-        //UPGRADE_TODO: Class 'java.io.DataInputStream' was converted to 'System.IO.BinaryReader' which has a different behavior. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1073_javaioDataInputStream'"
         private void readRGN(System.IO.BinaryReader ehs, bool mainh, int tileIdx, int tpIdx)
         {
             int comp; // ROI component
@@ -2234,7 +2219,6 @@ namespace CoreJ2K.j2k.codestream.reader
         /// encoder header stream
         /// 
         /// </exception>
-        //UPGRADE_TODO: Class 'java.io.DataInputStream' was converted to 'System.IO.BinaryReader' which has a different behavior. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1073_javaioDataInputStream'"
         private void readPPM(System.IO.BinaryReader ehs)
         {
             //byte[] b;
@@ -2257,7 +2241,7 @@ namespace CoreJ2K.j2k.codestream.reader
 
             // Read Nppm and Ippm data 
             pPMMarkerData[indx] = new byte[remSegLen];
-            ehs.BaseStream.Read(pPMMarkerData[indx], 0, remSegLen); //SupportClass.ReadInput(ehs.BaseStream, pPMMarkerData[indx], 0, remSegLen);
+            StreamHelper.ReadExact(ehs.BaseStream, pPMMarkerData[indx], 0, remSegLen);
 
             // Check marker length
             checkMarkerLength(ehs, "PPM marker");
@@ -2279,7 +2263,6 @@ namespace CoreJ2K.j2k.codestream.reader
         /// encoder header stream
         /// 
         /// </exception>
-        //UPGRADE_TODO: Class 'java.io.DataInputStream' was converted to 'System.IO.BinaryReader' which has a different behavior. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1073_javaioDataInputStream'"
         private void readPPT(System.IO.BinaryReader ehs, int tile, int tpIdx)
         {
             if (tilePartPkdPktHeaders == null)
@@ -2305,7 +2288,7 @@ namespace CoreJ2K.j2k.codestream.reader
 
             // Ippt (packed packet headers)
             var temp = new byte[curMarkSegLen - 3];
-            ehs.BaseStream.Read(temp, 0, temp.Length); //SupportClass.ReadInput(ehs.BaseStream, temp, 0, temp.Length);
+            StreamHelper.ReadExact(ehs.BaseStream, temp, 0, temp.Length);
             tilePartPkdPktHeaders[tile][tpIdx][indx] = temp;
 
             // Check marker length
@@ -2683,7 +2666,6 @@ namespace CoreJ2K.j2k.codestream.reader
         /// </summary>
         private void readFoundMainMarkSeg()
         {
-            //UPGRADE_TODO: Class 'java.io.DataInputStream' was converted to 'System.IO.BinaryReader' which has a different behavior. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1073_javaioDataInputStream'"
             //System.IO.BinaryReader dis;
             System.IO.MemoryStream bais;
 
@@ -2796,7 +2778,6 @@ namespace CoreJ2K.j2k.codestream.reader
         public virtual void readFoundTilePartMarkSeg(int tileIdx, int tpIdx)
         {
 
-            //UPGRADE_TODO: Class 'java.io.DataInputStream' was converted to 'System.IO.BinaryReader' which has a different behavior. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1073_javaioDataInputStream'"
             //CoreJ2K.EndianBinaryReader dis;
             System.IO.MemoryStream bais;
 

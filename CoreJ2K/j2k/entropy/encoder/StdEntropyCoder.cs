@@ -177,15 +177,12 @@ namespace CoreJ2K.j2k.entropy.encoder
         private const int ZC_LUT_BITS = 8;
 
         /// <summary>Zero Coding context lookup tables for the LH global orientation </summary>
-        //UPGRADE_NOTE: Final was removed from the declaration of 'ZC_LUT_LH '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
         private static readonly int[] ZC_LUT_LH = new int[1 << ZC_LUT_BITS];
 
         /// <summary>Zero Coding context lookup tables for the HL global orientation </summary>
-        //UPGRADE_NOTE: Final was removed from the declaration of 'ZC_LUT_HL '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
         private static readonly int[] ZC_LUT_HL = new int[1 << ZC_LUT_BITS];
 
         /// <summary>Zero Coding context lookup tables for the HH global orientation </summary>
-        //UPGRADE_NOTE: Final was removed from the declaration of 'ZC_LUT_HH '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
         private static readonly int[] ZC_LUT_HH = new int[1 << ZC_LUT_BITS];
 
         /// <summary>Number of bits used for the Sign Coding lookup table </summary>
@@ -201,7 +198,6 @@ namespace CoreJ2K.j2k.entropy.encoder
         /// of the value in the lookup table define the context number and the sign
         /// bit defines the "sign predictor". 
         /// </summary>
-        //UPGRADE_NOTE: Final was removed from the declaration of 'SC_LUT '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
         private static readonly int[] SC_LUT = new int[1 << SC_LUT_BITS];
 
         /// <summary>The mask to obtain the context index from the 'SC_LUT' </summary>
@@ -219,7 +215,6 @@ namespace CoreJ2K.j2k.entropy.encoder
         private const int MR_LUT_BITS = 9;
 
         /// <summary>Magnitude Refinement context lookup table </summary>
-        //UPGRADE_NOTE: Final was removed from the declaration of 'MR_LUT '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
         private static readonly int[] MR_LUT = new int[1 << MR_LUT_BITS];
 
         /// <summary>The number of contexts used </summary>
@@ -234,17 +229,14 @@ namespace CoreJ2K.j2k.entropy.encoder
         private const int UNIF_CTXT = 0;
 
         /// <summary>The initial states for the MQ coder </summary>
-        //UPGRADE_NOTE: Final was removed from the declaration of 'MQ_INIT'. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
         private static readonly int[] MQ_INIT = { 46, 3, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
         /// <summary>The 4 bits of the error resilience segmentation symbol (1010) </summary>
-        //UPGRADE_NOTE: Final was removed from the declaration of 'SEG_SYMBOLS'. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
         private static readonly int[] SEG_SYMBOLS = { 1, 0, 1, 0 };
 
         /// <summary>The 4 contexts for the error resilience segmentation symbol (always
         /// the UNIFORM context, UNIF_CTXT) 
         /// </summary>
-        //UPGRADE_NOTE: Final was removed from the declaration of 'SEG_SYMB_CTXTS '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
         private static readonly int[] SEG_SYMB_CTXTS = { UNIF_CTXT, UNIF_CTXT, UNIF_CTXT, UNIF_CTXT };
 
         /// <summary> The state array for each thread. Each element of the state array stores
@@ -365,11 +357,9 @@ namespace CoreJ2K.j2k.entropy.encoder
         private const int STATE_D_DR_R1 = 1;
 
         /// <summary>The flag bit for the significance in the state array, for row 2. </summary>
-        //UPGRADE_NOTE: Final was removed from the declaration of 'STATE_SIG_R2 '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
         private static readonly int STATE_SIG_R2 = STATE_SIG_R1 << STATE_SEP;
 
         /// <summary>The flag bit for the "visited" bit in the state array, for row 2. </summary>
-        //UPGRADE_NOTE: Final was removed from the declaration of 'STATE_VISITED_R2 '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
         private static readonly int STATE_VISITED_R2 = STATE_VISITED_R1 << STATE_SEP;
 
         /// <summary>The flag bit for the "not zero context" bit in the state array, for
@@ -377,103 +367,86 @@ namespace CoreJ2K.j2k.entropy.encoder
         /// STATE_V_U_R2, STATE_V_D_R2, STATE_D_UL_R2, STATE_D_UR_R2, STATE_D_DL_R2
         /// and STATE_D_DR_R2. 
         /// </summary>
-        //UPGRADE_NOTE: Final was removed from the declaration of 'STATE_NZ_CTXT_R2 '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
         private static readonly int STATE_NZ_CTXT_R2 = STATE_NZ_CTXT_R1 << STATE_SEP;
 
         /// <summary>The flag bit for the horizontal-left sign in the state array, for row
         /// 2. This bit can only be set if the STATE_H_L_R2 is also set. 
         /// </summary>
-        //UPGRADE_NOTE: Final was removed from the declaration of 'STATE_H_L_SIGN_R2 '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
         private static readonly int STATE_H_L_SIGN_R2 = STATE_H_L_SIGN_R1 << STATE_SEP;
 
         /// <summary>The flag bit for the horizontal-right sign in the state array, for
         /// row 2. This bit can only be set if the STATE_H_R_R2 is also set. 
         /// </summary>
-        //UPGRADE_NOTE: Final was removed from the declaration of 'STATE_H_R_SIGN_R2 '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
         private static readonly int STATE_H_R_SIGN_R2 = STATE_H_R_SIGN_R1 << STATE_SEP;
 
         /// <summary>The flag bit for the vertical-up sign in the state array, for row
         /// 2. This bit can only be set if the STATE_V_U_R2 is also set. 
         /// </summary>
-        //UPGRADE_NOTE: Final was removed from the declaration of 'STATE_V_U_SIGN_R2 '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
         private static readonly int STATE_V_U_SIGN_R2 = STATE_V_U_SIGN_R1 << STATE_SEP;
 
         /// <summary>The flag bit for the vertical-down sign in the state array, for row
         /// 2. This bit can only be set if the STATE_V_D_R2 is also set. 
         /// </summary>
-        //UPGRADE_NOTE: Final was removed from the declaration of 'STATE_V_D_SIGN_R2 '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
         private static readonly int STATE_V_D_SIGN_R2 = STATE_V_D_SIGN_R1 << STATE_SEP;
 
         /// <summary>The flag bit for the previous MR primitive applied in the state array,
         /// for row 2. 
         /// </summary>
-        //UPGRADE_NOTE: Final was removed from the declaration of 'STATE_PREV_MR_R2 '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
         private static readonly int STATE_PREV_MR_R2 = STATE_PREV_MR_R1 << STATE_SEP;
 
         /// <summary>The flag bit for the horizontal-left significance in the state array,
         /// for row 2. 
         /// </summary>
-        //UPGRADE_NOTE: Final was removed from the declaration of 'STATE_H_L_R2 '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
         private static readonly int STATE_H_L_R2 = STATE_H_L_R1 << STATE_SEP;
 
         /// <summary>The flag bit for the horizontal-right significance in the state array,
         /// for row 2. 
         /// </summary>
-        //UPGRADE_NOTE: Final was removed from the declaration of 'STATE_H_R_R2 '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
         private static readonly int STATE_H_R_R2 = STATE_H_R_R1 << STATE_SEP;
 
         /// <summary>The flag bit for the vertical-up significance in the state array, for
         /// row 2.  
         /// </summary>
-        //UPGRADE_NOTE: Final was removed from the declaration of 'STATE_V_U_R2 '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
         private static readonly int STATE_V_U_R2 = STATE_V_U_R1 << STATE_SEP;
 
         /// <summary>The flag bit for the vertical-down significance in the state array,
         /// for row 2.  
         /// </summary>
-        //UPGRADE_NOTE: Final was removed from the declaration of 'STATE_V_D_R2 '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
         private static readonly int STATE_V_D_R2 = STATE_V_D_R1 << STATE_SEP;
 
         /// <summary>The flag bit for the diagonal up-left significance in the state array,
         /// for row 2. 
         /// </summary>
-        //UPGRADE_NOTE: Final was removed from the declaration of 'STATE_D_UL_R2 '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
         private static readonly int STATE_D_UL_R2 = STATE_D_UL_R1 << STATE_SEP;
 
         /// <summary>The flag bit for the diagonal up-right significance in the state
         /// array, for row 2.
         /// </summary>
-        //UPGRADE_NOTE: Final was removed from the declaration of 'STATE_D_UR_R2 '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
         private static readonly int STATE_D_UR_R2 = STATE_D_UR_R1 << STATE_SEP;
 
         /// <summary>The flag bit for the diagonal down-left significance in the state
         /// array, for row 2. 
         /// </summary>
-        //UPGRADE_NOTE: Final was removed from the declaration of 'STATE_D_DL_R2 '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
         private static readonly int STATE_D_DL_R2 = STATE_D_DL_R1 << STATE_SEP;
 
         /// <summary>The flag bit for the diagonal down-right significance in the state
         /// array , for row 2.
         /// </summary>
-        //UPGRADE_NOTE: Final was removed from the declaration of 'STATE_D_DR_R2 '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
         private static readonly int STATE_D_DR_R2 = STATE_D_DR_R1 << STATE_SEP;
 
         /// <summary>The mask to isolate the significance bits for row 1 and 2 of the state 
         /// array. 
         /// </summary>
-        //UPGRADE_NOTE: Final was removed from the declaration of 'SIG_MASK_R1R2 '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
         private static readonly int SIG_MASK_R1R2 = STATE_SIG_R1 | STATE_SIG_R2;
 
         /// <summary>The mask to isolate the visited bits for row 1 and 2 of the state 
         /// array. 
         /// </summary>
-        //UPGRADE_NOTE: Final was removed from the declaration of 'VSTD_MASK_R1R2 '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
         private static readonly int VSTD_MASK_R1R2 = STATE_VISITED_R1 | STATE_VISITED_R2;
 
         /// <summary>The mask to isolate the bits necessary to identify RLC coding state
         /// (significant, visited and non-zero context, for row 1 and 2). 
         /// </summary>
-        //UPGRADE_NOTE: Final was removed from the declaration of 'RLC_MASK_R1R2 '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
         private static readonly int RLC_MASK_R1R2 = STATE_SIG_R1 | STATE_SIG_R2 | STATE_VISITED_R1 | STATE_VISITED_R2 | STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2;
 
         /// <summary>The mask to obtain the ZC_LUT index from the state information </summary>
@@ -489,19 +462,16 @@ namespace CoreJ2K.j2k.entropy.encoder
         /// <summary>The shift to obtain the SC index to 'SC_LUT' from the state
         /// information, for row 2. 
         /// </summary>
-        //UPGRADE_NOTE: Final was removed from the declaration of 'SC_SHIFT_R2 '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
         private static readonly int SC_SHIFT_R2 = SC_SHIFT_R1 + STATE_SEP;
 
         /// <summary>The bit mask to isolate the state bits relative to the sign coding
         /// lookup table ('SC_LUT'). 
         /// </summary>
-        //UPGRADE_NOTE: Final was removed from the declaration of 'SC_MASK '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
         private static readonly int SC_MASK = (1 << SC_LUT_BITS) - 1;
 
         /// <summary>The mask to obtain the MR index to 'MR_LUT' from the 'state'
         /// information. It is to be applied after the 'MR_SHIFT'. 
         /// </summary>
-        //UPGRADE_NOTE: Final was removed from the declaration of 'MR_MASK '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
         private static readonly int MR_MASK = (1 << MR_LUT_BITS) - 1;
 
         /// <summary>The number of bits used to index in the 'fm' lookup table, 7. The 'fs' 
@@ -517,13 +487,11 @@ namespace CoreJ2K.j2k.entropy.encoder
         /// <summary>Distortion estimation lookup table for bits coded using the sign-code
         /// (SC) primative, for lossy coding (i.e. normal). 
         /// </summary>
-        //UPGRADE_NOTE: Final was removed from the declaration of 'FS_LOSSY '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
         private static readonly int[] FS_LOSSY = new int[1 << (MSE_LKP_BITS - 1)];
 
         /// <summary>Distortion estimation lookup table for bits coded using the
         /// magnitude-refinement (MR) primative, for lossy coding (i.e. normal) 
         /// </summary>
-        //UPGRADE_NOTE: Final was removed from the declaration of 'FM_LOSSY '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
         private static readonly int[] FM_LOSSY = new int[1 << MSE_LKP_BITS];
 
         /// <summary>Distortion estimation lookup table for bits coded using the sign-code
@@ -531,7 +499,6 @@ namespace CoreJ2K.j2k.entropy.encoder
         /// different from 'fs_lossy' since when doing lossless coding the residual 
         /// distortion after the last bit-plane is coded is strictly 0. 
         /// </summary>
-        //UPGRADE_NOTE: Final was removed from the declaration of 'FS_LOSSLESS '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
         private static readonly int[] FS_LOSSLESS = new int[1 << (MSE_LKP_BITS - 1)];
 
         /// <summary>Distortion estimation lookup table for bits coded using the
@@ -540,7 +507,6 @@ namespace CoreJ2K.j2k.entropy.encoder
         /// lossless coding the residual distortion after the last bit-plane is
         /// coded is strictly 0.
         /// </summary>
-        //UPGRADE_NOTE: Final was removed from the declaration of 'FM_LOSSLESS '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
         private static readonly int[] FM_LOSSLESS = new int[1 << MSE_LKP_BITS];
 
         /// <summary>The buffer for distortion values (avoids reallocation for each
@@ -643,7 +609,6 @@ namespace CoreJ2K.j2k.entropy.encoder
 #if DO_TIMING
 			time = new long[src.NumComps];
 			// If we are timing make sure that 'finalize' gets called.
-			//UPGRADE_ISSUE: Method 'java.lang.System.runFinalizersOnExit' was not converted. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1000_javalangSystem'"
 			// CONVERSION PROBLEM?
             //System_Renamed.runFinalizersOnExit(true);
 #endif
@@ -2556,7 +2521,6 @@ namespace CoreJ2K.j2k.entropy.encoder
                                 {
                                     // Sample that became significant is in bottom
                                     // half of column => jump to bottom half
-                                    //UPGRADE_NOTE: Labeled break statement was changed to a goto statement. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1012'"
                                     goto top_half_brk;
                                 }
                                 // Otherwise sample that became significant is in
@@ -2603,7 +2567,6 @@ namespace CoreJ2K.j2k.entropy.encoder
                                 // column
                                 j += sscanw;
                                 csj = state[j];
-                                //UPGRADE_NOTE: Labeled break statement was changed to a goto statement. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1012'"
                                 goto top_half_brk;
                             }
                         }
@@ -2723,7 +2686,6 @@ namespace CoreJ2K.j2k.entropy.encoder
                         j += sscanw;
                         csj = state[j];
                     }
-                    //UPGRADE_NOTE: Label 'top_half_brk' was added. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1011'"
 
                 top_half_brk:;
                     // end of 'top_half' block
@@ -3348,11 +3310,9 @@ namespace CoreJ2K.j2k.entropy.encoder
                     // In fs we index by val-1, since val is really: 1 <= val < 2
                     val = (double)i / (1 << (MSE_LKP_BITS - 1)) + 1.0;
                     deltaMSE = val * val;
-                    //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                     FS_LOSSLESS[i] = (int)System.Math.Floor(deltaMSE * (1 << MSE_LKP_FRAC_BITS) + 0.5);
                     val -= 1.5;
                     deltaMSE -= val * val;
-                    //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                     FS_LOSSY[i] = (int)System.Math.Floor(deltaMSE * (1 << MSE_LKP_FRAC_BITS) + 0.5);
                 }
 
@@ -3361,11 +3321,9 @@ namespace CoreJ2K.j2k.entropy.encoder
                 {
                     val = (double)i / (1 << (MSE_LKP_BITS - 1));
                     deltaMSE = (val - 1.0) * (val - 1.0);
-                    //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                     FM_LOSSLESS[i] = (int)System.Math.Floor(deltaMSE * (1 << MSE_LKP_FRAC_BITS) + 0.5);
                     val -= ((i < (1 << (MSE_LKP_BITS - 1))) ? 0.5 : 1.5);
                     deltaMSE -= val * val;
-                    //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                     FM_LOSSY[i] = (int)System.Math.Floor(deltaMSE * (1 << MSE_LKP_FRAC_BITS) + 0.5);
                 }
             }

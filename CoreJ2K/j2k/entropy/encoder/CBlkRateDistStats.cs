@@ -251,7 +251,6 @@ namespace CoreJ2K.j2k.entropy.encoder
             // Select the valid points
             npnt = n - first_pnt;
             p_slope = 0f; // To keep compiler happy
-            //UPGRADE_NOTE: Label 'ploop' was moved. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1014'"
             do
             {
                 p = -1;
@@ -284,7 +283,6 @@ namespace CoreJ2K.j2k.entropy.encoder
                         npnt--;
                         continue; // Goto next point
                     }
-                    //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                     k_slope = (float)(delta_dist / delta_rate);
                     // Check that there is a decrease in distortion, slope is not
                     // infinite (i.e. delta_dist is not 0) and slope is
@@ -294,7 +292,6 @@ namespace CoreJ2K.j2k.entropy.encoder
                         // Last point was not good
                         rates[p] = -rates[p]; // Remove p from valid points
                         npnt--;
-                        //UPGRADE_NOTE: Labeled continue statement was changed to a goto statement. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1015'"
                         goto ploop; // Restart from the first one
                     }
                     else
@@ -305,7 +302,6 @@ namespace CoreJ2K.j2k.entropy.encoder
                 }
                 // If we get to last point we are done
                 break;
-            //UPGRADE_NOTE: Label 'ploop' was moved. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1014'"
 
             ploop:;
             }

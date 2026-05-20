@@ -365,7 +365,6 @@ namespace CoreJ2K.j2k.image
                         {
                             for (kmin = k - w; k > kmin; k--, kSrc--)
                             {
-                                //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                                 farr[k] = srcIArr[kSrc];
                             }
                             // Jump to geggining of next line in source
@@ -394,7 +393,6 @@ namespace CoreJ2K.j2k.image
                     // Cast data from source to blk
                     if (fp != 0)
                     {
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                         mult = 1 << fp;
                         for (i = h - 1, k = w * h - 1, kSrc = srcBlk.offset + (h - 1) * srcBlk.scanw + w - 1;
                              i >= 0;
@@ -404,12 +402,10 @@ namespace CoreJ2K.j2k.image
                             {
                                 if (srcFArr[kSrc] > 0.0f)
                                 {
-                                    //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                                     iarr[k] = (int)(srcFArr[kSrc] * mult + 0.5f);
                                 }
                                 else
                                 {
-                                    //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                                     iarr[k] = (int)(srcFArr[kSrc] * mult - 0.5f);
                                 }
                             }
@@ -427,12 +423,10 @@ namespace CoreJ2K.j2k.image
                             {
                                 if (srcFArr[kSrc] > 0.0f)
                                 {
-                                    //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                                     iarr[k] = (int)(srcFArr[kSrc] + 0.5f);
                                 }
                                 else
                                 {
-                                    //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                                     iarr[k] = (int)(srcFArr[kSrc] - 0.5f);
                                 }
                             }

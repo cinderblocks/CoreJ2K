@@ -168,11 +168,9 @@ namespace CoreJ2K.j2k.wavelet.analysis
         public override int FilterType => FilterTypes_Fields.W5X3;
 
         /// <summary>The low-pass synthesis filter of the 5x3 wavelet transform </summary>
-        //UPGRADE_NOTE: Final was removed from the declaration of 'LPSynthesisFilter'. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
         private static readonly float[] LPSynthesisFilter = { 0.5f, 1f, 0.5f };
 
         /// <summary>The high-pass synthesis filter of the 5x3 wavelet transform </summary>
-        //UPGRADE_NOTE: Final was removed from the declaration of 'HPSynthesisFilter'. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
         private static readonly float[] HPSynthesisFilter = { -0.125f, -0.25f, 0.75f, -0.25f, -0.125f };
 
         /// <summary> An implementation of the analyze_lpf() method that works on int data,
@@ -516,7 +514,6 @@ namespace CoreJ2K.j2k.wavelet.analysis
         {
             return "w5x3";
         }
-        //UPGRADE_NOTE: The following method implementation was automatically added to preserve functionality. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1306'"
         public override int GetHashCode()
         {
             return base.GetHashCode();

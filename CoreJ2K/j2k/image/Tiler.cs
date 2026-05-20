@@ -297,9 +297,7 @@ namespace CoreJ2K.j2k.image
             }
 
             // Calculate the number of tiles
-            //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
             ntX = (int)Math.Ceiling((x0siz + src.ImgWidth) / (double)xtsiz);
-            //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
             ntY = (int)Math.Ceiling((y0siz + src.ImgHeight) / (double)ytsiz);
         }
 
@@ -413,9 +411,7 @@ namespace CoreJ2K.j2k.image
                 throw new ArgumentException("Block is outside the tile");
             }
             // Translate to the sources coordinates
-            //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
             var incx = (int)Math.Ceiling(x0siz / (double)src.getCompSubsX(compIndex));
-            //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
             var incy = (int)Math.Ceiling(y0siz / (double)src.getCompSubsY(compIndex));
             blk.ulx -= incx;
             blk.uly -= incy;
@@ -468,9 +464,7 @@ namespace CoreJ2K.j2k.image
                 throw new ArgumentException("Block is outside the tile");
             }
             // Translate to the source's coordinates
-            //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
             var incx = (int)Math.Ceiling(x0siz / (double)src.getCompSubsX(c));
-            //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
             var incy = (int)Math.Ceiling(y0siz / (double)src.getCompSubsY(c));
             blk.ulx -= incx;
             blk.uly -= incy;
@@ -535,13 +529,9 @@ namespace CoreJ2K.j2k.image
             if (tcy0 == null) tcy0 = new int[nc];
             for (var i = 0; i < nc; i++)
             {
-                //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                 tcx0[i] = (int)Math.Ceiling(tx0 / (double)src.getCompSubsX(i));
-                //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                 tcy0[i] = (int)Math.Ceiling(ty0 / (double)src.getCompSubsY(i));
-                //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                 compW[i] = (int)Math.Ceiling(tx1 / (double)src.getCompSubsX(i)) - tcx0[i];
-                //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                 compH[i] = (int)Math.Ceiling(ty1 / (double)src.getCompSubsY(i)) - tcy0[i];
             }
         }

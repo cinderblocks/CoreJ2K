@@ -72,7 +72,6 @@ namespace CoreJ2K.Icc.Lut
             body.Append(Environment.NewLine).Append($"[lut = [short[{lut.Length}]]]");
 
             // Print the FP luts.
-            //UPGRADE_TODO: The equivalent in .NET for method 'java.lang.Object.toString' may return a different value. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1043'"
             body.Append(Environment.NewLine).Append($"fLut=  {fLut}");
 
             rep.Append(ColorSpace.indent("  ", body));
@@ -102,14 +101,12 @@ namespace CoreJ2K.Icc.Lut
             int i;
             for (i = 0; ((i <= dwInputMaxValue) && (fLut.lut[i] <= ksRGBShadowCutoff)); i++)
             {
-                //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                 lut[i] = (short)(Math.Floor(ksRGB8ShadowSlope * fLut.lut[i] + 0.5) - dwInputShiftValue);
             }
 
             // Now calculate the rest   
             for (; i <= dwInputMaxValue; i++)
             {
-                //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                 lut[i] = (short)(Math.Floor(ksRGB8ScaleAfterExp * Math.Pow(fLut.lut[i], ksRGBExponent) - ksRGB8ReduceAfterExp + 0.5) - dwInputShiftValue);
             }
         }
@@ -190,7 +187,6 @@ namespace CoreJ2K.Icc.Lut
             o = inb.offset;
             for (i = 0; i < inb.h * inb.w; ++i)
             {
-                //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                 j = (int)in_Renamed[i];
                 if (j < 0)
                     j = 0;

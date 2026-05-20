@@ -445,7 +445,6 @@ namespace CoreJ2K.j2k.wavelet.analysis
                 {
                     acc += wfs[0][i] * wfs[0][i];
                 }
-                //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                 l2n = (float)Math.Sqrt(acc);
                 // Compute column L2-norm
                 acc = 0.0;
@@ -453,7 +452,6 @@ namespace CoreJ2K.j2k.wavelet.analysis
                 {
                     acc += wfs[1][i] * wfs[1][i];
                 }
-                //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                 l2n *= (float)Math.Sqrt(acc);
                 // Release waveforms
                 wfs[0] = null;

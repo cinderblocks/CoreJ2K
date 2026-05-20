@@ -451,23 +451,15 @@ namespace CoreJ2K.j2k.codestream.writer
             var xrsiz = infoSrc.getCompSubsX(c);
             var yrsiz = infoSrc.getCompSubsY(c);
 
-            //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
             var tcx0 = (int)Math.Ceiling(tx0 / (double)(xrsiz));
-            //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
             var tcy0 = (int)Math.Ceiling(ty0 / (double)(yrsiz));
-            //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
             var tcx1 = (int)Math.Ceiling(tx1 / (double)(xrsiz));
-            //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
             var tcy1 = (int)Math.Ceiling(ty1 / (double)(yrsiz));
 
             var ndl = infoSrc.getAnSubbandTree(t, c).resLvl - r;
-            //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
             var trx0 = (int)Math.Ceiling(tcx0 / (double)(1 << ndl));
-            //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
             var try0 = (int)Math.Ceiling(tcy0 / (double)(1 << ndl));
-            //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
             var trx1 = (int)Math.Ceiling(tcx1 / (double)(1 << ndl));
-            //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
             var try1 = (int)Math.Ceiling(tcy1 / (double)(1 << ndl));
 
             var cb0x = infoSrc.CbULX;
@@ -475,9 +467,7 @@ namespace CoreJ2K.j2k.codestream.writer
 
             double twoppx = encSpec.pss.getPPX(t, c, r);
             double twoppy = encSpec.pss.getPPY(t, c, r);
-            //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
             var twoppx2 = (int)(twoppx / 2);
-            //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
             var twoppy2 = (int)(twoppy / 2);
 
             // Precincts are located at (cb0x+i*twoppx,cb0y+j*twoppy)
@@ -486,13 +476,9 @@ namespace CoreJ2K.j2k.codestream.writer
             var maxPrec = ppinfo[t][c][r].Length;
             var nPrec = 0;
 
-            //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
             var istart = (int)Math.Floor((try0 - cb0y) / twoppy);
-            //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
             var iend = (int)Math.Floor((try1 - 1 - cb0y) / twoppy);
-            //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
             var jstart = (int)Math.Floor((trx0 - cb0x) / twoppx);
-            //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
             var jend = (int)Math.Floor((trx1 - 1 - cb0x) / twoppx);
 
             int acb0x, acb0y;
@@ -505,9 +491,7 @@ namespace CoreJ2K.j2k.codestream.writer
             int cw, ch;
             int kstart, kend, lstart, lend, k0, l0;
             int prg_ulx, prg_uly;
-            //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
             var prg_w = (int)twoppx << ndl;
-            //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
             var prg_h = (int)twoppy << ndl;
 
             CBlkCoordInfo cb;
@@ -518,28 +502,23 @@ namespace CoreJ2K.j2k.codestream.writer
                 for (var j = jstart; j <= jend; j++, nPrec++)
                 {
                     // Horizontal precincts
-                    //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                     if (j == jstart && (trx0 - cb0x) % (xrsiz * ((int)twoppx)) != 0)
                     {
                         prg_ulx = tx0;
                     }
                     else
                     {
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                         prg_ulx = cb0x + j * xrsiz * ((int)twoppx << ndl);
                     }
-                    //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                     if (i == istart && (try0 - cb0y) % (yrsiz * ((int)twoppy)) != 0)
                     {
                         prg_uly = ty0;
                     }
                     else
                     {
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                         prg_uly = cb0y + i * yrsiz * ((int)twoppy << ndl);
                     }
 
-                    //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                     ppinfo[t][c][r][nPrec] = new PrecInfo(r, (int)(cb0x + j * twoppx), (int)(cb0y + i * twoppy), (int)twoppx, (int)twoppy, prg_ulx, prg_uly, prg_w, prg_h);
 
                     if (r == 0)
@@ -548,13 +527,9 @@ namespace CoreJ2K.j2k.codestream.writer
                         acb0x = cb0x;
                         acb0y = cb0y;
 
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                         p0x = acb0x + j * (int)twoppx;
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                         p1x = p0x + (int)twoppx;
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                         p0y = acb0y + i * (int)twoppy;
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                         p1y = p0y + (int)twoppy;
 
                         sb = (SubbandAn)root.getSubbandByIdx(0, 0);
@@ -566,17 +541,11 @@ namespace CoreJ2K.j2k.codestream.writer
                         // Code-blocks are located at (acb0x+k*cw,acb0y+l*ch)
                         cw = sb.nomCBlkW;
                         ch = sb.nomCBlkH;
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                         k0 = (int)Math.Floor((sb.ulcy - acb0y) / (double)ch);
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                         kstart = (int)Math.Floor((s0y - acb0y) / (double)ch);
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                         kend = (int)Math.Floor((s1y - 1 - acb0y) / (double)ch);
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                         l0 = (int)Math.Floor((sb.ulcx - acb0x) / (double)cw);
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                         lstart = (int)Math.Floor((s0x - acb0x) / (double)cw);
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                         lend = (int)Math.Floor((s1x - 1 - acb0x) / (double)cw);
 
                         if (s1x - s0x <= 0 || s1y - s0y <= 0)
@@ -631,17 +600,11 @@ namespace CoreJ2K.j2k.codestream.writer
                         // Code-blocks are located at (acb0x+k*cw,acb0y+l*ch)
                         cw = sb.nomCBlkW;
                         ch = sb.nomCBlkH;
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                         k0 = (int)Math.Floor((sb.ulcy - acb0y) / (double)ch);
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                         kstart = (int)Math.Floor((s0y - acb0y) / (double)ch);
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                         kend = (int)Math.Floor((s1y - 1 - acb0y) / (double)ch);
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                         l0 = (int)Math.Floor((sb.ulcx - acb0x) / (double)cw);
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                         lstart = (int)Math.Floor((s0x - acb0x) / (double)cw);
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                         lend = (int)Math.Floor((s1x - 1 - acb0x) / (double)cw);
 
                         if (s1x - s0x <= 0 || s1y - s0y <= 0)
@@ -692,17 +655,11 @@ namespace CoreJ2K.j2k.codestream.writer
                         // Code-blocks are located at (acb0x+k*cw,acb0y+l*ch)
                         cw = sb.nomCBlkW;
                         ch = sb.nomCBlkH;
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                         k0 = (int)Math.Floor((sb.ulcy - acb0y) / (double)ch);
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                         kstart = (int)Math.Floor((s0y - acb0y) / (double)ch);
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                         kend = (int)Math.Floor((s1y - 1 - acb0y) / (double)ch);
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                         l0 = (int)Math.Floor((sb.ulcx - acb0x) / (double)cw);
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                         lstart = (int)Math.Floor((s0x - acb0x) / (double)cw);
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                         lend = (int)Math.Floor((s1x - 1 - acb0x) / (double)cw);
 
                         if (s1x - s0x <= 0 || s1y - s0y <= 0)
@@ -753,17 +710,11 @@ namespace CoreJ2K.j2k.codestream.writer
                         // Code-blocks are located at (acb0x+k*cw,acb0y+l*ch)
                         cw = sb.nomCBlkW;
                         ch = sb.nomCBlkH;
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                         k0 = (int)Math.Floor((sb.ulcy - acb0y) / (double)ch);
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                         kstart = (int)Math.Floor((s0y - acb0y) / (double)ch);
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                         kend = (int)Math.Floor((s1y - 1 - acb0y) / (double)ch);
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                         l0 = (int)Math.Floor((sb.ulcx - acb0x) / (double)cw);
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                         lstart = (int)Math.Floor((s0x - acb0x) / (double)cw);
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                         lend = (int)Math.Floor((s1x - 1 - acb0x) / (double)cw);
 
                         if (s1x - s0x <= 0 || s1y - s0y <= 0)

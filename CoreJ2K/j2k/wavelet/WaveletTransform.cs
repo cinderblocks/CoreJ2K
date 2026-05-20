@@ -77,7 +77,6 @@ namespace CoreJ2K.j2k.wavelet
     }
     public interface WaveletTransform : ImgData
     {
-        //UPGRADE_NOTE: Members of interface 'WaveletTransform' were extracted into structure 'WaveletTransform_Fields'. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1045'"
 
 
         /// <summary> Returns the reversibility of the wavelet transform for the specified

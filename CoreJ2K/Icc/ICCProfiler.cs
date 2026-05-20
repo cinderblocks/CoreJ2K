@@ -358,7 +358,6 @@ namespace CoreJ2K.Icc
             }
             catch (MatrixBasedTransformException e)
             {
-                //UPGRADE_TODO: The equivalent in .NET for method 'java.lang.Throwable.getMessage' may return a different value. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1043'"
                 FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.ERROR,
                     $"matrix transform problem:\n{e.Message}");
                 if (pl.getParameter("debug").Equals("on"))
@@ -373,7 +372,6 @@ namespace CoreJ2K.Icc
             }
             catch (MonochromeTransformException e)
             {
-                //UPGRADE_TODO: The equivalent in .NET for method 'java.lang.Throwable.getMessage' may return a different value. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1043'"
                 FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.ERROR,
                     $"monochrome transform problem:\n{e.Message}");
                 if (pl.getParameter("debug").Equals("on"))
@@ -451,7 +449,6 @@ namespace CoreJ2K.Icc
             }
             if (xform != null)
             {
-                //UPGRADE_TODO: The equivalent in .NET for method 'java.lang.Object.toString' may return a different value. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1043'"
                 body.Append(Environment.NewLine).Append(ColorSpace.indent("  ", xform.ToString()));
             }
             rep.Append(ColorSpace.indent("  ", body));

@@ -363,13 +363,9 @@ namespace CoreJ2K.j2k.codestream.reader
                 for (var r = 0; r <= mdl[c]; r++)
                 {
                     // Tile's coordinates in the reduced resolution image domain
-                    //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                     trx0 = (int)Math.Ceiling(tcx0 / (double)(1 << (mdl[c] - r)));
-                    //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                     try0 = (int)Math.Ceiling(tcy0 / (double)(1 << (mdl[c] - r)));
-                    //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                     trx1 = (int)Math.Ceiling(tcx1 / (double)(1 << (mdl[c] - r)));
-                    //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                     try1 = (int)Math.Ceiling(tcy1 / (double)(1 << (mdl[c] - r)));
 
                     // Calculate the maximum number of precincts for each
@@ -382,7 +378,6 @@ namespace CoreJ2K.j2k.codestream.reader
                     }
                     if (trx1 > trx0)
                     {
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                         numPrec[c][r].x = (int)Math.Ceiling((trx1 - cb0x) / twoppx) - (int)Math.Floor((trx0 - cb0x) / twoppx);
                     }
                     else
@@ -391,7 +386,6 @@ namespace CoreJ2K.j2k.codestream.reader
                     }
                     if (try1 > try0)
                     {
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                         numPrec[c][r].y = (int)Math.Ceiling((try1 - cb0y) / twoppy) - (int)Math.Floor((try0 - cb0y) / twoppy);
                     }
                     else
@@ -561,7 +555,6 @@ namespace CoreJ2K.j2k.codestream.reader
             int kstart, kend, lstart, lend, k0, l0;
             int prg_ulx, prg_uly;
             int tmp1, tmp2;
-            CBlkCoordInfo cb;
 
             for (var i = istart; i <= iend; i++)
             {

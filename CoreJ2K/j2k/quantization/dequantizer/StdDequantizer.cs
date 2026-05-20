@@ -119,11 +119,7 @@ namespace CoreJ2K.j2k.quantization.dequantizer
         private int _cachedParamsComp = -1;
         private StdDequantizerParams _cachedParams;
 
-        private int _cachedGTile = -1;
-        private int _cachedGComp = -1;
-        private int _cachedG;
-
-        // Cache for the max resolution level (getSynSubbandTree().resLvl) used in the
+        // Cache for the max resolution level
         // derived-quantization step calculation — constant per (tile, component).
         private int _cachedMrlTile = -1;
         private int _cachedMrlComp = -1;

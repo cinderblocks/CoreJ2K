@@ -70,10 +70,8 @@ namespace CoreJ2K.Icc.Tags
             var rep = new System.Text.StringBuilder($"[ICCTagTable containing {tagCount} tags:");
             var body = new System.Text.StringBuilder("  ");
             System.Collections.IEnumerator keys = Keys.GetEnumerator();
-            //UPGRADE_TODO: Method 'java.util.Enumeration.hasMoreElements' was converted to 'System.Collections.IEnumerator.MoveNext' which has a different behavior. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1073_javautilEnumerationhasMoreElements'"
             while (keys.MoveNext())
             {
-                //UPGRADE_TODO: Method 'java.util.Enumeration.nextElement' was converted to 'System.Collections.IEnumerator.Current' which has a different behavior. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1073_javautilEnumerationnextElement'"
                 var key = (int)keys.Current;
                 var tag = this[key];
                 body.Append(Environment.NewLine).Append(tag);
@@ -114,10 +112,8 @@ namespace CoreJ2K.Icc.Tags
 
 
             System.Collections.Generic.IEnumerator<Triplet> Enum = trios.GetEnumerator();
-            //UPGRADE_TODO: Method 'java.util.Enumeration.hasMoreElements' was converted to 'System.Collections.IEnumerator.MoveNext' which has a different behavior. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1073_javautilEnumerationhasMoreElements'"
             while (Enum.MoveNext())
             {
-                //UPGRADE_TODO: Method 'java.util.Enumeration.nextElement' was converted to 'System.Collections.IEnumerator.Current' which has a different behavior. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1073_javautilEnumerationnextElement'"
                 var trio = Enum.Current;
                 var tag = ICCTag.createInstance(trio.signature, data, trio.offset, trio.count);
                 this[tag.signature] = tag;
@@ -130,7 +126,6 @@ namespace CoreJ2K.Icc.Tags
         /// </param>
         /// <exception cref="IOException">
         /// </exception>
-        //UPGRADE_TODO: Class 'java.io.RandomAccessFile' was converted to 'System.IO.FileStream' which has a different behavior. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1073_javaioRandomAccessFile'"
         public virtual void write(Stream raf)
         {
 
@@ -149,10 +144,8 @@ namespace CoreJ2K.Icc.Tags
             var currentDataOff = dataOff;
 
             System.Collections.IEnumerator enum_Renamed = trios.GetEnumerator();
-            //UPGRADE_TODO: Method 'java.util.Enumeration.hasMoreElements' was converted to 'System.Collections.IEnumerator.MoveNext' which has a different behavior. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1073_javautilEnumerationhasMoreElements'"
             while (enum_Renamed.MoveNext())
             {
-                //UPGRADE_TODO: Method 'java.util.Enumeration.nextElement' was converted to 'System.Collections.IEnumerator.Current' which has a different behavior. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1073_javautilEnumerationnextElement'"
                 var trio = (Triplet)enum_Renamed.Current;
                 var tag = this[trio.signature];
 

@@ -58,20 +58,17 @@ namespace CoreJ2K.Icc.Lut
         {
 
             var i = -1;
-            //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
             var dfNormalize = 1.0 / (float)ksRGBLinearMaxValue;
 
             // Generate the final linear-sRGB to non-linear sRGB LUT
             for (i = 0; i <= wShadowCutoff; i++)
             {
-                //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                 lut[i] = (byte)Math.Floor(dfShadowSlope * i + 0.5);
             }
 
             // Now calculate the rest
             for (; i <= ksRGBLinearMaxValue; i++)
             {
-                //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                 lut[i] = (byte)Math.Floor(ksRGB8ScaleAfterExp * Math.Pow(i * dfNormalize, ksRGBExponent) - ksRGB8ReduceAfterExp + 0.5);
             }
         }

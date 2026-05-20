@@ -71,7 +71,6 @@ namespace CoreJ2K.j2k.wavelet
     }
     public interface WaveletFilter
     {
-        //UPGRADE_NOTE: Members of interface 'WaveletFilter' were extracted into structure 'WaveletFilter_Fields'. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1045'"
         /// <summary> Returns the negative support of the low-pass analysis filter. That is
         /// the number of taps of the filter in the negative direction.
         /// 

@@ -33,7 +33,6 @@ namespace CoreJ2K.Icc.Tags
         /// <summary>Normalization utility </summary>
         public static long DoubleToXYZ(double x)
         {
-            //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
             return (long)Math.Floor(x * 65536.0 + 0.5);
         }
 
@@ -68,7 +67,6 @@ namespace CoreJ2K.Icc.Tags
 
 
         /// <summary>Write to a file. </summary>
-        //UPGRADE_TODO: Class 'java.io.RandomAccessFile' was converted to 'System.IO.FileStream' which has a different behavior. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1073_javaioRandomAccessFile'"
         public virtual void write(System.IO.Stream raf)
         {
             var xb = ICCProfile.setLong(x);

@@ -51,21 +51,17 @@ namespace CoreJ2K.Icc.Lut
             {
                 dfTargetIndex = i * dfRatio;
                 dfLowIndex = Math.Floor(dfTargetIndex);
-                //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                 dwLowIndex = (int)dfLowIndex;
                 dfHighIndex = Math.Ceiling(dfTargetIndex);
-                //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                 dwHighIndex = (int)dfHighIndex;
                 if (dwLowIndex == dwHighIndex)
                 {
-                    //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                     lut[i] = (float)Tags_ICCCurveType.CurveToDouble(curve.entry(dwLowIndex));
                 }
                 else
                 {
                     dfLow = ICCCurveType.CurveToDouble(curve.entry(dwLowIndex));
                     dfHigh = ICCCurveType.CurveToDouble(curve.entry(dwHighIndex));
-                    //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                     lut[i] = (float)(dfLow + (dfHigh - dfLow) * (dfTargetIndex - dfLowIndex));
                 }
             }

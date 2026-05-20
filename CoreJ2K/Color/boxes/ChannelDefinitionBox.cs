@@ -69,10 +69,8 @@ namespace CoreJ2K.Color.Boxes
         public int getCn(int asoc)
         {
             IEnumerator<int> keys = definitions.Keys.GetEnumerator();
-            //UPGRADE_TODO: Method 'java.util.Enumeration.hasMoreElements' was converted to 'System.Collections.IEnumerator.MoveNext' which has a different behavior. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1073_javautilEnumerationhasMoreElements'"
             while (keys.MoveNext())
             {
-                //UPGRADE_TODO: Method 'java.util.Enumeration.nextElement' was converted to 'System.Collections.IEnumerator.Current' which has a different behavior. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1073_javautilEnumerationnextElement'"
                 var bfr = definitions[keys.Current];
                 if (asoc == getAsoc(bfr))
                     return getCn(bfr);
@@ -102,10 +100,8 @@ namespace CoreJ2K.Color.Boxes
             rep.Append("ndefs= ").Append(Convert.ToString(NDefs));
 
             IEnumerator<int> keys = definitions.Keys.GetEnumerator();
-            //UPGRADE_TODO: Method 'java.util.Enumeration.hasMoreElements' was converted to 'System.Collections.IEnumerator.MoveNext' which has a different behavior. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1073_javautilEnumerationhasMoreElements'"
             while (keys.MoveNext())
             {
-                //UPGRADE_TODO: Method 'java.util.Enumeration.nextElement' was converted to 'System.Collections.IEnumerator.Current' which has a different behavior. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1073_javautilEnumerationnextElement'"
                 var bfr = definitions[keys.Current];
                 rep.Append(Environment.NewLine).Append("  ").Append("Cn= ").Append(Convert.ToString(getCn(bfr))).Append(", ").Append("Typ= ").Append(Convert.ToString(getTyp(bfr))).Append(", ").Append("Asoc= ").Append(Convert.ToString(getAsoc(bfr)));
             }

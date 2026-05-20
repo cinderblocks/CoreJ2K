@@ -79,7 +79,6 @@ namespace CoreJ2K.j2k.image.output
         private readonly int[] levShift = new int[3];
 
         /// <summary>Where to write the data </summary>
-        //UPGRADE_TODO: Class 'java.io.RandomAccessFile' was converted to 'System.IO.FileStream' which has a different behavior. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1073_javaioRandomAccessFile'"
         private System.IO.Stream out_Renamed;
 
         /// <summary>The array of indexes of the components from where to get the data </summary>
@@ -281,9 +280,7 @@ namespace CoreJ2K.j2k.image.output
 
             // Active tiles in all components have same offset since they are at
             // same resolution (PPM does not support anything else)
-            //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
             tOffx = src.getCompULX(cps[0]) - (int)Math.Ceiling(src.ImgULX / (double)src.getCompSubsX(cps[0]));
-            //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
             tOffy = src.getCompULY(cps[0]) - (int)Math.Ceiling(src.ImgULY / (double)src.getCompSubsY(cps[0]));
 
             // Check the array size
@@ -437,7 +434,6 @@ namespace CoreJ2K.j2k.image.output
         /// </returns>
         public override string ToString()
         {
-            //UPGRADE_TODO: The equivalent in .NET for method 'java.lang.Object.toString' may return a different value. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1043'"
             return
                 $"ImgWriterPPM: WxH = {w}x{h}, Components = {cps[0]},{cps[1]},{cps[2]}\nUnderlying RandomAccessFile:\n{out_Renamed}";
         }

@@ -193,7 +193,6 @@ namespace CoreJ2K.Color
 
                         for (kOut = leftedgeOut, kIn = leftedgeIn; kIn < rightedgeIn; ++kIn, ++kOut)
                         {
-                            //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                             outdataFloat[kOut] = pbox.getEntry(c, (int)dataFloat[0][kIn] + shiftValueArray[0]) - outShiftValueArray[c];
                         }
                     }

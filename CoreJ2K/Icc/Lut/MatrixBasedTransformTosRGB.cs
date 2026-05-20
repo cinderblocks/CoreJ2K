@@ -94,7 +94,6 @@ namespace CoreJ2K.Icc.Lut
 
             body.Append(Environment.NewLine).Append("dwShiftValues= ").Append(Convert.ToString(dwShiftValue[0])).Append(", ").Append(Convert.ToString(dwShiftValue[1])).Append(", ").Append(Convert.ToString(dwShiftValue[2]));
 
-            //UPGRADE_TODO: The equivalent in .NET for method 'java.lang.Object.toString' may return a different value. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1043'"
             body.Append(Environment.NewLine).Append(Environment.NewLine).Append("fLut= ").Append(Environment.NewLine).Append(ColorSpace.indent("  ",
                 $"fLut[RED]=  {fLut[0]}")).Append(Environment.NewLine).Append(ColorSpace.indent("  ", $"fLut[GRN]=  {fLut[1]}")).Append(Environment.NewLine).Append(ColorSpace.indent("  ",
                 $"fLut[BLU]=  {fLut[2]}"));
@@ -268,7 +267,6 @@ namespace CoreJ2K.Icc.Lut
 
                     // Apply the matrix to the intermediate floating point data in order to index the 
                     // final LUT.
-                    //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                     val = (int)(matrix[M00] * r + matrix[M01] * g + matrix[M02] * b + 0.5);
                     // Clip the calculated value if necessary..
                     if (val < 0)
@@ -278,7 +276,6 @@ namespace CoreJ2K.Icc.Lut
                     else
                         ro[index] = lut32[val];
 
-                    //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                     val = (int)(matrix[M10] * r + matrix[M11] * g + matrix[M12] * b + 0.5);
                     // Clip the calculated value if necessary..
                     if (val < 0)
@@ -288,7 +285,6 @@ namespace CoreJ2K.Icc.Lut
                     else
                         go[index] = lut32[val];
 
-                    //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                     val = (int)(matrix[M20] * r + matrix[M21] * g + matrix[M22] * b + 0.5);
                     // Clip the calculated value if necessary..
                     if (val < 0)
@@ -370,7 +366,6 @@ namespace CoreJ2K.Icc.Lut
 
                     // Apply the matrix to the intermediate floating point data inorder to index the 
                     // final LUT.
-                    //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                     val = (int)(matrix[M00] * fBuf[RED][index] + matrix[M01] * fBuf[GREEN][index] + matrix[M02] * fBuf[BLUE][index] + 0.5);
                     // Clip the calculated value if necessary..
                     if (val < 0)
@@ -380,7 +375,6 @@ namespace CoreJ2K.Icc.Lut
                     else
                         out_Renamed[0][index] = lut32[val];
 
-                    //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                     val = (int)(matrix[M10] * fBuf[RED][index] + matrix[M11] * fBuf[GREEN][index] + matrix[M12] * fBuf[BLUE][index] + 0.5);
                     // Clip the calculated value if necessary..
                     if (val < 0)
@@ -390,7 +384,6 @@ namespace CoreJ2K.Icc.Lut
                     else
                         out_Renamed[1][index] = lut32[val];
 
-                    //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                     val = (int)(matrix[M20] * fBuf[RED][index] + matrix[M21] * fBuf[GREEN][index] + matrix[M22] * fBuf[BLUE][index] + 0.5);
                     // Clip the calculated value if necessary..
                     if (val < 0)
@@ -445,7 +438,6 @@ namespace CoreJ2K.Icc.Lut
                         wTemp = 0;
                     else
                         wTemp = in_Renamed[i];
-                    //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                     out_Renamed[j++] = lutFP[(int)wTemp];
                 }
             }

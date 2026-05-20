@@ -88,7 +88,6 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// </returns>
         /// <seealso cref="DataBlk" />
         public abstract int DataType { get; }
-        //UPGRADE_NOTE: Respective javadoc comments were merged.  It should be changed in order to comply with .NET documentation conventions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1199'"
         /// <summary> Returns the array containing the data, or null if there is no data. The
         /// returned array is of the type returned by <tt>getDataType()</tt> (e.g.,
         /// for <tt>TYPE_INT</tt>, it is a <tt>int[]</tt>).

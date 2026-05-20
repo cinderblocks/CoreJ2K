@@ -75,7 +75,6 @@ namespace CoreJ2K.j2k.io
     }
     public interface EndianType
     {
-        //UPGRADE_NOTE: Members of interface 'EndianType' were extracted into structure 'EndianType_Fields'. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1045'"
 
     }
 }

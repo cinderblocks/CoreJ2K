@@ -32,7 +32,6 @@ namespace CoreJ2K.Icc.Lut
             dfE = Tags_ICCCurveType.CurveGammaToDouble(curve.entry(0));
             for (var i = 0; i < dwNumInput; i++)
             {
-                //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                 lut[i] = (float)Math.Pow((double)i / (dwNumInput - 1), dfE);
             }
         }

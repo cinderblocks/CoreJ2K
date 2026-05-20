@@ -48,7 +48,6 @@ namespace CoreJ2K.Icc.Types
         }
 
         /// <summary>Write an ICCDateTime to a file. </summary>
-        //UPGRADE_TODO: Class 'java.io.RandomAccessFile' was converted to 'System.IO.FileStream' which has a different behavior. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1073_javaioRandomAccessFile'"
         public virtual void write(System.IO.Stream raf)
         {
             System.IO.BinaryWriter temp_BinaryWriter;

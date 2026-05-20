@@ -110,7 +110,6 @@ namespace CoreJ2K.j2k.image.output
         private readonly int bitDepth;
 
         /// <summary>Where to write the data </summary>
-        //UPGRADE_TODO: Class 'java.io.RandomAccessFile' was converted to 'System.IO.FileStream' which has a different behavior. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1073_javaioRandomAccessFile'"
         private System.IO.Stream out_Renamed;
 
         /// <summary>The offset of the raw pixel data in the PGX file </summary>
@@ -332,9 +331,7 @@ namespace CoreJ2K.j2k.image.output
             db.w = w;
             db.h = h;
             // Get the current active tile offset
-            //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
             tOffx = src.getCompULX(c) - (int)Math.Ceiling(src.ImgULX / (double)src.getCompSubsX(c));
-            //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
             tOffy = src.getCompULY(c) - (int)Math.Ceiling(src.ImgULY / (double)src.getCompSubsY(c));
             // Check the array size
             if (db.data_array != null && db.data_array.Length < w * h)
@@ -504,7 +501,6 @@ namespace CoreJ2K.j2k.image.output
         /// </returns>
         public override string ToString()
         {
-            //UPGRADE_TODO: The equivalent in .NET for method 'java.lang.Object.toString' may return a different value. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1043'"
             return
                 $"ImgWriterPGX: WxH = {w}x{h}, Component = {c}, Bit-depth = {bitDepth}, signed = {isSigned}\nUnderlying RandomAccessFile:\n{out_Renamed}";
         }

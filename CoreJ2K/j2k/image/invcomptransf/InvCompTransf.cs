@@ -323,21 +323,18 @@ namespace CoreJ2K.j2k.image.invcomptransf
                     // The MathUtil.log2(x) function calculates floor(log2(x)), so we
                     // use 'MathUtil.log2(2*x-1)+1', which calculates ceil(log2(x))
                     // for any x>=1, x integer.
-                    //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                     tdepth[0] =
                         MathUtil.log2(
                             (int)
                             Math.Floor(
                                 (1 << utdepth[0]) * 0.299072 + (1 << utdepth[1]) * 0.586914
                                 + (1 << utdepth[2]) * 0.114014) - 1) + 1;
-                    //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                     tdepth[1] =
                         MathUtil.log2(
                             (int)
                             Math.Floor(
                                 (1 << utdepth[0]) * 0.168701 + (1 << utdepth[1]) * 0.331299 + (1 << utdepth[2]) * 0.5)
                             - 1) + 1;
-                    //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                     tdepth[2] =
                         MathUtil.log2(
                             (int)
@@ -505,7 +502,7 @@ namespace CoreJ2K.j2k.image.invcomptransf
             else if ((outdata[c] == null) || (dbi.ulx > blk.ulx) || (dbi.uly > blk.uly)
                      || (dbi.ulx + dbi.w < blk.ulx + blk.w) || (dbi.uly + dbi.h < blk.uly + blk.h))
             {
-                int k, k0, k1, k2, mink, i;
+                int i;
                 var w = blk.w; //width of output block
                 var h = blk.h; //height of ouput block
 
@@ -668,7 +665,6 @@ namespace CoreJ2K.j2k.image.invcomptransf
                 {
                     for (mink = k - w; k > mink; k--, k0--)
                     {
-                        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                         out_data[k] = (int)(indata[k0]);
                     }
                     // Jump to beggining of previous line in input
@@ -685,14 +681,14 @@ namespace CoreJ2K.j2k.image.invcomptransf
             else if ((outdata[c] == null) || (dbi.ulx > blk.ulx) || (dbi.uly > blk.uly)
                      || (dbi.ulx + dbi.w < blk.ulx + blk.w) || (dbi.uly + dbi.h < blk.uly + blk.h))
             {
-                int k, k0, k1, k2, mink, i;
+                int i;
                 var w = blk.w; //width of output block
                 var h = blk.h; //height of ouput block
 
                 //Reference to output block data array
                 outdata[c] = (int[])blk.Data;
 
-                // Validate block dimensions to prevent integer overflow
+                // Validate block dimensions
                 long totalSize = (long)w * h;
                 if (totalSize > int.MaxValue)
                 {

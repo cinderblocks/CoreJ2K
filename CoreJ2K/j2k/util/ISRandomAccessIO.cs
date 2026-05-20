@@ -654,11 +654,9 @@ namespace CoreJ2K.j2k.util
 			if (pos + 3 < len)
 			{
 				// common, fast case
-				//UPGRADE_ISSUE: Method 'java.lang.Float.intBitsToFloat' was not converted. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1000_javalangFloatintBitsToFloat_int'"
 				return Float.intBitsToFloat((buf[pos++] << 24) | ((0xFF & buf[pos++]) << 16) | ((0xFF & buf[pos++]) << 8) | (0xFF & buf[pos++]));
 			}
 			// general case
-			//UPGRADE_ISSUE: Method 'java.lang.Float.intBitsToFloat' was not converted. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1000_javalangFloatintBitsToFloat_int'"
 			return Float.intBitsToFloat((read() << 24) | (read() << 16) | (read() << 8) | read());
             */
         }
@@ -691,11 +689,9 @@ namespace CoreJ2K.j2k.util
 			if (pos + 7 < len)
 			{
 				// common, fast case
-				//UPGRADE_ISSUE: Method 'java.lang.Double.longBitsToDouble' was not converted. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1000_javalangDoublelongBitsToDouble_long'"
 				return Double.longBitsToDouble(((long) buf[pos++] << 56) | ((long) (0xFF & buf[pos++]) << 48) | ((long) (0xFF & buf[pos++]) << 40) | ((long) (0xFF & buf[pos++]) << 32) | ((long) (0xFF & buf[pos++]) << 24) | ((long) (0xFF & buf[pos++]) << 16) | ((long) (0xFF & buf[pos++]) << 8) | (long) (0xFF & buf[pos++]));
 			}
 			// general case
-			//UPGRADE_ISSUE: Method 'java.lang.Double.longBitsToDouble' was not converted. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1000_javalangDoublelongBitsToDouble_long'"
 			return Double.longBitsToDouble(((long) read() << 56) | ((long) read() << 48) | ((long) read() << 40) | ((long) read() << 32) | ((long) read() << 24) | ((long) read() << 16) | ((long) read() << 8) | (long) read());
             */
         }

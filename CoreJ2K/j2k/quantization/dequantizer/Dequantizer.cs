@@ -111,7 +111,6 @@ namespace CoreJ2K.j2k.quantization.dequantizer
         /// <summary>The list of parameters that is accepted by the bit stream
         /// readers. They start with 'Q' 
         /// </summary>
-        //UPGRADE_NOTE: Final was removed from the declaration of 'pinfo'. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
         private static readonly string[][] pinfo = null;
 
         /// <summary>The entropy decoder from where to get the quantized data (the

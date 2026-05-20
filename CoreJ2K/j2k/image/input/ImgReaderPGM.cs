@@ -120,7 +120,6 @@ namespace CoreJ2K.j2k.image.input
         /// <exception cref="IOException">if an error occurs when opening the file
         /// 
         /// </exception>
-        //UPGRADE_TODO: Class 'java.io.RandomAccessFile' was converted to 'System.IO.FileStream' which has a different behavior. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1073_javaioRandomAccessFile'"
         public ImgReaderPGM(System.IO.Stream inRenamed)
         {
             this.inRenamed = inRenamed;
@@ -503,7 +502,6 @@ namespace CoreJ2K.j2k.image.input
         /// </returns>
         public override string ToString()
         {
-            //UPGRADE_TODO: The equivalent in .NET for method 'java.lang.Object.toString' may return a different value. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1043'"
             return $"ImgReaderPGM: WxH = {w}x{h}, Component = 0\nUnderlying RandomAccessIO:\n{inRenamed}";
         }
     }

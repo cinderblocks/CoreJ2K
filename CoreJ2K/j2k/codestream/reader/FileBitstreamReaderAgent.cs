@@ -371,7 +371,6 @@ namespace CoreJ2K.j2k.codestream.reader
             }
             else
             {
-                //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                 tnbytes = (int)(trate * hd.MaxCompImgWidth * hd.MaxCompImgHeight) / 8;
                 if (tnbytes < 0) tnbytes = int.MaxValue;
             }
@@ -758,7 +757,6 @@ namespace CoreJ2K.j2k.codestream.reader
             var totnByte = rem;
             for (var t = nt - 1; t > 0; t--)
             {
-                //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                 rem -= (nBytes[t] = (int)(totnByte * (totTileLen[t] / totAllTileLen)));
             }
             nBytes[0] = rem;

@@ -67,7 +67,6 @@ namespace CoreJ2K.j2k.quantization
     }
     public interface QuantizationType
     {
-        //UPGRADE_NOTE: Members of interface 'QuantizationType' were extracted into structure 'QuantizationType_Fields'. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1045'"
 
     }
 }

@@ -40,10 +40,8 @@ namespace CoreJ2K.Color
         /// <summary>Matrix component for ycc transform. </summary>
         protected internal static float Matrix10 = 1;
         /// <summary>Matrix component for ycc transform. </summary>
-        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
         protected internal static float Matrix11 = (float)(-0.34413);
         /// <summary>Matrix component for ycc transform. </summary>
-        //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
         protected internal static float Matrix12 = (float)(-0.71414);
         /// <summary>Matrix component for ycc transform. </summary>
         protected internal static float Matrix20 = 1;
@@ -313,13 +311,10 @@ namespace CoreJ2K.Color
 
             for (j = 0; j < length; ++j)
             {
-                //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                 out_Renamed[0][j] = (int)(Matrix00 * in_Renamed[0][inblk[0].offset + j] + Matrix01 * in_Renamed[1][inblk[1].offset + j] + Matrix02 * in_Renamed[2][inblk[2].offset + j]);
 
-                //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                 out_Renamed[1][j] = (int)(Matrix10 * in_Renamed[0][inblk[0].offset + j] + Matrix11 * in_Renamed[1][inblk[1].offset + j] + Matrix12 * in_Renamed[2][inblk[2].offset + j]);
 
-                //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                 out_Renamed[2][j] = (int)(Matrix20 * in_Renamed[0][inblk[0].offset + j] + Matrix21 * in_Renamed[1][inblk[1].offset + j] + Matrix22 * in_Renamed[2][inblk[2].offset + j]);
             }
 

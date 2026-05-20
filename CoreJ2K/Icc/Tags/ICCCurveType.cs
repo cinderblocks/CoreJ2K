@@ -46,7 +46,6 @@ namespace CoreJ2K.Icc.Tags
         /// <summary>Normalization utility </summary>
         public static short DoubleToCurve(double entry)
         {
-            //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
             return (short)Math.Floor(entry * 65535.0 + 0.5);
         }
 

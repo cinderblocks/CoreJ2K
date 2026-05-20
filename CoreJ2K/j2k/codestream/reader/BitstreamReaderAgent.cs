@@ -241,7 +241,6 @@ namespace CoreJ2K.j2k.codestream.reader
         /// <summary>The list of parameters that is accepted by the bit stream
         /// readers. They start with 'B'. 
         /// </summary>
-        //UPGRADE_NOTE: Final was removed from the declaration of 'pinfo'. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
         private static readonly string[][] pinfo = null;
 
         /// <summary> The maximum number of decompostion levels for each component of the
@@ -252,7 +251,6 @@ namespace CoreJ2K.j2k.codestream.reader
         protected internal int[] mdl;
 
         /// <summary>The number of components </summary>
-        //UPGRADE_NOTE: Final was removed from the declaration of 'nc '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
         protected internal int nc;
 
         /// <summary>Image resolution level to generate </summary>
@@ -267,83 +265,68 @@ namespace CoreJ2K.j2k.codestream.reader
         protected internal SubbandSyn[] subbTrees;
 
         /// <summary>The image width on the hi-res reference grid </summary>
-        //UPGRADE_NOTE: Final was removed from the declaration of 'imgW '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
         protected internal int imgW;
 
         /// <summary>The image width on the hi-res reference grid </summary>
-        //UPGRADE_NOTE: Final was removed from the declaration of 'imgH '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
         protected internal int imgH;
 
         /// <summary>The horizontal coordinate of the image origin in the canvas system, on
         /// the reference grid. 
         /// </summary>
-        //UPGRADE_NOTE: Final was removed from the declaration of 'ax '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
         protected internal int ax;
 
         /// <summary>The vertical coordinate of the image origin in the canvas system, on
         /// the reference grid. 
         /// </summary>
-        //UPGRADE_NOTE: Final was removed from the declaration of 'ay '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
         protected internal int ay;
 
         /// <summary>The horizontal coordinate of the tiling origin in the canvas system, on
         /// the reference grid. 
         /// </summary>
-        //UPGRADE_NOTE: Final was removed from the declaration of 'px '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
         protected internal int px;
 
         /// <summary>The vertical coordinate of the tiling origin in the canvas system, on
         /// the reference grid. 
         /// </summary>
-        //UPGRADE_NOTE: Final was removed from the declaration of 'py '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
         protected internal int py;
 
         /// <summary>The horizontal offsets of the upper-left corner of the current tile
         /// (not active tile) with respect to the canvas origin, in the component
         /// hi-res grid, for each component. 
         /// </summary>
-        //UPGRADE_NOTE: Final was removed from the declaration of 'offX '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
         protected internal int[] offX;
 
         /// <summary>The vertical offsets of the upper-left corner of the current tile (not
         /// active tile) with respect to the canvas origin, in the component hi-res
         /// grid, for each component. 
         /// </summary>
-        //UPGRADE_NOTE: Final was removed from the declaration of 'offY '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
         protected internal int[] offY;
 
         /// <summary>The horizontal coordinates of the upper-left corner of the active
         /// tile, with respect to the canvas origin, in the component hi-res grid,
         /// for each component. 
         /// </summary>
-        //UPGRADE_NOTE: Final was removed from the declaration of 'culx '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
         protected internal int[] culx;
 
         /// <summary>The vertical coordinates of the upper-left corner of the active tile,
         /// with respect to the canvas origin, in the component hi-res grid, for
         /// each component. 
         /// </summary>
-        //UPGRADE_NOTE: Final was removed from the declaration of 'culy '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
         protected internal int[] culy;
 
         /// <summary>The nominal tile width, in the hi-res reference grid </summary>
-        //UPGRADE_NOTE: Final was removed from the declaration of 'ntW '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
         protected internal int ntW;
 
         /// <summary>The nominal tile height, in the hi-res reference grid </summary>
-        //UPGRADE_NOTE: Final was removed from the declaration of 'ntH '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
         protected internal int ntH;
 
         /// <summary>The number of tile in the horizontal direction </summary>
-        //UPGRADE_NOTE: Final was removed from the declaration of 'ntX '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
         protected internal int ntX;
 
         /// <summary>The number of tiles in the vertical direction </summary>
-        //UPGRADE_NOTE: Final was removed from the declaration of 'ntY '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
         protected internal int ntY;
 
         /// <summary>The total number of tiles </summary>
-        //UPGRADE_NOTE: Final was removed from the declaration of 'nt '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
         protected internal int nt;
 
         /// <summary>The current tile horizontal index </summary>
@@ -353,7 +336,6 @@ namespace CoreJ2K.j2k.codestream.reader
         protected internal int ctY;
 
         /// <summary>The decoded bit stream header </summary>
-        //UPGRADE_NOTE: Final was removed from the declaration of 'hd '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
         protected internal HeaderDecoder hd;
 
         /// <summary>Number of bytes targeted to be read </summary>
@@ -889,9 +871,7 @@ namespace CoreJ2K.j2k.codestream.reader
                     $"Requested resolution level is not available for, at least, one component in tile: {ctX}x{ctY}");
             }
             var tx0 = Math.Max(px + ctX * ntW, ax);
-            //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
             var tcx0 = (int)Math.Ceiling(tx0 / (double)getCompSubsX(c));
-            //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
             return (int)Math.Ceiling(tcx0 / (double)(1 << dl));
         }
 
@@ -914,9 +894,7 @@ namespace CoreJ2K.j2k.codestream.reader
                     $"Requested resolution level is not available for, at least, one component in tile: {ctX}x{ctY}");
             }
             var ty0 = Math.Max(py + ctY * ntH, ay);
-            //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
             var tcy0 = (int)Math.Ceiling(ty0 / (double)getCompSubsY(c));
-            //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
             return (int)Math.Ceiling(tcy0 / (double)(1 << dl));
         }
 

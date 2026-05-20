@@ -339,7 +339,6 @@ namespace CoreJ2K.j2k.entropy
         /// </returns>
         public virtual int getCBlkWidth(byte type, int t, int c)
         {
-            //UPGRADE_TODO: The 'System.Int32' structure does not have an equivalent to NULL. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1291'"
             int[] dim = null;
             switch (type)
             {
@@ -400,7 +399,6 @@ namespace CoreJ2K.j2k.entropy
         /// </returns>
         public virtual int getCBlkHeight(byte type, int t, int c)
         {
-            //UPGRADE_TODO: The 'System.Int32' structure does not have an equivalent to NULL. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1291'"
             int[] dim = null;
             switch (type)
             {

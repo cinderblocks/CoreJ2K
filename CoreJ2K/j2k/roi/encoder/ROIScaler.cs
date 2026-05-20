@@ -120,7 +120,6 @@ namespace CoreJ2K.j2k.roi.encoder
         /// <summary>The list of parameters that are accepted for ROI coding. Options 
         /// for ROI Scaler start with 'R'. 
         /// </summary>
-        //UPGRADE_NOTE: Final was removed from the declaration of 'pinfo'. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
         private static readonly string[][] pinfo = { new string[] { "Rroi", "[<component idx>] R <left> <top> <width> <height> or [<component idx>] C <centre column> <centre row> <radius> or [<component idx>] A <filename>", "Specifies ROIs shape and location. The shape can be either rectangular 'R', or circular 'C' or arbitrary 'A'. Each new occurrence of an 'R', a 'C' or an 'A' is a new ROI. For circular and rectangular ROIs, all values are given as their pixel values relative to the canvas origin. Arbitrary shapes must be included in a PGM file where non 0 values correspond to ROI coefficients. The PGM file must have the size as the image. The component idx specifies which components contain the ROI. The component index is specified as described by points 3 and 4 in the general comment on tile-component idx. If this option is used, the codestream is layer progressive by default unless it is overridden by the 'Aptype' option.", null }, new string[] { "Ralign", "[on|off]", "By specifying this argument, the ROI mask will be limited to covering only entire code-blocks. The ROI coding can then be performed without any actual scaling of the coefficients but by instead scaling the distortion estimates.", "off" }, new string[] { "Rstart_level", "<level>", "This argument forces the lowest <level> resolution levels to " + "belong to the ROI. By doing this, it is possible to avoid only " + "getting information for the ROI at an early stage of " + "transmission.<level> = 0 means the lowest resolution level " + "belongs to the ROI, 1 means the two lowest etc. (-1 deactivates" + " the option)", "-1" }, new string[] { "Rno_rect", "[on|off]", "This argument makes sure that the ROI mask generation is not done " + "using the fast ROI mask generation for rectangular ROIs " + "regardless of whether the specified ROIs are rectangular or not", "off" } };
 
         /// <summary>The maximum number of magnitude bit-planes in any subband. One value
@@ -612,7 +611,6 @@ namespace CoreJ2K.j2k.roi.encoder
             {
                 // Scale the wmse so that instead of scaling the coefficients, the
                 // wmse is scaled.
-                //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                 cblk.wmseScaling *= 1 << (maxBits << 1);
                 cblk.nROIcoeff = w * h;
                 return cblk;
@@ -641,7 +639,6 @@ namespace CoreJ2K.j2k.roi.encoder
                 if (nroicoeff != 0)
                 {
                     // Include the subband
-                    //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
                     cblk.wmseScaling *= 1 << (maxBits << 1);
                     cblk.nROIcoeff = w * h;
                 }

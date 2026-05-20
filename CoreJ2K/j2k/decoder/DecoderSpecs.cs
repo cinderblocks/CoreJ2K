@@ -191,7 +191,6 @@ namespace CoreJ2K.j2k.decoder
             iccs = new ModuleSpec(nt, nc, ModuleSpec.SPEC_TYPE_TILE);
             pphs.SetBoolDefault(false);
         }
-        //UPGRADE_TODO: The following method was automatically generated and it must be implemented in order to preserve the class logic. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1232'"
         public virtual object Clone()
         {
             return null;
