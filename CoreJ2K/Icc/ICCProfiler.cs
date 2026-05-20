@@ -98,23 +98,28 @@ namespace CoreJ2K.Icc
             /* end ICCProfiler ctor */
         }
 
-        /// <summary>General utility used by ctors </summary>
-        private void initialize()
-        {
+		/// <summary>General utility used by ctors </summary>
+		private void initialize()
+		{
+			workInt = new DataBlkInt[ncomps];
+			workFloat = new DataBlkFloat[ncomps];
+			workDataInt = new int[ncomps][];
+			workDataFloat = new float[ncomps][];
+			tempInt = new DataBlkInt[ncomps];
+			tempFloat = new DataBlkFloat[ncomps];
 
-            tempInt = new DataBlkInt[ncomps];
-            tempFloat = new DataBlkFloat[ncomps];
-
-            /* For each component, get the maximum data value, a reference
+			/* For each component, get the maximum data value, a reference
 			* to the pixel data and set up working and temporary DataBlks
 			* for both integer and float output.
 			*/
-            for (var i = 0; i < ncomps; ++i)
-            {
-                tempInt[i] = new DataBlkInt();
-                tempFloat[i] = new DataBlkFloat();
-            }
-        }
+			for (var i = 0; i < ncomps; ++i)
+			{
+				workInt[i] = new DataBlkInt();
+				workFloat[i] = new DataBlkFloat();
+				tempInt[i] = new DataBlkInt();
+				tempFloat[i] = new DataBlkFloat();
+			}
+		}
 
         /// <summary> Get the ICCProfile information JP2 ColorSpace</summary>
         /// <param name="csm">provides all necessary info about the colorspace

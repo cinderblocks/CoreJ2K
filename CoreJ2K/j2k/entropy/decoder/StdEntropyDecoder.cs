@@ -46,6 +46,7 @@ using CoreJ2K.j2k.util;
 using CoreJ2K.j2k.wavelet;
 using CoreJ2K.j2k.wavelet.synthesis;
 using System;
+using System.Runtime.CompilerServices;
 
 namespace CoreJ2K.j2k.entropy.decoder
 {
@@ -310,11 +311,11 @@ namespace CoreJ2K.j2k.entropy.decoder
 
         /// <summary>The flag bit for the significance in the state array, for row 2. </summary>
         //UPGRADE_NOTE: Final was removed from the declaration of 'STATE_SIG_R2 '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
-        private static readonly int STATE_SIG_R2 = STATE_SIG_R1 << STATE_SEP;
+        private const int STATE_SIG_R2 = STATE_SIG_R1 << STATE_SEP;
 
         /// <summary>The flag bit for the "visited" bit in the state array, for row 2. </summary>
         //UPGRADE_NOTE: Final was removed from the declaration of 'STATE_VISITED_R2 '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
-        private static readonly int STATE_VISITED_R2 = STATE_VISITED_R1 << STATE_SEP;
+        private const int STATE_VISITED_R2 = STATE_VISITED_R1 << STATE_SEP;
 
         /// <summary>The flag bit for the "not zero context" bit in the state array, for
         /// row 2. This bit is always the OR of bits STATE_H_L_R2, STATE_H_R_R2,
@@ -322,103 +323,103 @@ namespace CoreJ2K.j2k.entropy.decoder
         /// and STATE_D_DR_R2. 
         /// </summary>
         //UPGRADE_NOTE: Final was removed from the declaration of 'STATE_NZ_CTXT_R2 '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
-        private static readonly int STATE_NZ_CTXT_R2 = STATE_NZ_CTXT_R1 << STATE_SEP;
+        private const int STATE_NZ_CTXT_R2 = STATE_NZ_CTXT_R1 << STATE_SEP;
 
         /// <summary>The flag bit for the horizontal-left sign in the state array, for row
         /// 2. This bit can only be set if the STATE_H_L_R2 is also set. 
         /// </summary>
         //UPGRADE_NOTE: Final was removed from the declaration of 'STATE_H_L_SIGN_R2 '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
-        private static readonly int STATE_H_L_SIGN_R2 = STATE_H_L_SIGN_R1 << STATE_SEP;
+        private const int STATE_H_L_SIGN_R2 = STATE_H_L_SIGN_R1 << STATE_SEP;
 
         /// <summary>The flag bit for the horizontal-right sign in the state array, for row
         /// 2. This bit can only be set if the STATE_H_R_R2 is also set. 
         /// </summary>
         //UPGRADE_NOTE: Final was removed from the declaration of 'STATE_H_R_SIGN_R2 '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
-        private static readonly int STATE_H_R_SIGN_R2 = STATE_H_R_SIGN_R1 << STATE_SEP;
+        private const int STATE_H_R_SIGN_R2 = STATE_H_R_SIGN_R1 << STATE_SEP;
 
         /// <summary>The flag bit for the vertical-up sign in the state array, for row
         /// 2. This bit can only be set if the STATE_V_U_R2 is also set. 
         /// </summary>
         //UPGRADE_NOTE: Final was removed from the declaration of 'STATE_V_U_SIGN_R2 '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
-        private static readonly int STATE_V_U_SIGN_R2 = STATE_V_U_SIGN_R1 << STATE_SEP;
+        private const int STATE_V_U_SIGN_R2 = STATE_V_U_SIGN_R1 << STATE_SEP;
 
         /// <summary>The flag bit for the vertical-down sign in the state array, for row
         /// 2. This bit can only be set if the STATE_V_D_R2 is also set. 
         /// </summary>
         //UPGRADE_NOTE: Final was removed from the declaration of 'STATE_V_D_SIGN_R2 '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
-        private static readonly int STATE_V_D_SIGN_R2 = STATE_V_D_SIGN_R1 << STATE_SEP;
+        private const int STATE_V_D_SIGN_R2 = STATE_V_D_SIGN_R1 << STATE_SEP;
 
         /// <summary>The flag bit for the previous MR primitive applied in the state array,
         /// for row 2. 
         /// </summary>
         //UPGRADE_NOTE: Final was removed from the declaration of 'STATE_PREV_MR_R2 '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
-        private static readonly int STATE_PREV_MR_R2 = STATE_PREV_MR_R1 << STATE_SEP;
+        private const int STATE_PREV_MR_R2 = STATE_PREV_MR_R1 << STATE_SEP;
 
         /// <summary>The flag bit for the horizontal-left significance in the state array,
         /// for row 2. 
         /// </summary>
         //UPGRADE_NOTE: Final was removed from the declaration of 'STATE_H_L_R2 '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
-        private static readonly int STATE_H_L_R2 = STATE_H_L_R1 << STATE_SEP;
+        private const int STATE_H_L_R2 = STATE_H_L_R1 << STATE_SEP;
 
         /// <summary>The flag bit for the horizontal-right significance in the state array,
         /// for row 2. 
         /// </summary>
         //UPGRADE_NOTE: Final was removed from the declaration of 'STATE_H_R_R2 '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
-        private static readonly int STATE_H_R_R2 = STATE_H_R_R1 << STATE_SEP;
+        private const int STATE_H_R_R2 = STATE_H_R_R1 << STATE_SEP;
 
         /// <summary>The flag bit for the vertical-up significance in the state array, for
         /// row 2.  
         /// </summary>
         //UPGRADE_NOTE: Final was removed from the declaration of 'STATE_V_U_R2 '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
-        private static readonly int STATE_V_U_R2 = STATE_V_U_R1 << STATE_SEP;
+        private const int STATE_V_U_R2 = STATE_V_U_R1 << STATE_SEP;
 
         /// <summary>The flag bit for the vertical-down significance in the state array,
         /// for row 2.  
         /// </summary>
         //UPGRADE_NOTE: Final was removed from the declaration of 'STATE_V_D_R2 '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
-        private static readonly int STATE_V_D_R2 = STATE_V_D_R1 << STATE_SEP;
+        private const int STATE_V_D_R2 = STATE_V_D_R1 << STATE_SEP;
 
         /// <summary>The flag bit for the diagonal up-left significance in the state array,
         /// for row 2. 
         /// </summary>
         //UPGRADE_NOTE: Final was removed from the declaration of 'STATE_D_UL_R2 '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
-        private static readonly int STATE_D_UL_R2 = STATE_D_UL_R1 << STATE_SEP;
+        private const int STATE_D_UL_R2 = STATE_D_UL_R1 << STATE_SEP;
 
         /// <summary>The flag bit for the diagonal up-right significance in the state
         /// array, for row 2.
         /// </summary>
         //UPGRADE_NOTE: Final was removed from the declaration of 'STATE_D_UR_R2 '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
-        private static readonly int STATE_D_UR_R2 = STATE_D_UR_R1 << STATE_SEP;
+        private const int STATE_D_UR_R2 = STATE_D_UR_R1 << STATE_SEP;
 
         /// <summary>The flag bit for the diagonal down-left significance in the state
         /// array, for row 2. 
         /// </summary>
         //UPGRADE_NOTE: Final was removed from the declaration of 'STATE_D_DL_R2 '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
-        private static readonly int STATE_D_DL_R2 = STATE_D_DL_R1 << STATE_SEP;
+        private const int STATE_D_DL_R2 = STATE_D_DL_R1 << STATE_SEP;
 
         /// <summary>The flag bit for the diagonal down-right significance in the state
         /// array , for row 2.
         /// </summary>
         //UPGRADE_NOTE: Final was removed from the declaration of 'STATE_D_DR_R2 '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
-        private static readonly int STATE_D_DR_R2 = STATE_D_DR_R1 << STATE_SEP;
+        private const int STATE_D_DR_R2 = STATE_D_DR_R1 << STATE_SEP;
 
         /// <summary>The mask to isolate the significance bits for row 1 and 2 of the state 
         /// array. 
         /// </summary>
         //UPGRADE_NOTE: Final was removed from the declaration of 'SIG_MASK_R1R2 '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
-        private static readonly int SIG_MASK_R1R2 = STATE_SIG_R1 | STATE_SIG_R2;
+        private const int SIG_MASK_R1R2 = STATE_SIG_R1 | STATE_SIG_R2;
 
         /// <summary>The mask to isolate the visited bits for row 1 and 2 of the state 
         /// array. 
         /// </summary>
         //UPGRADE_NOTE: Final was removed from the declaration of 'VSTD_MASK_R1R2 '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
-        private static readonly int VSTD_MASK_R1R2 = STATE_VISITED_R1 | STATE_VISITED_R2;
+        private const int VSTD_MASK_R1R2 = STATE_VISITED_R1 | STATE_VISITED_R2;
 
         /// <summary>The mask to isolate the bits necessary to identify RLC coding state
         /// (significant, visited and non-zero context, for row 1 and 2). 
         /// </summary>
         //UPGRADE_NOTE: Final was removed from the declaration of 'RLC_MASK_R1R2 '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
-        private static readonly int RLC_MASK_R1R2 = STATE_SIG_R1 | STATE_SIG_R2 | STATE_VISITED_R1 | STATE_VISITED_R2 | STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2;
+        private const int RLC_MASK_R1R2 = STATE_SIG_R1 | STATE_SIG_R2 | STATE_VISITED_R1 | STATE_VISITED_R2 | STATE_NZ_CTXT_R1 | STATE_NZ_CTXT_R2;
 
         /// <summary>The mask to obtain the ZC_LUT index from the 'state' information </summary>
         // This is needed because of the STATE_V_D_SIGN, STATE_V_U_SIGN,
@@ -434,13 +435,13 @@ namespace CoreJ2K.j2k.entropy.decoder
         /// information, for row 2. 
         /// </summary>
         //UPGRADE_NOTE: Final was removed from the declaration of 'SC_SHIFT_R2 '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
-        private static readonly int SC_SHIFT_R2 = SC_SHIFT_R1 + STATE_SEP;
+        private const int SC_SHIFT_R2 = SC_SHIFT_R1 + STATE_SEP;
 
         /// <summary>The bit mask to isolate the state bits relative to the sign coding
         /// lookup table ('SC_LUT'). 
         /// </summary>
         //UPGRADE_NOTE: Final was removed from the declaration of 'SC_MASK '. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1003'"
-        private static readonly int SC_MASK = (1 << SC_LUT_BITS) - 1;
+        private const int SC_MASK = (1 << SC_LUT_BITS) - 1;
 
         /// <summary>The mask to obtain the MR index to 'MR_LUT' from the 'state'
         /// information. It is to be applied after the 'MR_SHIFT' 
@@ -608,9 +609,10 @@ namespace CoreJ2K.j2k.entropy.decoder
                 _cachedOptsComp = c;
             }
 
-            // Reset state — Array.Clear is JIT-intrinsified to a single memset call,
-            // which is faster than the manual doubling-copy loop in ArrayUtil.intArraySet.
-            Array.Clear(state, 0, state.Length);
+            // Reset state — clear only the region actually used by this code-block.
+            // The state scan-width is (w+2); stripes are ceil(h/2)+2 rows tall.
+            // Clearing the full (max-size) array wastes up to ~4× work for small blocks.
+            Array.Clear(state, 0, (srcblk.w + 2) * ((srcblk.h + 1) / 2 + 2));
 
             // Initialize output code-block
             if (cblk == null)
@@ -906,6 +908,9 @@ namespace CoreJ2K.j2k.entropy.decoder
         /// otherwise.
         /// 
         /// </returns>
+        #if NET5_0_OR_GREATER || NETCOREAPP3_0_OR_GREATER
+        [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+#endif
         private bool sigProgPass(DataBlk cblk, MQDecoder mq, int bp, int[] state, int[] zc_lut, bool isterm)
         {
             int j, sj; // The state index for line and stripe
@@ -928,6 +933,8 @@ namespace CoreJ2K.j2k.entropy.decoder
             int sheight; // Height of the current stripe
             int off_ul, off_ur, off_dr, off_dl; // offsets
             bool error; // The error condition
+            int[] sc_lut = SC_LUT; // Hoist static array reference into local
+            int localOptions = options; // Hoist instance field into local
 
             // Initialize local variables
             dscanw = cblk.scanw;
@@ -972,7 +979,7 @@ namespace CoreJ2K.j2k.entropy.decoder
                             {
                                 // Became significant
                                 // Use sign coding
-                                ctxt = SC_LUT[(SupportClass.URShift(csj, SC_SHIFT_R1)) & SC_MASK];
+                                ctxt = sc_lut[(SupportClass.URShift(csj, SC_SHIFT_R1)) & SC_MASK];
                                 sym = mq.decodeSymbol(ctxt & SC_LUT_MASK) ^ (SupportClass.URShift(ctxt, SC_SPRED_SHIFT));
                                 // Update data
                                 data[k] = (sym << 31) | setmask;
@@ -1018,7 +1025,7 @@ namespace CoreJ2K.j2k.entropy.decoder
                             {
                                 // Became significant
                                 // Use sign coding
-                                ctxt = SC_LUT[(SupportClass.URShift(csj, SC_SHIFT_R2)) & SC_MASK];
+                                ctxt = sc_lut[(SupportClass.URShift(csj, SC_SHIFT_R2)) & SC_MASK];
                                 sym = mq.decodeSymbol(ctxt & SC_LUT_MASK) ^ (SupportClass.URShift(ctxt, SC_SPRED_SHIFT));
                                 // Update data
                                 data[k] = (sym << 31) | setmask;
@@ -1063,7 +1070,7 @@ namespace CoreJ2K.j2k.entropy.decoder
                             {
                                 // Became significant
                                 // Use sign coding
-                                ctxt = SC_LUT[(SupportClass.URShift(csj, SC_SHIFT_R1)) & SC_MASK];
+                                ctxt = sc_lut[(SupportClass.URShift(csj, SC_SHIFT_R1)) & SC_MASK];
                                 sym = mq.decodeSymbol(ctxt & SC_LUT_MASK) ^ (SupportClass.URShift(ctxt, SC_SPRED_SHIFT));
                                 // Update data
                                 data[k] = (sym << 31) | setmask;
@@ -1099,7 +1106,7 @@ namespace CoreJ2K.j2k.entropy.decoder
                             {
                                 // Became significant
                                 // Use sign coding
-                                ctxt = SC_LUT[(SupportClass.URShift(csj, SC_SHIFT_R2)) & SC_MASK];
+                                ctxt = sc_lut[(SupportClass.URShift(csj, SC_SHIFT_R2)) & SC_MASK];
                                 sym = mq.decodeSymbol(ctxt & SC_LUT_MASK) ^ (SupportClass.URShift(ctxt, SC_SPRED_SHIFT));
                                 // Update data
                                 data[k] = (sym << 31) | setmask;
@@ -1131,13 +1138,13 @@ namespace CoreJ2K.j2k.entropy.decoder
             error = false;
 
             // Check the error resilience termination
-            if (isterm && (options & StdEntropyCoderOptions.OPT_PRED_TERM) != 0)
+            if (isterm && (localOptions & StdEntropyCoderOptions.OPT_PRED_TERM) != 0)
             {
                 error = mq.checkPredTerm();
             }
 
             // Reset the MQ context states if we need to
-            if ((options & StdEntropyCoderOptions.OPT_RESET_MQ) != 0)
+            if ((localOptions & StdEntropyCoderOptions.OPT_RESET_MQ) != 0)
             {
                 mq.resetCtxts();
             }
@@ -1184,6 +1191,9 @@ namespace CoreJ2K.j2k.entropy.decoder
         /// otherwise.
         /// 
         /// </returns>
+        #if NET5_0_OR_GREATER || NETCOREAPP3_0_OR_GREATER
+        [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+#endif
         private bool rawSigProgPass(DataBlk cblk, ByteToBitInput bin, int bp, int[] state, bool isterm)
         {
             int j, sj; // The state index for line and stripe
@@ -1205,6 +1215,7 @@ namespace CoreJ2K.j2k.entropy.decoder
             int sheight; // Height of the current stripe
             int off_ul, off_ur, off_dr, off_dl; // offsets
             bool error; // The error condition
+            int localOptions = options; // Hoist instance field into local
 
             // Initialize local variables
             dscanw = cblk.scanw;
@@ -1214,7 +1225,7 @@ namespace CoreJ2K.j2k.entropy.decoder
             setmask = (int)(((long)3 << bp) >> 1);
             data = (int[])cblk.Data;
             nstripes = (cblk.h + StdEntropyCoderOptions.STRIPE_HEIGHT - 1) / StdEntropyCoderOptions.STRIPE_HEIGHT;
-            causal = (options & StdEntropyCoderOptions.OPT_VERT_STR_CAUSAL) != 0;
+            causal = (localOptions & StdEntropyCoderOptions.OPT_VERT_STR_CAUSAL) != 0;
 
             // Pre-calculate offsets in 'state' for diagonal neighbors
             off_ul = -sscanw - 1; // up-left
@@ -1408,7 +1419,7 @@ namespace CoreJ2K.j2k.entropy.decoder
 
             // Check the byte padding if the pass is terminated and if the error
             // resilience predictable termination is signaled in COx marker.
-            if (isterm && (options & StdEntropyCoderOptions.OPT_PRED_TERM) != 0)
+            if (isterm && (localOptions & StdEntropyCoderOptions.OPT_PRED_TERM) != 0)
             {
                 error = bin.checkBytePadding();
             }
@@ -1451,6 +1462,9 @@ namespace CoreJ2K.j2k.entropy.decoder
         /// otherwise.
         /// 
         /// </returns>
+        #if NET5_0_OR_GREATER || NETCOREAPP3_0_OR_GREATER
+        [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+#endif
         private bool magRefPass(DataBlk cblk, MQDecoder mq, int bp, int[] state, bool isterm)
         {
             int j, sj; // The state index for line and stripe
@@ -1469,6 +1483,8 @@ namespace CoreJ2K.j2k.entropy.decoder
             int nstripes; // The number of stripes in the code-block
             int sheight; // Height of the current stripe
             bool error; // The error condition
+            int[] mr_lut = MR_LUT; // Hoist static array reference into local
+            int localOptions = options; // Hoist instance field into local
 
             // Initialize local variables
             dscanw = cblk.scanw;
@@ -1502,7 +1518,7 @@ namespace CoreJ2K.j2k.entropy.decoder
                         if ((csj & (STATE_SIG_R1 | STATE_VISITED_R1)) == STATE_SIG_R1)
                         {
                             // Use MR primitive
-                            sym = mq.decodeSymbol(MR_LUT[csj & MR_MASK]);
+                            sym = mq.decodeSymbol(mr_lut[csj & MR_MASK]);
                             // Update the data
                             data[k] &= resetmask;
                             data[k] |= (sym << bp) | setmask;
@@ -1519,7 +1535,7 @@ namespace CoreJ2K.j2k.entropy.decoder
                         {
                             k += dscanw;
                             // Use MR primitive
-                            sym = mq.decodeSymbol(MR_LUT[(SupportClass.URShift(csj, STATE_SEP)) & MR_MASK]);
+                            sym = mq.decodeSymbol(mr_lut[(SupportClass.URShift(csj, STATE_SEP)) & MR_MASK]);
                             // Update the data
                             data[k] &= resetmask;
                             data[k] |= (sym << bp) | setmask;
@@ -1542,7 +1558,7 @@ namespace CoreJ2K.j2k.entropy.decoder
                         if ((csj & (STATE_SIG_R1 | STATE_VISITED_R1)) == STATE_SIG_R1)
                         {
                             // Use MR primitive
-                            sym = mq.decodeSymbol(MR_LUT[csj & MR_MASK]);
+                            sym = mq.decodeSymbol(mr_lut[csj & MR_MASK]);
                             // Update the data
                             data[k] &= resetmask;
                             data[k] |= (sym << bp) | setmask;
@@ -1559,7 +1575,7 @@ namespace CoreJ2K.j2k.entropy.decoder
                         {
                             k += dscanw;
                             // Use MR primitive
-                            sym = mq.decodeSymbol(MR_LUT[(SupportClass.URShift(csj, STATE_SEP)) & MR_MASK]);
+                            sym = mq.decodeSymbol(mr_lut[(SupportClass.URShift(csj, STATE_SEP)) & MR_MASK]);
                             // Update the data
                             data[k] &= resetmask;
                             data[k] |= (sym << bp) | setmask;
@@ -1574,13 +1590,13 @@ namespace CoreJ2K.j2k.entropy.decoder
             error = false;
 
             // Check the error resilient termination
-            if (isterm && (options & StdEntropyCoderOptions.OPT_PRED_TERM) != 0)
+            if (isterm && (localOptions & StdEntropyCoderOptions.OPT_PRED_TERM) != 0)
             {
                 error = mq.checkPredTerm();
             }
 
             // Reset the MQ context states if we need to
-            if ((options & StdEntropyCoderOptions.OPT_RESET_MQ) != 0)
+            if ((localOptions & StdEntropyCoderOptions.OPT_RESET_MQ) != 0)
             {
                 mq.resetCtxts();
             }
@@ -1627,6 +1643,9 @@ namespace CoreJ2K.j2k.entropy.decoder
         /// otherwise.
         /// 
         /// </returns>
+        #if NET5_0_OR_GREATER || NETCOREAPP3_0_OR_GREATER
+        [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+#endif
         private bool rawMagRefPass(DataBlk cblk, ByteToBitInput bin, int bp, int[] state, bool isterm)
         {
             int j, sj; // The state index for line and stripe
@@ -1645,6 +1664,7 @@ namespace CoreJ2K.j2k.entropy.decoder
             int nstripes; // The number of stripes in the code-block
             int sheight; // Height of the current stripe
             bool error; // The error condition
+            int localOptions = options; // Hoist instance field into local
 
             // Initialize local variables
             dscanw = cblk.scanw;
@@ -1743,7 +1763,7 @@ namespace CoreJ2K.j2k.entropy.decoder
 
             //  Check the byte padding if the pass is terminated and the
             // predictable termination is signaled in COx marker.
-            if (isterm && (options & StdEntropyCoderOptions.OPT_PRED_TERM) != 0)
+            if (isterm && (localOptions & StdEntropyCoderOptions.OPT_PRED_TERM) != 0)
             {
                 error = bin.checkBytePadding();
             }
@@ -1790,6 +1810,9 @@ namespace CoreJ2K.j2k.entropy.decoder
         /// otherwise.
         /// 
         /// </returns>
+        #if NET5_0_OR_GREATER || NETCOREAPP3_0_OR_GREATER
+        [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+#endif
         private bool cleanuppass(DataBlk cblk, MQDecoder mq, int bp, int[] state, int[] zc_lut, bool isterm)
         {
             int j, sj; // The state index for line and stripe
@@ -1813,6 +1836,8 @@ namespace CoreJ2K.j2k.entropy.decoder
             int sheight; // Height of the current stripe
             int off_ul, off_ur, off_dr, off_dl; // offsets
             bool error; // The error condition
+            int[] sc_lut = SC_LUT; // Hoist static array reference into local
+            int localOptions = options; // Hoist instance field into local
 
             // Initialize local variables
             dscanw = cblk.scanw;
@@ -1822,7 +1847,7 @@ namespace CoreJ2K.j2k.entropy.decoder
             setmask = (int)(((long)3 << bp) >> 1);
             data = (int[])cblk.Data;
             nstripes = (cblk.h + StdEntropyCoderOptions.STRIPE_HEIGHT - 1) / StdEntropyCoderOptions.STRIPE_HEIGHT;
-            causal = (options & StdEntropyCoderOptions.OPT_VERT_STR_CAUSAL) != 0;
+            causal = (localOptions & StdEntropyCoderOptions.OPT_VERT_STR_CAUSAL) != 0;
 
             // Pre-calculate offsets in 'state' for diagonal neighbors
             off_ul = -sscanw - 1; // up-left
@@ -1875,7 +1900,7 @@ namespace CoreJ2K.j2k.entropy.decoder
                             {
                                 // Sample that became significant is first row of
                                 // its column half
-                                ctxt = SC_LUT[(csj >> SC_SHIFT_R1) & SC_MASK];
+                                ctxt = sc_lut[(csj >> SC_SHIFT_R1) & SC_MASK];
                                 sym = mq.decodeSymbol(ctxt & SC_LUT_MASK) ^ (SupportClass.URShift(ctxt, SC_SPRED_SHIFT));
                                 // Update the data
                                 data[k] = (sym << 31) | setmask;
@@ -1917,7 +1942,7 @@ namespace CoreJ2K.j2k.entropy.decoder
                             {
                                 // Sample that became significant is second row of
                                 // its column half
-                                ctxt = SC_LUT[(csj >> SC_SHIFT_R2) & SC_MASK];
+                                ctxt = sc_lut[(csj >> SC_SHIFT_R2) & SC_MASK];
                                 sym = mq.decodeSymbol(ctxt & SC_LUT_MASK) ^ (SupportClass.URShift(ctxt, SC_SPRED_SHIFT));
                                 // Update the data
                                 data[k] = (sym << 31) | setmask;
@@ -1965,7 +1990,7 @@ namespace CoreJ2K.j2k.entropy.decoder
                                 {
                                     // Became significant
                                     // Use sign coding
-                                    ctxt = SC_LUT[(SupportClass.URShift(csj, SC_SHIFT_R1)) & SC_MASK];
+                                    ctxt = sc_lut[(SupportClass.URShift(csj, SC_SHIFT_R1)) & SC_MASK];
                                     sym = mq.decodeSymbol(ctxt & SC_LUT_MASK) ^ (SupportClass.URShift(ctxt, SC_SPRED_SHIFT));
                                     // Update the data
                                     data[k] = (sym << 31) | setmask;
@@ -2008,7 +2033,7 @@ namespace CoreJ2K.j2k.entropy.decoder
                                 {
                                     // Became significant
                                     // Use sign coding
-                                    ctxt = SC_LUT[(SupportClass.URShift(csj, SC_SHIFT_R2)) & SC_MASK];
+                                    ctxt = sc_lut[(SupportClass.URShift(csj, SC_SHIFT_R2)) & SC_MASK];
                                     sym = mq.decodeSymbol(ctxt & SC_LUT_MASK) ^ (SupportClass.URShift(ctxt, SC_SPRED_SHIFT));
                                     // Update the data
                                     data[k] = (sym << 31) | setmask;
@@ -2053,7 +2078,7 @@ namespace CoreJ2K.j2k.entropy.decoder
                             {
                                 // Became significant
                                 // Use sign coding
-                                ctxt = SC_LUT[(csj >> SC_SHIFT_R1) & SC_MASK];
+                                ctxt = sc_lut[(csj >> SC_SHIFT_R1) & SC_MASK];
                                 sym = mq.decodeSymbol(ctxt & SC_LUT_MASK) ^ (SupportClass.URShift(ctxt, SC_SPRED_SHIFT));
                                 // Update the data
                                 data[k] = (sym << 31) | setmask;
@@ -2086,7 +2111,7 @@ namespace CoreJ2K.j2k.entropy.decoder
                             {
                                 // Became significant
                                 // Use sign coding
-                                ctxt = SC_LUT[(SupportClass.URShift(csj, SC_SHIFT_R2)) & SC_MASK];
+                                ctxt = sc_lut[(SupportClass.URShift(csj, SC_SHIFT_R2)) & SC_MASK];
                                 sym = mq.decodeSymbol(ctxt & SC_LUT_MASK) ^ (SupportClass.URShift(ctxt, SC_SPRED_SHIFT));
                                 // Update the data
                                 data[k] = (sym << 31) | setmask;
@@ -2111,7 +2136,7 @@ namespace CoreJ2K.j2k.entropy.decoder
             }
 
             // Decode segment symbol if we need to
-            if ((options & StdEntropyCoderOptions.OPT_SEG_SYMBOLS) != 0)
+            if ((localOptions & StdEntropyCoderOptions.OPT_SEG_SYMBOLS) != 0)
             {
                 sym = mq.decodeSymbol(UNIF_CTXT) << 3;
                 sym |= mq.decodeSymbol(UNIF_CTXT) << 2;
@@ -2127,13 +2152,13 @@ namespace CoreJ2K.j2k.entropy.decoder
             }
 
             // Check the error resilience termination
-            if (isterm && (options & StdEntropyCoderOptions.OPT_PRED_TERM) != 0)
+            if (isterm && (localOptions & StdEntropyCoderOptions.OPT_PRED_TERM) != 0)
             {
                 error = mq.checkPredTerm();
             }
 
             // Reset the MQ context states if we need to
-            if ((options & StdEntropyCoderOptions.OPT_RESET_MQ) != 0)
+            if ((localOptions & StdEntropyCoderOptions.OPT_RESET_MQ) != 0)
             {
                 mq.resetCtxts();
             }

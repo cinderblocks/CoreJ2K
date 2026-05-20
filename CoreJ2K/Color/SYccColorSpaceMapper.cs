@@ -82,12 +82,21 @@ namespace CoreJ2K.Color
         /// <summary>General utility used by ctors </summary>
         private void initialize()
         {
-
             if (ncomps != 1 && ncomps != 3)
             {
                 var msg = $"SYccColorSpaceMapper: ycc transformation _not_ applied to {ncomps} component image";
                 FacilityManager.getMsgLogger().printmsg(j2k.util.MsgLogger_Fields.ERROR, msg);
                 throw new ColorSpaceException(msg);
+            }
+
+            workInt = new image_DataBlkInt[ncomps];
+            workFloat = new image_DataBlkFloat[ncomps];
+            workDataInt = new int[ncomps][];
+            workDataFloat = new float[ncomps][];
+            for (var i = 0; i < ncomps; ++i)
+            {
+                workInt[i] = new image_DataBlkInt();
+                workFloat[i] = new image_DataBlkFloat();
             }
         }
 

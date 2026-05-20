@@ -123,6 +123,12 @@ namespace CoreJ2K.j2k.quantization.dequantizer
         private int _cachedGComp = -1;
         private int _cachedG;
 
+        // Cache for the max resolution level (getSynSubbandTree().resLvl) used in the
+        // derived-quantization step calculation — constant per (tile, component).
+        private int _cachedMrlTile = -1;
+        private int _cachedMrlComp = -1;
+        private int _cachedMrl;
+
         /// <summary> Initializes the source of compressed data. And sets the number of range
         /// bits and fraction bits and receives the parameters for the dequantizer.
         /// 
@@ -382,22 +388,34 @@ namespace CoreJ2K.j2k.quantization.dequantizer
             if (reversible)
             {
                 shiftBits = 31 - magBits;
-                // For int data Inverse quantization happens "in-place". The input
-                // array has an offset of 0 and scan width equal to the code-block
-                // width.
+                // Branchless sign-magnitude extraction: s = temp >> 31 gives 0 for
+                // positive, -1 (all-ones) for negative.  (temp ^ s) - s == abs(temp).
                 for (j = outiarr.Length - 1; j >= 0; j--)
                 {
-                    temp = outiarr[j]; // input array is same as output one
-                    outiarr[j] = (temp >= 0) ? (temp >> shiftBits) : -((temp & 0x7FFFFFFF) >> shiftBits);
+                    temp = outiarr[j];
+                    int s = temp >> 31;
+                    outiarr[j] = ((temp ^ s) - s) >> shiftBits;
                 }
             }
             else
             {
-                // Not reversible 
+                // Not reversible
                 if (derived)
                 {
-                    // Max resolution level
-                    var mrl = src.getSynSubbandTree(TileIdx, c).resLvl;
+                    // Cache getSynSubbandTree().resLvl per (tile, component) — it is
+                    // constant within a tile and the virtual dispatch chain is non-trivial.
+                    int mrl;
+                    if (_cachedMrlTile == tIdx && _cachedMrlComp == c)
+                    {
+                        mrl = _cachedMrl;
+                    }
+                    else
+                    {
+                        mrl = src.getSynSubbandTree(TileIdx, c).resLvl;
+                        _cachedMrl = mrl;
+                        _cachedMrlTile = tIdx;
+                        _cachedMrlComp = c;
+                    }
                     step = params_Renamed.nStep[0][0] * (1L << (rb[c] + sb.anGainExp + mrl - sb.level));
                 }
                 else
@@ -413,20 +431,16 @@ namespace CoreJ2K.j2k.quantization.dequantizer
                 {
 
                     case DataBlk.TYPE_INT:
-                        // For int data Inverse quantization happens "in-place". The
-                        // input array has an offset of 0 and scan width equal to the
-                        // code-block width.
+                        // Branchless sign-magnitude: s = temp >> 31; abs = (temp ^ s) - s
                         for (j = outiarr.Length - 1; j >= 0; j--)
                         {
-                            temp = outiarr[j]; // input array is same as output one
-                                               //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
-                            outiarr[j] = (int)(((temp >= 0) ? temp : -(temp & 0x7FFFFFFF)) * step);
+                            temp = outiarr[j];
+                            int si = temp >> 31;
+                            outiarr[j] = (int)(((temp ^ si) - si) * step);
                         }
                         break;
 
                     case DataBlk.TYPE_FLOAT:
-                        // For float data the inverse quantization can not happen
-                        // "in-place".
                         w = cblk.w;
                         h = cblk.h;
                         for (j = w * h - 1, k = inblk.offset + (h - 1) * inblk.scanw + w - 1, jmin = w * (h - 1); j >= 0; jmin -= w)
@@ -434,10 +448,9 @@ namespace CoreJ2K.j2k.quantization.dequantizer
                             for (; j >= jmin; k--, j--)
                             {
                                 temp = inarr[k];
-                                //UPGRADE_WARNING: Data types in Visual C# might be different.  Verify the accuracy of narrowing conversions. "ms-help://MS.VSCC.v80/dv_commoner/local/redirect.htm?index='!DefaultContextWindowIndex'&keyword='jlca1042'"
-                                outfarr[j] = ((temp >= 0) ? temp : -(temp & 0x7FFFFFFF)) * step;
+                                int sf = temp >> 31;
+                                outfarr[j] = ((temp ^ sf) - sf) * step;
                             }
-                            // Jump to beggining of previous line in input
                             k -= (inblk.scanw - w);
                         }
                         break;

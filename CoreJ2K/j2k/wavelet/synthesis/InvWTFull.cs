@@ -563,43 +563,47 @@ namespace CoreJ2K.j2k.wavelet.synthesis
                     _waveletScratchInt = new int[need5x3];
                 int[] buf_int5x3 = _waveletScratchInt;
                 {
+                    // Hoist loop-invariant half-lengths
+                    int wHalf = w / 2, wHalfCeil = (w + 1) / 2;
+                    int hHalf = h / 2, hHalfCeil = (h + 1) / 2;
+
                     // Horizontal reconstruction
                     offset = (uly - db.uly) * db.w + ulx - db.ulx;
                     if (sb.ulcx % 2 == 0)
                     {
                         for (i = 0; i < h; i++, offset += db.w)
                         {
-                            Array.Copy(data_int5x3, offset, buf_int5x3, 0, w);
-                            hf5x3.synthetize_lpf(buf_int5x3, 0, (w + 1) / 2, 1, buf_int5x3, (w + 1) / 2, w / 2, 1, data_int5x3, offset, 1);
+                            new ReadOnlySpan<int>(data_int5x3, offset, w).CopyTo(buf_int5x3);
+                            hf5x3.synthetize_lpf(buf_int5x3, 0, wHalfCeil, 1, buf_int5x3, wHalfCeil, wHalf, 1, data_int5x3, offset, 1);
                         }
                     }
                     else
                     {
                         for (i = 0; i < h; i++, offset += db.w)
                         {
-                            Array.Copy(data_int5x3, offset, buf_int5x3, 0, w);
-                            hf5x3.synthetize_hpf(buf_int5x3, 0, w / 2, 1, buf_int5x3, w / 2, (w + 1) / 2, 1, data_int5x3, offset, 1);
+                            new ReadOnlySpan<int>(data_int5x3, offset, w).CopyTo(buf_int5x3);
+                            hf5x3.synthetize_hpf(buf_int5x3, 0, wHalf, 1, buf_int5x3, wHalf, wHalfCeil, 1, data_int5x3, offset, 1);
                         }
                     }
 
-                    // Vertical reconstruction
+                    // Vertical reconstruction — forward gather for hardware-prefetch friendliness
                     offset = (uly - db.uly) * db.w + ulx - db.ulx;
                     if (sb.ulcy % 2 == 0)
                     {
                         for (j = 0; j < w; j++, offset++)
                         {
-                            for (i = h - 1, k = offset + i * db.w; i >= 0; i--, k -= db.w)
+                            for (i = 0, k = offset; i < h; i++, k += db.w)
                                 buf_int5x3[i] = data_int5x3[k];
-                            vf5x3.synthetize_lpf(buf_int5x3, 0, (h + 1) / 2, 1, buf_int5x3, (h + 1) / 2, h / 2, 1, data_int5x3, offset, db.w);
+                            vf5x3.synthetize_lpf(buf_int5x3, 0, hHalfCeil, 1, buf_int5x3, hHalfCeil, hHalf, 1, data_int5x3, offset, db.w);
                         }
                     }
                     else
                     {
                         for (j = 0; j < w; j++, offset++)
                         {
-                            for (i = h - 1, k = offset + i * db.w; i >= 0; i--, k -= db.w)
+                            for (i = 0, k = offset; i < h; i++, k += db.w)
                                 buf_int5x3[i] = data_int5x3[k];
-                            vf5x3.synthetize_hpf(buf_int5x3, 0, h / 2, 1, buf_int5x3, h / 2, (h + 1) / 2, 1, data_int5x3, offset, db.w);
+                            vf5x3.synthetize_hpf(buf_int5x3, 0, hHalf, 1, buf_int5x3, hHalf, hHalfCeil, 1, data_int5x3, offset, db.w);
                         }
                     }
                 }
@@ -616,43 +620,47 @@ namespace CoreJ2K.j2k.wavelet.synthesis
                     _waveletScratchFloat = new float[need9x7];
                 float[] buf_float = _waveletScratchFloat;
                 {
+                    // Hoist loop-invariant half-lengths
+                    int wHalf9 = w / 2, wHalfCeil9 = (w + 1) / 2;
+                    int hHalf9 = h / 2, hHalfCeil9 = (h + 1) / 2;
+
                     // Horizontal reconstruction
                     offset = (uly - db.uly) * db.w + ulx - db.ulx;
                     if (sb.ulcx % 2 == 0)
                     {
                         for (i = 0; i < h; i++, offset += db.w)
                         {
-                            Array.Copy(data_float, offset, buf_float, 0, w);
-                            hf9x7.synthetize_lpf(buf_float, 0, (w + 1) / 2, 1, buf_float, (w + 1) / 2, w / 2, 1, data_float, offset, 1);
+                            new ReadOnlySpan<float>(data_float, offset, w).CopyTo(buf_float);
+                            hf9x7.synthetize_lpf(buf_float, 0, wHalfCeil9, 1, buf_float, wHalfCeil9, wHalf9, 1, data_float, offset, 1);
                         }
                     }
                     else
                     {
                         for (i = 0; i < h; i++, offset += db.w)
                         {
-                            Array.Copy(data_float, offset, buf_float, 0, w);
-                            hf9x7.synthetize_hpf(buf_float, 0, w / 2, 1, buf_float, w / 2, (w + 1) / 2, 1, data_float, offset, 1);
+                            new ReadOnlySpan<float>(data_float, offset, w).CopyTo(buf_float);
+                            hf9x7.synthetize_hpf(buf_float, 0, wHalf9, 1, buf_float, wHalf9, wHalfCeil9, 1, data_float, offset, 1);
                         }
                     }
 
-                    // Vertical reconstruction
+                    // Vertical reconstruction — forward gather for hardware-prefetch friendliness
                     offset = (uly - db.uly) * db.w + ulx - db.ulx;
                     if (sb.ulcy % 2 == 0)
                     {
                         for (j = 0; j < w; j++, offset++)
                         {
-                            for (i = h - 1, k = offset + i * db.w; i >= 0; i--, k -= db.w)
+                            for (i = 0, k = offset; i < h; i++, k += db.w)
                                 buf_float[i] = data_float[k];
-                            vf9x7.synthetize_lpf(buf_float, 0, (h + 1) / 2, 1, buf_float, (h + 1) / 2, h / 2, 1, data_float, offset, db.w);
+                            vf9x7.synthetize_lpf(buf_float, 0, hHalfCeil9, 1, buf_float, hHalfCeil9, hHalf9, 1, data_float, offset, db.w);
                         }
                     }
                     else
                     {
                         for (j = 0; j < w; j++, offset++)
                         {
-                            for (i = h - 1, k = offset + i * db.w; i >= 0; i--, k -= db.w)
+                            for (i = 0, k = offset; i < h; i++, k += db.w)
                                 buf_float[i] = data_float[k];
-                            vf9x7.synthetize_hpf(buf_float, 0, h / 2, 1, buf_float, h / 2, (h + 1) / 2, 1, data_float, offset, db.w);
+                            vf9x7.synthetize_hpf(buf_float, 0, hHalf9, 1, buf_float, hHalf9, hHalfCeil9, 1, data_float, offset, db.w);
                         }
                     }
                 }
@@ -678,6 +686,9 @@ namespace CoreJ2K.j2k.wavelet.synthesis
 
             try
             {
+                int wHalfG = w / 2, wHalfCeilG = (w + 1) / 2;
+                int hHalfG = h / 2, hHalfCeilG = (h + 1) / 2;
+
                 //Perform the horizontal reconstruction
                 offset = (uly - db.uly) * db.w + ulx - db.ulx;
                 if (sb.ulcx % 2 == 0)
@@ -686,7 +697,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
                     for (i = 0; i < h; i++, offset += db.w)
                     {
                         Array.Copy((Array)data, offset, (Array)buf, 0, w);
-                        sb.hFilter.synthetize_lpf(buf, 0, (w + 1) / 2, 1, buf, (w + 1) / 2, w / 2, 1, data, offset, 1);
+                        sb.hFilter.synthetize_lpf(buf, 0, wHalfCeilG, 1, buf, wHalfCeilG, wHalfG, 1, data, offset, 1);
                     }
                 }
                 else
@@ -695,7 +706,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
                     for (i = 0; i < h; i++, offset += db.w)
                     {
                         Array.Copy((Array)data, offset, (Array)buf, 0, w);
-                        sb.hFilter.synthetize_hpf(buf, 0, w / 2, 1, buf, w / 2, (w + 1) / 2, 1, data, offset, 1);
+                        sb.hFilter.synthetize_hpf(buf, 0, wHalfG, 1, buf, wHalfG, wHalfCeilG, 1, data, offset, 1);
                     }
                 }
 
@@ -713,9 +724,9 @@ namespace CoreJ2K.j2k.wavelet.synthesis
                             // start index is even => use LPF
                             for (j = 0; j < w; j++, offset++)
                             {
-                                for (i = h - 1, k = offset + i * db.w; i >= 0; i--, k -= db.w)
+                                for (i = 0, k = offset; i < h; i++, k += db.w)
                                     buf_int[i] = data_int[k];
-                                sb.vFilter.synthetize_lpf(buf, 0, (h + 1) / 2, 1, buf, (h + 1) / 2, h / 2, 1, data, offset, db.w);
+                                sb.vFilter.synthetize_lpf(buf, 0, hHalfCeilG, 1, buf, hHalfCeilG, hHalfG, 1, data, offset, db.w);
                             }
                         }
                         else
@@ -723,9 +734,9 @@ namespace CoreJ2K.j2k.wavelet.synthesis
                             // start index is odd => use HPF
                             for (j = 0; j < w; j++, offset++)
                             {
-                                for (i = h - 1, k = offset + i * db.w; i >= 0; i--, k -= db.w)
+                                for (i = 0, k = offset; i < h; i++, k += db.w)
                                     buf_int[i] = data_int[k];
-                                sb.vFilter.synthetize_hpf(buf, 0, h / 2, 1, buf, h / 2, (h + 1) / 2, 1, data, offset, db.w);
+                                sb.vFilter.synthetize_hpf(buf, 0, hHalfG, 1, buf, hHalfG, hHalfCeilG, 1, data, offset, db.w);
                             }
                         }
                         break;
@@ -739,9 +750,9 @@ namespace CoreJ2K.j2k.wavelet.synthesis
                             // start index is even => use LPF
                             for (j = 0; j < w; j++, offset++)
                             {
-                                for (i = h - 1, k = offset + i * db.w; i >= 0; i--, k -= db.w)
+                                for (i = 0, k = offset; i < h; i++, k += db.w)
                                     buf_float2[i] = data_float2[k];
-                                sb.vFilter.synthetize_lpf(buf, 0, (h + 1) / 2, 1, buf, (h + 1) / 2, h / 2, 1, data, offset, db.w);
+                                sb.vFilter.synthetize_lpf(buf, 0, hHalfCeilG, 1, buf, hHalfCeilG, hHalfG, 1, data, offset, db.w);
                             }
                         }
                         else
@@ -749,9 +760,9 @@ namespace CoreJ2K.j2k.wavelet.synthesis
                             // start index is odd => use HPF
                             for (j = 0; j < w; j++, offset++)
                             {
-                                for (i = h - 1, k = offset + i * db.w; i >= 0; i--, k -= db.w)
+                                for (i = 0, k = offset; i < h; i++, k += db.w)
                                     buf_float2[i] = data_float2[k];
-                                sb.vFilter.synthetize_hpf(buf, 0, h / 2, 1, buf, h / 2, (h + 1) / 2, 1, data, offset, db.w);
+                                sb.vFilter.synthetize_hpf(buf, 0, hHalfG, 1, buf, hHalfG, hHalfCeilG, 1, data, offset, db.w);
                             }
                         }
                         break;

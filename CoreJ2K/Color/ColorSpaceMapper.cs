@@ -138,9 +138,6 @@ namespace CoreJ2K.Color
         /// <summary>The image source. </summary>
         protected internal BlkImgDataSrc src = null;
 
-        /// <summary>The image source data per component. </summary>
-        protected internal DataBlk[] srcBlk = null;
-
 
         protected internal sealed class ComputedComponents
         {
@@ -299,47 +296,30 @@ namespace CoreJ2K.Color
         private void initialize()
         {
 
-            pl = csMap.pl;
-            ncomps = src.NumComps;
+			pl = csMap.pl;
+			ncomps = src.NumComps;
 
-            shiftValueArray = new int[ncomps];
-            maxValueArray = new int[ncomps];
-            fixedPtBitsArray = new int[ncomps];
+			shiftValueArray = new int[ncomps];
+			maxValueArray = new int[ncomps];
+			fixedPtBitsArray = new int[ncomps];
 
-            srcBlk = new DataBlk[ncomps];
-            inInt = new DataBlkInt[ncomps];
-            inFloat = new DataBlkFloat[ncomps];
-            workInt = new DataBlkInt[ncomps];
-            workFloat = new DataBlkFloat[ncomps];
-            dataInt = new int[ncomps][];
-            dataFloat = new float[ncomps][];
-            workDataInt = new int[ncomps][];
-            workDataFloat = new float[ncomps][];
-            dataInt = new int[ncomps][];
-            dataFloat = new float[ncomps][];
+			inInt = new DataBlkInt[ncomps];
+			inFloat = new DataBlkFloat[ncomps];
+			dataInt = new int[ncomps][];
+			dataFloat = new float[ncomps][];
 
-
-            /* For each component, get a reference to the pixel data and
+			/* For each component, get a reference to the pixel data and
 			* set up working DataBlks for both integer and float output.
 			*/
-            for (var i = 0; i < ncomps; ++i)
-            {
+			for (var i = 0; i < ncomps; ++i)
+			{
+				shiftValueArray[i] = 1 << (src.getNomRangeBits(i) - 1);
+				maxValueArray[i] = (1 << src.getNomRangeBits(i)) - 1;
+				fixedPtBitsArray[i] = src.GetFixedPoint(i);
 
-                shiftValueArray[i] = 1 << (src.getNomRangeBits(i) - 1);
-                maxValueArray[i] = (1 << src.getNomRangeBits(i)) - 1;
-                fixedPtBitsArray[i] = src.GetFixedPoint(i);
-
-                inInt[i] = new DataBlkInt();
-                inFloat[i] = new DataBlkFloat();
-                workInt[i] = new DataBlkInt
-                {
-                    progressive = inInt[i].progressive
-                };
-                workFloat[i] = new DataBlkFloat
-                {
-                    progressive = inFloat[i].progressive
-                };
-            }
+				inInt[i] = new DataBlkInt();
+				inFloat[i] = new DataBlkFloat();
+			}
         }
 
         /// <summary> Returns the number of bits, referred to as the "range bits",
