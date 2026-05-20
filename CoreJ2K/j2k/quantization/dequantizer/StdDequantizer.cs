@@ -371,13 +371,11 @@ namespace CoreJ2K.j2k.quantization.dequantizer
             if (reversible)
             {
                 shiftBits = 31 - magBits;
-                // Branchless sign-magnitude extraction: s = temp >> 31 gives 0 for
-                // positive, -1 (all-ones) for negative.  (temp ^ s) - s == abs(temp).
+                // Sign-magnitude: bit 31 is the sign flag, bits 0-30 are magnitude.
                 for (j = outiarr.Length - 1; j >= 0; j--)
                 {
                     temp = outiarr[j];
-                    int s = temp >> 31;
-                    outiarr[j] = ((temp ^ s) - s) >> shiftBits;
+                    outiarr[j] = (temp >= 0) ? (temp >> shiftBits) : -((temp & 0x7FFFFFFF) >> shiftBits);
                 }
             }
             else
@@ -414,12 +412,11 @@ namespace CoreJ2K.j2k.quantization.dequantizer
                 {
 
                     case DataBlk.TYPE_INT:
-                        // Branchless sign-magnitude: s = temp >> 31; abs = (temp ^ s) - s
+                        // Sign-magnitude: bit 31 is the sign flag, bits 0-30 are magnitude.
                         for (j = outiarr.Length - 1; j >= 0; j--)
                         {
                             temp = outiarr[j];
-                            int si = temp >> 31;
-                            outiarr[j] = (int)(((temp ^ si) - si) * step);
+                            outiarr[j] = (int)(((temp >= 0) ? temp : -(temp & 0x7FFFFFFF)) * step);
                         }
                         break;
 
@@ -431,8 +428,7 @@ namespace CoreJ2K.j2k.quantization.dequantizer
                             for (; j >= jmin; k--, j--)
                             {
                                 temp = inarr[k];
-                                int sf = temp >> 31;
-                                outfarr[j] = ((temp ^ sf) - sf) * step;
+                                outfarr[j] = ((temp >= 0) ? temp : -(temp & 0x7FFFFFFF)) * step;
                             }
                             k -= (inblk.scanw - w);
                         }
