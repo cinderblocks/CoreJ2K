@@ -21,9 +21,9 @@ namespace CoreJ2K.Tests
         public void TestBitsPerComponentDataCreation()
         {
             var bitDepths = new[] { 8, 10, 12 };
-            var isSigned = new[] { false, false, false };
+            var IsSigned = new[] { false, false, false };
 
-            var bpcData = BitsPerComponentData.FromBitDepths(bitDepths, isSigned);
+            var bpcData = BitsPerComponentData.FromBitDepths(bitDepths, IsSigned);
 
             Assert.NotNull(bpcData);
             Assert.Equal(3, bpcData.NumComponents);
@@ -39,9 +39,9 @@ namespace CoreJ2K.Tests
         public void TestBitsPerComponentWithSignedValues()
         {
             var bitDepths = new[] { 8, 16, 12 };
-            var isSigned = new[] { true, false, true };
+            var IsSigned = new[] { true, false, true };
 
-            var bpcData = BitsPerComponentData.FromBitDepths(bitDepths, isSigned);
+            var bpcData = BitsPerComponentData.FromBitDepths(bitDepths, IsSigned);
 
             Assert.True(bpcData.IsSigned(0));
             Assert.False(bpcData.IsSigned(1));
@@ -123,7 +123,7 @@ namespace CoreJ2K.Tests
             // Create a JP2 file with varying bit depths
             var codestream = CreateMinimalCodestream();
             var bitDepths = new[] { 8, 10, 12 };
-            var isSigned = new[] { false, false, false };
+            var IsSigned = new[] { false, false, false };
 
             using (var ms = new MemoryStream())
             {
@@ -210,15 +210,15 @@ namespace CoreJ2K.Tests
             // Test with many components
             var numComponents = 10;
             var bitDepths = new int[numComponents];
-            var isSigned = new bool[numComponents];
+            var IsSigned = new bool[numComponents];
 
             for (int i = 0; i < numComponents; i++)
             {
                 bitDepths[i] = 8 + i; // Varying bit depths
-                isSigned[i] = (i % 2 == 0); // Alternate signed/unsigned
+                IsSigned[i] = (i % 2 == 0); // Alternate signed/unsigned
             }
 
-            var bpcData = BitsPerComponentData.FromBitDepths(bitDepths, isSigned);
+            var bpcData = BitsPerComponentData.FromBitDepths(bitDepths, IsSigned);
 
             Assert.Equal(numComponents, bpcData.NumComponents);
             for (int i = 0; i < numComponents; i++)

@@ -1,13 +1,4 @@
 /* 
-* CVS identifier:
-* 
-* $Id: PktHeaderBitReader.java,v 1.10 2001/09/14 09:29:45 grosbois Exp $
-* 
-* Class:                   PktHeaderBitReader
-* 
-* Description:             Bit based reader for packet headers
-* 
-* 
 * 
 * COPYRIGHT:
 * 
@@ -54,7 +45,7 @@ namespace CoreJ2K.j2k.codestream.reader
     {
 
         /// <summary>The byte based source of data </summary>
-        internal RandomAccessIO in_Renamed;
+        internal RandomAccessIO bitReader;
 
         /// <summary>The byte array that is the source of data if the PktHeaderBitReader
         /// is instantiated with a buffer instead of a RandomAccessIO
@@ -84,9 +75,9 @@ namespace CoreJ2K.j2k.codestream.reader
         /// <param name="in">The source of byte data
         /// 
         /// </param>
-        internal PktHeaderBitReader(RandomAccessIO in_Renamed)
+        internal PktHeaderBitReader(RandomAccessIO bitReader)
         {
-            this.in_Renamed = in_Renamed;
+            this.bitReader = bitReader;
             usebais = false;
         }
 
@@ -122,12 +113,12 @@ namespace CoreJ2K.j2k.codestream.reader
                 if (bbuf != 0xFF)
                 {
                     // No bit stuffing
-                    bbuf = usebais ? bais.ReadByte() : in_Renamed.read();
+                    bbuf = usebais ? bais.ReadByte() : bitReader.read();
                     bpos = 8;
                     if (bbuf == 0xFF)
                     {
                         // If new bit stuffing get next byte
-                        nextbbuf = usebais ? bais.ReadByte() : in_Renamed.read();
+                        nextbbuf = usebais ? bais.ReadByte() : bitReader.read();
                     }
                 }
                 else
@@ -181,13 +172,13 @@ namespace CoreJ2K.j2k.codestream.reader
                     if (bbuf != 0xFF)
                     {
                         // No bit stuffing
-                        bbuf = usebais ? bais.ReadByte() : in_Renamed.read();
+                        bbuf = usebais ? bais.ReadByte() : bitReader.read();
 
                         bpos = 8;
                         if (bbuf == 0xFF)
                         {
                             // If new bit stuffing get next byte
-                            nextbbuf = usebais ? bais.ReadByte() : in_Renamed.read();
+                            nextbbuf = usebais ? bais.ReadByte() : bitReader.read();
                         }
                     }
                     else
@@ -233,9 +224,9 @@ namespace CoreJ2K.j2k.codestream.reader
         /// <param name="in">The source of byte data
         /// 
         /// </param>
-        internal virtual void setInput(RandomAccessIO in_Renamed)
+        internal virtual void SetInput(RandomAccessIO bitReader)
         {
-            this.in_Renamed = in_Renamed;
+            this.bitReader = bitReader;
             bbuf = 0;
             bpos = 0;
         }
@@ -251,7 +242,7 @@ namespace CoreJ2K.j2k.codestream.reader
         /// <param name="bais">The source of byte data
         /// 
         /// </param>
-        internal virtual void setInput(System.IO.MemoryStream bais)
+        internal virtual void SetInput(System.IO.MemoryStream bais)
         {
             this.bais = bais;
             bbuf = 0;

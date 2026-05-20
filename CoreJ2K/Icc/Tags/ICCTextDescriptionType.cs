@@ -1,6 +1,5 @@
 /// <summary>**************************************************************************
 /// 
-/// $Id: ICCTextDescriptionType.java,v 1.1 2002/07/25 14:56:37 grosbois Exp $
 /// 
 /// Copyright Eastman Kodak Company, 343 State Street, Rochester, NY 14650
 /// $Date $
@@ -38,13 +37,13 @@ namespace CoreJ2K.Icc.Tags
         protected internal ICCTextDescriptionType(int signature, byte[] data, int offset, int length) : base(signature, data, offset, length)
         {
 
-            type = ICCProfile.getInt(data, offset);
+            type = ICCProfile.GetInt(data, offset);
             offset += ICCProfile.int_size;
 
-            reserved = ICCProfile.getInt(data, offset);
+            reserved = ICCProfile.GetInt(data, offset);
             offset += ICCProfile.int_size;
 
-            size = ICCProfile.getInt(data, offset);
+            size = ICCProfile.GetInt(data, offset);
             offset += ICCProfile.int_size;
 
             ascii = new byte[size - 1];
@@ -56,7 +55,5 @@ namespace CoreJ2K.Icc.Tags
         {
             return $"[{base.ToString()} \"{System.Text.Encoding.UTF8.GetString(ascii, 0, ascii.Length)}\"]";
         }
-
-        /* end class ICCTextDescriptionType */
     }
 }

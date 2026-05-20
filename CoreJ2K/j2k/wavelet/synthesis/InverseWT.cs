@@ -1,14 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: InverseWT.java,v 1.34 2001/10/09 12:52:55 grosbois Exp $
-*
-* Class:                   InverseWT
-*
-* Description:             This interface defines the specifics
-*                          of inverse wavelet transforms.
-*
-*
 *
 * COPYRIGHT:
 * 

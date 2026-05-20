@@ -3,7 +3,6 @@ using CoreJ2K.j2k.image;
 using CoreJ2K.j2k.util;
 /// <summary>**************************************************************************
 /// 
-/// $Id: PalettizedColorSpaceMapper.java,v 1.2 2002/08/08 14:07:16 grosbois Exp $
 /// 
 /// Copyright Eastman Kodak Company, 343 State Street, Rochester, NY 14650
 /// $Date $
@@ -76,7 +75,7 @@ namespace CoreJ2K.Color
 
             for (var i = 0; i < outComps; i++)
             {
-                outShiftValueArray[i] = 1 << (getNomRangeBits(i) - 1);
+                outShiftValueArray[i] = 1 << (GetNomRangeBits(i) - 1);
             }
         }
 
@@ -115,18 +114,18 @@ namespace CoreJ2K.Color
         /// 
         /// </returns>
         /// <seealso cref="GetInternCompData" />
-        public override DataBlk GetCompData(DataBlk out_Renamed, int c)
+        public override DataBlk GetCompData(DataBlk output, int c)
         {
 
             if (pbox == null)
-                return src.GetCompData(out_Renamed, c);
+                return src.GetCompData(output, c);
 
             if (ncomps != 1)
             {
                 var msg =
                     $"PalettizedColorSpaceMapper: color palette _not_ applied, incorrect number ({Convert.ToString(ncomps)}) of components";
-                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING, msg);
-                return src.GetCompData(out_Renamed, c);
+                FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING, msg);
+                return src.GetCompData(output, c);
             }
 
             // Initialize general input and output indexes
@@ -140,63 +139,67 @@ namespace CoreJ2K.Color
             var kIn = -1;
 
             // Assure a properly sized data buffer for output.
-            InternalBuffer = out_Renamed;
+            InternalBuffer = output;
 
-            switch (out_Renamed.DataType)
+            switch (output.DataType)
             {
 
                 // Int and Float data only
                 case DataBlk.TYPE_INT:
 
-                    copyGeometry(inInt[0], out_Renamed);
+                    copyGeometry(inInt[0], output);
 
                     // Request data from the source.        
                     inInt[0] = (DataBlkInt)src.GetInternCompData(inInt[0], 0);
                     dataInt[0] = (int[])inInt[0].Data;
-                    var outdataInt = ((DataBlkInt)out_Renamed).DataInt;
+                    var outdataInt = ((DataBlkInt)output).DataInt;
 
                     // The nitty-gritty.
 
-                    for (var row = 0; row < out_Renamed.h; ++row)
+                    for (var row = 0; row < output.h; ++row)
                     {
                         leftedgeIn = inInt[0].offset + row * inInt[0].scanw;
                         rightedgeIn = leftedgeIn + inInt[0].w;
-                        leftedgeOut = out_Renamed.offset + row * out_Renamed.scanw;
-                        rightedgeOut = leftedgeOut + out_Renamed.w;
+                        leftedgeOut = output.offset + row * output.scanw;
+                        rightedgeOut = leftedgeOut + output.w;
 
                         for (kOut = leftedgeOut, kIn = leftedgeIn; kIn < rightedgeIn; ++kIn, ++kOut)
                         {
-                            outdataInt[kOut] = pbox.getEntry(c, dataInt[0][kIn] + shiftValueArray[0]) - outShiftValueArray[c];
+                            var paletteIndex = dataInt[0][kIn] + shiftValueArray[0];
+                            paletteIndex = Math.Max(0, Math.Min(paletteIndex, pbox.NumEntries - 1));
+                            outdataInt[kOut] = pbox.GetEntry(paletteIndex, c) - outShiftValueArray[c];
                         }
                     }
-                    out_Renamed.progressive = inInt[0].progressive;
+                    output.progressive = inInt[0].progressive;
                     break;
 
 
                 case DataBlk.TYPE_FLOAT:
 
-                    copyGeometry(inFloat[0], out_Renamed);
+                    copyGeometry(inFloat[0], output);
 
                     // Request data from the source.        
                     inFloat[0] = (DataBlkFloat)src.GetInternCompData(inFloat[0], 0);
                     dataFloat[0] = (float[])inFloat[0].Data;
-                    var outdataFloat = ((DataBlkFloat)out_Renamed).DataFloat;
+                    var outdataFloat = ((DataBlkFloat)output).DataFloat;
 
                     // The nitty-gritty.
 
-                    for (var row = 0; row < out_Renamed.h; ++row)
+                    for (var row = 0; row < output.h; ++row)
                     {
                         leftedgeIn = inFloat[0].offset + row * inFloat[0].scanw;
                         rightedgeIn = leftedgeIn + inFloat[0].w;
-                        leftedgeOut = out_Renamed.offset + row * out_Renamed.scanw;
-                        rightedgeOut = leftedgeOut + out_Renamed.w;
+                        leftedgeOut = output.offset + row * output.scanw;
+                        rightedgeOut = leftedgeOut + output.w;
 
                         for (kOut = leftedgeOut, kIn = leftedgeIn; kIn < rightedgeIn; ++kIn, ++kOut)
                         {
-                            outdataFloat[kOut] = pbox.getEntry(c, (int)dataFloat[0][kIn] + shiftValueArray[0]) - outShiftValueArray[c];
+                            var paletteIndexF = (int)dataFloat[0][kIn] + shiftValueArray[0];
+                            paletteIndexF = Math.Max(0, Math.Min(paletteIndexF, pbox.NumEntries - 1));
+                            outdataFloat[kOut] = pbox.GetEntry(paletteIndexF, c) - outShiftValueArray[c];
                         }
                     }
-                    out_Renamed.progressive = inFloat[0].progressive;
+                    output.progressive = inFloat[0].progressive;
                     break;
 
 
@@ -209,9 +212,9 @@ namespace CoreJ2K.Color
 
             // Initialize the output block geometry and set the profiled
             // data into the output block.
-            out_Renamed.offset = 0;
-            out_Renamed.scanw = out_Renamed.w;
-            return out_Renamed;
+            output.offset = 0;
+            output.scanw = output.w;
+            return output;
         }
 
 
@@ -237,7 +240,7 @@ namespace CoreJ2K.Color
                 body.Append("ncomps= ").Append(NumComps).Append(", scomp= ").Append(srcChannel);
                 for (c = 0; c < NumComps; ++c)
                 {
-                    body.Append(Environment.NewLine).Append("column= ").Append(c).Append(", ").Append(pbox.getBitDepth(c)).Append(" bit ").Append(pbox.isSigned(c) ? "signed entry" : "unsigned entry");
+                    body.Append(Environment.NewLine).Append("column= ").Append(c).Append(", ").Append(pbox.GetBitDepth(c)).Append(" bit ").Append(pbox.IsSigned(c) ? "signed entry" : "unsigned entry");
                 }
             }
             else
@@ -296,9 +299,9 @@ namespace CoreJ2K.Color
         /// </returns>
         /// <seealso cref="GetCompData">
         /// </seealso>
-        public override DataBlk GetInternCompData(DataBlk out_Renamed, int compIndex)
+        public override DataBlk GetInternCompData(DataBlk output, int compIndex)
         {
-            return GetCompData(out_Renamed, compIndex);
+            return GetCompData(output, compIndex);
         }
 
         /// <summary> Returns the number of bits, referred to as the "range bits",
@@ -316,9 +319,9 @@ namespace CoreJ2K.Color
         /// <returns> The number of bits corresponding to the nominal range of the
         /// image data (in the image domain).
         /// </returns>
-        public override int getNomRangeBits(int compIndex)
+        public override int GetNomRangeBits(int compIndex)
         {
-            return pbox?.getBitDepth(compIndex) ?? src.getNomRangeBits(compIndex);
+            return pbox?.GetBitDepth(compIndex) ?? src.GetNomRangeBits(compIndex);
         }
 
         public override int GetFixedPoint(int compIndex)
@@ -340,9 +343,9 @@ namespace CoreJ2K.Color
         /// 
         /// </returns>
         /// <seealso cref="j2k.image.ImgData" />
-        public override int getCompSubsX(int c)
+        public override int GetCompSubsX(int c)
         {
-            return imgdatasrc.getCompSubsX(srcChannel);
+            return imgdatasrc.GetCompSubsX(srcChannel);
         }
 
         /// <summary> Returns the component subsampling factor in the vertical direction, for
@@ -358,9 +361,9 @@ namespace CoreJ2K.Color
         /// 
         /// </returns>
         /// <seealso cref="j2k.image.ImgData" />
-        public override int getCompSubsY(int c)
+        public override int GetCompSubsY(int c)
         {
-            return imgdatasrc.getCompSubsY(srcChannel);
+            return imgdatasrc.GetCompSubsY(srcChannel);
         }
 
         /// <summary> Returns the width in pixels of the specified tile-component
@@ -375,9 +378,9 @@ namespace CoreJ2K.Color
         /// <returns> The width in pixels of component <tt>c</tt> in tile<tt>t</tt>.
         /// 
         /// </returns>
-        public override int getTileCompWidth(int t, int c)
+        public override int GetTileCompWidth(int t, int c)
         {
-            return imgdatasrc.getTileCompWidth(t, srcChannel);
+            return imgdatasrc.GetTileCompWidth(t, srcChannel);
         }
 
         /// <summary> Returns the height in pixels of the specified tile-component.
@@ -393,9 +396,9 @@ namespace CoreJ2K.Color
         /// <tt>t</tt>.
         /// 
         /// </returns>
-        public override int getTileCompHeight(int t, int c)
+        public override int GetTileCompHeight(int t, int c)
         {
-            return imgdatasrc.getTileCompHeight(t, srcChannel);
+            return imgdatasrc.GetTileCompHeight(t, srcChannel);
         }
 
         /// <summary> Returns the width in pixels of the specified component in the overall
@@ -409,9 +412,9 @@ namespace CoreJ2K.Color
         /// image.
         /// 
         /// </returns>
-        public override int getCompImgWidth(int c)
+        public override int GetCompImgWidth(int c)
         {
-            return imgdatasrc.getCompImgWidth(srcChannel);
+            return imgdatasrc.GetCompImgWidth(srcChannel);
         }
 
 
@@ -431,9 +434,9 @@ namespace CoreJ2K.Color
         /// image data (in the image domain).
         /// 
         /// </returns>
-        public override int getCompImgHeight(int c)
+        public override int GetCompImgHeight(int c)
         {
-            return imgdatasrc.getCompImgHeight(srcChannel);
+            return imgdatasrc.GetCompImgHeight(srcChannel);
         }
 
         /// <summary> Returns the horizontal coordinate of the upper-left corner of the
@@ -443,9 +446,9 @@ namespace CoreJ2K.Color
         /// <param name="c">The index of the component.
         /// 
         /// </param>
-        public override int getCompULX(int c)
+        public override int GetCompULX(int c)
         {
-            return imgdatasrc.getCompULX(srcChannel);
+            return imgdatasrc.GetCompULX(srcChannel);
         }
 
         /// <summary> Returns the vertical coordinate of the upper-left corner of the
@@ -455,11 +458,9 @@ namespace CoreJ2K.Color
         /// <param name="c">The index of the component.
         /// 
         /// </param>
-        public override int getCompULY(int c)
+        public override int GetCompULY(int c)
         {
-            return imgdatasrc.getCompULY(srcChannel);
+            return imgdatasrc.GetCompULY(srcChannel);
         }
-
-        /* end class PalettizedColorSpaceMapper */
     }
 }

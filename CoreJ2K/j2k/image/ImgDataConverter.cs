@@ -1,13 +1,5 @@
 /*
-* CVS Identifier:
-*
-* $Id: ImgDataConverter.java,v 1.13 2001/02/27 19:16:03 grosbois Exp $ 
-*
 * Interface:           ImgDataConverter
-*
-* Description:         The abstract class for classes that provide
-*                      Image Data Convertres (int -> float, float->int).
-*
 *
 *
 * COPYRIGHT:
@@ -171,7 +163,7 @@ namespace CoreJ2K.j2k.image
         /// </seealso>
         public virtual DataBlk GetCompData(DataBlk blk, int c)
         {
-            return getData(blk, c, false);
+            return GetData(blk, c, false);
         }
 
         /// <summary> Closes the underlying file or network connection from where the
@@ -248,7 +240,7 @@ namespace CoreJ2K.j2k.image
         /// </seealso>
         public DataBlk GetInternCompData(DataBlk blk, int compIndex)
         {
-            return getData(blk, compIndex, true);
+            return GetData(blk, compIndex, true);
         }
 
         /// <summary> Implements the 'getInternCompData()' and the 'getCompData()'
@@ -275,7 +267,7 @@ namespace CoreJ2K.j2k.image
         /// <seealso cref="GetCompData">
         /// 
         /// </seealso>
-        private DataBlk getData(DataBlk blk, int c, bool intern)
+        private DataBlk GetData(DataBlk blk, int c, bool intern)
         {
             DataBlk reqBlk; // Reference to block used in request to source
 

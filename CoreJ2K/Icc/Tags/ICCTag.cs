@@ -1,6 +1,5 @@
 /// <summary>**************************************************************************
 /// 
-/// $Id: ICCTag.java,v 1.1 2002/07/25 14:56:37 grosbois Exp $
 /// 
 /// Copyright Eastman Kodak Company, 343 State Street, Rochester, NY 14650
 /// $Date $
@@ -188,7 +187,7 @@ namespace CoreJ2K.Icc.Tags
         public static ICCTag createInstance(int signature, byte[] data, int offset, int count)
         {
 
-            var type = ICCProfile.getInt(data, offset);
+            var type = ICCProfile.GetInt(data, offset);
 
             if (type == kdwTextDescType)
                 return new ICCTextDescriptionType(signature, data, offset, count);
@@ -233,15 +232,13 @@ namespace CoreJ2K.Icc.Tags
             this.data = data;
             this.offset = offset;
             this.count = count;
-            type = ICCProfile.getInt(data, offset);
+            type = ICCProfile.GetInt(data, offset);
         }
 
         public override string ToString()
         {
             return $"{signatureString(signature)}:{typeString(type)}";
         }
-
-        /* end class ICCTag */
         static ICCTag()
         {
             kdwCprtSignature = GetTagInt(sdwCprtSignature);

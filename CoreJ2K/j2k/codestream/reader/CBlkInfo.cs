@@ -1,13 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: CBlkInfo.java,v 1.12 2001/09/14 08:32:15 grosbois Exp $
-*
-* Class:                   CBlkInfo
-*
-* Description:             Object containing code-block informations.
-*
-*
 *
 * COPYRIGHT:
 * 
@@ -215,23 +206,23 @@ namespace CoreJ2K.j2k.codestream.reader
         /// </returns>
         public override string ToString()
         {
-            var string_Renamed = $"(ulx,uly,w,h)= ({ulx},{uly},{w},{h}";
-            string_Renamed += (") " + msbSkipped + " MSB bit(s) skipped\n");
+            var result = $"(ulx,uly,w,h)= ({ulx},{uly},{w},{h}";
+            result += (") " + msbSkipped + " MSB bit(s) skipped\n");
             if (len != null)
                 for (var i = 0; i < len.Length; i++)
                 {
-                    string_Renamed += ("\tl:" + i + ", start:" + off[i] + ", len:" + len[i] + ", ntp:" + ntp[i] + ", pktIdx=" + pktIdx[i]);
+                    result += ("\tl:" + i + ", start:" + off[i] + ", len:" + len[i] + ", ntp:" + ntp[i] + ", pktIdx=" + pktIdx[i]);
                     if (segLen?[i] != null)
                     {
-                        string_Renamed += " { ";
+                        result += " { ";
                         for (var j = 0; j < segLen[i].Length; j++)
-                            string_Renamed += (segLen[i][j] + " ");
-                        string_Renamed += "}";
+                            result += (segLen[i][j] + " ");
+                        result += "}";
                     }
-                    string_Renamed += "\n";
+                    result += "\n";
                 }
-            string_Renamed += ("\tctp=" + ctp);
-            return string_Renamed;
+            result += ("\tctp=" + ctp);
+            return result;
         }
     }
 }

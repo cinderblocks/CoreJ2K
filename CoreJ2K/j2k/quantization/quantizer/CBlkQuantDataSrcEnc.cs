@@ -1,15 +1,4 @@
 /* 
-* CVS identifier:
-* 
-* $Id: CBlkQuantDataSrcEnc.java,v 1.10 2001/09/14 08:51:46 grosbois Exp $
-* 
-* Class:                   CBlkQuantDataSrcEnc
-* 
-* Description:             Interface that defines a source of
-*                          quantized wavelet data to be transferred in a
-*                          code-block by code-block basis.
-* 
-* 
 * 
 * COPYRIGHT:
 * 
@@ -51,7 +40,7 @@ namespace CoreJ2K.j2k.quantization.quantizer
 
     /// <summary> This interface defines a source of quantized wavelet coefficients and
     /// methods to transfer them in a code-block by code-block basis. In each call
-    /// to 'getNextCodeBlock()' or 'getNextInternCodeBlock()' a new code-block is
+    /// to 'GetNextCodeBlock()' or 'GetNextInternCodeBlock()' a new code-block is
     /// returned. The code-blocks are returned in no specific order.
     /// 
     /// This class is the source of data for the entropy coder. See the
@@ -87,7 +76,7 @@ namespace CoreJ2K.j2k.quantization.quantizer
         /// the code-blocks have been returned for the current tile calls to this
         /// method will return 'null'.
         /// 
-        /// When changing the current tile (through 'setTile()' or 'nextTile()')
+        /// When changing the current tile (through 'SetTile()' or 'NextTile()')
         /// this method will always return the first code-block, as if this method
         /// was never called before for the new current tile.
         /// 
@@ -116,7 +105,7 @@ namespace CoreJ2K.j2k.quantization.quantizer
         /// 
         /// </returns>
         /// <seealso cref="CBlkWTData" />
-        CBlkWTData getNextCodeBlock(int c, CBlkWTData cblk);
+        CBlkWTData GetNextCodeBlock(int c, CBlkWTData cblk);
 
         /// <summary> Returns the next code-block in the current tile for the specified
         /// component. The order in which code-blocks are returned is not
@@ -126,7 +115,7 @@ namespace CoreJ2K.j2k.quantization.quantizer
         /// have been returned for the current tile calls to this method will
         /// return 'null'.
         /// 
-        /// When changing the current tile (through 'setTile()' or 'nextTile()')
+        /// When changing the current tile (through 'SetTile()' or 'NextTile()')
         /// this method will always return the first code-block, as if this method
         /// was never called before for the new current tile.
         /// 
@@ -154,6 +143,6 @@ namespace CoreJ2K.j2k.quantization.quantizer
         /// 
         /// </returns>
         /// <seealso cref="CBlkWTData" />
-        CBlkWTData getNextInternCodeBlock(int c, CBlkWTData cblk);
+        CBlkWTData GetNextInternCodeBlock(int c, CBlkWTData cblk);
     }
 }

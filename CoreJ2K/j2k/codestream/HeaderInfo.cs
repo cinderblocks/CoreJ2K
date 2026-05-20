@@ -1,14 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: HeaderInfo.java,v 1.3 2001/10/26 16:30:33 grosbois Exp $
-*
-* Class:                   HeaderInfo
-*
-* Description:             Holds information found in main and tile-part
-*                          headers 
-*
-*
 *
 * COPYRIGHT:
 * 
@@ -222,7 +212,7 @@ namespace CoreJ2K.j2k.codestream
             /// <param name="c">Component index
             /// 
             /// </param>
-            public virtual int getCompImgWidth(int c)
+            public virtual int GetCompImgWidth(int c)
             {
                 if (compWidth == null)
                 {
@@ -234,7 +224,7 @@ namespace CoreJ2K.j2k.codestream
                 }
                 return compWidth[c];
             }
-            public virtual int getCompImgHeight(int c)
+            public virtual int GetCompImgHeight(int c)
             {
                 if (compHeight == null)
                 {
@@ -248,7 +238,7 @@ namespace CoreJ2K.j2k.codestream
             }
             private int numTiles = -1;
             private bool[] origSigned = null;
-            public virtual bool isOrigSigned(int c)
+            public virtual bool IsOrigSigned(int c)
             {
                 if (origSigned == null)
                 {
@@ -261,7 +251,7 @@ namespace CoreJ2K.j2k.codestream
                 return origSigned[c];
             }
             private int[] origBitDepth = null;
-            public virtual int getOrigBitDepth(int c)
+            public virtual int GetOrigBitDepth(int c)
             {
                 if (origBitDepth == null)
                 {
@@ -285,13 +275,13 @@ namespace CoreJ2K.j2k.codestream
                 str += " Orig. depth  : ";
                 for (var i = 0; i < csiz; i++)
                 {
-                    str += (getOrigBitDepth(i) + " ");
+                    str += (GetOrigBitDepth(i) + " ");
                 }
                 str += "\n";
                 str += " Orig. signed : ";
                 for (var i = 0; i < csiz; i++)
                 {
-                    str += (isOrigSigned(i) + " ");
+                    str += (IsOrigSigned(i) + " ");
                 }
                 str += "\n";
                 str += " Subs. factor : ";
@@ -1191,7 +1181,7 @@ namespace CoreJ2K.j2k.codestream
         }
 
         /// <summary>Returns a copy of this object </summary>
-        public virtual HeaderInfo getCopy(int nt)
+        public virtual HeaderInfo GetCopy(int nt)
         {
             HeaderInfo nhi = null;
             // SIZ

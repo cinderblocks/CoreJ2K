@@ -1,13 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: ImgDataJoiner.java,v 1.12 2001/09/14 09:17:00 grosbois Exp $
-*
-* Class:                   ImgDataJoiner
-*
-* Description:             Get ImgData from different sources
-*
-*
 *
 * COPYRIGHT:
 * 
@@ -225,7 +216,7 @@ namespace CoreJ2K.j2k.image
             // canvas origin.
             for (i = 0; i < nc; i++)
             {
-                if (imD[i].getNumTiles() != 1 || imD[i].getCompULX(cIdx[i]) != 0 || imD[i].getCompULY(cIdx[i]) != 0)
+                if (imD[i].GetNumTiles() != 1 || imD[i].GetCompULX(cIdx[i]) != 0 || imD[i].GetCompULY(cIdx[i]) != 0)
                 {
                     throw new System.ArgumentException("All input components must, not use tiles and must have the origin at the canvas origin");
                 }
@@ -246,10 +237,10 @@ namespace CoreJ2K.j2k.image
             maxH = 0;
             for (i = 0; i < nc; i++)
             {
-                if (imD[i].getCompImgWidth(cIdx[i]) > maxW)
-                    maxW = imD[i].getCompImgWidth(cIdx[i]);
-                if (imD[i].getCompImgHeight(cIdx[i]) > maxH)
-                    maxH = imD[i].getCompImgHeight(cIdx[i]);
+                if (imD[i].GetCompImgWidth(cIdx[i]) > maxW)
+                    maxW = imD[i].GetCompImgWidth(cIdx[i]);
+                if (imD[i].GetCompImgHeight(cIdx[i]) > maxH)
+                    maxH = imD[i].GetCompImgHeight(cIdx[i]);
             }
             // Set the image width and height as the maximum ones
             w = maxW;
@@ -261,9 +252,9 @@ namespace CoreJ2K.j2k.image
             {
                 // This calculation only holds if the subsampling factor is less
                 // than the component width
-                subsX[i] = (maxW + imD[i].getCompImgWidth(cIdx[i]) - 1) / imD[i].getCompImgWidth(cIdx[i]);
-                subsY[i] = (maxH + imD[i].getCompImgHeight(cIdx[i]) - 1) / imD[i].getCompImgHeight(cIdx[i]);
-                if ((maxW + subsX[i] - 1) / subsX[i] != imD[i].getCompImgWidth(cIdx[i]) || (maxH + subsY[i] - 1) / subsY[i] != imD[i].getCompImgHeight(cIdx[i]))
+                subsX[i] = (maxW + imD[i].GetCompImgWidth(cIdx[i]) - 1) / imD[i].GetCompImgWidth(cIdx[i]);
+                subsY[i] = (maxH + imD[i].GetCompImgHeight(cIdx[i]) - 1) / imD[i].GetCompImgHeight(cIdx[i]);
+                if ((maxW + subsX[i] - 1) / subsX[i] != imD[i].GetCompImgWidth(cIdx[i]) || (maxH + subsY[i] - 1) / subsY[i] != imD[i].GetCompImgHeight(cIdx[i]))
                 {
                     throw new System.InvalidOperationException("Can not compute component subsampling factors: strange subsampling.");
                 }
@@ -285,7 +276,7 @@ namespace CoreJ2K.j2k.image
         /// <seealso cref="ImgData">
         /// 
         /// </seealso>
-        public virtual int getCompSubsX(int c)
+        public virtual int GetCompSubsX(int c)
         {
             return subsX[c];
         }
@@ -305,7 +296,7 @@ namespace CoreJ2K.j2k.image
         /// <seealso cref="ImgData">
         /// 
         /// </seealso>
-        public virtual int getCompSubsY(int c)
+        public virtual int GetCompSubsY(int c)
         {
             return subsY[c];
         }
@@ -323,9 +314,9 @@ namespace CoreJ2K.j2k.image
         /// <returns> The width in pixels of component <tt>c</tt> in tile<tt>t</tt>.
         /// 
         /// </returns>
-        public virtual int getTileCompWidth(int t, int c)
+        public virtual int GetTileCompWidth(int t, int c)
         {
-            return imageData[c].getTileCompWidth(t, compIdx[c]);
+            return imageData[c].GetTileCompWidth(t, compIdx[c]);
         }
 
         /// <summary> Returns the height in pixels of the specified tile-component.
@@ -341,9 +332,9 @@ namespace CoreJ2K.j2k.image
         /// tile.
         /// 
         /// </returns>
-        public virtual int getTileCompHeight(int t, int c)
+        public virtual int GetTileCompHeight(int t, int c)
         {
-            return imageData[c].getTileCompHeight(t, compIdx[c]);
+            return imageData[c].GetTileCompHeight(t, compIdx[c]);
         }
 
         /// <summary> Returns the width in pixels of the specified component in the overall
@@ -357,9 +348,9 @@ namespace CoreJ2K.j2k.image
         /// image.
         /// 
         /// </returns>
-        public virtual int getCompImgWidth(int c)
+        public virtual int GetCompImgWidth(int c)
         {
-            return imageData[c].getCompImgWidth(compIdx[c]);
+            return imageData[c].GetCompImgWidth(compIdx[c]);
         }
 
         /// <summary> Returns the height in pixels of the specified component in the
@@ -375,9 +366,9 @@ namespace CoreJ2K.j2k.image
         /// 
         /// 
         /// </returns>
-        public virtual int getCompImgHeight(int n)
+        public virtual int GetCompImgHeight(int n)
         {
-            return imageData[n].getCompImgHeight(compIdx[n]);
+            return imageData[n].GetCompImgHeight(compIdx[n]);
         }
 
         /// <summary> Returns the number of bits, referred to as the "range bits",
@@ -396,9 +387,9 @@ namespace CoreJ2K.j2k.image
         /// return value is undefined.
         /// 
         /// </returns>
-        public virtual int getNomRangeBits(int compIndex)
+        public virtual int GetNomRangeBits(int compIndex)
         {
-            return imageData[compIndex].getNomRangeBits(compIdx[compIndex]);
+            return imageData[compIndex].GetNomRangeBits(compIdx[compIndex]);
         }
 
         /// <summary> Returns the position of the fixed point in the specified
@@ -554,7 +545,7 @@ namespace CoreJ2K.j2k.image
         /// <param name="y">The vertical coordinate of the new tile.
         /// 
         /// </param>
-        public virtual void setTile(int x, int y)
+        public virtual void SetTile(int x, int y)
         {
             if (x != 0 || y != 0)
             {
@@ -568,7 +559,7 @@ namespace CoreJ2K.j2k.image
         /// assumes no tiling, so NoNextElementException() is always thrown.
         /// 
         /// </summary>
-        public virtual void nextTile()
+        public virtual void NextTile()
         {
             throw new NoNextElementException();
         }
@@ -584,7 +575,7 @@ namespace CoreJ2K.j2k.image
         /// <returns> The current tile's coordinates.
         /// 
         /// </returns>
-        public virtual Coord getTile(Coord co)
+        public virtual Coord GetTile(Coord co)
         {
             if (co != null)
             {
@@ -605,7 +596,7 @@ namespace CoreJ2K.j2k.image
         /// <param name="c">The component index.
         /// 
         /// </param>
-        public virtual int getCompULX(int c)
+        public virtual int GetCompULX(int c)
         {
             return 0;
         }
@@ -617,7 +608,7 @@ namespace CoreJ2K.j2k.image
         /// <param name="c">The component index.
         /// 
         /// </param>
-        public virtual int getCompULY(int c)
+        public virtual int GetCompULY(int c)
         {
             return 0;
         }
@@ -635,7 +626,7 @@ namespace CoreJ2K.j2k.image
         /// (Coord.y) directions.
         /// 
         /// </returns>
-        public virtual Coord getNumTiles(Coord co)
+        public virtual Coord GetNumTiles(Coord co)
         {
             if (co != null)
             {
@@ -656,7 +647,7 @@ namespace CoreJ2K.j2k.image
         /// <returns> The total number of tiles in the image.
         /// 
         /// </returns>
-        public virtual int getNumTiles()
+        public virtual int GetNumTiles()
         {
             return 1;
         }
@@ -671,12 +662,12 @@ namespace CoreJ2K.j2k.image
         /// </returns>
         public override string ToString()
         {
-            var string_Renamed = $"ImgDataJoiner: WxH = {w}x{h}";
+            var result = $"ImgDataJoiner: WxH = {w}x{h}";
             for (var i = 0; i < nc; i++)
             {
-                string_Renamed += ($"\n- Component {i} {imageData[i]}");
+                result += ($"\n- Component {i} {imageData[i]}");
             }
-            return string_Renamed;
+            return result;
         }
     }
 }

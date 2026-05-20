@@ -1,13 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: BitOutputBuffer.java,v 1.9 2002/07/19 12:40:05 grosbois Exp $
-*
-* Class:                   BitOutputBuffer
-*
-* Description:             <short description of class>
-*
-*
 *
 * COPYRIGHT:
 * 

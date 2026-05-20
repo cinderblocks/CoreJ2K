@@ -1,13 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: CBlkSizeSpec.java,v 1.11 2001/02/14 10:38:18 grosbois Exp $
-*
-* Class:                   CBlkSizeSpec
-*
-* Description:             Specification of the code-blocks size
-*
-*
 *
 * COPYRIGHT:
 * 
@@ -115,7 +106,7 @@ namespace CoreJ2K.j2k.entropy
         {
 
             var firstVal = true;
-            var param = pl.getParameter(optName);
+            var param = pl.GetParameter(optName);
 
             // Precinct partition is used : parse arguments
             var stk = new Tokenizer(param);
@@ -252,7 +243,7 @@ namespace CoreJ2K.j2k.entropy
                         {
                             // This is the first time a value is given so we set it as
                             // the default one 
-                            setDefault(dim);
+                            SetDefault(dim);
                             firstVal = false;
                         }
 
@@ -260,7 +251,7 @@ namespace CoreJ2K.j2k.entropy
                         {
 
                             case SPEC_DEF:
-                                setDefault(dim);
+                                SetDefault(dim);
                                 break;
 
                             case SPEC_TILE_DEF:
@@ -268,7 +259,7 @@ namespace CoreJ2K.j2k.entropy
                                 {
                                     if (tileSpec[ti])
                                     {
-                                        setTileDef(ti, dim);
+                                        SetTileDef(ti, dim);
                                     }
                                 }
                                 break;
@@ -278,7 +269,7 @@ namespace CoreJ2K.j2k.entropy
                                 {
                                     if (compSpec[ci])
                                     {
-                                        setCompDef(ci, dim);
+                                        SetCompDef(ci, dim);
                                     }
                                 }
                                 break;
@@ -290,7 +281,7 @@ namespace CoreJ2K.j2k.entropy
                                     {
                                         if (tileSpec[ti] && compSpec[ci])
                                         {
-                                            setTileCompVal(ti, ci, dim);
+                                            SetTileCompVal(ti, ci, dim);
                                         }
                                     }
                                 }
@@ -338,26 +329,26 @@ namespace CoreJ2K.j2k.entropy
         /// <returns> The code-block width for the specified tile and component
         /// 
         /// </returns>
-        public virtual int getCBlkWidth(byte type, int t, int c)
+        public virtual int GetCBlkWidth(byte type, int t, int c)
         {
             int[] dim = null;
             switch (type)
             {
 
                 case SPEC_DEF:
-                    dim = (int[])getDefault();
+                    dim = (int[])GetDefault();
                     break;
 
                 case SPEC_COMP_DEF:
-                    dim = (int[])getCompDef(c);
+                    dim = (int[])GetCompDef(c);
                     break;
 
                 case SPEC_TILE_DEF:
-                    dim = (int[])getTileDef(t);
+                    dim = (int[])GetTileDef(t);
                     break;
 
                 case SPEC_TILE_COMP:
-                    dim = (int[])getTileCompVal(t, c);
+                    dim = (int[])GetTileCompVal(t, c);
                     break;
             }
             return dim[0];
@@ -398,26 +389,26 @@ namespace CoreJ2K.j2k.entropy
         /// <returns> The code-block height for the specified tile and component
         /// 
         /// </returns>
-        public virtual int getCBlkHeight(byte type, int t, int c)
+        public virtual int GetCBlkHeight(byte type, int t, int c)
         {
             int[] dim = null;
             switch (type)
             {
 
                 case SPEC_DEF:
-                    dim = (int[])getDefault();
+                    dim = (int[])GetDefault();
                     break;
 
                 case SPEC_COMP_DEF:
-                    dim = (int[])getCompDef(c);
+                    dim = (int[])GetCompDef(c);
                     break;
 
                 case SPEC_TILE_DEF:
-                    dim = (int[])getTileDef(t);
+                    dim = (int[])GetTileDef(t);
                     break;
 
                 case SPEC_TILE_COMP:
-                    dim = (int[])getTileCompVal(t, c);
+                    dim = (int[])GetTileCompVal(t, c);
                     break;
             }
             return dim[1];
@@ -429,12 +420,12 @@ namespace CoreJ2K.j2k.entropy
         /// <param name="value">Default value
         /// 
         /// </param>
-        public sealed override void setDefault(object value_Renamed)
+        public sealed override void SetDefault(object value)
         {
-            base.setDefault(value_Renamed);
+            base.SetDefault(value);
 
             // Store the biggest code-block dimensions
-            storeHighestDims((int[])value_Renamed);
+            storeHighestDims((int[])value);
         }
 
         /// <summary> Sets default value for specified tile and specValType tag if allowed by
@@ -447,12 +438,12 @@ namespace CoreJ2K.j2k.entropy
         /// <param name="value">Tile's default value
         /// 
         /// </param>
-        public sealed override void setTileDef(int t, object value_Renamed)
+        public sealed override void SetTileDef(int t, object value)
         {
-            base.setTileDef(t, value_Renamed);
+            base.SetTileDef(t, value);
 
             // Store the biggest code-block dimensions
-            storeHighestDims((int[])value_Renamed);
+            storeHighestDims((int[])value);
         }
 
         /// <summary> Sets default value for specified component and specValType tag if
@@ -465,12 +456,12 @@ namespace CoreJ2K.j2k.entropy
         /// <param name="value">Component's default value
         /// 
         /// </param>
-        public sealed override void setCompDef(int c, object value_Renamed)
+        public sealed override void SetCompDef(int c, object value)
         {
-            base.setCompDef(c, value_Renamed);
+            base.SetCompDef(c, value);
 
             // Store the biggest code-block dimensions
-            storeHighestDims((int[])value_Renamed);
+            storeHighestDims((int[])value);
         }
 
         /// <summary> Sets value for specified tile-component.
@@ -485,12 +476,12 @@ namespace CoreJ2K.j2k.entropy
         /// <param name="value">Tile-component's value
         /// 
         /// </param>
-        public sealed override void setTileCompVal(int t, int c, object value_Renamed)
+        public sealed override void SetTileCompVal(int t, int c, object value)
         {
-            base.setTileCompVal(t, c, value_Renamed);
+            base.SetTileCompVal(t, c, value);
 
             // Store the biggest code-block dimensions
-            storeHighestDims((int[])value_Renamed);
+            storeHighestDims((int[])value);
         }
 
         /// <summary> Stores the highest code-block width and height

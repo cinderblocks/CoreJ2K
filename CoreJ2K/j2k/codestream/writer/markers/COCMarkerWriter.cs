@@ -36,15 +36,15 @@ namespace CoreJ2K.j2k.codestream.writer.markers
 
             if (isMainHeader)
             {
-                mrl = ((int)encSpec.dls.getCompDef(compIdx));
-                ppx = encSpec.pss.getPPX(-1, compIdx, mrl);
-                ppy = encSpec.pss.getPPY(-1, compIdx, mrl);
+                mrl = ((int)encSpec.dls.GetCompDef(compIdx));
+                ppx = encSpec.pss.GetPPX(-1, compIdx, mrl);
+                ppy = encSpec.pss.GetPPY(-1, compIdx, mrl);
             }
             else
             {
-                mrl = ((int)encSpec.dls.getTileCompVal(tileIdx, compIdx));
-                ppx = encSpec.pss.getPPX(tileIdx, compIdx, mrl);
-                ppy = encSpec.pss.getPPY(tileIdx, compIdx, mrl);
+                mrl = ((int)encSpec.dls.GetTileCompVal(tileIdx, compIdx));
+                ppx = encSpec.pss.GetPPX(tileIdx, compIdx, mrl);
+                ppy = encSpec.pss.GetPPY(tileIdx, compIdx, mrl);
             }
 
             precinctPartitionUsed = (ppx != Markers.PRECINCT_PARTITION_DEF_SIZE || 
@@ -86,16 +86,16 @@ namespace CoreJ2K.j2k.codestream.writer.markers
             // Code-block width and height
             if (isMainHeader)
             {
-                tmp = encSpec.cblks.getCBlkWidth(ModuleSpec.SPEC_COMP_DEF, -1, compIdx);
+                tmp = encSpec.cblks.GetCBlkWidth(ModuleSpec.SPEC_COMP_DEF, -1, compIdx);
                 writer.Write((byte)(MathUtil.log2(tmp) - 2));
-                tmp = encSpec.cblks.getCBlkHeight(ModuleSpec.SPEC_COMP_DEF, -1, compIdx);
+                tmp = encSpec.cblks.GetCBlkHeight(ModuleSpec.SPEC_COMP_DEF, -1, compIdx);
                 writer.Write((byte)(MathUtil.log2(tmp) - 2));
             }
             else
             {
-                tmp = encSpec.cblks.getCBlkWidth(ModuleSpec.SPEC_TILE_COMP, tileIdx, compIdx);
+                tmp = encSpec.cblks.GetCBlkWidth(ModuleSpec.SPEC_TILE_COMP, tileIdx, compIdx);
                 writer.Write((byte)(MathUtil.log2(tmp) - 2));
-                tmp = encSpec.cblks.getCBlkHeight(ModuleSpec.SPEC_TILE_COMP, tileIdx, compIdx);
+                tmp = encSpec.cblks.GetCBlkHeight(ModuleSpec.SPEC_TILE_COMP, tileIdx, compIdx);
                 writer.Write((byte)(MathUtil.log2(tmp) - 2));
             }
 
@@ -106,12 +106,12 @@ namespace CoreJ2K.j2k.codestream.writer.markers
             // Wavelet filter
             if (isMainHeader)
             {
-                filt = ((AnWTFilter[][])encSpec.wfs.getCompDef(compIdx));
+                filt = ((AnWTFilter[][])encSpec.wfs.GetCompDef(compIdx));
                 writer.Write((byte)filt[0][0].FilterType);
             }
             else
             {
-                filt = ((AnWTFilter[][])encSpec.wfs.getTileCompVal(tileIdx, compIdx));
+                filt = ((AnWTFilter[][])encSpec.wfs.GetTileCompVal(tileIdx, compIdx));
                 writer.Write((byte)filt[0][0].FilterType);
             }
 
@@ -128,32 +128,32 @@ namespace CoreJ2K.j2k.codestream.writer.markers
 
             if (isMainHeader)
             {
-                if (((string)encSpec.bms.getCompDef(compIdx)).Equals("on"))
+                if (((string)encSpec.bms.GetCompDef(compIdx)).Equals("on"))
                     tmp |= StdEntropyCoderOptions.OPT_BYPASS;
-                if (string.Equals((string)encSpec.mqrs.getCompDef(compIdx), "ON", StringComparison.OrdinalIgnoreCase))
+                if (string.Equals((string)encSpec.mqrs.GetCompDef(compIdx), "ON", StringComparison.OrdinalIgnoreCase))
                     tmp |= StdEntropyCoderOptions.OPT_RESET_MQ;
-                if (((string)encSpec.rts.getCompDef(compIdx)).Equals("on"))
+                if (((string)encSpec.rts.GetCompDef(compIdx)).Equals("on"))
                     tmp |= StdEntropyCoderOptions.OPT_TERM_PASS;
-                if (((string)encSpec.css.getCompDef(compIdx)).Equals("on"))
+                if (((string)encSpec.css.GetCompDef(compIdx)).Equals("on"))
                     tmp |= StdEntropyCoderOptions.OPT_VERT_STR_CAUSAL;
-                if (((string)encSpec.tts.getCompDef(compIdx)).Equals("predict"))
+                if (((string)encSpec.tts.GetCompDef(compIdx)).Equals("predict"))
                     tmp |= StdEntropyCoderOptions.OPT_PRED_TERM;
-                if (((string)encSpec.sss.getCompDef(compIdx)).Equals("on"))
+                if (((string)encSpec.sss.GetCompDef(compIdx)).Equals("on"))
                     tmp |= StdEntropyCoderOptions.OPT_SEG_SYMBOLS;
             }
             else
             {
-                if (((string)encSpec.bms.getTileCompVal(tileIdx, compIdx)).Equals("on"))
+                if (((string)encSpec.bms.GetTileCompVal(tileIdx, compIdx)).Equals("on"))
                     tmp |= StdEntropyCoderOptions.OPT_BYPASS;
-                if (((string)encSpec.mqrs.getTileCompVal(tileIdx, compIdx)).Equals("on"))
+                if (((string)encSpec.mqrs.GetTileCompVal(tileIdx, compIdx)).Equals("on"))
                     tmp |= StdEntropyCoderOptions.OPT_RESET_MQ;
-                if (((string)encSpec.rts.getTileCompVal(tileIdx, compIdx)).Equals("on"))
+                if (((string)encSpec.rts.GetTileCompVal(tileIdx, compIdx)).Equals("on"))
                     tmp |= StdEntropyCoderOptions.OPT_TERM_PASS;
-                if (((string)encSpec.css.getTileCompVal(tileIdx, compIdx)).Equals("on"))
+                if (((string)encSpec.css.GetTileCompVal(tileIdx, compIdx)).Equals("on"))
                     tmp |= StdEntropyCoderOptions.OPT_VERT_STR_CAUSAL;
-                if (((string)encSpec.tts.getTileCompVal(tileIdx, compIdx)).Equals("predict"))
+                if (((string)encSpec.tts.GetTileCompVal(tileIdx, compIdx)).Equals("predict"))
                     tmp |= StdEntropyCoderOptions.OPT_PRED_TERM;
-                if (((string)encSpec.sss.getTileCompVal(tileIdx, compIdx)).Equals("on"))
+                if (((string)encSpec.sss.GetTileCompVal(tileIdx, compIdx)).Equals("on"))
                     tmp |= StdEntropyCoderOptions.OPT_SEG_SYMBOLS;
             }
 
@@ -163,8 +163,8 @@ namespace CoreJ2K.j2k.codestream.writer.markers
         private void WritePrecinctPartition(BinaryWriter writer, bool isMainHeader, int tileIdx, int compIdx, int mrl)
         {
             System.Collections.Generic.List<int>[] v = isMainHeader ?
-                (System.Collections.Generic.List<int>[])encSpec.pss.getCompDef(compIdx) :
-                (System.Collections.Generic.List<int>[])encSpec.pss.getTileCompVal(tileIdx, compIdx);
+                (System.Collections.Generic.List<int>[])encSpec.pss.GetCompDef(compIdx) :
+                (System.Collections.Generic.List<int>[])encSpec.pss.GetTileCompVal(tileIdx, compIdx);
 
             for (var r = mrl; r >= 0; r--)
             {

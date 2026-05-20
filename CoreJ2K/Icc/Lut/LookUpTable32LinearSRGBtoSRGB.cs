@@ -1,6 +1,5 @@
 /// <summary>**************************************************************************
 /// 
-/// $Id: LookUpTable32LinearSRGBtoSRGB.java,v 1.1 2002/07/25 14:56:47 grosbois Exp $
 /// 
 /// Copyright Eastman Kodak Company, 343 State Street, Rochester, NY 14650
 /// $Date $
@@ -93,7 +92,5 @@ namespace CoreJ2K.Icc.Lut
             var rep = new System.Text.StringBuilder("[LookUpTable32LinearSRGBtoSRGB:");
             return rep.Append("]").ToString();
         }
-
-        /* end class LookUpTable32LinearSRGBtoSRGB */
     }
 }

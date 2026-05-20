@@ -1,12 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: ByteInputBuffer.java,v 1.13 2001/10/17 17:01:57 grosbois Exp $
-*
-* Class:                   ByteInputBuffer
-*
-* Description:             Provides buffering for byte based input, similar
-*                          to the standard class ByteArrayInputStream
 *
 *                          the old jj2000.j2k.io.ByteArrayInput class by
 *                          Diego SANTA CRUZ, Apr-26-1999
@@ -132,7 +124,7 @@ namespace CoreJ2K.j2k.entropy.decoder
         /// <param name="length">the maximum number of bytes to read frmo the buffer.
         /// 
         /// </param>
-        public virtual void setByteArray(byte[] buf, int offset, int length)
+        public virtual void SetByteArray(byte[] buf, int offset, int length)
         {
             // In same buffer?
             if (buf == null)

@@ -1,13 +1,5 @@
 /*
-* CVS Identifier:
-*
-* $Id: BinaryDataInput.java,v 1.12 2001/07/23 09:27:26 grosbois Exp $
-*
 * Interface:           BinaryDataInput
-*
-* Description:         Stream like interface for binary
-*                      input from a stream or file.
-*
 *
 *
 * COPYRIGHT:

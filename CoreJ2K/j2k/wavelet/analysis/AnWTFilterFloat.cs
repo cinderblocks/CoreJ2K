@@ -1,14 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: AnWTFilterFloat.java,v 1.7 2000/09/05 09:25:37 grosbois Exp $
-*
-* Class:                   AnWTFilterFloat
-*
-* Description:             A specialized wavelet filter interface that
-*                          works on float data.
-*
-*
 *
 * COPYRIGHT:
 * 

@@ -1,14 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: MQDecoder.java,v 1.32 2001/10/17 16:58:00 grosbois Exp $
-*
-* Class:                   MQDecoder
-*
-* Description:             Class that encodes a number of bits using the
-*                          MQ arithmetic decoder
-*
-*
 *
 * COPYRIGHT:
 * 
@@ -79,7 +69,7 @@ namespace CoreJ2K.j2k.entropy.decoder
         /// <returns> The underlying ByteInputBuffer.
         /// 
         /// </returns>
-        public virtual ByteInputBuffer ByteInputBuffer => in_Renamed;
+        public virtual ByteInputBuffer ByteInputBuffer => inputBuffer;
 
         /// <summary>The data structures containing the probabilities for the LPS </summary>
         internal static readonly uint[] qe = { 0x5601, 0x3401, 0x1801, 0x0ac1, 0x0521, 0x0221, 0x5601, 0x5401, 0x4801, 0x3801, 0x3001, 0x2401, 0x1c01, 0x1601, 0x5601, 0x5401, 0x5101, 0x4801, 0x3801, 0x3401, 0x3001, 0x2801, 0x2401, 0x2201, 0x1c01, 0x1801, 0x1601, 0x1401, 0x1201, 0x1101, 0x0ac1, 0x09c1, 0x08a1, 0x0521, 0x0441, 0x02a1, 0x0221, 0x0141, 0x0111, 0x0085, 0x0049, 0x0025, 0x0015, 0x0009, 0x0005, 0x0001, 0x5601 };
@@ -94,7 +84,7 @@ namespace CoreJ2K.j2k.entropy.decoder
         internal static readonly int[] switchLM = { 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
         /// <summary>The ByteInputBuffer used to read the compressed bit stream. </summary>
-        internal ByteInputBuffer in_Renamed;
+        internal ByteInputBuffer inputBuffer;
 
         /// <summary>The current most probable signal for each context </summary>
         internal int[] mPS;
@@ -138,7 +128,7 @@ namespace CoreJ2K.j2k.entropy.decoder
         /// </param>
         public MQDecoder(ByteInputBuffer iStream, int nrOfContexts, int[] initStates)
         {
-            in_Renamed = iStream;
+            inputBuffer = iStream;
 
             // Default initialization of the statistics bins is MPS=0 and
             // I=0
@@ -625,7 +615,7 @@ namespace CoreJ2K.j2k.entropy.decoder
                 if (!markerFound)
                 {
                     // Get next byte and check
-                    b = (uint)in_Renamed.read() & 0xFF;
+                    b = (uint)inputBuffer.read() & 0xFF;
                     if (b <= 0x8F)
                         return true;
                 }
@@ -692,7 +682,7 @@ namespace CoreJ2K.j2k.entropy.decoder
             {
                 if (b == 0xFF)
                 {
-                    b = ((uint)in_Renamed.read()) & 0xFF; // Convert EOFs (-1) to 0xFF
+                    b = ((uint)inputBuffer.read()) & 0xFF; // Convert EOFs (-1) to 0xFF
 
                     if (b > 0x8F)
                     {
@@ -708,7 +698,7 @@ namespace CoreJ2K.j2k.entropy.decoder
                 }
                 else
                 {
-                    b = ((uint)in_Renamed.read()) & 0xFF; // Convert EOFs (-1) to 0xFF
+                    b = ((uint)inputBuffer.read()) & 0xFF; // Convert EOFs (-1) to 0xFF
                     c += 0xFF00 - (b << 8);
                     cT = 8;
                 }
@@ -766,7 +756,7 @@ namespace CoreJ2K.j2k.entropy.decoder
         public void nextSegment(byte[] buf, int off, int len)
         {
             // Set the new input
-            in_Renamed.setByteArray(buf, off, len);
+            inputBuffer.SetByteArray(buf, off, len);
             // Reinitialize MQ
             init();
         }
@@ -785,7 +775,7 @@ namespace CoreJ2K.j2k.entropy.decoder
             markerFound = false;
 
             // Read first byte
-            b = ((uint)in_Renamed.read()) & 0xFF;
+            b = ((uint)inputBuffer.read()) & 0xFF;
 
             // Software conventions decoder
             c = (b ^ 0xFF) << 16;

@@ -1,12 +1,4 @@
 /* 
-* CVS identifier:
-* 
-* $Id: InvWTFull.java,v 1.20 2002/05/22 15:01:32 grosbois Exp $
-* 
-* Class:                   InvWTFull
-* 
-* Description:             This class implements a full page inverse DWT for
-*                          int and float data.
 * 
 *                          the InvWTFullInt and InvWTFullFloat
 *                          classes by Bertrand Berthelot, Apr-19-1999
@@ -161,13 +153,13 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// subband are reversible
         /// 
         /// </returns>
-        private bool isSubbandReversible(Subband subband)
+        private bool IsSubbandReversible(Subband subband)
         {
             if (subband.isNode)
             {
                 // It's reversible if the filters to obtain the 4 subbands are
                 // reversible and the ones for this one are reversible too.
-                return isSubbandReversible(subband.LL) && isSubbandReversible(subband.HL) && isSubbandReversible(subband.LH) && isSubbandReversible(subband.HH) && ((SubbandSyn)subband).hFilter.Reversible && ((SubbandSyn)subband).vFilter.Reversible;
+                return IsSubbandReversible(subband.LL) && IsSubbandReversible(subband.HL) && IsSubbandReversible(subband.LH) && IsSubbandReversible(subband.HH) && ((SubbandSyn)subband).hFilter.Reversible && ((SubbandSyn)subband).vFilter.Reversible;
             }
             else
             {
@@ -191,7 +183,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// <returns> true is the wavelet transform is reversible, false if not.
         /// 
         /// </returns>
-        public override bool isReversible(int t, int c)
+        public override bool IsReversible(int t, int c)
         {
             if (reversible[t] == null)
             {
@@ -199,7 +191,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
                 reversible[t] = new bool[NumComps];
                 for (var i = reversible[t].Length - 1; i >= 0; i--)
                 {
-                    reversible[t][i] = isSubbandReversible(src.getSynSubbandTree(t, i));
+                    reversible[t][i] = IsSubbandReversible(src.GetSynSubbandTree(t, i));
                 }
             }
             return reversible[t][c];
@@ -210,7 +202,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// component.
         /// 
         /// The returned value corresponds to the nominal dynamic range of the
-        /// reconstructed image data, as long as the getNomRangeBits() method of
+        /// reconstructed image data, as long as the GetNomRangeBits() method of
         /// the source returns a value corresponding to the nominal dynamic range
         /// of the image data and not not of the wavelet coefficients.
         /// 
@@ -226,9 +218,9 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// data.
         /// 
         /// </returns>
-        public override int getNomRangeBits(int compIndex)
+        public override int GetNomRangeBits(int compIndex)
         {
-            return src.getNomRangeBits(compIndex);
+            return src.GetNomRangeBits(compIndex);
         }
 
         /// <summary> Returns the position of the fixed point in the specified
@@ -253,7 +245,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// </returns>
         public override int GetFixedPoint(int compIndex)
         {
-            return src.getFixedPoint(compIndex);
+            return src.GetFixedPoint(compIndex);
         }
 
         /// <summary> Returns a block of image data containing the specifed rectangular area,
@@ -291,10 +283,10 @@ namespace CoreJ2K.j2k.wavelet.synthesis
             //If the source image has not been decomposed (or was invalidated by a tile change)
             if (reconstructedComps[compIndex] == null || reconstructedComps[compIndex].Data == null)
             {
-                // Call getSynSubbandTree exactly once on the slow path; reuse for both
+                // Call GetSynSubbandTree exactly once on the slow path; reuse for both
                 // dtype determination and waveletTreeReconstruction — avoids the extra
                 // virtual dispatch that was occurring on every call in the original code.
-                var synTree = src.getSynSubbandTree(tIdx, compIndex);
+                var synTree = src.GetSynSubbandTree(tIdx, compIndex);
                 dtype = synTree.HorWFilter == null ? DataBlk.TYPE_INT : synTree.HorWFilter.DataType;
 
                 //Allocate component data buffer
@@ -302,8 +294,8 @@ namespace CoreJ2K.j2k.wavelet.synthesis
                 {
 
                     case DataBlk.TYPE_FLOAT:
-                        var fwidth = getTileCompWidth(tIdx, compIndex);
-                        var fheight = getTileCompHeight(tIdx, compIndex);
+                        var fwidth = GetTileCompWidth(tIdx, compIndex);
+                        var fheight = GetTileCompHeight(tIdx, compIndex);
 
                         // Validate dimensions to prevent integer overflow
                         long fBufferSize = (long)fwidth * fheight;
@@ -345,8 +337,8 @@ namespace CoreJ2K.j2k.wavelet.synthesis
                         break;
 
                     case DataBlk.TYPE_INT:
-                        var iwidth = getTileCompWidth(tIdx, compIndex);
-                        var iheight = getTileCompHeight(tIdx, compIndex);
+                        var iwidth = GetTileCompWidth(tIdx, compIndex);
+                        var iheight = GetTileCompHeight(tIdx, compIndex);
 
                         // Validate dimensions to prevent integer overflow
                         long iBufferSize = (long)iwidth * iheight;
@@ -393,7 +385,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
             else
             {
                 // Fast path: reconstruction already cached. Derive dtype from the concrete
-                // type of the cached block — zero virtual calls to getSynSubbandTree.
+                // type of the cached block — zero virtual calls to GetSynSubbandTree.
                 dtype = reconstructedComps[compIndex] is DataBlkInt ? DataBlk.TYPE_INT : DataBlk.TYPE_FLOAT;
             }
 
@@ -825,7 +817,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
                     {
                         for (n = 0; n < ncblks.x; n++)
                         {
-                            subbData = src.getInternCodeBlock(c, m, n, sb, subbData);
+                            subbData = src.GetInternCodeBlock(c, m, n, sb, subbData);
                             int[] srcArr = (int[])subbData.Data;
                             int dstBase = subbData.uly * img.w + subbData.ulx;
                             for (i = subbData.h - 1; i >= 0; i--)
@@ -843,7 +835,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
                     {
                         for (n = 0; n < ncblks.x; n++)
                         {
-                            subbData = src.getInternCodeBlock(c, m, n, sb, subbData);
+                            subbData = src.GetInternCodeBlock(c, m, n, sb, subbData);
                             float[] srcArr = (float[])subbData.Data;
                             int dstBase = subbData.uly * img.w + subbData.ulx;
                             for (i = subbData.h - 1; i >= 0; i--)
@@ -887,7 +879,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// 
         /// </returns>
         /// <seealso cref="WaveletTransform.WT_IMPL_FULL" />
-        public override int getImplementationType(int c)
+        public override int GetImplementationType(int c)
         {
             return WaveletTransform_Fields.WT_IMPL_FULL;
         }
@@ -903,32 +895,32 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// <param name="y">The vertical index of the new tile.
         /// 
         /// </param>
-        public override void setTile(int x, int y)
+        public override void SetTile(int x, int y)
         {
             int i;
 
             // Change tile
-            base.setTile(x, y);
+            base.SetTile(x, y);
 
             var nc = src.NumComps;
             var tIdx = src.TileIdx;
             for (var c = 0; c < nc; c++)
             {
-                ndl[c] = src.getSynSubbandTree(tIdx, c).resLvl;
+                ndl[c] = src.GetSynSubbandTree(tIdx, c).resLvl;
             }
 
             // Ensure rented buffers are large enough for new tile; do not return them so they are reused
             for (i = 0; i < nc; i++)
             {
-                var newWidth = getTileCompWidth(tIdx, i);
-                var newHeight = getTileCompHeight(tIdx, i);
+                var newWidth = GetTileCompWidth(tIdx, i);
+                var newHeight = GetTileCompHeight(tIdx, i);
                 
                 // Validate dimensions to prevent integer overflow
                 long needed = (long)newWidth * newHeight;
                 if (needed > int.MaxValue)
                 {
                     throw new InvalidOperationException(
-                        $"Tile component {i} too large in setTile: " +
+                        $"Tile component {i} too large in SetTile: " +
                         $"w={newWidth}, h={newHeight}. " +
                         $"Buffer size {needed} exceeds maximum array size.");
                 }
@@ -969,24 +961,24 @@ namespace CoreJ2K.j2k.wavelet.synthesis
             SubbandSyn root, sb;
             for (var c = 0; c < nc; c++)
             {
-                root = src.getSynSubbandTree(tIdx, c);
+                root = src.GetSynSubbandTree(tIdx, c);
                 for (var r = 0; r <= reslvl - maxImgRes + root.resLvl; r++)
                 {
                     if (r == 0)
                     {
-                        sb = (SubbandSyn)root.getSubbandByIdx(0, 0);
+                        sb = (SubbandSyn)root.GetSubbandByIdx(0, 0);
                         if (sb != null)
                             cblkToDecode += sb.numCb.x * sb.numCb.y;
                     }
                     else
                     {
-                        sb = (SubbandSyn)root.getSubbandByIdx(r, 1);
+                        sb = (SubbandSyn)root.GetSubbandByIdx(r, 1);
                         if (sb != null)
                             cblkToDecode += sb.numCb.x * sb.numCb.y;
-                        sb = (SubbandSyn)root.getSubbandByIdx(r, 2);
+                        sb = (SubbandSyn)root.GetSubbandByIdx(r, 2);
                         if (sb != null)
                             cblkToDecode += sb.numCb.x * sb.numCb.y;
-                        sb = (SubbandSyn)root.getSubbandByIdx(r, 3);
+                        sb = (SubbandSyn)root.GetSubbandByIdx(r, 3);
                         if (sb != null)
                             cblkToDecode += sb.numCb.x * sb.numCb.y;
                     }
@@ -994,32 +986,32 @@ namespace CoreJ2K.j2k.wavelet.synthesis
             } // Loop on components
         }
 
-        public override void nextTile()
+        public override void NextTile()
         {
             int i;
 
             // Change tile
-            base.nextTile();
+            base.NextTile();
 
             var nc = src.NumComps;
             var tIdx = src.TileIdx;
             for (var c = 0; c < nc; c++)
             {
-                ndl[c] = src.getSynSubbandTree(tIdx, c).resLvl;
+                ndl[c] = src.GetSynSubbandTree(tIdx, c).resLvl;
             }
 
             // Ensure rented buffers are large enough for new tile; keep them for reuse
             for (i = 0; i < nc; i++)
             {
-                var newWidth = getTileCompWidth(tIdx, i);
-                var newHeight = getTileCompHeight(tIdx, i);
+                var newWidth = GetTileCompWidth(tIdx, i);
+                var newHeight = GetTileCompHeight(tIdx, i);
                 
                 // Validate dimensions to prevent integer overflow
                 long needed = (long)newWidth * newHeight;
                 if (needed > int.MaxValue)
                 {
                     throw new InvalidOperationException(
-                        $"Tile component {i} too large in nextTile: " +
+                        $"Tile component {i} too large in NextTile: " +
                         $"w={newWidth}, h={newHeight}. " +
                         $"Buffer size {needed} exceeds maximum array size.");
                 }

@@ -254,7 +254,7 @@ namespace CoreJ2K.Util
             ParseNumbers();
         }
 
-        private void setAttributes(int low, int hi, sbyte attrib)
+        private void SetAttributes(int low, int hi, sbyte attrib)
         {
             var l = Math.Max(0, low);
             var h = Math.Min(255, hi);
@@ -262,7 +262,7 @@ namespace CoreJ2K.Util
                 attribute[i] = attrib;
         }
 
-        private bool isWordChar(int data)
+        private bool IsWordChar(int data)
         {
             var ch = (char)data;
             return (data != -1 && (ch > 255 || attribute[ch] == WORDCHAR || attribute[ch] == NUMBERCHAR));
@@ -436,7 +436,7 @@ namespace CoreJ2K.Util
                         }
                     case STATE_WORD:
                         {
-                            if (isWordChar(data))
+                            if (IsWordChar(data))
                                 buf.Append(ch);
                             else
                             {
@@ -740,7 +740,7 @@ namespace CoreJ2K.Util
         /// <param name="hi">High end of the range.</param>
         public virtual void OrdinaryChars(int low, int hi)
         {
-            setAttributes(low, hi, ORDINARYCHAR);
+            SetAttributes(low, hi, ORDINARYCHAR);
         }
 
         /// <summary>
@@ -867,7 +867,7 @@ namespace CoreJ2K.Util
         /// <param name="hi">The high end of the range.</param>
         public virtual void WhitespaceChars(int low, int hi)
         {
-            setAttributes(low, hi, WHITESPACECHAR);
+            SetAttributes(low, hi, WHITESPACECHAR);
         }
 
         /// <summary>
@@ -877,7 +877,7 @@ namespace CoreJ2K.Util
         /// <param name="hi">The high end of the range.</param>
         public virtual void WordChars(int low, int hi)
         {
-            setAttributes(low, hi, WORDCHAR);
+            SetAttributes(low, hi, WORDCHAR);
         }
     }
 

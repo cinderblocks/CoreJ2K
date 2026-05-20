@@ -1,14 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: ISRandomAccessIO.java,v 1.2 2001/04/09 16:58:15 grosbois Exp $
-*
-* Class:                   ISRandomAccessIO
-*
-* Description:             Turns an InsputStream into a read-only
-*                          RandomAccessIO, using buffering.
-*
-*
 *
 * COPYRIGHT:
 * 
@@ -101,7 +91,7 @@ namespace CoreJ2K.j2k.util
         public virtual int ByteOrdering => EndianType_Fields.BIG_ENDIAN;
 
         /// <summary>The InputStream that is wrapped </summary>
-        private System.IO.Stream is_Renamed;
+        private System.IO.Stream inputStream;
 
         /* Tha maximum size, in bytes, of the in memory buffer. The maximum size
 		* includes the EOF. */
@@ -141,13 +131,13 @@ namespace CoreJ2K.j2k.util
         /// <param name="maxsize">The maximum size for the cache buffer, in bytes.
         /// 
         /// </param>
-        public ISRandomAccessIO(System.IO.Stream is_Renamed, int size, int inc, int maxsize)
+        public ISRandomAccessIO(System.IO.Stream inputStream, int size, int inc, int maxsize)
         {
-            if (size < 0 || inc <= 0 || maxsize <= 0 || is_Renamed == null)
+            if (size < 0 || inc <= 0 || maxsize <= 0 || inputStream == null)
             {
                 throw new ArgumentException();
             }
-            this.is_Renamed = is_Renamed;
+            this.inputStream = inputStream;
             // Increase size by one to count in EOF
             if (size < int.MaxValue)
                 size++;
@@ -173,23 +163,23 @@ namespace CoreJ2K.j2k.util
         /// <param name="is">The input from where to get the data.
         /// 
         /// </param>
-        public ISRandomAccessIO(System.IO.Stream is_Renamed)
+        public ISRandomAccessIO(System.IO.Stream inputStream)
         {
-            if (is_Renamed == null)
+            if (inputStream == null)
                 throw new ArgumentException();
 
             // When the full length is known upfront (e.g. MemoryStream) bulk-load
             // everything now so that readInput() is never called during decode.
-            if (is_Renamed.CanSeek && is_Renamed.CanRead && is_Renamed.Length <= int.MaxValue - 1)
+            if (inputStream.CanSeek && inputStream.CanRead && inputStream.Length <= int.MaxValue - 1)
             {
-                int streamLen = (int)(is_Renamed.Length - is_Renamed.Position);
+                int streamLen = (int)(inputStream.Length - inputStream.Position);
                 // +1 to account for the EOF sentinel used by readInput()
                 buf = new byte[streamLen + 1];
                 int offset = 0;
                 int remaining = streamLen;
                 while (remaining > 0)
                 {
-                    int read = is_Renamed.Read(buf, offset, remaining);
+                    int read = inputStream.Read(buf, offset, remaining);
                     if (read <= 0) break;
                     offset += read;
                     remaining -= read;
@@ -197,7 +187,7 @@ namespace CoreJ2K.j2k.util
                 len = offset;
                 complete = true;
                 // Do not dispose: the caller owns the stream's lifetime.
-                this.is_Renamed = null;
+                this.inputStream = null;
                 inc = 1 << 18;
                 maxsize = int.MaxValue;
                 pos = 0;
@@ -205,7 +195,7 @@ namespace CoreJ2K.j2k.util
             }
 
             // Fallback: incremental buffering for non-seekable or very large streams.
-            this.is_Renamed = is_Renamed;
+            this.inputStream = inputStream;
             int size = (1 << 18) + 1;
             buf = new byte[size];
             inc = 1 << 18;
@@ -271,7 +261,7 @@ namespace CoreJ2K.j2k.util
                 throw new ArgumentException("Already reached EOF");
             }
             long available;
-            available = is_Renamed.Length - is_Renamed.Position;
+            available = inputStream.Length - inputStream.Position;
             n = (int)available; /* how much can we read without blocking? */
             if (n == 0)
                 n = 1; /* read at least one byte (even if it blocks) */
@@ -284,7 +274,7 @@ namespace CoreJ2K.j2k.util
             do
             {
                 // CONVERSION PROBLEM? OPTIMIZE!!!
-                k = is_Renamed.Read(buf, len, n);
+                k = inputStream.Read(buf, len, n);
                 if (k > 0)
                 {
                     /* Some data was read */
@@ -297,8 +287,8 @@ namespace CoreJ2K.j2k.util
             {
                 /* we reached EOF */
                 complete = true;
-                is_Renamed.Dispose();
-                is_Renamed = null;
+                inputStream.Dispose();
+                inputStream = null;
             }
         }
 
@@ -315,8 +305,8 @@ namespace CoreJ2K.j2k.util
             buf = null;
             if (!complete)
             {
-                is_Renamed.Dispose();
-                is_Renamed = null;
+                inputStream.Dispose();
+                inputStream = null;
             }
         }
 

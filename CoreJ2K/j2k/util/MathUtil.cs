@@ -1,13 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: MathUtil.java,v 1.15 2001/09/14 08:48:51 grosbois Exp $
-*
-* Class:                   MathUtil
-*
-* Description:             Utility mathematical methods
-*
-*
 *
 * COPYRIGHT:
 * 

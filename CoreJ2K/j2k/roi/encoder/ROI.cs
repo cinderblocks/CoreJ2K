@@ -1,13 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: ROI.java,v 1.3 2001/01/03 15:08:15 qtxjoas Exp $
-*
-* Class:                   ROI
-*
-* Description:             This class describes a single ROI
-*
-*
 *
 * COPYRIGHT:
 * 

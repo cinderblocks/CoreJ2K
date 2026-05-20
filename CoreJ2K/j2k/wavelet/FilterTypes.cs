@@ -1,13 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: FilterTypes.java,v 1.12 2001/05/08 16:14:28 grosbois Exp $
-*
-* Class:                   FilterTypes
-*
-* Description:             Defines the interface for Filter types
-*
-*
 *
 * COPYRIGHT:
 * 

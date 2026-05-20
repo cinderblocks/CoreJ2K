@@ -1,13 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: CodestreamManipulator.java,v 1.17 2001/05/16 13:58:09 qtxjoas Exp $
-*
-* Class:                   CodestreamManipulator
-*
-* Description:             Manipulates codestream to create tile-parts etc
-*
-*
 *
 * COPYRIGHT:
 * 

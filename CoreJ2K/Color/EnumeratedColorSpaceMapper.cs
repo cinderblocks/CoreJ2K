@@ -1,6 +1,5 @@
 /// <summary>**************************************************************************
 /// 
-/// $Id: EnumeratedColorSpaceMapper.java,v 1.1 2002/07/25 14:52:01 grosbois Exp $
 /// 
 /// Copyright Eastman Kodak Company, 343 State Street, Rochester, NY 14650
 /// $Date $
@@ -47,7 +46,6 @@ namespace CoreJ2K.Color
         /// </param>
         protected internal EnumeratedColorSpaceMapper(image_BlkImgDataSrc src, ColorSpace csMap) : base(src, csMap)
         {
-            /* end EnumeratedColorSpaceMapper ctor */
         }
 
 
@@ -85,9 +83,9 @@ namespace CoreJ2K.Color
         /// 
         /// </returns>
         /// <seealso cref="GetInternCompData" />
-        public override image_DataBlk GetCompData(image_DataBlk out_Renamed, int c)
+        public override image_DataBlk GetCompData(image_DataBlk output, int c)
         {
-            return src.GetCompData(out_Renamed, c);
+            return src.GetCompData(output, c);
         }
 
         /// <summary> Returns, in the blk argument, a block of image data containing the
@@ -135,9 +133,9 @@ namespace CoreJ2K.Color
         /// 
         /// </returns>
         /// <seealso cref="GetCompData" />
-        public override image_DataBlk GetInternCompData(image_DataBlk out_Renamed, int compIndex)
+        public override image_DataBlk GetInternCompData(image_DataBlk output, int compIndex)
         {
-            return src.GetInternCompData(out_Renamed, compIndex);
+            return src.GetInternCompData(output, compIndex);
         }
 
 
@@ -176,7 +174,5 @@ namespace CoreJ2K.Color
 
             return rep.Append("]").ToString();
         }
-
-        /* end class EnumeratedColorSpaceMapper */
     }
 }

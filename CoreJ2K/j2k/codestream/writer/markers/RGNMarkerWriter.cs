@@ -46,7 +46,7 @@ namespace CoreJ2K.j2k.codestream.writer.markers
                 writer.Write((byte)Markers.SRGN_IMPLICIT);
 
                 // Write ROI info (SPrgn)
-                writer.Write((byte)((int)(encSpec.rois.getTileCompVal(tileIdx, i))));
+                writer.Write((byte)((int)(encSpec.rois.GetTileCompVal(tileIdx, i))));
             }
         }
     }

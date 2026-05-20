@@ -1,13 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: MQCoder.java,v 1.36 2002/01/10 10:31:28 grosbois Exp $
-*
-* Class:                   MQCoder
-*
-* Description:             Class that encodes a number of bits using the
-*                          MQ arithmetic coder
-*
 *
 *                          Diego SANTA CRUZ, Jul-26-1999 (improved speed)
 *
@@ -341,7 +332,7 @@ namespace CoreJ2K.j2k.entropy.encoder
         // Having ints proved to be more efficient than booleans
 
         /// <summary>The ByteOutputBuffer used to write the compressed bit stream. </summary>
-        internal ByteOutputBuffer out_Renamed;
+        internal ByteOutputBuffer outputBuffer;
 
         /// <summary>The current most probable signal for each context </summary>
         internal int[] mPS;
@@ -439,7 +430,7 @@ namespace CoreJ2K.j2k.entropy.encoder
         /// </param>
         public MQCoder(ByteOutputBuffer oStream, int nrOfContexts, int[] init)
         {
-            out_Renamed = oStream;
+            outputBuffer = oStream;
 
             // --- INITENC
 
@@ -950,11 +941,11 @@ namespace CoreJ2K.j2k.entropy.encoder
                     // Write delayed 0xFF bytes
                     if (delFF)
                     {
-                        out_Renamed.write(0xFF);
+                        outputBuffer.write(0xFF);
                         delFF = false;
                         nrOfWrittenBytes++;
                     }
-                    out_Renamed.write(b);
+                    outputBuffer.write(b);
                     nrOfWrittenBytes++;
                     b = (c >>> 19);
                     c &= 0x7FFFF;
@@ -977,11 +968,11 @@ namespace CoreJ2K.j2k.entropy.encoder
                         // Write delayed 0xFF bytes
                         if (delFF)
                         {
-                            out_Renamed.write(0xFF);
+                            outputBuffer.write(0xFF);
                             delFF = false;
                             nrOfWrittenBytes++;
                         }
-                        out_Renamed.write(b);
+                        outputBuffer.write(b);
                         nrOfWrittenBytes++;
                         b = (((c >>> 19)) & 0xFF);
                         c &= 0x7FFFF;
@@ -1060,11 +1051,11 @@ namespace CoreJ2K.j2k.entropy.encoder
                         // Write delayed 0xFF bytes
                         if (delFF)
                         {
-                            out_Renamed.write(0xFF);
+                            outputBuffer.write(0xFF);
                             delFF = false;
                             nrOfWrittenBytes++;
                         }
-                        out_Renamed.write(b);
+                        outputBuffer.write(b);
                         nrOfWrittenBytes++;
                     }
                     break;
@@ -1197,7 +1188,7 @@ namespace CoreJ2K.j2k.entropy.encoder
                             if (bLow <= 127 && bUp > 127)
                                 break;
                             // We will write more bytes so output delayed 0xFF now
-                            out_Renamed.write(0xFF);
+                            outputBuffer.write(0xFF);
                             nrOfWrittenBytes++;
                             delFF = false;
                         }
@@ -1220,7 +1211,7 @@ namespace CoreJ2K.j2k.entropy.encoder
                             // Transfer byte bits from C to B
                             // (if the byte buffer was empty output nothing)
                             if (nrOfWrittenBytes >= 0)
-                                out_Renamed.write(bLow);
+                                outputBuffer.write(bLow);
                             nrOfWrittenBytes++;
                             bUp -= bLow;
                             bUp <<= 8;
@@ -1311,7 +1302,7 @@ namespace CoreJ2K.j2k.entropy.encoder
         {
 
             // Reset the output buffer
-            out_Renamed.reset();
+            outputBuffer.reset();
 
             a = 0x8000;
             c = 0;
@@ -1491,7 +1482,7 @@ namespace CoreJ2K.j2k.entropy.encoder
                         }
                         // Update bounds with next byte of coded data and
                         // normalize to cT = 0 again.
-                        nb = (clen >= minlen) ? out_Renamed.getByte(clen) : 0;
+                        nb = (clen >= minlen) ? outputBuffer.GetByte(clen) : 0;
                         bLow -= nb;
                         bUp -= nb;
                         clen++;

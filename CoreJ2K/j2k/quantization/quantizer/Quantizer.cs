@@ -1,13 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: Quantizer.java,v 1.38 2002/01/09 13:24:14 grosbois Exp $
-*
-* Class:                   Quantizer
-*
-* Description:             An abstract class for quantizers
-*
-*
 *
 * COPYRIGHT:
 * 
@@ -153,7 +144,7 @@ namespace CoreJ2K.j2k.quantization.quantizer
         /// <returns> The number of guard bits
         /// 
         /// </returns>
-        public abstract int getNumGuardBits(int t, int c);
+        public abstract int GetNumGuardBits(int t, int c);
 
         /// <summary> Returns true if the quantizer of given tile-component uses derived
         /// quantization step sizes.
@@ -168,7 +159,7 @@ namespace CoreJ2K.j2k.quantization.quantizer
         /// <returns> True if derived quantization is used.
         /// 
         /// </returns>
-        public abstract bool isDerived(int t, int c);
+        public abstract bool IsDerived(int t, int c);
 
         /// <summary> Calculates the parameters of the SubbandAn objects that depend on the
         /// Quantizer. The 'stepWMSE' field is calculated for each subband which is
@@ -205,12 +196,12 @@ namespace CoreJ2K.j2k.quantization.quantizer
         /// <seealso cref="SubbandAn" />
         /// <seealso cref="Subband" />
         /// <seealso cref="calcSbParams" />
-        public virtual SubbandAn getAnSubbandTree(int t, int c)
+        public virtual SubbandAn GetAnSubbandTree(int t, int c)
         {
             SubbandAn sbba;
 
             // Ask for the wavelet tree of the source
-            sbba = src.getAnSubbandTree(t, c);
+            sbba = src.GetAnSubbandTree(t, c);
             // Calculate the stepWMSE
             calcSbParams(sbba, c);
             return sbba;
@@ -252,9 +243,9 @@ namespace CoreJ2K.j2k.quantization.quantizer
         /// current tile.
         /// 
         /// </returns>
-        public abstract int getMaxMagBits(int c);
-        public abstract CBlkWTData getNextInternCodeBlock(int param1, CBlkWTData param2);
-        public abstract CBlkWTData getNextCodeBlock(int param1, CBlkWTData param2);
-        public abstract bool isReversible(int param1, int param2);
+        public abstract int GetMaxMagBits(int c);
+        public abstract CBlkWTData GetNextInternCodeBlock(int param1, CBlkWTData param2);
+        public abstract CBlkWTData GetNextCodeBlock(int param1, CBlkWTData param2);
+        public abstract bool IsReversible(int param1, int param2);
     }
 }

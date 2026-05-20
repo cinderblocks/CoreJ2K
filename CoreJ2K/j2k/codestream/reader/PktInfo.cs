@@ -1,13 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: PktInfo.java,v 1.7 2001/02/14 10:54:49 grosbois Exp $
-*
-* Class:                   PktInfo
-*
-* Description:             Object containing packet informations.
-* 
-*
 *
 * COPYRIGHT:
 * 

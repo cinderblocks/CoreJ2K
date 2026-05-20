@@ -1,6 +1,5 @@
 /// <summary>**************************************************************************
 /// 
-/// $Id: SYccColorSpaceMapper.java,v 1.1 2002/07/25 14:52:01 grosbois Exp $
 /// 
 /// Copyright Eastman Kodak Company, 343 State Street, Rochester, NY 14650
 /// $Date $
@@ -62,7 +61,7 @@ namespace CoreJ2K.Color
             if (ncomps != 1 && ncomps != 3)
             {
                 var msg = $"EsRgbColorSpaceMapper: e-sRGB transformation _not_ applied to {ncomps} component image";
-                FacilityManager.getMsgLogger().printmsg(j2k.util.MsgLogger_Fields.ERROR, msg);
+                FacilityManager.GetMsgLogger().printmsg(j2k.util.MsgLogger_Fields.ERROR, msg);
                 throw new ColorSpaceException(msg);
             }
         }
@@ -106,7 +105,7 @@ namespace CoreJ2K.Color
         {
 
             var type = outblk.DataType;
-            var colors = Math.Pow(2, src.getNomRangeBits(c));
+            var colors = Math.Pow(2, src.GetNomRangeBits(c));
             var bitoff = colors * 0.375D;
             if (type == image_DataBlk.TYPE_INT)
             {
@@ -127,7 +126,7 @@ namespace CoreJ2K.Color
             }
             else if (type == DataBlk.TYPE_FLOAT)
             {
-                FacilityManager.getMsgLogger().printmsg(j2k.util.MsgLogger_Fields.WARNING, "Unsupported e-sRGB DataType (float)");
+                FacilityManager.GetMsgLogger().printmsg(j2k.util.MsgLogger_Fields.WARNING, "Unsupported e-sRGB DataType (float)");
 
                 var fltblk = (image_DataBlkFloat)src.GetInternCompData(outblk, c);
                 outblk = fltblk;
@@ -181,9 +180,9 @@ namespace CoreJ2K.Color
         /// </returns>
         /// <seealso cref="GetCompData">
         /// </seealso>
-        public override image_DataBlk GetInternCompData(image_DataBlk out_Renamed, int compIndex)
+        public override image_DataBlk GetInternCompData(image_DataBlk output, int compIndex)
         {
-            return GetCompData(out_Renamed, compIndex);
+            return GetCompData(output, compIndex);
         }
 
         /// <summary>Return a suitable String representation of the class instance. </summary>
@@ -196,7 +195,7 @@ namespace CoreJ2K.Color
 
             for (i = 0; i < ncomps; ++i)
             {
-                rep_comps.Append("  ").Append("component[").Append(Convert.ToString(i)).Append("] height, width = (").Append(src.getCompImgHeight(i)).Append(", ").Append(src.getCompImgWidth(i)).Append(")").Append(Environment.NewLine);
+                rep_comps.Append("  ").Append("component[").Append(Convert.ToString(i)).Append("] height, width = (").Append(src.GetCompImgHeight(i)).Append(", ").Append(src.GetCompImgWidth(i)).Append(")").Append(Environment.NewLine);
             }
 
             var rep = new System.Text.StringBuilder("[EsRGBColorSpaceMapper ");

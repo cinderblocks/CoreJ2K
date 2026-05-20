@@ -1,13 +1,4 @@
 /* 
-* CVS identifier:
-* 
-* $Id: ForwCompTransfSpec.java,v 1.7 2001/05/08 16:10:18 grosbois Exp $
-* 
-* Class:                   ForwCompTransfSpec
-* 
-* Description:             Component Transformation specification for encoder
-* 
-* 
 * 
 * COPYRIGHT:
 * 
@@ -85,7 +76,7 @@ namespace CoreJ2K.j2k.image.forwcomptransf
         public ForwCompTransfSpec(int nt, int nc, byte type, AnWTFilterSpec wfs, ParameterList pl) : base(nt, nc, type)
         {
 
-            var param = pl.getParameter("Mct");
+            var param = pl.GetParameter("Mct");
 
             if (param == null)
             {
@@ -95,13 +86,13 @@ namespace CoreJ2K.j2k.image.forwcomptransf
                 // transformation 
                 if (nc < 3)
                 {
-                    setDefault("none");
+                    SetDefault("none");
                     return;
                 }
                 // If the compression is lossless, uses RCT
-                else if (pl.getBooleanParameter("lossless"))
+                else if (pl.GetBooleanParameter("lossless"))
                 {
-                    setDefault("rct");
+                    SetDefault("rct");
                     return;
                 }
                 else
@@ -110,7 +101,7 @@ namespace CoreJ2K.j2k.image.forwcomptransf
                     var filtType = new int[nComp];
                     for (var c = 0; c < 3; c++)
                     {
-                        anfilt = (AnWTFilter[][])wfs.getCompDef(c);
+                        anfilt = (AnWTFilter[][])wfs.GetCompDef(c);
                         filtType[c] = anfilt[0][0].FilterType;
                     }
 
@@ -124,12 +115,12 @@ namespace CoreJ2K.j2k.image.forwcomptransf
 
                     if (reject)
                     {
-                        setDefault("none");
+                        SetDefault("none");
                     }
                     else
                     {
-                        anfilt = (AnWTFilter[][])wfs.getCompDef(0);
-                        setDefault(anfilt[0][0].FilterType == FilterTypes_Fields.W9X7 ? "ict" : "rct");
+                        anfilt = (AnWTFilter[][])wfs.GetCompDef(0);
+                        SetDefault(anfilt[0][0].FilterType == FilterTypes_Fields.W9X7 ? "ict" : "rct");
                     }
                 }
 
@@ -142,7 +133,7 @@ namespace CoreJ2K.j2k.image.forwcomptransf
                     var filtType = new int[nComp];
                     for (var c = 0; c < 3; c++)
                     {
-                        anfilt = (AnWTFilter[][])wfs.getTileCompVal(t, c);
+                        anfilt = (AnWTFilter[][])wfs.GetTileCompVal(t, c);
                         filtType[c] = anfilt[0][0].FilterType;
                     }
 
@@ -156,12 +147,12 @@ namespace CoreJ2K.j2k.image.forwcomptransf
 
                     if (reject)
                     {
-                        setTileDef(t, "none");
+                        SetTileDef(t, "none");
                     }
                     else
                     {
-                        anfilt = (AnWTFilter[][])wfs.getTileCompVal(t, 0);
-                        setTileDef(t, anfilt[0][0].FilterType == FilterTypes_Fields.W9X7 ? "ict" : "rct");
+                        anfilt = (AnWTFilter[][])wfs.GetTileCompVal(t, 0);
+                        SetTileDef(t, anfilt[0][0].FilterType == FilterTypes_Fields.W9X7 ? "ict" : "rct");
                     }
                 }
                 return;
@@ -174,7 +165,7 @@ namespace CoreJ2K.j2k.image.forwcomptransf
                                         // current parameter
             bool[] tileSpec = null; // Tiles concerned by the
                                     // specification
-                                    //System.Boolean value_Renamed;
+                                    //System.Boolean value;
 
             while (stk.HasMoreTokens())
             {
@@ -198,14 +189,14 @@ namespace CoreJ2K.j2k.image.forwcomptransf
                                 switch (curSpecType)
                                 {
                                     case SPEC_DEF:
-                                        setDefault("none");
+                                        SetDefault("none");
                                         break;
                                     case SPEC_TILE_DEF:
                                         {
                                             for (var i = tileSpec.Length - 1; i >= 0; i--)
                                                 if (tileSpec[i])
                                                 {
-                                                    setTileDef(i, "none");
+                                                    SetTileDef(i, "none");
                                                 }
 
                                             break;
@@ -219,7 +210,7 @@ namespace CoreJ2K.j2k.image.forwcomptransf
                                 // Set arbitrarily the default
                                 // value to RCT (later will be found the suitable
                                 // component transform for each tile)
-                                setDefault("rct");
+                                SetDefault("rct");
                                 break;
                             case "on":
                                 {
@@ -229,8 +220,8 @@ namespace CoreJ2K.j2k.image.forwcomptransf
                                         {
                                             if (tileSpec[i])
                                             {
-                                                setTileDef(i,
-                                                    getFilterType(i, wfs) == FilterTypes_Fields.W5X3 ? "rct" : "ict");
+                                                SetTileDef(i,
+                                                    GetFilterType(i, wfs) == FilterTypes_Fields.W5X3 ? "rct" : "ict");
                                             }
                                         }
                                     }
@@ -250,16 +241,16 @@ namespace CoreJ2K.j2k.image.forwcomptransf
             }
 
             // Check that default value has been specified
-            if (getDefault() == null)
+            if (GetDefault() == null)
             {
                 // If not, set arbitrarily the default value to 'none' but
                 // specifies explicitely a default value for each tile depending
                 // on the wavelet transform that is used
-                setDefault("none");
+                SetDefault("none");
 
                 for (var t = 0; t < nt; t++)
                 {
-                    if (isTileSpecified(t))
+                    if (IsTileSpecified(t))
                     {
                         continue;
                     }
@@ -268,7 +259,7 @@ namespace CoreJ2K.j2k.image.forwcomptransf
                     var filtType = new int[nComp];
                     for (var c = 0; c < 3; c++)
                     {
-                        anfilt = (AnWTFilter[][])wfs.getTileCompVal(t, c);
+                        anfilt = (AnWTFilter[][])wfs.GetTileCompVal(t, c);
                         filtType[c] = anfilt[0][0].FilterType;
                     }
 
@@ -282,12 +273,12 @@ namespace CoreJ2K.j2k.image.forwcomptransf
 
                     if (reject)
                     {
-                        setTileDef(t, "none");
+                        SetTileDef(t, "none");
                     }
                     else
                     {
-                        anfilt = (AnWTFilter[][])wfs.getTileCompVal(t, 0);
-                        setTileDef(t, anfilt[0][0].FilterType == FilterTypes_Fields.W9X7 ? "ict" : "rct");
+                        anfilt = (AnWTFilter[][])wfs.GetTileCompVal(t, 0);
+                        SetTileDef(t, anfilt[0][0].FilterType == FilterTypes_Fields.W9X7 ? "ict" : "rct");
                     }
                 }
             }
@@ -297,15 +288,15 @@ namespace CoreJ2K.j2k.image.forwcomptransf
             for (var t = nt - 1; t >= 0; t--)
             {
 
-                if (((string)getTileDef(t)).Equals("none"))
+                if (((string)GetTileDef(t)).Equals("none"))
                 {
                     // No comp. transf is used. No check is needed
                     continue;
                 }
-                else if (((string)getTileDef(t)).Equals("rct"))
+                else if (((string)GetTileDef(t)).Equals("rct"))
                 {
                     // Tile is using Reversible component transform
-                    var filterType = getFilterType(t, wfs);
+                    var filterType = GetFilterType(t, wfs);
                     switch (filterType)
                     {
 
@@ -313,7 +304,7 @@ namespace CoreJ2K.j2k.image.forwcomptransf
                             break;
 
                         case FilterTypes_Fields.W9X7:  // Must use ICT
-                            if (isTileSpecified(t))
+                            if (IsTileSpecified(t))
                             {
                                 // User has requested RCT -> Error
                                 throw new ArgumentException($"Cannot use RCT with 9x7 filter in tile {t}");
@@ -321,7 +312,7 @@ namespace CoreJ2K.j2k.image.forwcomptransf
                             else
                             {
                                 // Specify ICT for this tile
-                                setTileDef(t, "ict");
+                                SetTileDef(t, "ict");
                             }
                             break;
 
@@ -333,19 +324,19 @@ namespace CoreJ2K.j2k.image.forwcomptransf
                 else
                 {
                     // ICT
-                    var filterType = getFilterType(t, wfs);
+                    var filterType = GetFilterType(t, wfs);
                     switch (filterType)
                     {
 
                         case FilterTypes_Fields.W5X3:  // Must use RCT
-                            if (isTileSpecified(t))
+                            if (IsTileSpecified(t))
                             {
                                 // User has requested ICT -> Error
                                 throw new ArgumentException($"Cannot use ICT with filter 5x3 in tile {t}");
                             }
                             else
                             {
-                                setTileDef(t, "rct");
+                                SetTileDef(t, "rct");
                             }
                             break;
 
@@ -374,7 +365,7 @@ namespace CoreJ2K.j2k.image.forwcomptransf
         /// <returns> The filter type common to all the components 
         /// 
         /// </returns>
-        private int getFilterType(int t, AnWTFilterSpec wfs)
+        private int GetFilterType(int t, AnWTFilterSpec wfs)
         {
             AnWTFilter[][] anfilt;
             var filtType = new int[nComp];
@@ -382,11 +373,11 @@ namespace CoreJ2K.j2k.image.forwcomptransf
             {
                 if (t == -1)
                 {
-                    anfilt = (AnWTFilter[][])wfs.getCompDef(c);
+                    anfilt = (AnWTFilter[][])wfs.GetCompDef(c);
                 }
                 else
                 {
-                    anfilt = (AnWTFilter[][])wfs.getTileCompVal(t, c);
+                    anfilt = (AnWTFilter[][])wfs.GetTileCompVal(t, c);
                 }
                 filtType[c] = anfilt[0][0].FilterType;
             }

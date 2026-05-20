@@ -1,13 +1,4 @@
 /* 
-* CVS identifier:
-* 
-* $Id: CompTransfSpec.java,v 1.18 2001/04/10 14:23:26 grosbois Exp $
-* 
-* Class:                   CompTransfSpec
-* 
-* Description:             Component Transformation specification
-* 
-* 
 * 
 * COPYRIGHT:
 * 

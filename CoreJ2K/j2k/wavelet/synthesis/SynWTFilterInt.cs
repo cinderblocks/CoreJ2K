@@ -1,14 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: SynWTFilterInt.java,v 1.7 2000/09/05 09:26:35 grosbois Exp $
-*
-* Class:                   SynWTFilterInt
-*
-* Description:             A specialized synthesis wavelet filter interface
-*                          that works on int data.
-*
-*
 *
 * COPYRIGHT:
 * 

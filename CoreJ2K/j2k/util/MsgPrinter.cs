@@ -1,14 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: MsgPrinter.java,v 1.6 2000/09/05 09:25:24 grosbois Exp $
-*
-* Class:                   MsgPrinter
-*
-* Description:             Prints messages formatted for a specific
-*                          line width.
-*
-*
 *
 * COPYRIGHT:
 * 
@@ -133,7 +123,7 @@ namespace CoreJ2K.j2k.util
         /// 
         /// 
         /// </param>
-        public virtual void print(System.IO.StreamWriter out_Renamed, int flind, int ind, string msg)
+        public virtual void print(System.IO.StreamWriter writer, int flind, int ind, string msg)
         {
             int start, end, pend, efflw, lind, i;
 
@@ -149,13 +139,13 @@ namespace CoreJ2K.j2k.util
                     // Forced line break
                     for (i = 0; i < lind; i++)
                     {
-                        out_Renamed.Write(" ");
+                        writer.Write(" ");
                     }
-                    out_Renamed.WriteLine(msg.Substring(start, (pend) - (start)));
+                    writer.WriteLine(msg.Substring(start, (pend) - (start)));
                     if (nextWord(msg, pend) == msg.Length)
                     {
                         // Traling newline => print it and done
-                        out_Renamed.WriteLine("");
+                        writer.WriteLine("");
                         start = pend;
                         break;
                     }
@@ -174,18 +164,18 @@ namespace CoreJ2K.j2k.util
                         // Filled-up current line => print it
                         for (i = 0; i < lind; i++)
                         {
-                            out_Renamed.Write(" ");
+                            writer.Write(" ");
                         }
                         if (start == pend)
                         {
                             // Word larger than line width
                             // Print anyways
-                            out_Renamed.WriteLine(msg.Substring(start, (end) - (start)));
+                            writer.WriteLine(msg.Substring(start, (end) - (start)));
                             pend = end;
                         }
                         else
                         {
-                            out_Renamed.WriteLine(msg.Substring(start, (pend) - (start)));
+                            writer.WriteLine(msg.Substring(start, (pend) - (start)));
                         }
                     }
                 }
@@ -204,9 +194,9 @@ namespace CoreJ2K.j2k.util
                 // Part of a line left => print it
                 for (i = 0; i < lind; i++)
                 {
-                    out_Renamed.Write(" ");
+                    writer.Write(" ");
                 }
-                out_Renamed.WriteLine(msg.Substring(start, (pend) - (start)));
+                writer.WriteLine(msg.Substring(start, (pend) - (start)));
             }
         }
 

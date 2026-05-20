@@ -1,14 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: DequantizerParams.java,v 1.16 2000/09/19 14:11:54 grosbois Exp $
-*
-* Class:                   DequantizerParams
-*
-* Description:             Generic class to hold dequantizer
-*                          parameters.
-*
-*
 *
 * COPYRIGHT:
 * 

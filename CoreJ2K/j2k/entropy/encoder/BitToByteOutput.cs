@@ -1,14 +1,4 @@
 /* 
-* CVS identifier:
-* 
-* $Id: BitToByteOutput.java,v 1.16 2001/10/17 16:56:59 grosbois Exp $
-* 
-* Class:                   BitToByteOutput
-* 
-* Description:             Adapter to perform bit based output on a byte
-*                          based one.
-* 
-* 
 * 
 * COPYRIGHT:
 * 
@@ -78,7 +68,7 @@ namespace CoreJ2K.j2k.entropy.encoder
         internal bool delFF = false;
 
         /// <summary>The byte based output </summary>
-        internal ByteOutputBuffer out_Renamed;
+        internal ByteOutputBuffer outputBuffer;
 
         /// <summary>The bit buffer </summary>
         internal int bbuf;
@@ -100,9 +90,9 @@ namespace CoreJ2K.j2k.entropy.encoder
         /// <param name="out">The underlying byte based output
         /// 
         /// </param>
-        internal BitToByteOutput(ByteOutputBuffer out_Renamed)
+        internal BitToByteOutput(ByteOutputBuffer outputBuffer)
         {
-            this.out_Renamed = out_Renamed;
+            this.outputBuffer = outputBuffer;
         }
 
         /// <summary> Writes to the bit stream the symbols contained in the 'symbuf'
@@ -135,11 +125,11 @@ namespace CoreJ2K.j2k.entropy.encoder
                         if (delFF)
                         {
                             // Output delayed 0xFF if any
-                            out_Renamed.write(0xFF);
+                            outputBuffer.write(0xFF);
                             nb++;
                             delFF = false;
                         }
-                        out_Renamed.write(bbuf);
+                        outputBuffer.write(bbuf);
                         nb++;
                         bpos = 7;
                     }
@@ -173,12 +163,12 @@ namespace CoreJ2K.j2k.entropy.encoder
                     if (delFF)
                     {
                         // Output delayed 0xFF if any
-                        out_Renamed.write(0xFF);
+                        outputBuffer.write(0xFF);
                         nb++;
                         delFF = false;
                     }
                     // Output the bit buffer
-                    out_Renamed.write(bbuf);
+                    outputBuffer.write(bbuf);
                     nb++;
                     bpos = 7;
                 }
@@ -205,23 +195,23 @@ namespace CoreJ2K.j2k.entropy.encoder
                 {
                     // Bit buffer is not empty
                     // Output delayed 0xFF
-                    out_Renamed.write(0xFF);
+                    outputBuffer.write(0xFF);
                     nb++;
                     delFF = false;
                     // Pad to byte boundary with an alternating sequence of 0's
                     // and 1's.
                     bbuf |= ((PAD_SEQ >>> (6 - bpos)));
                     // Output the bit buffer
-                    out_Renamed.write(bbuf);
+                    outputBuffer.write(bbuf);
                     nb++;
                     bpos = 7;
                     bbuf = 0;
                 }
                 else if (isPredTerm)
                 {
-                    out_Renamed.write(0xFF);
+                    outputBuffer.write(0xFF);
                     nb++;
-                    out_Renamed.write(0x2A);
+                    outputBuffer.write(0x2A);
                     nb++;
                     bpos = 7;
                     bbuf = 0;
@@ -238,7 +228,7 @@ namespace CoreJ2K.j2k.entropy.encoder
                     // 1's.
                     bbuf |= ((PAD_SEQ >>> (6 - bpos)));
                     // Output the bit buffer (bbuf can not be 0xFF)
-                    out_Renamed.write(bbuf);
+                    outputBuffer.write(bbuf);
                     nb++;
                     bpos = 7;
                     bbuf = 0;

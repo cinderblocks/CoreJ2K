@@ -1,11 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: Markers.java,v 1.13 2001/09/14 09:31:40 grosbois Exp $
-*
-* Class:                   Markers
-*
-* Description: Defines the values of the markers in JPEG 2000 codestream
 *
 * COPYRIGHT:
 * 

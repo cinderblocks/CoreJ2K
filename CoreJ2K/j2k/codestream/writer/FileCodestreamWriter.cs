@@ -1,13 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: FileCodestreamWriter.java,v 1.15 2001/09/14 09:29:22 grosbois Exp $
-*
-* Class:                   FileCodestreamWriter
-*
-* Description:             Implementation of the bit stream writer for streams.
-*
-*
 *
 * COPYRIGHT:
 * 
@@ -92,7 +83,7 @@ namespace CoreJ2K.j2k.codestream.writer
         //private int tileIdx = 0;
 
         /// <summary>The file to write </summary>
-        private readonly System.IO.Stream out_Renamed;
+        private readonly System.IO.Stream outStream;
 
         /// <summary>The number of bytes already written to the codestream, excluding the
         /// header length, magic number and header length info. 
@@ -139,7 +130,7 @@ namespace CoreJ2K.j2k.codestream.writer
         /// </exception>
         public FileCodestreamWriter(System.IO.Stream os, int mb) : base(mb)
         {
-            out_Renamed = os;
+            outStream = os;
             initSOP_EPHArrays();
         }
 
@@ -211,7 +202,7 @@ namespace CoreJ2K.j2k.codestream.writer
                         // classe's constructor. 
                         sopMarker[4] = (byte)(packetIdx >> 8);
                         sopMarker[5] = (byte)(packetIdx);
-                        out_Renamed.Write(sopMarker, 0, Markers.SOP_LENGTH);
+                        outStream.Write(sopMarker, 0, Markers.SOP_LENGTH);
                         packetIdx++;
                         if (packetIdx > SOP_MARKER_LIMIT)
                         {
@@ -219,14 +210,14 @@ namespace CoreJ2K.j2k.codestream.writer
                             packetIdx = 0;
                         }
                     }
-                    out_Renamed.Write(head, 0, hlen);
+                    outStream.Write(head, 0, hlen);
                     // Update data length 
                     ndata += len;
 
                     // Write End of Packet Header markers if necessary 
                     if (eph)
                     {
-                        out_Renamed.Write(ephMarker, 0, Markers.EPH_LENGTH);
+                        outStream.Write(ephMarker, 0, Markers.EPH_LENGTH);
                     }
 
                     // Deal with ROI Information
@@ -290,7 +281,7 @@ namespace CoreJ2K.j2k.codestream.writer
                 }
                 if (blen > 0)
                 {
-                    out_Renamed.Write(body, 0, len);
+                    outStream.Write(body, 0, len);
                 }
                 // Update data length 
                 ndata += len;
@@ -320,8 +311,8 @@ namespace CoreJ2K.j2k.codestream.writer
         {
 
             // Write the EOC marker and close the codestream.
-            out_Renamed.WriteByte(unchecked((byte)(Markers.EOC >>> 8)));
-            out_Renamed.WriteByte(Markers.EOC & 0x00FF);
+            outStream.WriteByte(unchecked((byte)(Markers.EOC >>> 8)));
+            outStream.WriteByte(Markers.EOC & 0x00FF);
 
             ndata += 2; // Add two to length of codestream for EOC marker
         }
@@ -341,7 +332,7 @@ namespace CoreJ2K.j2k.codestream.writer
         {
             // Actualize ndata
             ndata += he.Length;
-            he.writeTo(out_Renamed); // Write the header
+            he.writeTo(outStream); // Write the header
                                      // Reset packet index used for SOP markers
             packetIdx = 0;
 

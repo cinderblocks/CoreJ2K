@@ -1,6 +1,5 @@
 /// <summary>**************************************************************************
 /// 
-/// $Id: SYccColorSpaceMapper.java,v 1.1 2002/07/25 14:52:01 grosbois Exp $
 /// 
 /// Copyright Eastman Kodak Company, 343 State Street, Rochester, NY 14650
 /// $Date $
@@ -74,7 +73,6 @@ namespace CoreJ2K.Color
         protected internal SYccColorSpaceMapper(image_BlkImgDataSrc src, ColorSpace csMap) : base(src, csMap)
         {
             initialize();
-            /* end SYccColorSpaceMapper ctor */
         }
 
         /// <summary>General utility used by ctors </summary>
@@ -83,7 +81,7 @@ namespace CoreJ2K.Color
             if (ncomps != 1 && ncomps != 3)
             {
                 var msg = $"SYccColorSpaceMapper: ycc transformation _not_ applied to {ncomps} component image";
-                FacilityManager.getMsgLogger().printmsg(j2k.util.MsgLogger_Fields.ERROR, msg);
+                FacilityManager.GetMsgLogger().printmsg(j2k.util.MsgLogger_Fields.ERROR, msg);
                 throw new ColorSpaceException(msg);
             }
 
@@ -228,9 +226,9 @@ namespace CoreJ2K.Color
         /// </returns>
         /// <seealso cref="GetCompData">
         /// </seealso>
-        public override image_DataBlk GetInternCompData(image_DataBlk out_Renamed, int compIndex)
+        public override image_DataBlk GetInternCompData(image_DataBlk output, int compIndex)
         {
-            return GetCompData(out_Renamed, compIndex);
+            return GetCompData(output, compIndex);
         }
 
 
@@ -251,26 +249,26 @@ namespace CoreJ2K.Color
             int i, j;
             var length = inblk[0].h * inblk[0].w;
             var outblk = new image_DataBlkFloat[3];
-            var out_Renamed = new float[3][];
-            var in_Renamed = new float[3][];
+            var output = new float[3][];
+            var inStream = new float[3][];
 
             for (i = 0; i < 3; ++i)
             {
-                in_Renamed[i] = inblk[i].DataFloat;
+                inStream[i] = inblk[i].DataFloat;
                 outblk[i] = new image_DataBlkFloat();
                 copyGeometry(outblk[i], inblk[i]);
                 outblk[i].offset = inblk[i].offset;
-                out_Renamed[i] = new float[length];
-                outblk[i].Data = out_Renamed[i];
+                output[i] = new float[length];
+                outblk[i].Data = output[i];
             }
 
             for (j = 0; j < length; ++j)
             {
-                out_Renamed[0][j] = (Matrix00 * in_Renamed[0][inblk[0].offset + j] + Matrix01 * in_Renamed[1][inblk[1].offset + j] + Matrix02 * in_Renamed[2][inblk[2].offset + j]);
+                output[0][j] = (Matrix00 * inStream[0][inblk[0].offset + j] + Matrix01 * inStream[1][inblk[1].offset + j] + Matrix02 * inStream[2][inblk[2].offset + j]);
 
-                out_Renamed[1][j] = (Matrix10 * in_Renamed[0][inblk[0].offset + j] + Matrix11 * in_Renamed[1][inblk[1].offset + j] + Matrix12 * in_Renamed[2][inblk[2].offset + j]);
+                output[1][j] = (Matrix10 * inStream[0][inblk[0].offset + j] + Matrix11 * inStream[1][inblk[1].offset + j] + Matrix12 * inStream[2][inblk[2].offset + j]);
 
-                out_Renamed[2][j] = (Matrix20 * in_Renamed[0][inblk[0].offset + j] + Matrix21 * in_Renamed[1][inblk[1].offset + j] + Matrix22 * in_Renamed[2][inblk[2].offset + j]);
+                output[2][j] = (Matrix20 * inStream[0][inblk[0].offset + j] + Matrix21 * inStream[1][inblk[1].offset + j] + Matrix22 * inStream[2][inblk[2].offset + j]);
             }
 
             return outblk;
@@ -296,26 +294,26 @@ namespace CoreJ2K.Color
             int i, j;
             var length = inblk[0].h * inblk[0].w;
             var outblk = new image_DataBlkInt[3];
-            var out_Renamed = new int[3][];
-            var in_Renamed = new int[3][];
+            var output = new int[3][];
+            var inStream = new int[3][];
 
             for (i = 0; i < 3; ++i)
             {
-                in_Renamed[i] = inblk[i].DataInt;
+                inStream[i] = inblk[i].DataInt;
                 outblk[i] = new image_DataBlkInt();
                 copyGeometry(outblk[i], inblk[i]);
                 outblk[i].offset = inblk[i].offset;
-                out_Renamed[i] = new int[length];
-                outblk[i].Data = out_Renamed[i];
+                output[i] = new int[length];
+                outblk[i].Data = output[i];
             }
 
             for (j = 0; j < length; ++j)
             {
-                out_Renamed[0][j] = (int)(Matrix00 * in_Renamed[0][inblk[0].offset + j] + Matrix01 * in_Renamed[1][inblk[1].offset + j] + Matrix02 * in_Renamed[2][inblk[2].offset + j]);
+                output[0][j] = (int)(Matrix00 * inStream[0][inblk[0].offset + j] + Matrix01 * inStream[1][inblk[1].offset + j] + Matrix02 * inStream[2][inblk[2].offset + j]);
 
-                out_Renamed[1][j] = (int)(Matrix10 * in_Renamed[0][inblk[0].offset + j] + Matrix11 * in_Renamed[1][inblk[1].offset + j] + Matrix12 * in_Renamed[2][inblk[2].offset + j]);
+                output[1][j] = (int)(Matrix10 * inStream[0][inblk[0].offset + j] + Matrix11 * inStream[1][inblk[1].offset + j] + Matrix12 * inStream[2][inblk[2].offset + j]);
 
-                out_Renamed[2][j] = (int)(Matrix20 * in_Renamed[0][inblk[0].offset + j] + Matrix21 * in_Renamed[1][inblk[1].offset + j] + Matrix22 * in_Renamed[2][inblk[2].offset + j]);
+                output[2][j] = (int)(Matrix20 * inStream[0][inblk[0].offset + j] + Matrix21 * inStream[1][inblk[1].offset + j] + Matrix22 * inStream[2][inblk[2].offset + j]);
             }
 
             return outblk;
@@ -332,7 +330,7 @@ namespace CoreJ2K.Color
 
             for (i = 0; i < ncomps; ++i)
             {
-                rep_comps.Append("  ").Append("component[").Append(Convert.ToString(i)).Append("] height, width = (").Append(src.getCompImgHeight(i)).Append(", ").Append(src.getCompImgWidth(i)).Append(")").Append(Environment.NewLine);
+                rep_comps.Append("  ").Append("component[").Append(Convert.ToString(i)).Append("] height, width = (").Append(src.GetCompImgHeight(i)).Append(", ").Append(src.GetCompImgWidth(i)).Append(")").Append(Environment.NewLine);
             }
 
             var rep = new System.Text.StringBuilder("[SYccColorSpaceMapper ");
@@ -341,8 +339,5 @@ namespace CoreJ2K.Color
 
             return rep.Append("]").ToString();
         }
-
-
-        /* end class SYccColorSpaceMapper */
     }
 }

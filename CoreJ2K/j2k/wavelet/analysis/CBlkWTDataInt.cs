@@ -1,13 +1,4 @@
 /* 
-* CVS identifier:
-* 
-* $Id: CBlkWTDataInt.java,v 1.10 2001/08/15 17:18:51 grosbois Exp $
-* 
-* Class:                   CBlkWTDataInt
-* 
-* Description:             Implementation of CBlkWTData for 'int' data
-* 
-* 
 * 
 * COPYRIGHT:
 * 

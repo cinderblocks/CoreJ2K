@@ -1,11 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: PrecCoordInfo.java,v 1.9 2001/09/14 09:33:22 grosbois Exp $
-*
-* Class:                   PrecCoordInfo
-*
-* Description:             Used to store the coordinates precincts.
 *
 * COPYRIGHT:
 * 

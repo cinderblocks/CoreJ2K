@@ -241,12 +241,12 @@ namespace CoreJ2K.j2k.codestream.writer
             baos = new System.IO.MemoryStream();
             hbuf = new Util.EndianBinaryWriter(baos, true);
             nComp = origsrc.NumComps;
-            enJJ2KMarkSeg = pl.getBooleanParameter("Hjj2000_COM");
-            otherCOMMarkSeg = pl.getParameter("HCOM");
-            useTLM = pl.getBooleanParameter("Htlm");
-            usePLT = pl.getBooleanParameter("Hplt");
-            usePPM = pl.getBooleanParameter("Hppm");
-            usePPT = pl.getBooleanParameter("Hppt");
+            enJJ2KMarkSeg = pl.GetBooleanParameter("Hjj2000_COM");
+            otherCOMMarkSeg = pl.GetParameter("HCOM");
+            useTLM = pl.GetBooleanParameter("Htlm");
+            usePLT = pl.GetBooleanParameter("Hplt");
+            usePPM = pl.GetBooleanParameter("Hppm");
+            usePPT = pl.GetBooleanParameter("Hppt");
 
             // Validate PPM/PPT usage (can't use both)
             if (usePPM && usePPT)
@@ -299,7 +299,7 @@ namespace CoreJ2K.j2k.codestream.writer
         /// <param name="out">Where to write the header.
         /// 
         /// </param>
-        public virtual void writeTo(BinaryDataOutput out_Renamed)
+        public virtual void writeTo(BinaryDataOutput outStream)
         {
             int i, len;
             byte[] buf;
@@ -309,7 +309,7 @@ namespace CoreJ2K.j2k.codestream.writer
 
             for (i = 0; i < len; i++)
             {
-                out_Renamed.writeByte(buf[i]);
+                outStream.writeByte(buf[i]);
             }
         }
 
@@ -319,9 +319,9 @@ namespace CoreJ2K.j2k.codestream.writer
         /// <param name="out">Where to write the header.
         /// 
         /// </param>
-        public virtual void writeTo(System.IO.Stream out_Renamed)
+        public virtual void writeTo(System.IO.Stream outStream)
         {
-            out_Renamed.Write(Buffer, 0, BufferLength);
+            outStream.Write(Buffer, 0, BufferLength);
         }
 
         /// <summary> Start Of Codestream marker (SOC) signalling the beginning of a
@@ -512,7 +512,7 @@ namespace CoreJ2K.j2k.codestream.writer
             // +-------------------------------+
             // |   COding style Default (COD)  |
             // +-------------------------------+
-            var isEresUsed = ((string)encSpec.tts.getDefault()).Equals("predict");
+            var isEresUsed = ((string)encSpec.tts.GetDefault()).Equals("predict");
             codWriter.Write(hbuf, true, 0, nComp);
 
             // +---------------------------------+
@@ -603,8 +603,8 @@ namespace CoreJ2K.j2k.codestream.writer
         /// </param>
         public virtual void encodeTilePartHeader(int tileLength, int tileIdx)
         {
-            var numTiles = ralloc.getNumTiles(null);
-            ralloc.setTile(tileIdx % numTiles.x, tileIdx / numTiles.x);
+            var numTiles = ralloc.GetNumTiles(null);
+            ralloc.SetTile(tileIdx % numTiles.x, tileIdx / numTiles.x);
 
             // +--------------------------+
             // |    SOT maker segment     |
@@ -614,7 +614,7 @@ namespace CoreJ2K.j2k.codestream.writer
             // +--------------------------+
             // |    COD maker segment     |
             // +--------------------------+
-            var isEresUsed = ((string)encSpec.tts.getDefault()).Equals("predict");
+            var isEresUsed = ((string)encSpec.tts.GetDefault()).Equals("predict");
             var tileCODwritten = false;
             
             if (tileHeaderWriter.ShouldWriteCOD(tileIdx, isEresUsed))

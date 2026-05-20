@@ -1,14 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: Tiler.java,v 1.34 2001/09/14 09:16:09 grosbois Exp $
-*
-* Class:                   Tiler
-*
-* Description:             An object to create TiledImgData from
-*                          ImgData
-*
-*
 *
 * COPYRIGHT:
 * 
@@ -257,7 +247,7 @@ namespace CoreJ2K.j2k.image
             ytsiz = nh;
 
             // Verify that input is not tiled
-            if (src.getNumTiles() != 1)
+            if (src.GetNumTiles() != 1)
             {
                 throw new ArgumentException("Source is tiled");
             }
@@ -290,7 +280,7 @@ namespace CoreJ2K.j2k.image
             }
             if (x0siz - xt0siz >= xtsiz || y0siz - yt0siz >= ytsiz)
             {
-                FacilityManager.getMsgLogger()
+                FacilityManager.GetMsgLogger()
                     .printmsg(
                         MsgLogger_Fields.INFO,
                         $"Automatically adjusted tiling origin to equivalent one ({xt0siz},{yt0siz}) so that first tile overlaps the image");
@@ -313,13 +303,13 @@ namespace CoreJ2K.j2k.image
         /// <returns> The width of specified tile-component.
         /// 
         /// </returns>
-        public override int getTileCompWidth(int t, int c)
+        public override int GetTileCompWidth(int t, int c)
         {
             if (t != TileIdx)
             {
                 throw new InvalidOperationException(
-                    "Asking the width of a tile-component which is not in the current tile (call setTile() or "
-                    + "nextTile() methods before).");
+                    "Asking the width of a tile-component which is not in the current tile (call SetTile() or "
+                    + "NextTile() methods before).");
             }
             return compW[c];
         }
@@ -336,13 +326,13 @@ namespace CoreJ2K.j2k.image
         /// <returns> The height of specified tile-component.
         /// 
         /// </returns>
-        public override int getTileCompHeight(int t, int c)
+        public override int GetTileCompHeight(int t, int c)
         {
             if (t != TileIdx)
             {
                 throw new InvalidOperationException(
-                    "Asking the width of a tile-component which is not in the current tile (call setTile() or "
-                    + "nextTile() methods before).");
+                    "Asking the width of a tile-component which is not in the current tile (call SetTile() or "
+                    + "NextTile() methods before).");
             }
             return compH[c];
         }
@@ -411,8 +401,8 @@ namespace CoreJ2K.j2k.image
                 throw new ArgumentException("Block is outside the tile");
             }
             // Translate to the sources coordinates
-            var incx = (int)Math.Ceiling(x0siz / (double)src.getCompSubsX(compIndex));
-            var incy = (int)Math.Ceiling(y0siz / (double)src.getCompSubsY(compIndex));
+            var incx = (int)Math.Ceiling(x0siz / (double)src.GetCompSubsX(compIndex));
+            var incy = (int)Math.Ceiling(y0siz / (double)src.GetCompSubsY(compIndex));
             blk.ulx -= incx;
             blk.uly -= incy;
             blk = src.GetInternCompData(blk, compIndex);
@@ -464,8 +454,8 @@ namespace CoreJ2K.j2k.image
                 throw new ArgumentException("Block is outside the tile");
             }
             // Translate to the source's coordinates
-            var incx = (int)Math.Ceiling(x0siz / (double)src.getCompSubsX(c));
-            var incy = (int)Math.Ceiling(y0siz / (double)src.getCompSubsY(c));
+            var incx = (int)Math.Ceiling(x0siz / (double)src.GetCompSubsX(c));
+            var incy = (int)Math.Ceiling(y0siz / (double)src.GetCompSubsY(c));
             blk.ulx -= incx;
             blk.uly -= incy;
             blk = src.GetCompData(blk, c);
@@ -502,7 +492,7 @@ namespace CoreJ2K.j2k.image
         /// </summary>
         /// <param name="x">The horizontal index of the tile.</param>
         /// <param name="y">The vertical index of the new tile.</param>
-        public override void setTile(int x, int y)
+        public override void SetTile(int x, int y)
         {
             // Check tile indexes
             if (x < 0 || y < 0 || x >= ntX || y >= ntY)
@@ -529,10 +519,10 @@ namespace CoreJ2K.j2k.image
             if (tcy0 == null) tcy0 = new int[nc];
             for (var i = 0; i < nc; i++)
             {
-                tcx0[i] = (int)Math.Ceiling(tx0 / (double)src.getCompSubsX(i));
-                tcy0[i] = (int)Math.Ceiling(ty0 / (double)src.getCompSubsY(i));
-                compW[i] = (int)Math.Ceiling(tx1 / (double)src.getCompSubsX(i)) - tcx0[i];
-                compH[i] = (int)Math.Ceiling(ty1 / (double)src.getCompSubsY(i)) - tcy0[i];
+                tcx0[i] = (int)Math.Ceiling(tx0 / (double)src.GetCompSubsX(i));
+                tcy0[i] = (int)Math.Ceiling(ty0 / (double)src.GetCompSubsY(i));
+                compW[i] = (int)Math.Ceiling(tx1 / (double)src.GetCompSubsX(i)) - tcx0[i];
+                compH[i] = (int)Math.Ceiling(ty1 / (double)src.GetCompSubsY(i)) - tcy0[i];
             }
         }
 
@@ -541,7 +531,7 @@ namespace CoreJ2K.j2k.image
         /// columns). An NoNextElementException is thrown if the current tile is
         /// the last one (i.e. there is no next tile).
         /// </summary>
-        public override void nextTile()
+        public override void NextTile()
         {
             if (tx == ntX - 1 && ty == ntY - 1)
             {
@@ -551,12 +541,12 @@ namespace CoreJ2K.j2k.image
             else if (tx < ntX - 1)
             {
                 // If not at end of current tile line
-                setTile(tx + 1, ty);
+                SetTile(tx + 1, ty);
             }
             else
             {
                 // First tile at next line
-                setTile(0, ty + 1);
+                SetTile(0, ty + 1);
             }
         }
 
@@ -564,7 +554,7 @@ namespace CoreJ2K.j2k.image
         /// <param name="co">If not null this object is used to return the
         /// information. If null a new one is created and returned.</param>
         /// <returns> The current tile's horizontal and vertical indexes.</returns>
-        public override Coord getTile(Coord co)
+        public override Coord GetTile(Coord co)
         {
             if (co != null)
             {
@@ -583,7 +573,7 @@ namespace CoreJ2K.j2k.image
         /// specified component in the current tile.
         /// </summary>
         /// <param name="c">The component index.</param>
-        public override int getCompULX(int c)
+        public override int GetCompULX(int c)
         {
             return tcx0[c];
         }
@@ -593,7 +583,7 @@ namespace CoreJ2K.j2k.image
         /// specified component in the current tile.
         /// </summary>
         /// <param name="c">The component index.</param>
-        public override int getCompULY(int c)
+        public override int GetCompULY(int c)
         {
             return tcy0[c];
         }
@@ -603,7 +593,7 @@ namespace CoreJ2K.j2k.image
         /// null a new one is created and returned.</param>
         /// <returns> The number of tiles in the horizontal (Coord.x) and vertical
         /// (Coord.y) directions.</returns>
-        public override Coord getNumTiles(Coord co)
+        public override Coord GetNumTiles(Coord co)
         {
             if (co != null)
             {
@@ -619,7 +609,7 @@ namespace CoreJ2K.j2k.image
 
         /// <summary>Returns the total number of tiles in the image.</summary>
         /// <returns>The total number of tiles in the image.</returns>
-        public override int getNumTiles()
+        public override int GetNumTiles()
         {
             return ntX * ntY;
         }
@@ -633,7 +623,7 @@ namespace CoreJ2K.j2k.image
         /// <returns> The coordinate of the tiling origin, in the canvas system, on
         /// the reference grid.</returns>
         /// <seealso cref="ImgData" />
-        public Coord getTilingOrigin(Coord co)
+        public Coord GetTilingOrigin(Coord co)
         {
             if (co != null)
             {
@@ -651,7 +641,7 @@ namespace CoreJ2K.j2k.image
         /// <returns>Tiler's info in as string</returns>
         public override string ToString()
         {
-            return $"Tiler: source= {src}\n{getNumTiles()} tile(s), nominal width={xtsiz}, nominal height={ytsiz}";
+            return $"Tiler: source= {src}\n{GetNumTiles()} tile(s), nominal width={xtsiz}, nominal height={ytsiz}";
         }
     }
 }

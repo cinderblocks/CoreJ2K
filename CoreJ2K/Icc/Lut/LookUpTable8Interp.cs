@@ -1,6 +1,5 @@
 /// <summary>**************************************************************************
 /// 
-/// $Id: LookUpTable8Interp.java,v 1.1 2002/07/25 14:56:48 grosbois Exp $
 /// 
 /// Copyright Eastman Kodak Company, 343 State Street, Rochester, NY 14650
 /// $Date $
@@ -60,7 +59,5 @@ namespace CoreJ2K.Icc.Lut
                 lut[i] = (byte)Math.Floor(dfOut * dwMaxOutput + 0.5);
             }
         }
-
-        /* end class LookUpTable8Interp */
     }
 }

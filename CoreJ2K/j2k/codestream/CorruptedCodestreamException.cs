@@ -1,14 +1,5 @@
 /*
-* CVS identifier:
-*
-* $Id: CorruptedCodestreamException.java,v 1.6 2000/09/05 09:22:33 grosbois
 * Exp $
-*
-* Class:                   CorruptedCodestreamException
-*
-* Description:             Exception thrown when illegal bit stream
-*                          values are decoded.
-*
 *
 *
 * COPYRIGHT:

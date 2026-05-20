@@ -1,13 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: RectROIMaskGenerator.java,v 1.4 2001/02/28 15:33:44 grosbois Exp $
-*
-* Class:                   RectROIMaskGenerator
-*
-* Description:             Generates masks when only rectangular ROIs exist
-*
-*
 *
 * COPYRIGHT:
 * 
@@ -139,7 +130,7 @@ namespace CoreJ2K.j2k.roi.encoder
         /// <returns> Whether or not a mask was needed for this tile
         /// 
         /// </returns>
-        public override bool getROIMask(DataBlkInt db, Subband sb, int magbits, int c)
+        public override bool GetROIMask(DataBlkInt db, Subband sb, int magbits, int c)
         {
             var x = db.ulx;
             var y = db.uly;
@@ -170,7 +161,7 @@ namespace CoreJ2K.j2k.roi.encoder
             }
 
             // Find relevant subband mask and get ROI bounds
-            srm = (SubbandRectROIMask)sMasks[c].getSubbandRectROIMask(x, y);
+            srm = (SubbandRectROIMask)sMasks[c].GetSubbandRectROIMask(x, y);
             culxs = srm.ulxs;
             culys = srm.ulys;
             clrxs = srm.lrxs;

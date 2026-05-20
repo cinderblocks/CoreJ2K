@@ -25,37 +25,37 @@ namespace CoreJ2K.j2k.codestream.writer
 
         public bool ShouldWriteCOD(int tileIdx, bool isEresUsed)
         {
-            var isEresUsedInTile = ((string)encSpec.tts.getTileDef(tileIdx)).Equals("predict");
+            var isEresUsedInTile = ((string)encSpec.tts.GetTileDef(tileIdx)).Equals("predict");
             
-            return encSpec.wfs.isTileSpecified(tileIdx) ||
-                   encSpec.cts.isTileSpecified(tileIdx) ||
-                   encSpec.dls.isTileSpecified(tileIdx) ||
-                   encSpec.bms.isTileSpecified(tileIdx) ||
-                   encSpec.mqrs.isTileSpecified(tileIdx) ||
-                   encSpec.rts.isTileSpecified(tileIdx) ||
-                   encSpec.css.isTileSpecified(tileIdx) ||
-                   encSpec.pss.isTileSpecified(tileIdx) ||
-                   encSpec.sops.isTileSpecified(tileIdx) ||
-                   encSpec.sss.isTileSpecified(tileIdx) ||
-                   encSpec.pocs.isTileSpecified(tileIdx) ||
-                   encSpec.ephs.isTileSpecified(tileIdx) ||
-                   encSpec.cblks.isTileSpecified(tileIdx) ||
+            return encSpec.wfs.IsTileSpecified(tileIdx) ||
+                   encSpec.cts.IsTileSpecified(tileIdx) ||
+                   encSpec.dls.IsTileSpecified(tileIdx) ||
+                   encSpec.bms.IsTileSpecified(tileIdx) ||
+                   encSpec.mqrs.IsTileSpecified(tileIdx) ||
+                   encSpec.rts.IsTileSpecified(tileIdx) ||
+                   encSpec.css.IsTileSpecified(tileIdx) ||
+                   encSpec.pss.IsTileSpecified(tileIdx) ||
+                   encSpec.sops.IsTileSpecified(tileIdx) ||
+                   encSpec.sss.IsTileSpecified(tileIdx) ||
+                   encSpec.pocs.IsTileSpecified(tileIdx) ||
+                   encSpec.ephs.IsTileSpecified(tileIdx) ||
+                   encSpec.cblks.IsTileSpecified(tileIdx) ||
                    (isEresUsed != isEresUsedInTile);
         }
 
         public bool ShouldWriteCOC(int tileIdx, int compIdx, bool isEresUsed, bool tileCODwritten)
         {
-            var isEresUsedInTileComp = ((string)encSpec.tts.getTileCompVal(tileIdx, compIdx)).Equals("predict");
+            var isEresUsedInTileComp = ((string)encSpec.tts.GetTileCompVal(tileIdx, compIdx)).Equals("predict");
 
-            if (encSpec.wfs.isTileCompSpecified(tileIdx, compIdx) ||
-                encSpec.dls.isTileCompSpecified(tileIdx, compIdx) ||
-                encSpec.bms.isTileCompSpecified(tileIdx, compIdx) ||
-                encSpec.mqrs.isTileCompSpecified(tileIdx, compIdx) ||
-                encSpec.rts.isTileCompSpecified(tileIdx, compIdx) ||
-                encSpec.css.isTileCompSpecified(tileIdx, compIdx) ||
-                encSpec.pss.isTileCompSpecified(tileIdx, compIdx) ||
-                encSpec.sss.isTileCompSpecified(tileIdx, compIdx) ||
-                encSpec.cblks.isTileCompSpecified(tileIdx, compIdx) ||
+            if (encSpec.wfs.IsTileCompSpecified(tileIdx, compIdx) ||
+                encSpec.dls.IsTileCompSpecified(tileIdx, compIdx) ||
+                encSpec.bms.IsTileCompSpecified(tileIdx, compIdx) ||
+                encSpec.mqrs.IsTileCompSpecified(tileIdx, compIdx) ||
+                encSpec.rts.IsTileCompSpecified(tileIdx, compIdx) ||
+                encSpec.css.IsTileCompSpecified(tileIdx, compIdx) ||
+                encSpec.pss.IsTileCompSpecified(tileIdx, compIdx) ||
+                encSpec.sss.IsTileCompSpecified(tileIdx, compIdx) ||
+                encSpec.cblks.IsTileCompSpecified(tileIdx, compIdx) ||
                 (isEresUsedInTileComp != isEresUsed))
             {
                 return true;
@@ -63,17 +63,17 @@ namespace CoreJ2K.j2k.codestream.writer
             
             if (tileCODwritten)
             {
-                return encSpec.wfs.isCompSpecified(compIdx) ||
-                       encSpec.dls.isCompSpecified(compIdx) ||
-                       encSpec.bms.isCompSpecified(compIdx) ||
-                       encSpec.mqrs.isCompSpecified(compIdx) ||
-                       encSpec.rts.isCompSpecified(compIdx) ||
-                       encSpec.sss.isCompSpecified(compIdx) ||
-                       encSpec.css.isCompSpecified(compIdx) ||
-                       encSpec.pss.isCompSpecified(compIdx) ||
-                       encSpec.cblks.isCompSpecified(compIdx) ||
-                       (encSpec.tts.isCompSpecified(compIdx) && 
-                        ((string)encSpec.tts.getCompDef(compIdx)).Equals("predict"));
+                return encSpec.wfs.IsCompSpecified(compIdx) ||
+                       encSpec.dls.IsCompSpecified(compIdx) ||
+                       encSpec.bms.IsCompSpecified(compIdx) ||
+                       encSpec.mqrs.IsCompSpecified(compIdx) ||
+                       encSpec.rts.IsCompSpecified(compIdx) ||
+                       encSpec.sss.IsCompSpecified(compIdx) ||
+                       encSpec.css.IsCompSpecified(compIdx) ||
+                       encSpec.pss.IsCompSpecified(compIdx) ||
+                       encSpec.cblks.IsCompSpecified(compIdx) ||
+                       (encSpec.tts.IsCompSpecified(compIdx) && 
+                        ((string)encSpec.tts.GetCompDef(compIdx)).Equals("predict"));
             }
 
             return false;
@@ -81,29 +81,29 @@ namespace CoreJ2K.j2k.codestream.writer
 
         public bool ShouldWriteQCD(int tileIdx)
         {
-            return encSpec.qts.isTileSpecified(tileIdx) ||
-                   encSpec.qsss.isTileSpecified(tileIdx) ||
-                   encSpec.dls.isTileSpecified(tileIdx) ||
-                   encSpec.gbs.isTileSpecified(tileIdx);
+            return encSpec.qts.IsTileSpecified(tileIdx) ||
+                   encSpec.qsss.IsTileSpecified(tileIdx) ||
+                   encSpec.dls.IsTileSpecified(tileIdx) ||
+                   encSpec.gbs.IsTileSpecified(tileIdx);
         }
 
         public bool ShouldWriteQCC(int tileIdx, int compIdx, int deftilenr, bool tileQCDwritten)
         {
-            if (dwt.getNomRangeBits(compIdx) != deftilenr ||
-                encSpec.qts.isTileCompSpecified(tileIdx, compIdx) ||
-                encSpec.qsss.isTileCompSpecified(tileIdx, compIdx) ||
-                encSpec.dls.isTileCompSpecified(tileIdx, compIdx) ||
-                encSpec.gbs.isTileCompSpecified(tileIdx, compIdx))
+            if (dwt.GetNomRangeBits(compIdx) != deftilenr ||
+                encSpec.qts.IsTileCompSpecified(tileIdx, compIdx) ||
+                encSpec.qsss.IsTileCompSpecified(tileIdx, compIdx) ||
+                encSpec.dls.IsTileCompSpecified(tileIdx, compIdx) ||
+                encSpec.gbs.IsTileCompSpecified(tileIdx, compIdx))
             {
                 return true;
             }
             
             if (tileQCDwritten)
             {
-                return encSpec.qts.isCompSpecified(compIdx) ||
-                       encSpec.qsss.isCompSpecified(compIdx) ||
-                       encSpec.dls.isCompSpecified(compIdx) ||
-                       encSpec.gbs.isCompSpecified(compIdx);
+                return encSpec.qts.IsCompSpecified(compIdx) ||
+                       encSpec.qsss.IsCompSpecified(compIdx) ||
+                       encSpec.dls.IsCompSpecified(compIdx) ||
+                       encSpec.gbs.IsCompSpecified(compIdx);
             }
 
             return false;
@@ -111,9 +111,9 @@ namespace CoreJ2K.j2k.codestream.writer
 
         public bool ShouldWritePOC(int tileIdx)
         {
-            if (encSpec.pocs.isTileSpecified(tileIdx))
+            if (encSpec.pocs.IsTileSpecified(tileIdx))
             {
-                var prog = (Progression[])(encSpec.pocs.getTileDef(tileIdx));
+                var prog = (Progression[])(encSpec.pocs.GetTileDef(tileIdx));
                 return prog.Length > 1;
             }
             return false;

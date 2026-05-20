@@ -1,14 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: SynWTFilter.java,v 1.9 2001/08/02 10:05:58 grosbois Exp $
-*
-* Class:                   SynWTFilter
-*
-* Description:             The abstract class for all synthesis wavelet
-*                          filters.
-*
-*
 *
 * COPYRIGHT:
 * 
@@ -105,7 +95,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// array. The index of the first sample to filter (i.e. that will generate
         /// the first (second) output sample). is given by lowOff (highOff). This
         /// array must be of the same type as the one for which the particular
-        /// implementation works with (which is returned by the getDataType()
+        /// implementation works with (which is returned by the GetDataType()
         /// method).
         /// 
         /// The low-pass (high-pass) input signal can be interleaved with other
@@ -129,7 +119,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// </summary>
         /// <param name="lowSig">This is the array that contains the low-pass input
         /// signal. It must be of the correct type (e.g., it must be int[] if
-        /// getDataType() returns TYPE_INT).
+        /// GetDataType() returns TYPE_INT).
         /// 
         /// </param>
         /// <param name="lowOff">This is the index in lowSig of the first sample to
@@ -146,7 +136,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// </param>
         /// <param name="highSig">This is the array that contains the high-pass input
         /// signal. It must be of the correct type (e.g., it must be int[] if
-        /// getDataType() returns TYPE_INT).
+        /// GetDataType() returns TYPE_INT).
         /// 
         /// </param>
         /// <param name="highOff">This is the index in highSig of the first sample to
@@ -185,7 +175,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// array. The index of the first sample to filter (i.e. that will generate
         /// the first (second) output sample). is given by lowOff (highOff). This
         /// array must be of the same type as the one for which the particular
-        /// implementation works with (which is returned by the getDataType()
+        /// implementation works with (which is returned by the GetDataType()
         /// method).
         /// 
         /// The low-pass (high-pass) input signal can be interleaved with other
@@ -209,7 +199,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// </summary>
         /// <param name="lowSig">This is the array that contains the low-pass input
         /// signal. It must be of the correct type (e.g., it must be int[] if
-        /// getDataType() returns TYPE_INT).
+        /// GetDataType() returns TYPE_INT).
         /// 
         /// </param>
         /// <param name="lowOff">This is the index in lowSig of the first sample to
@@ -226,7 +216,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// </param>
         /// <param name="highSig">This is the array that contains the high-pass input
         /// signal. It must be of the correct type (e.g., it must be int[] if
-        /// getDataType() returns TYPE_INT).
+        /// GetDataType() returns TYPE_INT).
         /// 
         /// </param>
         /// <param name="highOff">This is the index in highSig of the first sample to
@@ -255,6 +245,6 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// 
         /// </param>
         public abstract void synthetize_hpf(object lowSig, int lowOff, int lowLen, int lowStep, object highSig, int highOff, int highLen, int highStep, object outSig, int outOff, int outStep);
-        public abstract bool isSameAsFullWT(int param1, int param2, int param3);
+        public abstract bool IsSameAsFullWT(int param1, int param2, int param3);
     }
 }

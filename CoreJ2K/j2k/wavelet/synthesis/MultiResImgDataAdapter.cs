@@ -1,15 +1,4 @@
 /* 
-* CVS identifier:
-* 
-* $Id: MultiResImgDataAdapter.java,v 1.10 2002/07/25 15:11:55 grosbois Exp $
-* 
-* Class:                   MultiResImgDataAdapter
-* 
-* Description:             A default implementation of the MultiResImgData
-*                          interface that has and MultiResImgData source
-*                          and just returns the values of the source.
-* 
-* 
 * 
 * COPYRIGHT:
 * 
@@ -130,9 +119,9 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// <returns> The total current tile's width in pixels.
         /// 
         /// </returns>
-        public virtual int getTileWidth(int rl)
+        public virtual int GetTileWidth(int rl)
         {
-            return mressrc.getTileWidth(rl);
+            return mressrc.GetTileWidth(rl);
         }
 
         /// <summary> Returns the overall height of the current tile in pixels, for the given
@@ -148,9 +137,9 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// <returns> The total current tile's height in pixels.
         /// 
         /// </returns>
-        public virtual int getTileHeight(int rl)
+        public virtual int GetTileHeight(int rl)
         {
-            return mressrc.getTileHeight(rl);
+            return mressrc.GetTileHeight(rl);
         }
 
         /// <summary> Returns the overall width of the image in pixels, for the given
@@ -166,9 +155,9 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// <returns> The total image's width in pixels.
         /// 
         /// </returns>
-        public virtual int getImgWidth(int rl)
+        public virtual int GetImgWidth(int rl)
         {
-            return mressrc.getImgWidth(rl);
+            return mressrc.GetImgWidth(rl);
         }
 
         /// <summary> Returns the overall height of the image in pixels, for the given
@@ -184,9 +173,9 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// <returns> The total image's height in pixels.
         /// 
         /// </returns>
-        public virtual int getImgHeight(int rl)
+        public virtual int GetImgHeight(int rl)
         {
-            return mressrc.getImgHeight(rl);
+            return mressrc.GetImgHeight(rl);
         }
 
         /// <summary> Returns the component subsampling factor in the horizontal direction,
@@ -204,9 +193,9 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// 
         /// </returns>
         /// <seealso cref="j2k.image.ImgData" />
-        public virtual int getCompSubsX(int c)
+        public virtual int GetCompSubsX(int c)
         {
-            return mressrc.getCompSubsX(c);
+            return mressrc.GetCompSubsX(c);
         }
 
         /// <summary> Returns the component subsampling factor in the vertical direction, for
@@ -224,9 +213,9 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// 
         /// </returns>
         /// <seealso cref="j2k.image.ImgData" />
-        public virtual int getCompSubsY(int c)
+        public virtual int GetCompSubsY(int c)
         {
-            return mressrc.getCompSubsY(c);
+            return mressrc.GetCompSubsY(c);
         }
 
         /// <summary> Returns the width in pixels of the specified tile-component for the
@@ -248,9 +237,9 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// for resolution level <tt>rl</tt>.
         /// 
         /// </returns>
-        public virtual int getTileCompWidth(int t, int c, int rl)
+        public virtual int GetTileCompWidth(int t, int c, int rl)
         {
-            return mressrc.getTileCompWidth(t, c, rl);
+            return mressrc.GetTileCompWidth(t, c, rl);
         }
 
         /// <summary> Returns the height in pixels of the specified tile-component for the
@@ -272,9 +261,9 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// <tt>t</tt>. 
         /// 
         /// </returns>
-        public virtual int getTileCompHeight(int t, int c, int rl)
+        public virtual int GetTileCompHeight(int t, int c, int rl)
         {
-            return mressrc.getTileCompHeight(t, c, rl);
+            return mressrc.GetTileCompHeight(t, c, rl);
         }
 
         /// <summary> Returns the width in pixels of the specified component in the overall
@@ -293,9 +282,9 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// image.
         /// 
         /// </returns>
-        public virtual int getCompImgWidth(int c, int rl)
+        public virtual int GetCompImgWidth(int c, int rl)
         {
-            return mressrc.getCompImgWidth(c, rl);
+            return mressrc.GetCompImgWidth(c, rl);
         }
 
         /// <summary> Returns the height in pixels of the specified component in the overall
@@ -314,9 +303,9 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// image.
         /// 
         /// </returns>
-        public virtual int getCompImgHeight(int c, int rl)
+        public virtual int GetCompImgHeight(int c, int rl)
         {
-            return mressrc.getCompImgHeight(c, rl);
+            return mressrc.GetCompImgHeight(c, rl);
         }
 
         /// <summary> Changes the current tile, given the new indexes. An
@@ -332,9 +321,9 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// <param name="y">The vertical indexes of the new tile.
         /// 
         /// </param>
-        public virtual void setTile(int x, int y)
+        public virtual void SetTile(int x, int y)
         {
-            mressrc.setTile(x, y);
+            mressrc.SetTile(x, y);
             tIdx = TileIdx;
         }
 
@@ -345,9 +334,9 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// This default implementation just changes the tile in the source.
         /// 
         /// </summary>
-        public virtual void nextTile()
+        public virtual void NextTile()
         {
-            mressrc.nextTile();
+            mressrc.NextTile();
             tIdx = TileIdx;
         }
 
@@ -364,9 +353,9 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// <returns> The current tile's indexes (vertical and horizontal indexes).
         /// 
         /// </returns>
-        public virtual Coord getTile(Coord co)
+        public virtual Coord GetTile(Coord co)
         {
-            return mressrc.getTile(co);
+            return mressrc.GetTile(co);
         }
 
         /// <summary> Returns the horizontal coordinate of the upper-left corner of the
@@ -381,9 +370,9 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// <param name="rl">The resolution level index.
         /// 
         /// </param>
-        public virtual int getResULX(int c, int rl)
+        public virtual int GetResULX(int c, int rl)
         {
-            return mressrc.getResULX(c, rl);
+            return mressrc.GetResULX(c, rl);
         }
 
         /// <summary> Returns the vertical coordinate of the upper-left corner of the
@@ -398,9 +387,9 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// <param name="rl">The resolution level index.
         /// 
         /// </param>
-        public virtual int getResULY(int c, int rl)
+        public virtual int GetResULY(int c, int rl)
         {
-            return mressrc.getResULY(c, rl);
+            return mressrc.GetResULY(c, rl);
         }
 
         /// <summary> Returns the horizontal coordinate of the image origin, the top-left
@@ -417,9 +406,9 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// system, on the reference grid.
         /// 
         /// </returns>
-        public virtual int getImgULX(int rl)
+        public virtual int GetImgULX(int rl)
         {
-            return mressrc.getImgULX(rl);
+            return mressrc.GetImgULX(rl);
         }
 
         /// <summary> Returns the vertical coordinate of the image origin, the top-left
@@ -436,9 +425,9 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// system, on the reference grid.
         /// 
         /// </returns>
-        public virtual int getImgULY(int rl)
+        public virtual int GetImgULY(int rl)
         {
-            return mressrc.getImgULY(rl);
+            return mressrc.GetImgULY(rl);
         }
 
         /// <summary> Returns the number of tiles in the horizontal and vertical directions.
@@ -454,9 +443,9 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// (Coord.y) directions.
         /// 
         /// </returns>
-        public virtual Coord getNumTiles(Coord co)
+        public virtual Coord GetNumTiles(Coord co)
         {
-            return mressrc.getNumTiles(co);
+            return mressrc.GetNumTiles(co);
         }
 
         /// <summary> Returns the total number of tiles in the image.
@@ -467,10 +456,10 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// <returns> The total number of tiles in the image.
         /// 
         /// </returns>
-        public virtual int getNumTiles()
+        public virtual int GetNumTiles()
         {
-            return mressrc.getNumTiles();
+            return mressrc.GetNumTiles();
         }
-        public abstract SubbandSyn getSynSubbandTree(int param1, int param2);
+        public abstract SubbandSyn GetSynSubbandTree(int param1, int param2);
     }
 }

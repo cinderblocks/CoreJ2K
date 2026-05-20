@@ -1,14 +1,4 @@
 /* 
-* CVS identifier:
-* 
-* $Id:
-* 
-* Class:                   InvWT
-* 
-* Description:             The interface for implementations of a inverse
-*                          wavelet transform.
-* 
-* 
 * 
 * COPYRIGHT:
 * 

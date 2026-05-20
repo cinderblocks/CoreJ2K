@@ -1,13 +1,4 @@
 /* 
-* CVS identifier:
-* 
-* $Id: IntegerSpec.java,v 1.14 2001/09/20 12:31:08 grosbois Exp $
-* 
-* Class:                   IntegerSpec
-* 
-* Description:             Holds specs corresponding to an Integer
-* 
-* 
 * 
 * COPYRIGHT:
 * 
@@ -71,7 +62,7 @@ namespace CoreJ2K.j2k
                 {
                     for (var c = 0; c < nComp; c++)
                     {
-                        tmp = ((int)getSpec(t, c));
+                        tmp = ((int)GetSpec(t, c));
                         if (max < tmp)
                             max = tmp;
                     }
@@ -98,7 +89,7 @@ namespace CoreJ2K.j2k
                 {
                     for (var c = 0; c < nComp; c++)
                     {
-                        tmp = ((int)getSpec(t, c));
+                        tmp = ((int)GetSpec(t, c));
                         if (min > tmp)
                             min = tmp;
                     }
@@ -155,16 +146,16 @@ namespace CoreJ2K.j2k
         public IntegerSpec(int nt, int nc, byte type, ParameterList pl, string optName) : base(nt, nc, type)
         {
 
-            int value_Renamed;
-            var param = pl.getParameter(optName);
+            int value;
+            var param = pl.GetParameter(optName);
 
             if (param == null)
             {
                 // No parameter specified
-                param = pl.DefaultParameterList.getParameter(optName);
+                param = pl.DefaultParameterList.GetParameter(optName);
                 try
                 {
-                    setDefault(int.Parse(param));
+                    SetDefault(int.Parse(param));
                 }
                 catch (FormatException)
                 {
@@ -201,7 +192,7 @@ namespace CoreJ2K.j2k
                     default:
                         try
                         {
-                            value_Renamed = int.Parse(word);
+                            value = int.Parse(word);
                         }
                         catch (FormatException)
                         {
@@ -210,14 +201,14 @@ namespace CoreJ2K.j2k
 
                         if (curSpecType == SPEC_DEF)
                         {
-                            setDefault(value_Renamed);
+                            SetDefault(value);
                         }
                         else if (curSpecType == SPEC_TILE_DEF)
                         {
                             for (var i = tileSpec.Length - 1; i >= 0; i--)
                                 if (tileSpec[i])
                                 {
-                                    setTileDef(i, value_Renamed);
+                                    SetTileDef(i, value);
                                 }
                         }
                         else if (curSpecType == SPEC_COMP_DEF)
@@ -225,7 +216,7 @@ namespace CoreJ2K.j2k
                             for (var i = compSpec.Length - 1; i >= 0; i--)
                                 if (compSpec[i])
                                 {
-                                    setCompDef(i, value_Renamed);
+                                    SetCompDef(i, value);
                                 }
                         }
                         else
@@ -236,7 +227,7 @@ namespace CoreJ2K.j2k
                                 {
                                     if (tileSpec[i] && compSpec[j])
                                     {
-                                        setTileCompVal(i, j, value_Renamed);
+                                        SetTileCompVal(i, j, value);
                                     }
                                 }
                             }
@@ -252,7 +243,7 @@ namespace CoreJ2K.j2k
             }
 
             // Check that default value has been specified
-            if (getDefault() == null)
+            if (GetDefault() == null)
             {
                 var ndefspec = 0;
                 for (var t = nt - 1; t >= 0; t--)
@@ -270,10 +261,10 @@ namespace CoreJ2K.j2k
                 // the default value defined in ParameterList
                 if (ndefspec != 0)
                 {
-                    param = pl.DefaultParameterList.getParameter(optName);
+                    param = pl.DefaultParameterList.GetParameter(optName);
                     try
                     {
-                        setDefault(int.Parse(param));
+                        SetDefault(int.Parse(param));
                     }
                     catch (FormatException)
                     {
@@ -284,7 +275,7 @@ namespace CoreJ2K.j2k
                 {
                     // All tile-component have been specified, takes the first
                     // tile-component value as default.
-                    setDefault(getTileCompVal(0, 0));
+                    SetDefault(GetTileCompVal(0, 0));
                     switch (specValType[0][0])
                     {
 
@@ -324,14 +315,14 @@ namespace CoreJ2K.j2k
         /// <returns> The maximum value
         /// 
         /// </returns>
-        public int getMaxInComp(int c)
+        public int GetMaxInComp(int c)
         {
             var max = 0;
             int tmp;
 
             for (var t = 0; t < nTiles; t++)
             {
-                tmp = ((int)getSpec(t, c));
+                tmp = ((int)GetSpec(t, c));
                 if (max < tmp)
                     max = tmp;
             }
@@ -348,14 +339,14 @@ namespace CoreJ2K.j2k
         /// <returns> The minimum value
         /// 
         /// </returns>
-        public int getMinInComp(int c)
+        public int GetMinInComp(int c)
         {
             var min = MAX_INT; // Big value
             int tmp;
 
             for (var t = 0; t < nTiles; t++)
             {
-                tmp = ((int)getSpec(t, c));
+                tmp = ((int)GetSpec(t, c));
                 if (min > tmp)
                     min = tmp;
             }
@@ -372,14 +363,14 @@ namespace CoreJ2K.j2k
         /// <returns> The maximum value
         /// 
         /// </returns>
-        public int getMaxInTile(int t)
+        public int GetMaxInTile(int t)
         {
             var max = 0;
             int tmp;
 
             for (var c = 0; c < nComp; c++)
             {
-                tmp = ((int)getSpec(t, c));
+                tmp = ((int)GetSpec(t, c));
                 if (max < tmp)
                     max = tmp;
             }
@@ -396,14 +387,14 @@ namespace CoreJ2K.j2k
         /// <returns> The minimum value
         /// 
         /// </returns>
-        public int getMinInTile(int t)
+        public int GetMinInTile(int t)
         {
             var min = MAX_INT; // Big value
             int tmp;
 
             for (var c = 0; c < nComp; c++)
             {
-                tmp = ((int)getSpec(t, c));
+                tmp = ((int)GetSpec(t, c));
                 if (min > tmp)
                     min = tmp;
             }

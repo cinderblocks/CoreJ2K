@@ -1,12 +1,4 @@
 /* 
-* CVS identifier:
-* 
-* $Id: EBCOTLayer.java,v 1.9 2001/05/16 09:40:58 grosbois Exp $
-* 
-* Class:                   EBCOTLayer
-* 
-* Description:             Storage for layer information,
-*                          used by EBCOTRateAllocator
 * 
 *                          class that was in EBCOTRateAllocator.
 * 

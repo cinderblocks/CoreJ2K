@@ -1,14 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: CBlkRateDistStats.java,v 1.11 2001/09/14 09:23:51 grosbois Exp $
-*
-* Class:                   CBlkRateDistStats
-*
-* Description:             The coded (compressed) code-block with
-*                          rate-distortion statistics.
-*
-*
 *
 * COPYRIGHT:
 * 

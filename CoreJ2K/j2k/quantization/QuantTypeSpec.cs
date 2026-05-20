@@ -1,13 +1,4 @@
 /* 
-* CVS identifier:
-* 
-* $Id: QuantTypeSpec.java,v 1.18 2001/10/24 12:05:18 grosbois Exp $
-* 
-* Class:                   QuantTypeSpec
-* 
-* Description:             Quantization type specifications
-* 
-* 
 * 
 * COPYRIGHT:
 * 
@@ -76,7 +67,7 @@ namespace CoreJ2K.j2k.quantization
                 // The whole image is reversible if default specification is
                 // rev and no tile default, component default and
                 // tile-component value has been specificied
-                if (((string)getDefault()).Equals("reversible"))
+                if (((string)GetDefault()).Equals("reversible"))
                 {
                     for (var t = nTiles - 1; t >= 0; t--)
                         for (var c = nComp - 1; c >= 0; c--)
@@ -102,7 +93,7 @@ namespace CoreJ2K.j2k.quantization
                 // The whole image is irreversible no tile-component is reversible
                 for (var t = nTiles - 1; t >= 0; t--)
                     for (var c = nComp - 1; c >= 0; c--)
-                        if (((string)getSpec(t, c)).Equals("reversible"))
+                        if (((string)GetSpec(t, c)).Equals("reversible"))
                             return false;
                 return true;
             }
@@ -149,10 +140,10 @@ namespace CoreJ2K.j2k.quantization
         public QuantTypeSpec(int nt, int nc, byte type, ParameterList pl) : base(nt, nc, type)
         {
 
-            var param = pl.getParameter("Qtype");
+            var param = pl.GetParameter("Qtype");
             if (param == null)
             {
-                setDefault(pl.getBooleanParameter("lossless") ? "reversible" : "expounded");
+                SetDefault(pl.GetBooleanParameter("lossless") ? "reversible" : "expounded");
                 return;
             }
 
@@ -193,7 +184,7 @@ namespace CoreJ2K.j2k.quantization
                             throw new ArgumentException($"Unknown parameter for '-Qtype' option: {word}");
                         }
 
-                        if (pl.getBooleanParameter("lossless") && (string.Equals(word, "derived", StringComparison.OrdinalIgnoreCase) || string.Equals(word, "expounded", StringComparison.OrdinalIgnoreCase)))
+                        if (pl.GetBooleanParameter("lossless") && (string.Equals(word, "derived", StringComparison.OrdinalIgnoreCase) || string.Equals(word, "expounded", StringComparison.OrdinalIgnoreCase)))
                         {
                             throw new ArgumentException("Cannot use non reversible quantization with '-lossless' option");
                         }
@@ -202,7 +193,7 @@ namespace CoreJ2K.j2k.quantization
                         {
                             case SPEC_DEF:
                                 // Default specification
-                                setDefault(word);
+                                SetDefault(word);
                                 break;
                             case SPEC_TILE_DEF:
                                 {
@@ -211,7 +202,7 @@ namespace CoreJ2K.j2k.quantization
                                     {
                                         if (tileSpec[i])
                                         {
-                                            setTileDef(i, word);
+                                            SetTileDef(i, word);
                                         }
                                     }
 
@@ -223,7 +214,7 @@ namespace CoreJ2K.j2k.quantization
                                     for (var i = compSpec.Length - 1; i >= 0; i--)
                                         if (compSpec[i])
                                         {
-                                            setCompDef(i, word);
+                                            SetCompDef(i, word);
                                         }
 
                                     break;
@@ -237,7 +228,7 @@ namespace CoreJ2K.j2k.quantization
                                         {
                                             if (tileSpec[i] && compSpec[j])
                                             {
-                                                setTileCompVal(i, j, word);
+                                                SetTileCompVal(i, j, word);
                                             }
                                         }
                                     }
@@ -260,7 +251,7 @@ namespace CoreJ2K.j2k.quantization
             }
 
             // Check that default value has been specified
-            if (getDefault() == null)
+            if (GetDefault() == null)
             {
                 var ndefspec = 0;
                 for (var t = nt - 1; t >= 0; t--)
@@ -279,7 +270,7 @@ namespace CoreJ2K.j2k.quantization
                 // or 'expounded' (if not). 
                 if (ndefspec != 0)
                 {
-                    setDefault(pl.getBooleanParameter("lossless") ? "reversible" : "expounded");
+                    SetDefault(pl.GetBooleanParameter("lossless") ? "reversible" : "expounded");
                 }
                 else
                 {
@@ -287,7 +278,7 @@ namespace CoreJ2K.j2k.quantization
                     // the first tile-component value as default and modifies the
                     // specification type of all tile-component sharing this
                     // value.
-                    setDefault(getTileCompVal(0, 0));
+                    SetDefault(GetTileCompVal(0, 0));
 
                     switch (specValType[0][0])
                     {
@@ -332,9 +323,9 @@ namespace CoreJ2K.j2k.quantization
         /// <returns> True if derived quantization step size
         /// 
         /// </returns>
-        public bool isDerived(int t, int c)
+        public bool IsDerived(int t, int c)
         {
-            var quantType = getTileCompVal(t, c) as string;
+            var quantType = GetTileCompVal(t, c) as string;
             
             // Validate that quantization type is set
             if (quantType == null)
@@ -359,9 +350,9 @@ namespace CoreJ2K.j2k.quantization
         /// <returns> Whether or not the tile-component is reversible
         /// 
         /// </returns>
-        public bool isReversible(int t, int c)
+        public bool IsReversible(int t, int c)
         {
-            var quantType = getTileCompVal(t, c) as string;
+            var quantType = GetTileCompVal(t, c) as string;
             
             // Validate that quantization type is set
             if (quantType == null)

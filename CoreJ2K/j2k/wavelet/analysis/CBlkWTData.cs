@@ -1,13 +1,4 @@
 /* 
-* CVS identifier:
-* 
-* $Id: CBlkWTData.java,v 1.18 2001/08/15 17:15:14 grosbois Exp $
-* 
-* Class:                   CBlkWTData
-* 
-* Description:             Storage for code-blocks of WT data.
-* 
-* 
 * 
 * COPYRIGHT:
 * 
@@ -89,7 +80,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// <seealso cref="DataBlk" />
         public abstract int DataType { get; }
         /// <summary> Returns the array containing the data, or null if there is no data. The
-        /// returned array is of the type returned by <tt>getDataType()</tt> (e.g.,
+        /// returned array is of the type returned by <tt>GetDataType()</tt> (e.g.,
         /// for <tt>TYPE_INT</tt>, it is a <tt>int[]</tt>).
         /// 
         /// Each implementing class should provide a type specific equivalent
@@ -102,9 +93,9 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// data.
         /// 
         /// </returns>
-        /// <seealso cref="getDataType" />
+        /// <seealso cref="GetDataType" />
         /// <summary> Sets the data array to the specified one. The type of the specified
-        /// data array must match the one returned by <tt>getDataType()</tt> (e.g.,
+        /// data array must match the one returned by <tt>GetDataType()</tt> (e.g.,
         /// for <tt>TYPE_INT</tt>, it should be a <tt>int[]</tt>). If the wrong
         /// type of array is given a <tt>ClassCastException</tt> will be thrown.
         /// 
@@ -120,7 +111,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// <param name="arr">The new data array to use
         /// 
         /// </param>
-        /// <seealso cref="getDataType" />
+        /// <seealso cref="GetDataType" />
         public abstract object Data { get; set; }
 
         /// <summary>The horizontal coordinate of the upper-left corner of the code-block </summary>

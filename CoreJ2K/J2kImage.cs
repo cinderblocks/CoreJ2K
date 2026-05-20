@@ -141,7 +141,7 @@ namespace CoreJ2K
             var depth = new int[nCompCod];
             for (var i = 0; i < nCompCod; i++)
             {
-                depth[i] = hd.getOriginalBitDepth(i);
+                depth[i] = hd.GetOriginalBitDepth(i);
             }
 
             // **** Bit stream reader ****
@@ -215,7 +215,7 @@ namespace CoreJ2K
 
             // **** Color space mapping ****
             BlkImgDataSrc color;
-            if (ff.JP2FFUsed && pl.getParameter("nocolorspace").Equals("off"))
+            if (ff.JP2FFUsed && pl.GetParameter("nocolorspace").Equals("off"))
             {
                 try
                 {
@@ -253,11 +253,11 @@ namespace CoreJ2K
             // **** Copy to Bitmap ****
 
             var bitsUsed = new int[numComps];
-            for (var j = 0; j < numComps; ++j) bitsUsed[j] = decodedImage.getNomRangeBits(j);
+            for (var j = 0; j < numComps; ++j) bitsUsed[j] = decodedImage.GetNomRangeBits(j);
 
             var dst = new InterleavedImage(imgWidth, decodedImage.ImgHeight, numComps, bitsUsed);
 
-            var numTiles = decodedImage.getNumTiles(null);
+            var numTiles = decodedImage.GetNumTiles(null);
 
             var tIdx = 0;
 
@@ -266,16 +266,16 @@ namespace CoreJ2K
                 // Loop on horizontal tiles
                 for (var x = 0; x < numTiles.x; x++, tIdx++)
                 {
-                    decodedImage.setTile(x, y);
+                    decodedImage.SetTile(x, y);
 
-                    var height = decodedImage.getTileCompHeight(tIdx, 0);
-                    var width = decodedImage.getTileCompWidth(tIdx, 0);
+                    var height = decodedImage.GetTileCompHeight(tIdx, 0);
+                    var width = decodedImage.GetTileCompWidth(tIdx, 0);
 
-                    var tOffx = decodedImage.getCompULX(0)
-                                - (int)Math.Ceiling(decodedImage.ImgULX / (double)decodedImage.getCompSubsX(0));
+                    var tOffx = decodedImage.GetCompULX(0)
+                                - (int)Math.Ceiling(decodedImage.ImgULX / (double)decodedImage.GetCompSubsX(0));
 
-                    var tOffy = decodedImage.getCompULY(0)
-                                - (int)Math.Ceiling(decodedImage.ImgULY / (double)decodedImage.getCompSubsY(0));
+                    var tOffy = decodedImage.GetCompULY(0)
+                                - (int)Math.Ceiling(decodedImage.ImgULY / (double)decodedImage.GetCompSubsY(0));
 
                     var db = new DataBlkInt[numComps];
                     var ls = new int[numComps];
@@ -285,8 +285,8 @@ namespace CoreJ2K
                     {
                         db[i] = new DataBlkInt();
                         // Use per-component nominal bits and fixed point
-                        ls[i] = 1 << (decodedImage.getNomRangeBits(i) - 1);
-                        mv[i] = (1 << decodedImage.getNomRangeBits(i)) - 1;
+                        ls[i] = 1 << (decodedImage.GetNomRangeBits(i) - 1);
+                        mv[i] = (1 << decodedImage.GetNomRangeBits(i)) - 1;
                         fb[i] = decodedImage.GetFixedPoint(i);
                     }
 
@@ -422,7 +422,7 @@ namespace CoreJ2K
             var depth = new int[nCompCod];
             for (var i = 0; i < nCompCod; i++)
             {
-                depth[i] = hd.getOriginalBitDepth(i);
+                depth[i] = hd.GetOriginalBitDepth(i);
             }
 
             // **** Bit stream reader ****
@@ -496,7 +496,7 @@ namespace CoreJ2K
 
             // **** Color space mapping ****
             BlkImgDataSrc color;
-            if (ff.JP2FFUsed && pl.getParameter("nocolorspace").Equals("off"))
+            if (ff.JP2FFUsed && pl.GetParameter("nocolorspace").Equals("off"))
             {
                 try
                 {
@@ -534,11 +534,11 @@ namespace CoreJ2K
             // **** Copy to Bitmap ****
 
             var bitsUsed = new int[numComps];
-            for (var j = 0; j < numComps; ++j) bitsUsed[j] = decodedImage.getNomRangeBits(j);
+            for (var j = 0; j < numComps; ++j) bitsUsed[j] = decodedImage.GetNomRangeBits(j);
 
             var dst = new InterleavedImage(imgWidth, decodedImage.ImgHeight, numComps, bitsUsed);
 
-            var numTiles = decodedImage.getNumTiles(null);
+            var numTiles = decodedImage.GetNumTiles(null);
 
             var tIdx = 0;
 
@@ -547,16 +547,16 @@ namespace CoreJ2K
                 // Loop on horizontal tiles
                 for (var x = 0; x < numTiles.x; x++, tIdx++)
                 {
-                    decodedImage.setTile(x, y);
+                    decodedImage.SetTile(x, y);
 
-                    var height = decodedImage.getTileCompHeight(tIdx, 0);
-                    var width = decodedImage.getTileCompWidth(tIdx, 0);
+                    var height = decodedImage.GetTileCompHeight(tIdx, 0);
+                    var width = decodedImage.GetTileCompWidth(tIdx, 0);
 
-                    var tOffx = decodedImage.getCompULX(0)
-                                - (int)Math.Ceiling(decodedImage.ImgULX / (double)decodedImage.getCompSubsX(0));
+                    var tOffx = decodedImage.GetCompULX(0)
+                                - (int)Math.Ceiling(decodedImage.ImgULX / (double)decodedImage.GetCompSubsX(0));
 
-                    var tOffy = decodedImage.getCompULY(0)
-                                - (int)Math.Ceiling(decodedImage.ImgULY / (double)decodedImage.getCompSubsY(0));
+                    var tOffy = decodedImage.GetCompULY(0)
+                                - (int)Math.Ceiling(decodedImage.ImgULY / (double)decodedImage.GetCompSubsY(0));
 
                     var db = new DataBlkInt[numComps];
                     var ls = new int[numComps];
@@ -566,8 +566,8 @@ namespace CoreJ2K
                     {
                         db[i] = new DataBlkInt();
                         // Use per-component nominal bits and fixed point
-                        ls[i] = 1 << (decodedImage.getNomRangeBits(i) - 1);
-                        mv[i] = (1 << decodedImage.getNomRangeBits(i)) - 1;
+                        ls[i] = 1 << (decodedImage.GetNomRangeBits(i) - 1);
+                        mv[i] = (1 << decodedImage.GetNomRangeBits(i)) - 1;
                         fb[i] = decodedImage.GetFixedPoint(i);
                     }
 
@@ -803,48 +803,48 @@ namespace CoreJ2K
 
             // **** Get general parameters ****
 
-            if (string.Equals(pl.getParameter("file_format"), "on", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(pl.GetParameter("file_format"), "on", StringComparison.OrdinalIgnoreCase))
             {
                 useFileFormat = true;
-                if (pl.getParameter("rate") != null
-                    && pl.getFloatParameter("rate") != defpl.getFloatParameter("rate"))
+                if (pl.GetParameter("rate") != null
+                    && pl.GetFloatParameter("rate") != defpl.GetFloatParameter("rate"))
                 {
                     warning("Specified bit-rate applies only on the codestream but not on the whole file.");
                 }
             }
 
-            if (pl.getParameter("tiles") == null)
+            if (pl.GetParameter("tiles") == null)
             {
                 error("No tiles option specified", 2);
                 return null;
             }
 
-            if (string.Equals(pl.getParameter("pph_tile"), "on", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(pl.GetParameter("pph_tile"), "on", StringComparison.OrdinalIgnoreCase))
             {
                 pphTile = true;
 
-                if (string.Equals(pl.getParameter("Psop"), "off", StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(pl.GetParameter("Psop"), "off", StringComparison.OrdinalIgnoreCase))
                 {
                     pl["Psop"] = "on";
                     tempSop = true;
                 }
-                if (string.Equals(pl.getParameter("Peph"), "off", StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(pl.GetParameter("Peph"), "off", StringComparison.OrdinalIgnoreCase))
                 {
                     pl["Peph"] = "on";
                     tempEph = true;
                 }
             }
 
-            if (string.Equals(pl.getParameter("pph_main"), "on", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(pl.GetParameter("pph_main"), "on", StringComparison.OrdinalIgnoreCase))
             {
                 pphMain = true;
 
-                if (string.Equals(pl.getParameter("Psop"), "off", StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(pl.GetParameter("Psop"), "off", StringComparison.OrdinalIgnoreCase))
                 {
                     pl["Psop"] = "on";
                     tempSop = true;
                 }
-                if (string.Equals(pl.getParameter("Peph"), "off", StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(pl.GetParameter("Peph"), "off", StringComparison.OrdinalIgnoreCase))
                 {
                     pl["Peph"] = "on";
                     tempEph = true;
@@ -853,11 +853,11 @@ namespace CoreJ2K
 
             if (pphTile && pphMain) error("Can't have packed packet headers in both main and tile headers", 2);
 
-            if (pl.getBooleanParameter("lossless") && pl.getParameter("rate") != null
-                && pl.getFloatParameter("rate") != defpl.getFloatParameter("rate"))
+            if (pl.GetBooleanParameter("lossless") && pl.GetParameter("rate") != null
+                && pl.GetFloatParameter("rate") != defpl.GetFloatParameter("rate"))
                 throw new ArgumentException("Cannot use '-rate' and '-lossless' option at  the same time.");
 
-            if (pl.getParameter("rate") == null)
+            if (pl.GetParameter("rate") == null)
             {
                 error("Target bitrate not specified", 2);
                 return null;
@@ -865,7 +865,7 @@ namespace CoreJ2K
             float rate;
             try
             {
-                rate = pl.getFloatParameter("rate");
+                rate = pl.GetFloatParameter("rate");
                 if (rate == -1)
                 {
                     rate = float.MaxValue;
@@ -873,21 +873,21 @@ namespace CoreJ2K
             }
             catch (FormatException)
             {
-                error($"Invalid value in 'rate' option: {pl.getParameter("rate")}", 2);
+                error($"Invalid value in 'rate' option: {pl.GetParameter("rate")}", 2);
                 return null;
             }
             int pktspertp;
             try
             {
-                pktspertp = pl.getIntParameter("tile_parts");
+                pktspertp = pl.GetIntParameter("tile_parts");
                 if (pktspertp != 0)
                 {
-                    if (string.Equals(pl.getParameter("Psop"), "off", StringComparison.OrdinalIgnoreCase))
+                    if (string.Equals(pl.GetParameter("Psop"), "off", StringComparison.OrdinalIgnoreCase))
                     {
                         pl["Psop"] = "on";
                         tempSop = true;
                     }
-                    if (string.Equals(pl.getParameter("Peph"), "off", StringComparison.OrdinalIgnoreCase))
+                    if (string.Equals(pl.GetParameter("Peph"), "off", StringComparison.OrdinalIgnoreCase))
                     {
                         pl["Peph"] = "on";
                         tempEph = true;
@@ -896,7 +896,7 @@ namespace CoreJ2K
             }
             catch (FormatException)
             {
-                error($"Invalid value in 'tile_parts' option: {pl.getParameter("tile_parts")}", 2);
+                error($"Invalid value in 'tile_parts' option: {pl.GetParameter("tile_parts")}", 2);
                 return null;
             }
 
@@ -907,20 +907,20 @@ namespace CoreJ2K
             // **** Tiler ****
             // get nominal tile dimensions
             var stok =
-                new StreamTokenizerSupport(new StringReader(pl.getParameter("tiles")));
+                new StreamTokenizerSupport(new StringReader(pl.GetParameter("tiles")));
             stok.EOLIsSignificant(false);
 
             stok.NextToken();
             if (stok.ttype != StreamTokenizerSupport.TT_NUMBER)
             {
-                error($"An error occurred while parsing the tiles option: {pl.getParameter("tiles")}", 2);
+                error($"An error occurred while parsing the tiles option: {pl.GetParameter("tiles")}", 2);
                 return null;
             }
             var tw = (int)stok.nval;
             stok.NextToken();
             if (stok.ttype != StreamTokenizerSupport.TT_NUMBER)
             {
-                error($"An error occurred while parsing the tiles option: {pl.getParameter("tiles")}", 2);
+                error($"An error occurred while parsing the tiles option: {pl.GetParameter("tiles")}", 2);
                 return null;
             }
             var th = (int)stok.nval;
@@ -1001,7 +1001,7 @@ namespace CoreJ2K
             }
 
             // Get image reference point
-            var refs = pl.getParameter("ref").Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            var refs = pl.GetParameter("ref").Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
             int refx;
             int refy;
             try
@@ -1023,7 +1023,7 @@ namespace CoreJ2K
             }
 
             // Get tiling reference point
-            var trefs = pl.getParameter("tref").Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            var trefs = pl.GetParameter("tref").Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
             int trefx;
             int trefy;
             try
@@ -1055,15 +1055,15 @@ namespace CoreJ2K
                 error($"Could not tile image{((e.Message != null) ? (":\n" + e.Message) : "")}", 2);
                 return null;
             }
-            var ntiles = imgtiler.getNumTiles();
+            var ntiles = imgtiler.GetNumTiles();
 
             // **** Encoder specifications ****
             var encSpec = new EncoderSpecs(ntiles, ncomp, imgsrc, pl);
 
             // **** Component transformation ****
-            if (ppminput && pl.getParameter("Mct") != null && pl.getParameter("Mct").Equals("off"))
+            if (ppminput && pl.GetParameter("Mct") != null && pl.GetParameter("Mct").Equals("off"))
             {
-                FacilityManager.getMsgLogger()
+                FacilityManager.GetMsgLogger()
                     .printmsg(
                         MsgLogger_Fields.WARNING,
                         "Input image is RGB and no color transform has "
@@ -1219,7 +1219,7 @@ namespace CoreJ2K
                         //String res="";
                         if (pktspertp > 0)
                         {
-                            FacilityManager.getMsgLogger()
+                            FacilityManager.GetMsgLogger()
                                 .println(
                                     $"Created tile-parts containing at most {pktspertp} packets per tile.",
                                     4,
@@ -1227,11 +1227,11 @@ namespace CoreJ2K
                         }
                         if (pphTile)
                         {
-                            FacilityManager.getMsgLogger().println("Moved packet headers to tile headers", 4, 6);
+                            FacilityManager.GetMsgLogger().println("Moved packet headers to tile headers", 4, 6);
                         }
                         if (pphMain)
                         {
-                            FacilityManager.getMsgLogger().println("Moved packet headers to main header", 4, 6);
+                            FacilityManager.GetMsgLogger().println("Moved packet headers to main header", 4, 6);
                         }
                     }
                     catch (IOException e)
@@ -1252,7 +1252,7 @@ namespace CoreJ2K
                         var bpc = new int[nc];
                         for (var comp = 0; comp < nc; comp++)
                         {
-                            bpc[comp] = imgsrc.getNomRangeBits(comp);
+                            bpc[comp] = imgsrc.GetNomRangeBits(comp);
                         }
 
                         outStream.Seek(0, SeekOrigin.Begin);
@@ -1776,32 +1776,22 @@ namespace CoreJ2K
 
         #endregion
 
-        /**
-     * Prints the error message 'msg' to standard err, prepending "ERROR" to
-     * it, and sets the exitCode to 'code'. An exit code different than 0
-     * indicates that there were problems.
-     *
-     * @param msg The error message
-     *
-     * @param code The exit code to set
-     * */
-
+        /// <summary>Prints the error message 'msg' to standard err, prepending "ERROR" to
+        /// it, and sets the exitCode to 'code'. An exit code different than 0
+        /// indicates that there were problems.</summary>
+        /// <param name="msg">The error message</param>
+        /// <param name="code">The exit code to set</param>
         private static void error(string msg, int code)
         {
             //exitCode = code;
-            FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.ERROR, msg);
+            FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.ERROR, msg);
         }
 
-        /**
-         * Prints the warning message 'msg' to standard err, prepending "WARNING"
-         * to it.
-         *
-         * @param msg The error message
-         * */
-
+        /// <summary>Prints the warning message 'msg' to standard err, prepending "WARNING" to it.</summary>
+        /// <param name="msg">The warning message</param>
         private static void warning(string msg)
         {
-            FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING, msg);
+            FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING, msg);
         }
 
         private static string GetImageType(Stream inStream)

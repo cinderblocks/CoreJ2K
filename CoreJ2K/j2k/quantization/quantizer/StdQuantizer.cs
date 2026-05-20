@@ -1,12 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: StdQuantizer.java,v 1.14 2001/09/20 12:41:52 grosbois Exp $
-*
-* Class:                   StdQuantizer
-*
-* Description:             Scalar deadzone quantizer of integer or float
-*                          data.
 *
 *                          Mergerd from StdQuantizerInt and
 *                          StdQuantizerFloat from Joel Askelof.
@@ -132,7 +124,7 @@ namespace CoreJ2K.j2k.quantization.quantizer
         /// the value of 'derived' is ignored. If the source data is not integer
         /// (int) then the quantizer can not be reversible.
         /// 
-        /// After initializing member attributes, getAnSubbandTree is called for
+        /// After initializing member attributes, GetAnSubbandTree is called for
         /// all components setting the 'stepWMSE' for all subbands in the current
         /// tile.
         /// 
@@ -163,7 +155,7 @@ namespace CoreJ2K.j2k.quantization.quantizer
         /// <returns> The number of guard bits
         /// 
         /// </returns>
-        public override int getNumGuardBits(int t, int c)
+        public override int GetNumGuardBits(int t, int c)
         {
             return gbs.GetIntTileCompVal(t, c);
         }
@@ -182,9 +174,9 @@ namespace CoreJ2K.j2k.quantization.quantizer
         /// <returns> True if the quantized data is reversible, false if not.
         /// 
         /// </returns>
-        public override bool isReversible(int t, int c)
+        public override bool IsReversible(int t, int c)
         {
-            return qts.isReversible(t, c);
+            return qts.IsReversible(t, c);
         }
 
         /// <summary> Returns true if given tile-component uses derived quantization step
@@ -200,9 +192,9 @@ namespace CoreJ2K.j2k.quantization.quantizer
         /// <returns> True if derived
         /// 
         /// </returns>
-        public override bool isDerived(int t, int c)
+        public override bool IsDerived(int t, int c)
         {
-            return qts.isDerived(t, c);
+            return qts.IsDerived(t, c);
         }
 
         /// <summary> Returns the next code-block in the current tile for the specified
@@ -213,7 +205,7 @@ namespace CoreJ2K.j2k.quantization.quantizer
         /// the code-blocks have been returned for the current tile calls to this
         /// method will return 'null'.
         /// 
-        /// When changing the current tile (through 'setTile()' or 'nextTile()')
+        /// When changing the current tile (through 'SetTile()' or 'NextTile()')
         /// this method will always return the first code-block, as if this method
         /// was never called before for the new current tile.
         /// 
@@ -241,9 +233,9 @@ namespace CoreJ2K.j2k.quantization.quantizer
         /// 
         /// </returns>
         /// <seealso cref="CBlkWTData" />
-        public override CBlkWTData getNextCodeBlock(int c, CBlkWTData cblk)
+        public override CBlkWTData GetNextCodeBlock(int c, CBlkWTData cblk)
         {
-            return getNextInternCodeBlock(c, cblk);
+            return GetNextInternCodeBlock(c, cblk);
         }
 
         /// <summary> Returns the next code-block in the current tile for the specified
@@ -254,7 +246,7 @@ namespace CoreJ2K.j2k.quantization.quantizer
         /// have been returned for the current tile calls to this method will
         /// return 'null'.
         /// 
-        /// When changing the current tile (through 'setTile()' or 'nextTile()')
+        /// When changing the current tile (through 'SetTile()' or 'NextTile()')
         /// this method will always return the first code-block, as if this method
         /// was never called before for the new current tile.
         /// 
@@ -282,9 +274,9 @@ namespace CoreJ2K.j2k.quantization.quantizer
         /// 
         /// </returns>
         /// <seealso cref="CBlkWTData" />
-        public override CBlkWTData getNextInternCodeBlock(int c, CBlkWTData cblk)
+        public override CBlkWTData GetNextInternCodeBlock(int c, CBlkWTData cblk)
         {
-            // NOTE: this method is declared final since getNextCodeBlock() relies
+            // NOTE: this method is declared final since GetNextCodeBlock() relies
             // on this particular implementation
             int k, j;
             int tmp, shiftBits, jmin;
@@ -300,7 +292,7 @@ namespace CoreJ2K.j2k.quantization.quantizer
             var g = gbs.GetIntTileCompVal(tIdx, c);
 
             // Are we quantizing ints or floats?
-            intq = (src.getDataType(tIdx, c) == DataBlk.TYPE_INT);
+            intq = (src.GetDataType(tIdx, c) == DataBlk.TYPE_INT);
 
             // Check that we have an output object
             if (cblk == null)
@@ -313,13 +305,13 @@ namespace CoreJ2K.j2k.quantization.quantizer
 
             // Get data to quantize. When quantizing int data 'cblk' is used to
             // get the data to quantize and to return the quantized data as well,
-            // that's why 'getNextCodeBlock()' is used. This can not be done when
+            // that's why 'GetNextCodeBlock()' is used. This can not be done when
             // quantizing float data because of the different data types, that's
-            // why 'getNextInternCodeBlock()' is used in that case.
+            // why 'GetNextInternCodeBlock()' is used in that case.
             if (intq)
             {
                 // Source data is int
-                cblk = src.getNextCodeBlock(c, cblk);
+                cblk = src.GetNextCodeBlock(c, cblk);
                 if (cblk == null)
                 {
                     return null; // No more code-blocks in current tile for comp.
@@ -331,7 +323,7 @@ namespace CoreJ2K.j2k.quantization.quantizer
             {
                 // Source data is float
                 // Can not use 'cblk' to get float data, use 'infblk'
-                infblk = (CBlkWTDataFloat)src.getNextInternCodeBlock(c, infblk);
+                infblk = (CBlkWTDataFloat)src.GetNextInternCodeBlock(c, infblk);
                 if (infblk == null)
                 {
                     // Release buffer from infblk: this enables to garbage collect
@@ -367,16 +359,16 @@ namespace CoreJ2K.j2k.quantization.quantizer
             h = cblk.h;
             sb = cblk.sb;
 
-            if (isReversible(tIdx, c))
+            if (IsReversible(tIdx, c))
             {
                 // Reversible only for int data
-                cblk.magbits = g - 1 + src.getNomRangeBits(c) + sb.anGainExp;
+                cblk.magbits = g - 1 + src.GetNomRangeBits(c) + sb.anGainExp;
                 shiftBits = 31 - cblk.magbits;
 
                 // Update the convertFactor field
                 cblk.convertFactor = (1 << shiftBits);
 
-                // Since we used getNextCodeBlock() to get the int data then
+                // Since we used GetNextCodeBlock() to get the int data then
                 // 'offset' is 0 and 'scanw' is the width of the code-block The
                 // input and output arrays are the same (i.e. "in place")
                 for (j = w * h - 1; j >= 0; j--)
@@ -391,7 +383,7 @@ namespace CoreJ2K.j2k.quantization.quantizer
                 var baseStep = qsss.GetFloatTileCompVal(tIdx, c);
 
                 // Calculate magnitude bits and quantization step size 
-                if (isDerived(tIdx, c))
+                if (IsDerived(tIdx, c))
                 {
                     cblk.magbits = g - 1 + sb.level - (int)Math.Floor(Math.Log(baseStep) / log2);
                     stepUDR = baseStep / (1 << sb.level);
@@ -404,18 +396,18 @@ namespace CoreJ2K.j2k.quantization.quantizer
                 shiftBits = 31 - cblk.magbits;
                 // Calculate step that decoder will get and use that one.
                 stepUDR = convertFromExpMantissa(convertToExpMantissa(stepUDR));
-                invstep = 1.0f / ((1L << (src.getNomRangeBits(c) + sb.anGainExp)) * stepUDR);
+                invstep = 1.0f / ((1L << (src.GetNomRangeBits(c) + sb.anGainExp)) * stepUDR);
                 // Normalize to magnitude bits (output fractional point)
-                invstep *= (1 << (shiftBits - src.getFixedPoint(c)));
+                invstep *= (1 << (shiftBits - src.GetFixedPoint(c)));
 
                 // Update convertFactor and stepSize fields
                 cblk.convertFactor = invstep;
-                cblk.stepSize = ((1L << (src.getNomRangeBits(c) + sb.anGainExp)) * stepUDR);
+                cblk.stepSize = ((1L << (src.GetNomRangeBits(c) + sb.anGainExp)) * stepUDR);
 
                 if (intq)
                 {
                     // Quantizing int data
-                    // Since we used getNextCodeBlock() to get the int data then
+                    // Since we used GetNextCodeBlock() to get the int data then
                     // 'offset' is 0 and 'scanw' is the width of the code-block
                     // The input and output arrays are the same (i.e. "in place")
                     for (j = w * h - 1; j >= 0; j--)
@@ -465,14 +457,14 @@ namespace CoreJ2K.j2k.quantization.quantizer
                 return;
             if (!sb.isNode)
             {
-                if (isReversible(tIdx, c))
+                if (IsReversible(tIdx, c))
                 {
-                    sb.stepWMSE = (float)Math.Pow(2, -(src.getNomRangeBits(c) << 1)) * sb.l2Norm * sb.l2Norm;
+                    sb.stepWMSE = (float)Math.Pow(2, -(src.GetNomRangeBits(c) << 1)) * sb.l2Norm * sb.l2Norm;
                 }
                 else
                 {
                     baseStep = qsss.GetFloatTileCompVal(tIdx, c);
-                    if (isDerived(tIdx, c))
+                    if (IsDerived(tIdx, c))
                     {
                         sb.stepWMSE = baseStep * baseStep * (float)Math.Pow(2, (sb.anGainExp - sb.level) << 1) * sb.l2Norm * sb.l2Norm;
                     }
@@ -579,18 +571,18 @@ namespace CoreJ2K.j2k.quantization.quantizer
         /// current tile.
         /// 
         /// </returns>
-        public override int getMaxMagBits(int c)
+        public override int GetMaxMagBits(int c)
         {
-            Subband sb = getAnSubbandTree(tIdx, c);
-            if (isReversible(tIdx, c))
+            Subband sb = GetAnSubbandTree(tIdx, c);
+            if (IsReversible(tIdx, c))
             {
-                return getMaxMagBitsRev(sb, c);
+                return GetMaxMagBitsRev(sb, c);
             }
             else
             {
-                return isDerived(tIdx, c)
-                    ? getMaxMagBitsDerived(sb, tIdx, c)
-                    : getMaxMagBitsExpounded(sb, tIdx, c);
+                return IsDerived(tIdx, c)
+                    ? GetMaxMagBitsDerived(sb, tIdx, c)
+                    : GetMaxMagBitsExpounded(sb, tIdx, c);
             }
         }
 
@@ -608,22 +600,22 @@ namespace CoreJ2K.j2k.quantization.quantizer
         /// <returns> The highest number of magnitude bit-planes
         /// 
         /// </returns>
-        private int getMaxMagBitsRev(Subband sb, int c)
+        private int GetMaxMagBitsRev(Subband sb, int c)
         {
             int tmp, max = 0;
             var g = gbs.GetIntTileCompVal(tIdx, c);
 
             if (!sb.isNode)
-                return g - 1 + src.getNomRangeBits(c) + sb.anGainExp;
+                return g - 1 + src.GetNomRangeBits(c) + sb.anGainExp;
 
-            max = getMaxMagBitsRev(sb.LL, c);
-            tmp = getMaxMagBitsRev(sb.LH, c);
+            max = GetMaxMagBitsRev(sb.LL, c);
+            tmp = GetMaxMagBitsRev(sb.LH, c);
             if (tmp > max)
                 max = tmp;
-            tmp = getMaxMagBitsRev(sb.HL, c);
+            tmp = GetMaxMagBitsRev(sb.HL, c);
             if (tmp > max)
                 max = tmp;
-            tmp = getMaxMagBitsRev(sb.HH, c);
+            tmp = GetMaxMagBitsRev(sb.HH, c);
             if (tmp > max)
                 max = tmp;
 
@@ -646,7 +638,7 @@ namespace CoreJ2K.j2k.quantization.quantizer
         /// <returns> The highest number of magnitude bit-planes
         /// 
         /// </returns>
-        private int getMaxMagBitsDerived(Subband sb, int t, int c)
+        private int GetMaxMagBitsDerived(Subband sb, int t, int c)
         {
             int tmp, max = 0;
             var g = gbs.GetIntTileCompVal(t, c);
@@ -657,14 +649,14 @@ namespace CoreJ2K.j2k.quantization.quantizer
                 return g - 1 + sb.level - (int)Math.Floor(Math.Log(baseStep) / log2);
             }
 
-            max = getMaxMagBitsDerived(sb.LL, t, c);
-            tmp = getMaxMagBitsDerived(sb.LH, t, c);
+            max = GetMaxMagBitsDerived(sb.LL, t, c);
+            tmp = GetMaxMagBitsDerived(sb.LH, t, c);
             if (tmp > max)
                 max = tmp;
-            tmp = getMaxMagBitsDerived(sb.HL, t, c);
+            tmp = GetMaxMagBitsDerived(sb.HL, t, c);
             if (tmp > max)
                 max = tmp;
-            tmp = getMaxMagBitsDerived(sb.HH, t, c);
+            tmp = GetMaxMagBitsDerived(sb.HH, t, c);
             if (tmp > max)
                 max = tmp;
 
@@ -688,7 +680,7 @@ namespace CoreJ2K.j2k.quantization.quantizer
         /// <returns> The highest number of magnitude bit-planes
         /// 
         /// </returns>
-        private int getMaxMagBitsExpounded(Subband sb, int t, int c)
+        private int GetMaxMagBitsExpounded(Subband sb, int t, int c)
         {
             int tmp, max = 0;
             var g = gbs.GetIntTileCompVal(t, c);
@@ -699,14 +691,14 @@ namespace CoreJ2K.j2k.quantization.quantizer
                 return g - 1 - (int)Math.Floor(Math.Log(baseStep / (((SubbandAn)sb).l2Norm * (1 << sb.anGainExp))) / log2);
             }
 
-            max = getMaxMagBitsExpounded(sb.LL, t, c);
-            tmp = getMaxMagBitsExpounded(sb.LH, t, c);
+            max = GetMaxMagBitsExpounded(sb.LL, t, c);
+            tmp = GetMaxMagBitsExpounded(sb.LH, t, c);
             if (tmp > max)
                 max = tmp;
-            tmp = getMaxMagBitsExpounded(sb.HL, t, c);
+            tmp = GetMaxMagBitsExpounded(sb.HL, t, c);
             if (tmp > max)
                 max = tmp;
-            tmp = getMaxMagBitsExpounded(sb.HH, t, c);
+            tmp = GetMaxMagBitsExpounded(sb.HH, t, c);
             if (tmp > max)
                 max = tmp;
 

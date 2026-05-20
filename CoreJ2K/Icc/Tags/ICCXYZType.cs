@@ -1,6 +1,5 @@
 /// <summary>**************************************************************************
 /// 
-/// $Id: ICCXYZType.java,v 1.1 2002/07/25 14:56:37 grosbois Exp $
 /// 
 /// Copyright Eastman Kodak Company, 343 State Street, Rochester, NY 14650
 /// $Date $
@@ -53,9 +52,9 @@ namespace CoreJ2K.Icc.Tags
         /// </param>
         protected internal ICCXYZType(int signature, byte[] data, int offset, int length) : base(signature, data, offset, length)
         {
-            x = ICCProfile.getInt(data, offset + 2 * ICCProfile.int_size);
-            y = ICCProfile.getInt(data, offset + 3 * ICCProfile.int_size);
-            z = ICCProfile.getInt(data, offset + 4 * ICCProfile.int_size);
+            x = ICCProfile.GetInt(data, offset + 2 * ICCProfile.int_size);
+            y = ICCProfile.GetInt(data, offset + 3 * ICCProfile.int_size);
+            z = ICCProfile.GetInt(data, offset + 4 * ICCProfile.int_size);
         }
 
 
@@ -69,17 +68,14 @@ namespace CoreJ2K.Icc.Tags
         /// <summary>Write to a file. </summary>
         public virtual void write(System.IO.Stream raf)
         {
-            var xb = ICCProfile.setLong(x);
-            var yb = ICCProfile.setLong(y);
-            var zb = ICCProfile.setLong(z);
+            var xb = ICCProfile.SetLong(x);
+            var yb = ICCProfile.SetLong(y);
+            var zb = ICCProfile.SetLong(z);
 
             // CONVERSION PROBLEM?
             raf.Write(xb, ICCProfile.int_size, 0);
             raf.Write(yb, ICCProfile.int_size, 0);
             raf.Write(zb, ICCProfile.int_size, 0);
         }
-
-
-        /* end class ICCXYZType */
     }
 }

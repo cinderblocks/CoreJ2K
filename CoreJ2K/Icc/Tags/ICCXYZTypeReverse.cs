@@ -1,6 +1,5 @@
 /// <summary>**************************************************************************
 /// 
-/// $Id: ICCXYZTypeReverse.java,v 1.1 2002/07/25 14:56:38 grosbois Exp $
 /// 
 /// Copyright Eastman Kodak Company, 343 State Street, Rochester, NY 14650
 /// $Date $
@@ -40,9 +39,9 @@ namespace CoreJ2K.Icc.Tags
         /// </param>
         protected internal ICCXYZTypeReverse(int signature, byte[] data, int offset, int length) : base(signature, data, offset, length)
         {
-            z = ICCProfile.getInt(data, offset + 2 * ICCProfile.int_size);
-            y = ICCProfile.getInt(data, offset + 3 * ICCProfile.int_size);
-            x = ICCProfile.getInt(data, offset + 4 * ICCProfile.int_size);
+            z = ICCProfile.GetInt(data, offset + 2 * ICCProfile.int_size);
+            y = ICCProfile.GetInt(data, offset + 3 * ICCProfile.int_size);
+            x = ICCProfile.GetInt(data, offset + 4 * ICCProfile.int_size);
         }
 
 
@@ -51,7 +50,5 @@ namespace CoreJ2K.Icc.Tags
         {
             return $"[{base.ToString()}({x}, {y}, {z})]";
         }
-
-        /* end class ICCXYZTypeReverse */
     }
 }

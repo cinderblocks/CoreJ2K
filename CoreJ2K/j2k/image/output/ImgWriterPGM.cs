@@ -1,14 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: ImgWriterPGM.java,v 1.14 2002/07/19 14:13:38 grosbois Exp $
-*
-* Class:                   ImgWriterRawPGM
-*
-* Description:             Image writer for unsigned 8 bit data in
-*                          PGM file format.
-*
-*
 *
 * COPYRIGHT:
 * 
@@ -73,7 +63,7 @@ namespace CoreJ2K.j2k.image.output
         private readonly int levShift;
 
         /// <summary>Where to write the data </summary>
-        private System.IO.Stream out_Renamed;
+        private System.IO.Stream outStream;
 
         /// <summary>The index of the component from where to get the data </summary>
         private readonly int c;
@@ -111,7 +101,7 @@ namespace CoreJ2K.j2k.image.output
         /// <param name="c">The index of the component from where to get the data.
         /// 
         /// </param>
-        public ImgWriterPGM(IFileInfo out_Renamed, BlkImgDataSrc imgSrc, int c)
+        public ImgWriterPGM(IFileInfo outStream, BlkImgDataSrc imgSrc, int c)
         {
             // Check that imgSrc is of the correct type
             // Check that the component index is valid
@@ -121,24 +111,24 @@ namespace CoreJ2K.j2k.image.output
             }
 
             // Check that imgSrc is of the correct type
-            if (imgSrc.getNomRangeBits(c) > 8)
+            if (imgSrc.GetNomRangeBits(c) > 8)
             {
-                FacilityManager.getMsgLogger().println(
-                    $"Warning: Component {c} has nominal bitdepth {imgSrc.getNomRangeBits(c)}. Pixel values will be down-shifted to fit bitdepth of 8 for PGM file", 8, 8);
+                FacilityManager.GetMsgLogger().println(
+                    $"Warning: Component {c} has nominal bitdepth {imgSrc.GetNomRangeBits(c)}. Pixel values will be down-shifted to fit bitdepth of 8 for PGM file", 8, 8);
             }
 
             // Initialize
-            if (out_Renamed.Exists && !out_Renamed.Delete())
+            if (outStream.Exists && !outStream.Delete())
             {
                 throw new System.IO.IOException("Could not reset file");
             }
-            this.out_Renamed = FileStreamFactory.New(out_Renamed.FullName, "rw");
+            this.outStream = FileStreamFactory.New(outStream.FullName, "rw");
             src = imgSrc;
             this.c = c;
             w = imgSrc.ImgWidth;
             h = imgSrc.ImgHeight;
             fb = imgSrc.GetFixedPoint(c);
-            levShift = 1 << (imgSrc.getNomRangeBits(c) - 1);
+            levShift = 1 << (imgSrc.GetNomRangeBits(c) - 1);
 
             writeHeaderInfo();
         }
@@ -177,19 +167,19 @@ namespace CoreJ2K.j2k.image.output
             int i;
             // Finish writing the file, writing 0s at the end if the data at end
             // has not been written.
-            if (out_Renamed.Length != w * h + offset)
+            if (outStream.Length != w * h + offset)
             {
                 // Goto end of file
-                out_Renamed.Seek(out_Renamed.Length, System.IO.SeekOrigin.Begin);
+                outStream.Seek(outStream.Length, System.IO.SeekOrigin.Begin);
                 // Fill with 0s
-                for (i = offset + w * h - (int)out_Renamed.Length; i > 0; i--)
+                for (i = offset + w * h - (int)outStream.Length; i > 0; i--)
                 {
-                    out_Renamed.WriteByte(0);
+                    outStream.WriteByte(0);
                 }
             }
-            out_Renamed.Dispose();
+            outStream.Dispose();
             src = null;
-            out_Renamed = null;
+            outStream = null;
             db = null;
         }
 
@@ -247,8 +237,8 @@ namespace CoreJ2K.j2k.image.output
             db.w = w;
             db.h = h;
             // Get the current active tile offset
-            tOffx = src.getCompULX(c) - (int)Math.Ceiling(src.ImgULX / (double)src.getCompSubsX(c));
-            tOffy = src.getCompULY(c) - (int)Math.Ceiling(src.ImgULY / (double)src.getCompSubsY(c));
+            tOffx = src.GetCompULX(c) - (int)Math.Ceiling(src.ImgULX / (double)src.GetCompSubsX(c));
+            tOffy = src.GetCompULY(c) - (int)Math.Ceiling(src.ImgULY / (double)src.GetCompSubsY(c));
             // Check the array size
             if (db.data_array != null && db.data_array.Length < w * h)
             {
@@ -264,10 +254,10 @@ namespace CoreJ2K.j2k.image.output
             while (db.progressive);
 
             // variables used during coeff saturation
-            int tmp, maxVal = (1 << src.getNomRangeBits(c)) - 1;
+            int tmp, maxVal = (1 << src.GetNomRangeBits(c)) - 1;
 
             // If nominal bitdepth greater than 8, calculate down shift
-            var downShift = src.getNomRangeBits(c) - 8;
+            var downShift = src.GetNomRangeBits(c) - 8;
             if (downShift < 0)
             {
                 downShift = 0;
@@ -283,7 +273,7 @@ namespace CoreJ2K.j2k.image.output
             for (i = 0; i < h; i++)
             {
                 // Skip to beggining of line in file
-                out_Renamed.Seek(offset + this.w * (uly + tOffy + i) + ulx + tOffx, System.IO.SeekOrigin.Begin);
+                outStream.Seek(offset + this.w * (uly + tOffy + i) + ulx + tOffx, System.IO.SeekOrigin.Begin);
                 // Write all bytes in the line
                 if (fracbits == 0)
                 {
@@ -301,7 +291,7 @@ namespace CoreJ2K.j2k.image.output
                         buf[j] = (byte)(((tmp < 0) ? 0 : ((tmp > maxVal) ? maxVal : tmp)) >> downShift);
                     }
                 }
-                out_Renamed.Write(buf, 0, w);
+                outStream.Write(buf, 0, w);
             }
         }
 
@@ -322,8 +312,8 @@ namespace CoreJ2K.j2k.image.output
         {
             int i;
             var tIdx = src.TileIdx;
-            var tw = src.getTileCompWidth(tIdx, c); // Tile width
-            var th = src.getTileCompHeight(tIdx, c); // Tile height
+            var tw = src.GetTileCompWidth(tIdx, c); // Tile width
+            var th = src.GetTileCompHeight(tIdx, c); // Tile height
                                                      // Write in strips
             for (i = 0; i < th; i += DEF_STRIP_HEIGHT)
             {
@@ -348,34 +338,34 @@ namespace CoreJ2K.j2k.image.output
             string val;
 
             // write 'P5' to file
-            out_Renamed.WriteByte((byte)'P'); // 'P'
-            out_Renamed.WriteByte((byte)'5'); // '5'
-            out_Renamed.WriteByte((byte)'\n'); // newline
+            outStream.WriteByte((byte)'P'); // 'P'
+            outStream.WriteByte((byte)'5'); // '5'
+            outStream.WriteByte((byte)'\n'); // newline
             offset = 3;
             // Write width in ASCII
             val = Convert.ToString(w);
             byteVals = System.Text.Encoding.UTF8.GetBytes(val);
             for (i = 0; i < byteVals.Length; i++)
             {
-                out_Renamed.WriteByte(byteVals[i]);
+                outStream.WriteByte(byteVals[i]);
                 offset++;
             }
-            out_Renamed.WriteByte((byte)' '); // blank
+            outStream.WriteByte((byte)' '); // blank
             offset++;
             // Write height in ASCII
             val = Convert.ToString(h);
             byteVals = System.Text.Encoding.UTF8.GetBytes(val);
             for (i = 0; i < byteVals.Length; i++)
             {
-                out_Renamed.WriteByte(byteVals[i]);
+                outStream.WriteByte(byteVals[i]);
                 offset++;
             }
             // Write maxval
-            out_Renamed.WriteByte((byte)'\n'); // newline
-            out_Renamed.WriteByte((byte)'2'); // '2'
-            out_Renamed.WriteByte((byte)'5'); // '5'
-            out_Renamed.WriteByte((byte)'5'); // '5'
-            out_Renamed.WriteByte((byte)'\n'); // newline
+            outStream.WriteByte((byte)'\n'); // newline
+            outStream.WriteByte((byte)'2'); // '2'
+            outStream.WriteByte((byte)'5'); // '5'
+            outStream.WriteByte((byte)'5'); // '5'
+            outStream.WriteByte((byte)'\n'); // newline
             offset += 5;
         }
 
@@ -389,7 +379,7 @@ namespace CoreJ2K.j2k.image.output
         /// </returns>
         public override string ToString()
         {
-            return $"ImgWriterPGM: WxH = {w}x{h}, Component={c}\nUnderlying RandomAccessFile:\n{out_Renamed}";
+            return $"ImgWriterPGM: WxH = {w}x{h}, Component={c}\nUnderlying RandomAccessFile:\n{outStream}";
         }
     }
 }

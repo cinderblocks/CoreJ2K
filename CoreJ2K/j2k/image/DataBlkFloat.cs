@@ -1,12 +1,5 @@
 /*
-* CVS Identifier:
-*
-* $Id: DataBlkFloat.java,v 1.7 2001/10/09 12:52:01 grosbois Exp $
-*
 * Interface:           DataBlkFloat
-*
-* Description:         A float implementation of DataBlk
-*
 *
 *
 * COPYRIGHT:

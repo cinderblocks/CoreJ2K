@@ -1,12 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: ByteOutputBuffer.java,v 1.10 2001/05/17 15:21:16 grosbois Exp $
-*
-* Class:                   ByteOutputBuffer
-*
-* Description:             Provides buffering for byte based output, similar
-*                          to the standard class ByteArrayOutputStream
 *
 *                          the old jj2000.j2k.io.ByteArrayOutput class by
 *                          Diego SANTA CRUZ, Apr-26-1999
@@ -170,7 +162,7 @@ namespace CoreJ2K.j2k.entropy.encoder
         /// <returns> The value (betweeb 0-255) of the byte at position 'pos'.
         /// 
         /// </returns>
-        public virtual int getByte(int pos)
+        public virtual int GetByte(int pos)
         {
             if (pos >= count)
             {

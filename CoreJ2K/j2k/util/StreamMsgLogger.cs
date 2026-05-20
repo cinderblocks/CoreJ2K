@@ -48,7 +48,7 @@ namespace CoreJ2K.j2k.util
     public abstract class StreamMsgLogger : IMsgLogger
     {
         /// <summary>The 'out' stream </summary>
-        private readonly StreamWriter out_Renamed;
+        private readonly StreamWriter outStream;
 
         /// <summary>The 'err' stream </summary>
         private readonly StreamWriter err;
@@ -70,7 +70,7 @@ namespace CoreJ2K.j2k.util
         {
             var temp_writer = new StreamWriter(outstr, System.Text.Encoding.UTF8);
             temp_writer.AutoFlush = true;
-            out_Renamed = temp_writer;
+            outStream = temp_writer;
             var temp_writer2 = new StreamWriter(errstr, System.Text.Encoding.UTF8);
             temp_writer2.AutoFlush = true;
             err = temp_writer2;
@@ -91,7 +91,7 @@ namespace CoreJ2K.j2k.util
         {
             var temp_writer = new StreamWriter(outstr.BaseStream, outstr.Encoding);
             temp_writer.AutoFlush = true;
-            out_Renamed = temp_writer;
+            outStream = temp_writer;
             var temp_writer2 = new StreamWriter(errstr.BaseStream, errstr.Encoding);
             temp_writer2.AutoFlush = true;
             err = temp_writer2;
@@ -116,12 +116,12 @@ namespace CoreJ2K.j2k.util
 
                 case MsgLogger_Fields.LOG:
                     prefix = "[LOG]: ";
-                    lout = out_Renamed;
+                    lout = outStream;
                     break;
 
                 case MsgLogger_Fields.INFO:
                     prefix = "[INFO]: ";
-                    lout = out_Renamed;
+                    lout = outStream;
                     break;
 
                 case MsgLogger_Fields.WARNING:
@@ -161,7 +161,7 @@ namespace CoreJ2K.j2k.util
         /// </param>
         public virtual void println(string str, int flind, int ind)
         {
-            mp.print(out_Renamed, flind, ind, str);
+            mp.print(outStream, flind, ind, str);
         }
 
         /// <summary> Writes any buffered data from the print() and println() methods to the
@@ -169,7 +169,7 @@ namespace CoreJ2K.j2k.util
         /// </summary>
         public virtual void flush()
         {
-            out_Renamed.Flush();
+            outStream.Flush();
         }
     }
 }

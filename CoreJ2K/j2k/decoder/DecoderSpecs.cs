@@ -1,13 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: DecoderSpecs.java,v 1.25 2002/07/25 15:06:17 grosbois Exp $
-*
-* Class:                   DecoderSpecs
-*
-* Description:             Hold all decoder specifications
-*
-*
 *
 * COPYRIGHT:
 * 

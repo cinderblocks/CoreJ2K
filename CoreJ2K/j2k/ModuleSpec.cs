@@ -1,11 +1,4 @@
 /* 
-* CVS identifier:
-* 
-* $Id: ModuleSpec.java,v 1.24 2001/10/26 16:30:11 grosbois Exp $
-* 
-* Class:                   ModuleSpec
-* 
-* Description:             Generic class for storing module specs
 * 
 *                           from WTFilterSpec (Diego Santa Cruz)
 * 
@@ -312,9 +305,9 @@ namespace CoreJ2K.j2k
         /// <summary> Sets default value for this module 
         /// 
         /// </summary>
-        public virtual void setDefault(object value_Renamed)
+        public virtual void SetDefault(object value)
         {
-            def = value_Renamed;
+            def = value;
         }
 
         /// <summary>Cached boxed <c>true</c> to avoid repeated boxing allocations.</summary>
@@ -333,12 +326,12 @@ namespace CoreJ2K.j2k
         /// <summary>Sets the tile-level default using a pre-boxed bool singleton.</summary>
         public void SetBoolTileDef(int t, bool value)
         {
-            setTileDef(t, value ? BoxedTrue : BoxedFalse);
+            SetTileDef(t, value ? BoxedTrue : BoxedFalse);
         }
 
         /// <summary>Returns the tile default as a <c>bool</c> without unboxing overhead on
         /// a freshly allocated object. The stored value must have been set via
-        /// <see cref="SetBoolDefault"/> or <see cref="setDefault"/> with a bool.</summary>
+        /// <see cref="SetBoolDefault"/> or <see cref="SetDefault"/> with a bool.</summary>
         public bool GetBoolTileDef(int t)
         {
             if (specType == SPEC_TYPE_COMP)
@@ -353,7 +346,7 @@ namespace CoreJ2K.j2k
         /// <returns> The default value (Must be casted before use)
         /// 
         /// </returns>
-        public virtual object getDefault()
+        public virtual object GetDefault()
         {
             return def;
         }
@@ -379,11 +372,11 @@ namespace CoreJ2K.j2k
 
         /// <summary>Returns the tile-component value as an <c>int</c>, falling back through
         /// the priority chain (tile-comp → tile → comp → default) without extra allocation.</summary>
-        public int GetIntTileCompVal(int t, int c) => (int)getSpec(t, c);
+        public int GetIntTileCompVal(int t, int c) => (int)GetSpec(t, c);
 
         /// <summary>Returns the tile-component value as a <c>float</c>, falling back through
         /// the priority chain without extra allocation.</summary>
-        public float GetFloatTileCompVal(int t, int c) => (float)getSpec(t, c);
+        public float GetFloatTileCompVal(int t, int c) => (float)GetSpec(t, c);
 
         /// <summary> Sets default value for specified component and specValType tag if
         /// allowed by its priority.
@@ -392,12 +385,12 @@ namespace CoreJ2K.j2k
         /// <param name="c">Component index 
         /// 
         /// </param>
-        public virtual void setCompDef(int c, object value_Renamed)
+        public virtual void SetCompDef(int c, object value)
         {
             if (specType == SPEC_TYPE_TILE)
             {
                 var errMsg =
-                    $"Option whose value is '{value_Renamed}' cannot be specified for components as it is a 'tile only' specific option";
+                    $"Option whose value is '{value}' cannot be specified for components as it is a 'tile only' specific option";
                 throw new InvalidOperationException(errMsg);
             }
             if (compDef == null)
@@ -411,7 +404,7 @@ namespace CoreJ2K.j2k
                     specValType[i][c] = SPEC_COMP_DEF;
                 }
             }
-            compDef[c] = value_Renamed;
+            compDef[c] = value;
         }
 
         /// <summary> Gets default value of the specified component. If no specification have
@@ -425,15 +418,15 @@ namespace CoreJ2K.j2k
         /// use)
         /// 
         /// </returns>
-        /// <seealso cref="setCompDef" />
-        public virtual object getCompDef(int c)
+        /// <seealso cref="SetCompDef" />
+        public virtual object GetCompDef(int c)
         {
             if (specType == SPEC_TYPE_TILE)
             {
                 throw new InvalidOperationException("Illegal use of ModuleSpec class");
             }
 
-            return compDef?[c] == null ? getDefault() : compDef[c];
+            return compDef?[c] == null ? GetDefault() : compDef[c];
         }
 
         /// <summary> Sets default value for specified tile and specValType tag if allowed by
@@ -443,12 +436,12 @@ namespace CoreJ2K.j2k
         /// <param name="c">Tile index.
         /// 
         /// </param>
-        public virtual void setTileDef(int t, object value_Renamed)
+        public virtual void SetTileDef(int t, object value)
         {
             if (specType == SPEC_TYPE_COMP)
             {
                 var errMsg =
-                    $"Option whose value is '{value_Renamed}' cannot be specified for tiles as it is a 'component only' specific option";
+                    $"Option whose value is '{value}' cannot be specified for tiles as it is a 'component only' specific option";
                 throw new InvalidOperationException(errMsg);
             }
             if (tileDef == null)
@@ -462,7 +455,7 @@ namespace CoreJ2K.j2k
                     specValType[t][i] = SPEC_TILE_DEF;
                 }
             }
-            tileDef[t] = value_Renamed;
+            tileDef[t] = value;
         }
 
         /// <summary> Gets default value of the specified tile. If no specification has been
@@ -475,15 +468,15 @@ namespace CoreJ2K.j2k
         /// <returns> The default value for this tile (Must be casted before use)
         /// 
         /// </returns>
-        /// <seealso cref="setTileDef" />
-        public virtual object getTileDef(int t)
+        /// <seealso cref="SetTileDef" />
+        public virtual object GetTileDef(int t)
         {
             if (specType == SPEC_TYPE_COMP)
             {
                 throw new InvalidOperationException("Illegal use of ModuleSpec class");
             }
 
-            return tileDef?[t] == null ? getDefault() : tileDef[t];
+            return tileDef?[t] == null ? GetDefault() : tileDef[t];
         }
 
         /// <summary> Sets value for specified tile-component.
@@ -495,11 +488,11 @@ namespace CoreJ2K.j2k
         /// <param name="c">Component index 
         /// 
         /// </param>
-        public virtual void setTileCompVal(int t, int c, object value_Renamed)
+        public virtual void SetTileCompVal(int t, int c, object value)
         {
             if (specType != SPEC_TYPE_TILE_COMP)
             {
-                var errMsg = $"Option whose value is '{value_Renamed}' cannot be specified for ";
+                var errMsg = $"Option whose value is '{value}' cannot be specified for ";
                 switch (specType)
                 {
 
@@ -516,10 +509,10 @@ namespace CoreJ2K.j2k
             if (tileCompVal == null)
                 tileCompVal = new object[nTiles * nComp];
             specValType[t][c] = SPEC_TILE_COMP;
-            tileCompVal[t * nComp + c] = value_Renamed;
+            tileCompVal[t * nComp + c] = value;
         }
 
-        /// <summary> Gets value of specified tile-component. This method calls getSpec but
+        /// <summary> Gets value of specified tile-component. This method calls GetSpec but
         /// has a public access.
         /// 
         /// </summary>
@@ -532,15 +525,15 @@ namespace CoreJ2K.j2k
         /// <returns> The value of this tile-component (Must be casted before use)
         /// 
         /// </returns>
-        /// <seealso cref="setTileCompVal" />
-        /// <seealso cref="getSpec" />
-        public virtual object getTileCompVal(int t, int c)
+        /// <seealso cref="SetTileCompVal" />
+        /// <seealso cref="GetSpec" />
+        public virtual object GetTileCompVal(int t, int c)
         {
             if (specType != SPEC_TYPE_TILE_COMP)
             {
                 throw new InvalidOperationException("Illegal use of ModuleSpec class");
             }
-            return getSpec(t, c);
+            return GetSpec(t, c);
         }
 
         /// <summary> Gets value of specified tile-component without knowing if a specific
@@ -559,19 +552,19 @@ namespace CoreJ2K.j2k
         /// <returns> Value for this tile component.
         /// 
         /// </returns>
-        protected internal virtual object getSpec(int t, int c)
+        protected internal virtual object GetSpec(int t, int c)
         {
             switch (specValType[t][c])
             {
 
                 case SPEC_DEF:
-                    return getDefault();
+                    return GetDefault();
 
                 case SPEC_COMP_DEF:
-                    return getCompDef(c);
+                    return GetCompDef(c);
 
                 case SPEC_TILE_DEF:
-                    return getTileDef(t);
+                    return GetTileDef(t);
 
                 case SPEC_TILE_COMP:
                     return tileCompVal[t * nComp + c];
@@ -591,7 +584,7 @@ namespace CoreJ2K.j2k
         /// <param name="c">Component index
         /// 
         /// </param>
-        public virtual byte getSpecValType(int t, int c)
+        public virtual byte GetSpecValType(int t, int c)
         {
             return specValType[t][c];
         }
@@ -606,7 +599,7 @@ namespace CoreJ2K.j2k
         /// <returns> True if component specification has been defined
         /// 
         /// </returns>
-        public virtual bool isCompSpecified(int c)
+        public virtual bool IsCompSpecified(int c)
         {
             return compDef?[c] != null;
         }
@@ -620,7 +613,7 @@ namespace CoreJ2K.j2k
         /// <returns> True if tile specification has been entered
         /// 
         /// </returns>
-        public virtual bool isTileSpecified(int t)
+        public virtual bool IsTileSpecified(int t)
         {
             return tileDef?[t] != null;
         }
@@ -637,7 +630,7 @@ namespace CoreJ2K.j2k
         /// <returns> True if a tile-component specification has been defined.
         /// 
         /// </returns>
-        public virtual bool isTileCompSpecified(int t, int c)
+        public virtual bool IsTileCompSpecified(int t, int c)
         {
             return tileCompVal != null && tileCompVal[t * nComp + c] != null;
         }

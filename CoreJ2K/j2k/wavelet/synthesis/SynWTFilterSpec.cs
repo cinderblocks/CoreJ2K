@@ -1,13 +1,4 @@
 /* 
-* CVS identifier:
-* 
-* $Id: SynWTFilterSpec.java,v 1.15 2001/08/02 10:01:30 grosbois Exp $
-* 
-* Class:                   SynWTFilterSpec
-* 
-* Description:             Synthesis filters specification
-* 
-* 
 * 
 * COPYRIGHT:
 * 
@@ -84,9 +75,9 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// 
         /// </returns>
         /// <seealso cref="j2k.image.DataBlk" />
-        public virtual int getWTDataType(int t, int c)
+        public virtual int GetWTDataType(int t, int c)
         {
-            var an = (SynWTFilter[][])getSpec(t, c);
+            var an = (SynWTFilter[][])GetSpec(t, c);
             return an[0][0].DataType;
         }
 
@@ -111,9 +102,9 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// tile 't'.
         /// 
         /// </returns>
-        public virtual SynWTFilter[] getHFilters(int t, int c)
+        public virtual SynWTFilter[] GetHFilters(int t, int c)
         {
-            var an = (SynWTFilter[][])getSpec(t, c);
+            var an = (SynWTFilter[][])GetSpec(t, c);
             return an[0];
         }
 
@@ -138,9 +129,9 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// tile 't'.
         /// 
         /// </returns>
-        public virtual SynWTFilter[] getVFilters(int t, int c)
+        public virtual SynWTFilter[] GetVFilters(int t, int c)
         {
-            var an = (SynWTFilter[][])getSpec(t, c);
+            var an = (SynWTFilter[][])GetSpec(t, c);
             return an[1];
         }
 
@@ -156,7 +147,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
             {
                 for (var c = 0; c < nComp; c++)
                 {
-                    an = (SynWTFilter[][])getSpec(t, c);
+                    an = (SynWTFilter[][])GetSpec(t, c);
 
                     str += $"(t:{t},c:{c})\n";
 
@@ -189,11 +180,11 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// <param name="c">The index of the component
         /// 
         /// </param>
-        public virtual bool isReversible(int t, int c)
+        public virtual bool IsReversible(int t, int c)
         {
             // Note: no need to buffer the result since this method is normally
             // called once per tile-component.
-            SynWTFilter[] hfilter = getHFilters(t, c), vfilter = getVFilters(t, c);
+            SynWTFilter[] hfilter = GetHFilters(t, c), vfilter = GetVFilters(t, c);
 
             // As soon as a filter is not reversible, false can be returned
             for (var i = hfilter.Length - 1; i >= 0; i--)

@@ -1,13 +1,4 @@
 /* 
-* CVS identifier:
-* 
-* $Id: MaxShiftSpec.java,v 1.10 2000/11/27 15:00:45 grosbois Exp $
-* 
-* Class:                   MaxShiftSpec
-* 
-* Description:             Generic class for storing module specs
-* 
-*
 * 
 * COPYRIGHT:
 * 

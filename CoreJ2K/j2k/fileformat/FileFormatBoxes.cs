@@ -1,13 +1,4 @@
 /*
-* cvs identifier:
-*
-* $Id: FileFormatBoxes.java,v 1.10 2001/02/14 12:22:20 qtxjoas Exp $
-*
-* Class:                   FileFormatMarkers
-*
-* Description:             Contains definitions of boxes used in jp2 files
-*
-*
 *
 * COPYRIGHT:
 * 

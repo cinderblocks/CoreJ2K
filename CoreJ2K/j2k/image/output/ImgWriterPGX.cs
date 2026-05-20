@@ -1,14 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: ImgWriterPGX.java,v 1.14 2002/07/19 14:10:46 grosbois Exp $
-*
-* Class:                   ImgWriterPGX
-*
-* Description:             Image Writer for PGX files (custom file format
-*                          for VM3A)
-*
-*
 *
 * COPYRIGHT:
 * 
@@ -104,13 +94,13 @@ namespace CoreJ2K.j2k.image.output
         /// <summary>Whether the data must be signed when writing or not. In the latter
         /// case inverse level shifting must be applied 
         /// </summary>
-        internal bool isSigned;
+        internal bool IsSigned;
 
         /// <summary>The bit-depth of the input file (must be between 1 and 31)</summary>
         private readonly int bitDepth;
 
         /// <summary>Where to write the data </summary>
-        private System.IO.Stream out_Renamed;
+        private System.IO.Stream outStream;
 
         /// <summary>The offset of the raw pixel data in the PGX file </summary>
         private readonly int offset;
@@ -158,27 +148,27 @@ namespace CoreJ2K.j2k.image.output
         /// <param name="c">The index of the component from where to get the data.
         /// 
         /// </param>
-        /// <param name="isSigned">Whether the datas are signed or not (needed only when
+        /// <param name="IsSigned">Whether the datas are signed or not (needed only when
         /// writing header).
         /// 
         /// </param>
         /// <seealso cref="DataBlk" />
-        public ImgWriterPGX(IFileInfo out_Renamed, BlkImgDataSrc imgSrc, int c, bool isSigned)
+        public ImgWriterPGX(IFileInfo outStream, BlkImgDataSrc imgSrc, int c, bool IsSigned)
         {
             //Initialize
             this.c = c;
-            if (out_Renamed.Exists && !out_Renamed.Delete())
+            if (outStream.Exists && !outStream.Delete())
             {
                 throw new System.IO.IOException("Could not reset file");
             }
-            this.out_Renamed = FileStreamFactory.New(out_Renamed.FullName, "rw");
-            this.isSigned = isSigned;
+            this.outStream = FileStreamFactory.New(outStream.FullName, "rw");
+            this.IsSigned = IsSigned;
             src = imgSrc;
             w = src.ImgWidth;
             h = src.ImgHeight;
             fb = imgSrc.GetFixedPoint(c);
 
-            bitDepth = src.getNomRangeBits(this.c);
+            bitDepth = src.GetNomRangeBits(this.c);
             if ((bitDepth <= 0) || (bitDepth > 31))
             {
                 throw new System.IO.IOException("PGX supports only bit-depth between 1 and 31");
@@ -198,19 +188,19 @@ namespace CoreJ2K.j2k.image.output
             }
 
             // Writes PGX header
-            var tmpString = $"PG ML {((this.isSigned) ? "- " : "+ ")}{bitDepth} {w} {h}\n"; // component height
+            var tmpString = $"PG ML {((this.IsSigned) ? "- " : "+ ")}{bitDepth} {w} {h}\n"; // component height
 
             var tmpByte = System.Text.Encoding.UTF8.GetBytes(tmpString);
             foreach (var t in tmpByte)
             {
-                this.out_Renamed.WriteByte(t);
+                this.outStream.WriteByte(t);
             }
 
             offset = tmpByte.Length;
-            maxVal = this.isSigned ? ((1 << (src.getNomRangeBits(c) - 1)) - 1) : ((1 << src.getNomRangeBits(c)) - 1);
-            minVal = this.isSigned ? ((-1) * (1 << (src.getNomRangeBits(c) - 1))) : 0;
+            maxVal = this.IsSigned ? ((1 << (src.GetNomRangeBits(c) - 1)) - 1) : ((1 << src.GetNomRangeBits(c)) - 1);
+            minVal = this.IsSigned ? ((-1) * (1 << (src.GetNomRangeBits(c) - 1))) : 0;
 
-            levShift = (this.isSigned) ? 0 : 1 << (src.getNomRangeBits(c) - 1);
+            levShift = (this.IsSigned) ? 0 : 1 << (src.GetNomRangeBits(c) - 1);
         }
 
         /// <summary> Creates a new writer to the specified file, to write data from the
@@ -235,12 +225,12 @@ namespace CoreJ2K.j2k.image.output
         /// <param name="c">The index of the component from where to get the data.
         /// 
         /// </param>
-        /// <param name="isSigned">Whether the datas are signed or not (needed only when
+        /// <param name="IsSigned">Whether the datas are signed or not (needed only when
         /// writing header).
         /// 
         /// </param>
         /// <seealso cref="DataBlk" />
-        public ImgWriterPGX(string fname, BlkImgDataSrc imgSrc, int c, bool isSigned) : this(FileInfoFactory.New(fname), imgSrc, c, isSigned)
+        public ImgWriterPGX(string fname, BlkImgDataSrc imgSrc, int c, bool IsSigned) : this(FileInfoFactory.New(fname), imgSrc, c, IsSigned)
         {
         }
 
@@ -257,19 +247,19 @@ namespace CoreJ2K.j2k.image.output
             int i;
             // Finish writing the file, writing 0s at the end if the data at end
             // has not been written.
-            if (out_Renamed.Length != w * h * packBytes + offset)
+            if (outStream.Length != w * h * packBytes + offset)
             {
                 // Goto end of file
-                out_Renamed.Seek(out_Renamed.Length, System.IO.SeekOrigin.Begin);
+                outStream.Seek(outStream.Length, System.IO.SeekOrigin.Begin);
                 // Fill with 0s
-                for (i = offset + w * h * packBytes - (int)out_Renamed.Length; i > 0; i--)
+                for (i = offset + w * h * packBytes - (int)outStream.Length; i > 0; i--)
                 {
-                    out_Renamed.WriteByte(0);
+                    outStream.WriteByte(0);
                 }
             }
-            out_Renamed.Dispose();
+            outStream.Dispose();
             src = null;
-            out_Renamed = null;
+            outStream = null;
             db = null;
         }
 
@@ -331,8 +321,8 @@ namespace CoreJ2K.j2k.image.output
             db.w = w;
             db.h = h;
             // Get the current active tile offset
-            tOffx = src.getCompULX(c) - (int)Math.Ceiling(src.ImgULX / (double)src.getCompSubsX(c));
-            tOffy = src.getCompULY(c) - (int)Math.Ceiling(src.ImgULY / (double)src.getCompSubsY(c));
+            tOffx = src.GetCompULX(c) - (int)Math.Ceiling(src.ImgULX / (double)src.GetCompSubsX(c));
+            tOffy = src.GetCompULY(c) - (int)Math.Ceiling(src.ImgULY / (double)src.GetCompSubsY(c));
             // Check the array size
             if (db.data_array != null && db.data_array.Length < w * h)
             {
@@ -365,7 +355,7 @@ namespace CoreJ2K.j2k.image.output
                     for (i = 0; i < h; i++)
                     {
                         // Skip to beggining of line in file
-                        out_Renamed.Seek(offset + this.w * (uly + tOffy + i) + ulx + tOffx, System.IO.SeekOrigin.Begin);
+                        outStream.Seek(offset + this.w * (uly + tOffy + i) + ulx + tOffx, System.IO.SeekOrigin.Begin);
                         // Write all bytes in the line
                         if (fracbits == 0)
                         {
@@ -383,7 +373,7 @@ namespace CoreJ2K.j2k.image.output
                                 buf[j--] = (byte)((tmp < minVal) ? minVal : ((tmp > maxVal) ? maxVal : tmp));
                             }
                         }
-                        out_Renamed.Write(buf, 0, w);
+                        outStream.Write(buf, 0, w);
                     }
                     break;
 
@@ -394,7 +384,7 @@ namespace CoreJ2K.j2k.image.output
                     {
 
                         // Skip to beggining of line in file
-                        out_Renamed.Seek(offset + 2 * (this.w * (uly + tOffy + i) + ulx + tOffx), System.IO.SeekOrigin.Begin);
+                        outStream.Seek(offset + 2 * (this.w * (uly + tOffy + i) + ulx + tOffx), System.IO.SeekOrigin.Begin);
                         // Write all bytes in the line
                         if (fracbits == 0)
                         {
@@ -418,7 +408,7 @@ namespace CoreJ2K.j2k.image.output
                                 buf[j--] = (byte)((tmp >>> 8));
                             }
                         }
-                        out_Renamed.Write(buf, 0, w << 1);
+                        outStream.Write(buf, 0, w << 1);
                     }
                     break;
 
@@ -428,7 +418,7 @@ namespace CoreJ2K.j2k.image.output
                     for (i = 0; i < h; i++)
                     {
                         // Skip to beggining of line in file
-                        out_Renamed.Seek(offset + 4 * (this.w * (uly + tOffy + i) + ulx + tOffx), System.IO.SeekOrigin.Begin);
+                        outStream.Seek(offset + 4 * (this.w * (uly + tOffy + i) + ulx + tOffx), System.IO.SeekOrigin.Begin);
                         // Write all bytes in the line
                         if (fracbits == 0)
                         {
@@ -454,7 +444,7 @@ namespace CoreJ2K.j2k.image.output
                                 buf[j--] = (byte)((tmp >>> 24)); // same effect
                             }
                         }
-                        out_Renamed.Write(buf, 0, w << 2);
+                        outStream.Write(buf, 0, w << 2);
                     }
                     break;
 
@@ -482,8 +472,8 @@ namespace CoreJ2K.j2k.image.output
         {
             int i;
             var tIdx = src.TileIdx;
-            var tw = src.getTileCompWidth(tIdx, c); // Tile width
-            var th = src.getTileCompHeight(tIdx, c); // Tile height
+            var tw = src.GetTileCompWidth(tIdx, c); // Tile width
+            var th = src.GetTileCompHeight(tIdx, c); // Tile height
                                                      // Write in strips
             for (i = 0; i < th; i += DEF_STRIP_HEIGHT)
             {
@@ -502,7 +492,7 @@ namespace CoreJ2K.j2k.image.output
         public override string ToString()
         {
             return
-                $"ImgWriterPGX: WxH = {w}x{h}, Component = {c}, Bit-depth = {bitDepth}, signed = {isSigned}\nUnderlying RandomAccessFile:\n{out_Renamed}";
+                $"ImgWriterPGX: WxH = {w}x{h}, Component = {c}, Bit-depth = {bitDepth}, signed = {IsSigned}\nUnderlying RandomAccessFile:\n{outStream}";
         }
     }
 }

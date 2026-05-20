@@ -14,9 +14,9 @@ namespace CoreJ2K.Icc.Tags
         protected internal ICCSignatureType(int signature, byte[] data, int offset, int length)
             : base(signature, data, offset, offset + 2 * ICCProfile.int_size)
         {
-            type = ICCProfile.getInt(data, offset);
-            reserved = ICCProfile.getInt(data, offset + ICCProfile.int_size);
-            signature = ICCProfile.getInt(data, offset + ICCProfile.int_size);
+            type = ICCProfile.GetInt(data, offset);
+            reserved = ICCProfile.GetInt(data, offset + ICCProfile.int_size);
+            signature = ICCProfile.GetInt(data, offset + ICCProfile.int_size);
         }
     }
 }

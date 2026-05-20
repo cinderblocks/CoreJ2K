@@ -1,14 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: ROIScaler.java,v 1.11 2001/09/20 12:42:20 grosbois Exp $
-*
-* Class:                   ROIScaler
-*
-* Description:             This class takes care of the scaling of the 
-*                          samples
-*
-*
 *
 * COPYRIGHT:
 * 
@@ -184,7 +174,7 @@ namespace CoreJ2K.j2k.roi.encoder
         }
 
         /// <summary> Since ROI scaling is always a reversible operation, it calls
-        /// isReversible() method of it source (the quantizer module).
+        /// IsReversible() method of it source (the quantizer module).
         /// 
         /// </summary>
         /// <param name="t">The tile to test for reversibility
@@ -196,9 +186,9 @@ namespace CoreJ2K.j2k.roi.encoder
         /// <returns> True if the quantized data is reversible, false if not.
         /// 
         /// </returns>
-        public virtual bool isReversible(int t, int c)
+        public virtual bool IsReversible(int t, int c)
         {
-            return src.isReversible(t, c);
+            return src.IsReversible(t, c);
         }
 
         /// <summary> Returns a reference to the subband tree structure representing the
@@ -216,9 +206,9 @@ namespace CoreJ2K.j2k.roi.encoder
         /// </returns>
         /// <seealso cref="SubbandAn" />
         /// <seealso cref="Subband" />
-        public virtual SubbandAn getAnSubbandTree(int t, int c)
+        public virtual SubbandAn GetAnSubbandTree(int t, int c)
         {
-            return src.getAnSubbandTree(t, c);
+            return src.GetAnSubbandTree(t, c);
         }
 
         /// <summary> Creates a ROIScaler object. The Quantizer is the source of data to
@@ -251,7 +241,7 @@ namespace CoreJ2K.j2k.roi.encoder
             pl.checkList(OPT_PREFIX, ParameterList.toNameArray(pinfo));
 
             // Get parameters and check if there are and ROIs specified 
-            var roiopt = pl.getParameter("Rroi");
+            var roiopt = pl.GetParameter("Rroi");
             if (roiopt == null)
             {
                 // No ROIs specified! Create ROIScaler with no mask generator
@@ -259,13 +249,13 @@ namespace CoreJ2K.j2k.roi.encoder
             }
 
             // Check if the lowest resolution levels should belong to the ROI 
-            var sLev = pl.getIntParameter("Rstart_level");
+            var sLev = pl.GetIntParameter("Rstart_level");
 
             // Check if the ROIs are block-aligned
-            var useBlockAligned = pl.getBooleanParameter("Ralign");
+            var useBlockAligned = pl.GetBooleanParameter("Ralign");
 
             // Check if generic mask generation is specified 
-            var onlyRect = !pl.getBooleanParameter("Rno_rect");
+            var onlyRect = !pl.GetBooleanParameter("Rno_rect");
 
             // Parse the ROIs
             parseROIs(roiopt, src.NumComps, roiVector);
@@ -514,9 +504,9 @@ namespace CoreJ2K.j2k.roi.encoder
         /// 
         /// </returns>
         /// <seealso cref="CBlkWTData" />
-        public virtual CBlkWTData getNextCodeBlock(int c, CBlkWTData cblk)
+        public virtual CBlkWTData GetNextCodeBlock(int c, CBlkWTData cblk)
         {
-            return getNextInternCodeBlock(c, cblk);
+            return GetNextInternCodeBlock(c, cblk);
         }
 
         /// <summary> This function gets a datablk from the entropy coder. The sample sin the
@@ -541,7 +531,7 @@ namespace CoreJ2K.j2k.roi.encoder
         /// 
         /// </returns>
         /// <seealso cref="CBlkWTData" />
-        public virtual CBlkWTData getNextInternCodeBlock(int c, CBlkWTData cblk)
+        public virtual CBlkWTData GetNextInternCodeBlock(int c, CBlkWTData cblk)
         {
             int mi, i, j, k, wrap;
             int ulx, uly, w, h;
@@ -557,7 +547,7 @@ namespace CoreJ2K.j2k.roi.encoder
             var nROIcoeff = 0;
 
             // Get codeblock's data from quantizer
-            cblk = src.getNextCodeBlock(c, cblk);
+            cblk = src.GetNextCodeBlock(c, cblk);
 
             // If there is no ROI in the image, or if we already got all
             // code-blocks
@@ -592,9 +582,9 @@ namespace CoreJ2K.j2k.roi.encoder
             mask.h = h;
 
             // Get ROI mask from generator
-            root = src.getAnSubbandTree(tIdx, c);
+            root = src.GetAnSubbandTree(tIdx, c);
             maxBits = maxMagBits[tIdx][c];
-            roiInTile = mg.getROIMask(mask, root, maxBits, c);
+            roiInTile = mg.GetROIMask(mask, root, maxBits, c);
 
             // If there is no ROI in this tile, return the code-block untouched
             if (!roiInTile && (!sbInMask))
@@ -708,9 +698,9 @@ namespace CoreJ2K.j2k.roi.encoder
         /// <param name="y">The vertical index of the new tile.
         /// 
         /// </param>
-        public override void setTile(int x, int y)
+        public override void SetTile(int x, int y)
         {
-            base.setTile(x, y);
+            base.SetTile(x, y);
             if (roi)
                 mg.tileChanged();
         }
@@ -720,9 +710,9 @@ namespace CoreJ2K.j2k.roi.encoder
         /// the last one (i.e. there is no next tile).
         /// 
         /// </summary>
-        public override void nextTile()
+        public override void NextTile()
         {
-            base.nextTile();
+            base.NextTile();
             if (roi)
                 mg.tileChanged();
         }
@@ -740,7 +730,7 @@ namespace CoreJ2K.j2k.roi.encoder
             int tmp;
             var rois = encSpec.rois;
 
-            var nt = src.getNumTiles();
+            var nt = src.GetNumTiles();
             var nc = src.NumComps;
 
             maxMagBits = new int[nt][];
@@ -749,20 +739,20 @@ namespace CoreJ2K.j2k.roi.encoder
                 maxMagBits[i] = new int[nc];
             }
 
-            src.setTile(0, 0);
+            src.SetTile(0, 0);
             for (var t = 0; t < nt; t++)
             {
                 for (var c = nc - 1; c >= 0; c--)
                 {
-                    tmp = src.getMaxMagBits(c);
+                    tmp = src.GetMaxMagBits(c);
                     maxMagBits[t][c] = tmp;
-                    rois.setTileCompVal(t, c, tmp);
+                    rois.SetTileCompVal(t, c, tmp);
                 }
                 if (t < nt - 1)
-                    src.nextTile();
+                    src.NextTile();
             }
             // Reset to current initial tile position
-            src.setTile(0, 0);
+            src.SetTile(0, 0);
         }
     }
 }

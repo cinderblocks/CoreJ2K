@@ -1,14 +1,4 @@
 /* 
-* CVS identifier:
-* 
-* $Id: StdEntropyCoderOptions.java,v 1.10 2001/03/27 09:57:20 grosbois Exp $
-* 
-* Class:                   StdEntropyCoderOptions
-* 
-* Description:             Entropy coding engine of stripes in
-*                          code-blocks options
-* 
-* 
 * 
 * COPYRIGHT:
 * 

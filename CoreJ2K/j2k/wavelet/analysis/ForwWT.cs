@@ -1,14 +1,4 @@
 /* 
-* CVS identifier:
-* 
-* $Id: ForwWT.java,v 1.9 2001/10/24 12:02:13 grosbois Exp $
-* 
-* Class:                   ForwWT
-* 
-* Description:             The interface for implementations of a forward
-*                          wavelet transform.
-* 
-* 
 * 
 * COPYRIGHT:
 * 
@@ -81,7 +71,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// <returns> The horizontal analysis wavelet filters used in each level.
         /// 
         /// </returns>
-        WaveletFilter[] getHorAnWaveletFilters(int t, int c);
+        WaveletFilter[] GetHorAnWaveletFilters(int t, int c);
 
         /// <summary> Returns the vertical analysis wavelet filters used in each level, for
         /// the specified tile-component. The first element in the array is the
@@ -108,7 +98,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// <returns> The vertical analysis wavelet filters used in each level.
         /// 
         /// </returns>
-        WaveletFilter[] getVertAnWaveletFilters(int t, int c);
+        WaveletFilter[] GetVertAnWaveletFilters(int t, int c);
 
         /// <summary> Returns the number of decomposition levels that are applied to obtain
         /// the LL band, in the specified tile-component. A value of 0 means that
@@ -125,7 +115,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// (0 for no wavelet transform).
         /// 
         /// </returns>
-        int getDecompLevels(int t, int c);
+        int GetDecompLevels(int t, int c);
 
         /// <summary> Returns the wavelet tree decomposition. Only WT_DECOMP_DYADIC is
         /// supported by JPEG 2000 part I.
@@ -140,6 +130,6 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// <returns> The wavelet decomposition.
         /// 
         /// </returns>
-        int getDecomp(int t, int c);
+        int GetDecomp(int t, int c);
     }
 }

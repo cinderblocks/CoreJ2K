@@ -1,11 +1,5 @@
 /*
 *
-* Class:                   ImgReaderPPM
-*
-* Description:             Image writer for unsigned 8 bit data in
-*                          PPM files.
-*
-*
 *
 * COPYRIGHT:
 * 
@@ -150,7 +144,7 @@ namespace CoreJ2K.j2k.image.input
         /// <returns> The number of bits corresponding to the nominal range of the
         /// data. For floating-point data this value is not applicable and the
         /// return value is undefined.</returns>
-        public override int getNomRangeBits(int compIndex)
+        public override int GetNomRangeBits(int compIndex)
         {
             // Check component index
             if (compIndex < 0 || compIndex > 2)

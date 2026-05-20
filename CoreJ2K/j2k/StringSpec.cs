@@ -1,13 +1,4 @@
 /* 
-* CVS identifier:
-* 
-* $Id: StringSpec.java,v 1.17 2000/11/30 13:14:07 grosbois Exp $
-* 
-* Class:                   StringSpec
-* 
-* Description:             String specification for an option
-* 
-* 
 * 
 * COPYRIGHT:
 * 
@@ -106,18 +97,18 @@ namespace CoreJ2K.j2k
         public StringSpec(int nt, int nc, byte type, string optName, string[] list, ParameterList pl) : base(nt, nc, type)
         {
 
-            var param = pl.getParameter(optName);
+            var param = pl.GetParameter(optName);
             var recognized = false;
 
             if (param == null)
             {
-                param = pl.DefaultParameterList.getParameter(optName);
+                param = pl.DefaultParameterList.GetParameter(optName);
                 for (var i = list.Length - 1; i >= 0; i--)
                     if (string.Equals(param, list[i], StringComparison.OrdinalIgnoreCase))
                         recognized = true;
                 if (!recognized)
                     throw new ArgumentException($"Default parameter of option -{optName} not recognized: {param}");
-                setDefault(param);
+                SetDefault(param);
                 return;
             }
 
@@ -129,7 +120,7 @@ namespace CoreJ2K.j2k
             bool[] tileSpec = null; // Tiles concerned by the
                                     // specification
             bool[] compSpec = null; // Components concerned by the specification
-                                    //System.Boolean value_Renamed;
+                                    //System.Boolean value;
 
             while (stk.HasMoreTokens())
             {
@@ -161,14 +152,14 @@ namespace CoreJ2K.j2k
                         switch (curSpecType)
                         {
                             case SPEC_DEF:
-                                setDefault(word);
+                                SetDefault(word);
                                 break;
                             case SPEC_TILE_DEF:
                                 {
                                     for (var i = tileSpec.Length - 1; i >= 0; i--)
                                         if (tileSpec[i])
                                         {
-                                            setTileDef(i, word);
+                                            SetTileDef(i, word);
                                         }
 
                                     break;
@@ -178,7 +169,7 @@ namespace CoreJ2K.j2k
                                     for (var i = compSpec.Length - 1; i >= 0; i--)
                                         if (compSpec[i])
                                         {
-                                            setCompDef(i, word);
+                                            SetCompDef(i, word);
                                         }
 
                                     break;
@@ -191,7 +182,7 @@ namespace CoreJ2K.j2k
                                         {
                                             if (tileSpec[i] && compSpec[j])
                                             {
-                                                setTileCompVal(i, j, word);
+                                                SetTileCompVal(i, j, word);
                                             }
                                         }
                                     }
@@ -210,7 +201,7 @@ namespace CoreJ2K.j2k
             }
 
             // Check that default value has been specified
-            if (getDefault() == null)
+            if (GetDefault() == null)
             {
                 var ndefspec = 0;
                 for (var t = nt - 1; t >= 0; t--)
@@ -228,19 +219,19 @@ namespace CoreJ2K.j2k
                 // the default value defined in ParameterList
                 if (ndefspec != 0)
                 {
-                    param = pl.DefaultParameterList.getParameter(optName);
+                    param = pl.DefaultParameterList.GetParameter(optName);
                     for (var i = list.Length - 1; i >= 0; i--)
                         if (string.Equals(param, list[i], StringComparison.OrdinalIgnoreCase))
                             recognized = true;
                     if (!recognized)
                         throw new ArgumentException($"Default parameter of option -{optName} not recognized: {param}");
-                    setDefault(param);
+                    SetDefault(param);
                 }
                 else
                 {
                     // All tile-component have been specified, takes the first
                     // tile-component value as default.
-                    setDefault(getSpec(0, 0));
+                    SetDefault(GetSpec(0, 0));
                     switch (specValType[0][0])
                     {
 

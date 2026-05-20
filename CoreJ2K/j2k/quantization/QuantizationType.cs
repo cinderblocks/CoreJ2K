@@ -1,14 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: QuantizationType.java,v 1.10 2000/09/19 14:11:30 grosbois Exp $
-*
-* Class:                   QuantizationType
-*
-* Description:             This interface defines the possible
-*                          quantization types.
-*
-*
 *
 * COPYRIGHT:
 * 

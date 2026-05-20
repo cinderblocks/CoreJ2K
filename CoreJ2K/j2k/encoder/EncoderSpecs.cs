@@ -1,13 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: EncoderSpecs.java,v 1.35 2001/05/08 16:10:40 grosbois Exp $
-*
-* Class:                   EncoderSpecs
-*
-* Description:             Hold all encoder specifications
-*
-*
 *
 * COPYRIGHT:
 * 

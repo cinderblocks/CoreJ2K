@@ -1,13 +1,5 @@
 /*
-* CVS Identifier:
-*
-* $Id: EndianType.java,v 1.10 2000/09/05 09:24:36 grosbois Exp $
-*
 * Interface:           EndianType
-*
-* Description:         Defines the two types of endianess (i.e. byte
-*                      ordering).
-*
 *
 *
 * COPYRIGHT:

@@ -1,12 +1,5 @@
 /*
-* CVS Identifier:
-*
-* $Id: RandomAccessIO.java,v 1.15 2001/10/24 12:07:02 grosbois Exp $
-*
 * Interface:           RandomAccessIO.java
-*
-* Description:         Interface definition for random access I/O.
-*
 *
 *
 * COPYRIGHT:

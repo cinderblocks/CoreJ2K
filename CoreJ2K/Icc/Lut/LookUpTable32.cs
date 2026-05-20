@@ -1,6 +1,5 @@
 /// <summary>**************************************************************************
 /// 
-/// $Id: LookUpTable32.java,v 1.1 2002/07/25 14:56:47 grosbois Exp $
 /// 
 /// Copyright Eastman Kodak Company, 343 State Street, Rochester, NY 14650
 /// $Date $
@@ -113,7 +112,5 @@ namespace CoreJ2K.Icc.Lut
         {
             return lut[index];
         }
-
-        /* end class LookUpTable32 */
     }
 }

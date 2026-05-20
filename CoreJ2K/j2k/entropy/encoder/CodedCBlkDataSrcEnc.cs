@@ -1,15 +1,4 @@
 /* 
-* CVS identifier:
-* 
-* $Id: CodedCBlkDataSrcEnc.java,v 1.15 2001/09/14 09:23:22 grosbois Exp $
-* 
-* Class:                   CodedCBlkDataSrcEnc
-* 
-* Description:             Interface that defines a source of entropy coded
-*                          data that is transferred in a code-block by
-*                          code-block basis.
-* 
-* 
 * 
 * COPYRIGHT:
 * 
@@ -50,7 +39,7 @@ namespace CoreJ2K.j2k.entropy.encoder
 
     /// <summary> This interface defines a source of entropy coded data and methods to
     /// transfer it in a code-block by code-block basis. In each call to
-    /// 'getNextCodeBlock()' a new coded code-block is returned. The code-block are
+    /// 'GetNextCodeBlock()' a new coded code-block is returned. The code-block are
     /// retruned in no specific-order.
     /// 
     /// This interface is the source of data for the rate allocator. See the
@@ -74,7 +63,7 @@ namespace CoreJ2K.j2k.entropy.encoder
         /// the code-blocks have been returned for the current tile calls to this
         /// method will return 'null'.
         /// 
-        /// When changing the current tile (through 'setTile()' or 'nextTile()')
+        /// When changing the current tile (through 'SetTile()' or 'NextTile()')
         /// this method will always return the first code-block, as if this method
         /// was never called before for the new current tile.
         /// 
@@ -98,7 +87,7 @@ namespace CoreJ2K.j2k.entropy.encoder
         /// 
         /// </returns>
         /// <seealso cref="CBlkRateDistStats" />
-        CBlkRateDistStats getNextCodeBlock(int c, CBlkRateDistStats ccb);
+        CBlkRateDistStats GetNextCodeBlock(int c, CBlkRateDistStats ccb);
 
         /// <summary> Returns the width of a packet for the specified tile-component and
         /// resolution level.
@@ -117,7 +106,7 @@ namespace CoreJ2K.j2k.entropy.encoder
         /// resolution level.
         /// 
         /// </returns>
-        int getPPX(int t, int c, int r);
+        int GetPPX(int t, int c, int r);
 
         /// <summary> Returns the height of a packet for the specified tile-component and
         /// resolution level.
@@ -136,7 +125,7 @@ namespace CoreJ2K.j2k.entropy.encoder
         /// resolution level.
         /// 
         /// </returns>
-        int getPPY(int t, int c, int r);
+        int GetPPY(int t, int c, int r);
 
         /// <summary> Returns true if the precinct partition is used for the specified
         /// component and tile, returns false otherwise

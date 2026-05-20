@@ -1,6 +1,5 @@
 /// <summary>**************************************************************************
 /// 
-/// $Id: JP2Box.java,v 1.1 2002/07/25 14:50:47 grosbois Exp $
 /// 
 /// Copyright Eastman Kodak Company, 343 State Street, Rochester, NY 14650
 /// $Date $
@@ -29,15 +28,15 @@ namespace CoreJ2K.Color.Boxes
         public static int type;
 
         /// <summary>Return a String representation of the Box type. </summary>
-        public static string getTypeString(int t)
+        public static string GetTypeString(int t)
         {
-            return BoxType.get_Renamed(t);
+            return BoxType.GetDescription(t);
         }
 
         /// <summary>Length of the box.             </summary>
         public int length;
         /// <summary>input file                     </summary>
-        protected internal io_RandomAccessIO in_Renamed;
+        protected internal io_RandomAccessIO inStream;
         /// <summary>offset to start of box         </summary>
         protected internal int boxStart;
         /// <summary>offset to end of box           </summary>
@@ -52,24 +51,24 @@ namespace CoreJ2K.Color.Boxes
         /// </param>
         /// <exception cref="IOException,">ColorSpaceException 
         /// </exception>
-        protected JP2Box(io_RandomAccessIO in_Renamed, int boxStart)
+        protected JP2Box(io_RandomAccessIO inStream, int boxStart)
         {
             var boxHeader = new byte[16];
 
-            this.in_Renamed = in_Renamed;
+            this.inStream = inStream;
             this.boxStart = boxStart;
 
-            this.in_Renamed.seek(this.boxStart);
-            this.in_Renamed.readFully(boxHeader, 0, 8);
+            this.inStream.seek(this.boxStart);
+            this.inStream.readFully(boxHeader, 0, 8);
 
             dataStart = boxStart + 8;
-            length = ICCProfile.getInt(boxHeader, 0);
+            length = ICCProfile.GetInt(boxHeader, 0);
             
             if (length == 1)
             {
                 // Extended length box (XLBox) - read 8-byte length
-                this.in_Renamed.readFully(boxHeader, 8, 8);
-                var xlbox = ICCProfile.getLong(boxHeader, 8);
+                this.inStream.readFully(boxHeader, 8, 8);
+                var xlbox = ICCProfile.GetLong(boxHeader, 8);
                 
                 // For boxes > int.MaxValue, we clamp to int.MaxValue
                 // This is a limitation of the current API which uses int for positions
@@ -91,9 +90,9 @@ namespace CoreJ2K.Color.Boxes
 
 
         /// <summary>Return the box type as a String. </summary>
-        public virtual string getTypeString()
+        public virtual string GetTypeString()
         {
-            return BoxType.get_Renamed(type);
+            return BoxType.GetDescription(type);
         }
 
 
@@ -108,12 +107,10 @@ namespace CoreJ2K.Color.Boxes
                 map[type] = desc;
             }
 
-            public static string get_Renamed(int type)
+            public static string GetDescription(int type)
             {
                 return map[type];
             }
-
-            /* end class BoxType */
             static BoxType()
             {
                 {
@@ -139,7 +136,5 @@ namespace CoreJ2K.Color.Boxes
                 }
             }
         }
-
-        /* end class JP2Box */
     }
 }

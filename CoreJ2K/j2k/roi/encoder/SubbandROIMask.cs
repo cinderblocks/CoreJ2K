@@ -1,13 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: SubbandROIMask.java,v 1.2 2001/02/28 15:12:44 grosbois Exp $
-*
-* Class:                   ROI
-*
-* Description:             This class describes the ROI mask for a subband
-*
-*
 *
 * COPYRIGHT:
 * 
@@ -116,7 +107,7 @@ namespace CoreJ2K.j2k.roi.encoder
         /// <param name="y">horizontal coordinate of the specified point.
         /// 
         /// </param>
-        public virtual SubbandROIMask getSubbandRectROIMask(int x, int y)
+        public virtual SubbandROIMask GetSubbandRectROIMask(int x, int y)
         {
             SubbandROIMask cur, hhs;
 

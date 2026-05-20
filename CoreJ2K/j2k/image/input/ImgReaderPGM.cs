@@ -1,11 +1,5 @@
 /*
 *
-* Class:                   ImgReaderPGM
-*
-* Description:             Image writer for unsigned 8 bit data in
-*                          PGM files.
-*
-*
 *
 * COPYRIGHT:
 * 
@@ -168,7 +162,7 @@ namespace CoreJ2K.j2k.image.input
         /// return value is undefined.
         /// 
         /// </returns>
-        public override int getNomRangeBits(int compIndex)
+        public override int GetNomRangeBits(int compIndex)
         {
             // Check component index
             if (compIndex != 0)

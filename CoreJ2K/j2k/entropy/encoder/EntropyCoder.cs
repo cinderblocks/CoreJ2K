@@ -1,13 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: EntropyCoder.java,v 1.58 2001/09/20 12:40:30 grosbois Exp $
-*
-* Class:                   EntropyCoder
-*
-* Description:             The abstract class for entropy encoders
-*
-*
 *
 * COPYRIGHT:
 * 
@@ -136,7 +127,7 @@ namespace CoreJ2K.j2k.entropy.encoder
         /// <returns> The code-block width for the specified tile and component
         /// 
         /// </returns>
-        public abstract int getCBlkWidth(int t, int c);
+        public abstract int GetCBlkWidth(int t, int c);
 
         /// <summary> Returns the code-block height for the specified tile and component.
         /// 
@@ -150,7 +141,7 @@ namespace CoreJ2K.j2k.entropy.encoder
         /// <returns> The code-block height for the specified tile and component
         /// 
         /// </returns>
-        public abstract int getCBlkHeight(int t, int c);
+        public abstract int GetCBlkHeight(int t, int c);
 
         /// <summary> Returns the reversibility of the tile-component data that is provided
         /// by the object.  Data is reversible when it is suitable for lossless and
@@ -171,9 +162,9 @@ namespace CoreJ2K.j2k.entropy.encoder
         /// 
         /// </returns>
         /// <seealso cref="j2k.roi.encoder.ROIScaler" />
-        public virtual bool isReversible(int t, int c)
+        public virtual bool IsReversible(int t, int c)
         {
-            return src.isReversible(t, c);
+            return src.IsReversible(t, c);
         }
 
         /// <summary> Returns a reference to the root of subband tree structure representing
@@ -191,9 +182,9 @@ namespace CoreJ2K.j2k.entropy.encoder
         /// </returns>
         /// <seealso cref="SubbandAn" />
         /// <seealso cref="Subband" />
-        public virtual SubbandAn getAnSubbandTree(int t, int c)
+        public virtual SubbandAn GetAnSubbandTree(int t, int c)
         {
-            return src.getAnSubbandTree(t, c);
+            return src.GetAnSubbandTree(t, c);
         }
 
         /// <summary> Creates a EntropyCoder object for the appropriate entropy coding
@@ -244,9 +235,9 @@ namespace CoreJ2K.j2k.entropy.encoder
             pl.checkList(OPT_PREFIX, ParameterList.toNameArray(pinfo));
             return new StdEntropyCoder(src, cblks, pss, bms, mqrs, rts, css, sss, lcs, tts);
         }
-        public abstract CBlkRateDistStats getNextCodeBlock(int param1, CBlkRateDistStats param2);
+        public abstract CBlkRateDistStats GetNextCodeBlock(int param1, CBlkRateDistStats param2);
         public abstract bool precinctPartitionUsed(int param1, int param2);
-        public abstract int getPPX(int param1, int param2, int param3);
-        public abstract int getPPY(int param1, int param2, int param3);
+        public abstract int GetPPX(int param1, int param2, int param3);
+        public abstract int GetPPY(int param1, int param2, int param3);
     }
 }

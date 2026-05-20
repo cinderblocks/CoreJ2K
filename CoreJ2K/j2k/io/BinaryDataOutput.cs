@@ -1,13 +1,5 @@
 /*
-* CVS Identifier:
-*
-* $Id: BinaryDataOutput.java,v 1.11 2000/09/05 09:24:33 grosbois Exp $
-*
 * Interface:           BinaryDataOutput
-*
-* Description:         Stream like interface for bit as well as byte
-*                      level output to a stream or file.
-*
 *
 *
 * COPYRIGHT:

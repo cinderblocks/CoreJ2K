@@ -1,11 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: PrecInfo.java,v 1.2 2001/09/20 10:03:45 grosbois Exp $
-*
-* Class:                   PrecInfo
-*
-* Description:             Keeps information about a precinct
 *
 * COPYRIGHT:
 * 

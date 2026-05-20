@@ -1,13 +1,4 @@
 /*
-* cvs identifier:
-*
-* $Id: FileFormatReader.java,v 1.16 2002/07/25 14:04:08 grosbois Exp $
-* 
-* Class:                   FileFormatReader
-*
-* Description:             Reads the file format
-*
-*
 *
 * COPYRIGHT:
 * 
@@ -98,7 +89,7 @@ namespace CoreJ2K.j2k.fileformat.reader
         public virtual int FirstCodeStreamLength => codeStreamLength[0];
 
         /// <summary>The random access from which the file format boxes are read </summary>
-        private readonly RandomAccessIO in_Renamed;
+        private readonly RandomAccessIO inStream;
 
         /// <summary>The positions of the codestreams in the fileformat</summary>
         private List<int> codeStreamPos;
@@ -150,9 +141,9 @@ namespace CoreJ2K.j2k.fileformat.reader
         /// <param name="in">The RandomAccessIO from which to read the file format
         /// 
         /// </param>
-        public FileFormatReader(RandomAccessIO in_Renamed)
+        public FileFormatReader(RandomAccessIO inStream)
         {
-            this.in_Renamed = in_Renamed;
+            this.inStream = inStream;
         }
 
         /// <summary> This method checks whether the given RandomAccessIO is a valid JP2 file
@@ -193,21 +184,21 @@ namespace CoreJ2K.j2k.fileformat.reader
 
                 // Make sure that the first 12 bytes is the JP2_SIGNATURE_BOX or
                 // if not that the first 2 bytes is the SOC marker
-                var firstInt = in_Renamed.readInt();
-                var secondInt = in_Renamed.readInt();
-                var thirdInt = in_Renamed.readInt();
+                var firstInt = inStream.readInt();
+                var secondInt = inStream.readInt();
+                var thirdInt = inStream.readInt();
 
                 if (firstInt != 0x0000000c || secondInt != FileFormatBoxes.JP2_SIGNATURE_BOX || thirdInt != 0x0d0a870a)
                 {
                     // Not a JP2 file
-                    in_Renamed.seek(0);
+                    inStream.seek(0);
 
-                    marker = in_Renamed.readShort();
+                    marker = inStream.readShort();
                     if (marker != Markers.SOC)
                         //Standard syntax marker found
                         throw new InvalidOperationException("File is neither valid JP2 file nor " + "valid JPEG 2000 codestream");
                     JP2FFUsed = false;
-                    in_Renamed.seek(0);
+                    inStream.seek(0);
                     return;
                 }
 
@@ -229,20 +220,20 @@ namespace CoreJ2K.j2k.fileformat.reader
                 // Read all remaining boxes 
                 while (!lastBoxFound)
                 {
-                    pos = in_Renamed.Pos;
-                    length = in_Renamed.readInt();
-                    if ((pos + length) == in_Renamed.length())
+                    pos = inStream.Pos;
+                    length = inStream.readInt();
+                    if ((pos + length) == inStream.length())
                         lastBoxFound = true;
 
-                    box = in_Renamed.readInt();
+                    box = inStream.readInt();
                     if (length == 0)
                     {
                         lastBoxFound = true;
-                        length = in_Renamed.length() - in_Renamed.Pos;
+                        length = inStream.length() - inStream.Pos;
                     }
                     else if (length == 1)
                     {
-                        longLength = in_Renamed.readLong();
+                        longLength = inStream.readLong();
                         throw new System.IO.IOException("File too long.");
                     }
                     else
@@ -310,13 +301,13 @@ namespace CoreJ2K.j2k.fileformat.reader
                             break;
 
                         default:
-                            FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING,
+                            FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING,
                                 $"Unknown box-type: 0x{Convert.ToString(box, 16)}");
                             break;
 
                     }
                     if (!lastBoxFound)
-                        in_Renamed.seek(pos + length);
+                        inStream.seek(pos + length);
                 }
             }
             catch (System.IO.EndOfStreamException)
@@ -334,8 +325,8 @@ namespace CoreJ2K.j2k.fileformat.reader
             try
             {
                 // Read codestream data for validation
-                var savedPos = in_Renamed.Pos;
-                in_Renamed.seek(codeStreamPos[0]);
+                var savedPos = inStream.Pos;
+                inStream.seek(codeStreamPos[0]);
                 
                 // Determine how many bytes to validate
                 var bytesToValidate = MaxCodestreamValidationBytes > 0 
@@ -343,12 +334,12 @@ namespace CoreJ2K.j2k.fileformat.reader
                     : codeStreamLength[0];
                 
                 var codestreamSample = new byte[bytesToValidate];
-                in_Renamed.readFully(codestreamSample, 0, bytesToValidate);
+                inStream.readFully(codestreamSample, 0, bytesToValidate);
                 
                 if (ComprehensiveCodestreamValidation)
                 {
                     // Comprehensive validation (slower, more thorough)
-                    FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                    FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO,
                         $"Performing comprehensive codestream validation ({bytesToValidate} bytes)...");
                     Validator.ValidateCodestreamComprehensive(codestreamSample, bytesToValidate);
                 }
@@ -358,11 +349,11 @@ namespace CoreJ2K.j2k.fileformat.reader
                     Validator.ValidateBasicCodestreamMarkers(codestreamSample);
                 }
                 
-                in_Renamed.seek(savedPos);
+                inStream.seek(savedPos);
             }
             catch (Exception e)
             {
-                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING,
+                FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING,
                     $"Could not validate codestream markers: {e.Message}");
             }
 
@@ -379,13 +370,13 @@ namespace CoreJ2K.j2k.fileformat.reader
                 }
                 else
                 {
-                    FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING,
+                    FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING,
                         $"JP2 file has validation errors but continuing in non-strict mode:\n{report}");
                 }
             }
             else if (Validator.HasWarnings)
             {
-                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO,
                     Validator.GetValidationReport());
             }
 
@@ -412,10 +403,10 @@ namespace CoreJ2K.j2k.fileformat.reader
             var foundComp = false;
 
             // Get current position in file
-            pos = in_Renamed.Pos;
+            pos = inStream.Pos;
 
             // Read box length (LBox)
-            length = in_Renamed.readInt();
+            length = inStream.readInt();
             if (length == 0)
             {
                 // This can not be last box
@@ -423,7 +414,7 @@ namespace CoreJ2K.j2k.fileformat.reader
             }
 
             // Check that this is a File Type box (TBox)
-            if (in_Renamed.readInt() != FileFormatBoxes.FILE_TYPE_BOX)
+            if (inStream.readInt() != FileFormatBoxes.FILE_TYPE_BOX)
             {
                 return false;
             }
@@ -437,7 +428,7 @@ namespace CoreJ2K.j2k.fileformat.reader
             if (length == 1)
             {
                 // Box has 8 byte length;
-                longLength = in_Renamed.readLong();
+                longLength = inStream.readLong();
                 
                 // Detect extended length
                 Validator.DetectExtendedLength(length, longLength);
@@ -446,11 +437,11 @@ namespace CoreJ2K.j2k.fileformat.reader
             }
 
             // Read Brand field
-            var brand = in_Renamed.readInt();
+            var brand = inStream.readInt();
             FileStructure.HasValidBrand = (brand == FileFormatBoxes.FT_BR);
 
             // Read MinV field
-            FileStructure.MinorVersion = in_Renamed.readInt();
+            FileStructure.MinorVersion = inStream.readInt();
 
             // Check that there is at least one FT_BR entry in
             // compatibility list
@@ -460,7 +451,7 @@ namespace CoreJ2K.j2k.fileformat.reader
             var compatList = new int[nComp];
             for (var i = 0; i < nComp; i++)
             {
-                compatList[i] = in_Renamed.readInt();
+                compatList[i] = inStream.readInt();
                 if (compatList[i] == FileFormatBoxes.FT_BR)
                 {
                     foundComp = true;
@@ -517,8 +508,8 @@ namespace CoreJ2K.j2k.fileformat.reader
 
                 while (currentPos < headerBoxEnd)
                 {
-                    in_Renamed.seek(currentPos);
-                    in_Renamed.readFully(boxHeader, 0, 8);
+                    inStream.seek(currentPos);
+                    inStream.readFully(boxHeader, 0, 8);
 
                     var boxLen = (boxHeader[0] << 24) | (boxHeader[1] << 16) | 
                                  (boxHeader[2] << 8) | boxHeader[3];
@@ -533,8 +524,8 @@ namespace CoreJ2K.j2k.fileformat.reader
 
                         // Read BPC field from Image Header Box to check if Bits Per Component box is needed
                         // Skip HEIGHT(4), WIDTH(4), NC(2) to get to BPC(1)
-                        in_Renamed.seek(currentPos + 8 + 10); // Skip box header + HEIGHT + WIDTH + NC
-                        FileStructure.ImageHeaderBPCValue = in_Renamed.readByte();
+                        inStream.seek(currentPos + 8 + 10); // Skip box header + HEIGHT + WIDTH + NC
+                        FileStructure.ImageHeaderBPCValue = inStream.readByte();
                     }
                     else if (boxType == FileFormatBoxes.COLOUR_SPECIFICATION_BOX)
                     {
@@ -543,7 +534,7 @@ namespace CoreJ2K.j2k.fileformat.reader
 
                         // Read color specification box contents
                         var csBoxData = new byte[boxLen - 8];
-                        in_Renamed.readFully(csBoxData, 0, boxLen - 8);
+                        inStream.readFully(csBoxData, 0, boxLen - 8);
 
                         // Check method field (METH)
                         var method = csBoxData[0];
@@ -567,7 +558,7 @@ namespace CoreJ2K.j2k.fileformat.reader
                                     // Add to metadata
                                     Metadata.SetIccProfile(iccProfile);
 
-                                    FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                                    FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO,
                                         $"Found ICC Profile ({profileSize} bytes)");
                                 }
                                 else
@@ -575,7 +566,7 @@ namespace CoreJ2K.j2k.fileformat.reader
                                     // Still add even if validation failed, but user is warned
                                     Metadata.SetIccProfile(iccProfile);
                                     
-                                    FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING,
+                                    FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING,
                                         $"ICC Profile validation warnings detected, but profile was loaded ({profileSize} bytes)");
                                 }
                             }
@@ -593,7 +584,7 @@ namespace CoreJ2K.j2k.fileformat.reader
                         if (bpcLength > 0)
                         {
                             var bpcBytes = new byte[bpcLength];
-                            in_Renamed.readFully(bpcBytes, 0, bpcLength);
+                            inStream.readFully(bpcBytes, 0, bpcLength);
 
                             // Store in metadata
                             Metadata.BitsPerComponent = new BitsPerComponentData
@@ -601,7 +592,7 @@ namespace CoreJ2K.j2k.fileformat.reader
                                 ComponentBitDepths = bpcBytes
                             };
 
-                            FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                            FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO,
                                 $"Found Bits Per Component Box: {bpcLength} components");
                         }
                     }
@@ -650,7 +641,7 @@ namespace CoreJ2K.j2k.fileformat.reader
             catch (Exception e)
             {
                 // Don't fail the whole operation if we can't read metadata
-                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING,
+                FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING,
                     $"Error extracting metadata from JP2 Header: {e.Message}");
             }
 
@@ -669,8 +660,8 @@ namespace CoreJ2K.j2k.fileformat.reader
 
             while (currentPos < boxEnd)
             {
-                in_Renamed.seek(currentPos);
-                in_Renamed.readFully(boxHeader, 0, 8);
+                inStream.seek(currentPos);
+                inStream.readFully(boxHeader, 0, 8);
 
                 var boxLen = (boxHeader[0] << 24) | (boxHeader[1] << 16) | 
                              (boxHeader[2] << 8) | boxHeader[3];
@@ -681,7 +672,7 @@ namespace CoreJ2K.j2k.fileformat.reader
                 {
                     // Read capture resolution (resc)
                     var resData = new byte[10]; // VR_N(2), VR_D(2), HR_N(2), HR_D(2), VR_E(1), HR_E(1)
-                    in_Renamed.readFully(resData, 0, 10);
+                    inStream.readFully(resData, 0, 10);
 
                     var vr_n = (short)((resData[0] << 8) | resData[1]);
                     var vr_d = (short)((resData[2] << 8) | resData[3]);
@@ -699,7 +690,7 @@ namespace CoreJ2K.j2k.fileformat.reader
 
                     Metadata.Resolution.SetCaptureResolution(horizontalRes, verticalRes);
 
-                    FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                    FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO,
                         $"Found Capture Resolution: {horizontalRes:F2}x{verticalRes:F2} pixels/meter " +
                         $"({horizontalRes / 39.3701:F2}x{verticalRes / 39.3701:F2} DPI)");
                 }
@@ -707,7 +698,7 @@ namespace CoreJ2K.j2k.fileformat.reader
                 {
                     // Read display resolution (resd)
                     var resData = new byte[10];
-                    in_Renamed.readFully(resData, 0, 10);
+                    inStream.readFully(resData, 0, 10);
 
                     var vr_n = (short)((resData[0] << 8) | resData[1]);
                     var vr_d = (short)((resData[2] << 8) | resData[3]);
@@ -724,7 +715,7 @@ namespace CoreJ2K.j2k.fileformat.reader
 
                     Metadata.Resolution.SetDisplayResolution(horizontalRes, verticalRes);
 
-                    FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                    FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO,
                         $"Found Display Resolution: {horizontalRes:F2}x{verticalRes:F2} pixels/meter " +
                         $"({horizontalRes / 39.3701:F2}x{verticalRes / 39.3701:F2} DPI)");
                 }
@@ -743,7 +734,7 @@ namespace CoreJ2K.j2k.fileformat.reader
             try
             {
                 // Read number of channel definitions (N)
-                var nDef = in_Renamed.readShort();
+                var nDef = inStream.readShort();
                 
                 if (nDef <= 0)
                     return;
@@ -754,9 +745,9 @@ namespace CoreJ2K.j2k.fileformat.reader
                 // Read each channel definition (6 bytes each: Cn(2), Typ(2), Asoc(2))
                 for (int i = 0; i < nDef; i++)
                 {
-                    var cn = in_Renamed.readShort();    // Channel index
-                    var typ = in_Renamed.readShort();   // Channel type
-                    var asoc = in_Renamed.readShort() & 0xFFFF;  // Association (treat as unsigned)
+                    var cn = inStream.readShort();    // Channel index
+                    var typ = inStream.readShort();   // Channel type
+                    var asoc = inStream.readShort() & 0xFFFF;  // Association (treat as unsigned)
 
                     // Convert typ to ChannelType enum
                     var channelType = ChannelType.Unspecified;
@@ -780,12 +771,12 @@ namespace CoreJ2K.j2k.fileformat.reader
                 }
 
                 var alphaInfo = Metadata.ChannelDefinitions.HasAlphaChannel ? " (with alpha)" : "";
-                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO,
                     $"Found Channel Definition Box: {nDef} channels{alphaInfo}");
             }
             catch (Exception e)
             {
-                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING,
+                FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING,
                     $"Error reading Channel Definition Box: {e.Message}");
             }
         }
@@ -817,7 +808,7 @@ namespace CoreJ2K.j2k.fileformat.reader
         {
 
             // Add new codestream position to position vector
-            var ccpos = in_Renamed.Pos;
+            var ccpos = inStream.Pos;
 
             if (codeStreamPos == null)
                 codeStreamPos = new List<int>(10);
@@ -850,7 +841,7 @@ namespace CoreJ2K.j2k.fileformat.reader
                 // Read the XML content (length includes 8-byte box header)
                 var dataLength = length - 8;
                 var xmlBytes = new byte[dataLength];
-                in_Renamed.readFully(xmlBytes, 0, dataLength);
+                inStream.readFully(xmlBytes, 0, dataLength);
 
                 // Convert to string (XML boxes are UTF-8)
                 var xmlContent = Encoding.UTF8.GetString(xmlBytes);
@@ -858,12 +849,12 @@ namespace CoreJ2K.j2k.fileformat.reader
                 // Add to metadata
                 Metadata.XmlBoxes.Add(new XmlBox { XmlContent = xmlContent });
 
-                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO,
                     $"Found XML box ({dataLength} bytes)");
             }
             catch (Exception e)
             {
-                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING,
+                FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING,
                     $"Error reading XML box: {e.Message}");
             }
         }
@@ -879,23 +870,23 @@ namespace CoreJ2K.j2k.fileformat.reader
             {
                 // Read UUID (16 bytes)
                 var uuidBytes = new byte[16];
-                in_Renamed.readFully(uuidBytes, 0, 16);
+                inStream.readFully(uuidBytes, 0, 16);
                 var uuid = new Guid(uuidBytes);
 
                 // Read data (remaining bytes)
                 var dataLength = length - 24; // Box header (8) + UUID (16)
                 var data = new byte[dataLength];
-                in_Renamed.readFully(data, 0, dataLength);
+                inStream.readFully(data, 0, dataLength);
 
                 // Add to metadata
                 Metadata.UuidBoxes.Add(new UuidBox { Uuid = uuid, Data = data });
 
-                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO,
                     $"Found UUID box: {uuid} ({dataLength} bytes)");
             }
             catch (Exception e)
             {
-                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING,
+                FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING,
                     $"Error reading UUID box: {e.Message}");
             }
         }
@@ -910,14 +901,14 @@ namespace CoreJ2K.j2k.fileformat.reader
             try
             {
                 var uuidInfo = new UuidInfoBox();
-                var startPos = in_Renamed.Pos;
+                var startPos = inStream.Pos;
                 var endPos = startPos + length - 8; // Exclude box header
 
                 // UUID Info is a superbox containing UUID List and optionally URL box
-                while (in_Renamed.Pos < endPos)
+                while (inStream.Pos < endPos)
                 {
                     var boxHeader = new byte[8];
-                    in_Renamed.readFully(boxHeader, 0, 8);
+                    inStream.readFully(boxHeader, 0, 8);
 
                     var boxLen = (boxHeader[0] << 24) | (boxHeader[1] << 16) |
                                  (boxHeader[2] << 8) | boxHeader[3];
@@ -928,38 +919,38 @@ namespace CoreJ2K.j2k.fileformat.reader
                     {
                         // Read UUID List box
                         // Format: NU(2) + UUID1(16) + UUID2(16) + ...
-                        var numUuids = in_Renamed.readShort();
+                        var numUuids = inStream.readShort();
                         
                         for (int i = 0; i < numUuids; i++)
                         {
                             var uuidBytes = new byte[16];
-                            in_Renamed.readFully(uuidBytes, 0, 16);
+                            inStream.readFully(uuidBytes, 0, 16);
                             uuidInfo.UuidList.Add(new Guid(uuidBytes));
                         }
 
-                        FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                        FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO,
                             $"Found UUID List: {numUuids} UUID(s)");
                     }
                     else if (boxType == FileFormatBoxes.URL_BOX)
                     {
                         // Read URL box
                         // Format: VERS(1) + FLAG(3) + URL(variable length string)
-                        uuidInfo.UrlVersion = in_Renamed.readByte();
+                        uuidInfo.UrlVersion = inStream.readByte();
                         
                         // Read flags (3 bytes)
-                        in_Renamed.readByte(); // FLAG byte 0
-                        in_Renamed.readByte(); // FLAG byte 1
-                        uuidInfo.UrlFlags = in_Renamed.readByte(); // FLAG byte 2
+                        inStream.readByte(); // FLAG byte 0
+                        inStream.readByte(); // FLAG byte 1
+                        uuidInfo.UrlFlags = inStream.readByte(); // FLAG byte 2
 
                         // Read URL (remaining bytes in box)
                         var urlLength = boxLen - 12; // Box header (8) + VERS(1) + FLAG(3)
                         if (urlLength > 0)
                         {
                             var urlBytes = new byte[urlLength];
-                            in_Renamed.readFully(urlBytes, 0, urlLength);
+                            inStream.readFully(urlBytes, 0, urlLength);
                             uuidInfo.Url = Encoding.UTF8.GetString(urlBytes).TrimEnd('\0');
 
-                            FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                            FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO,
                                 $"Found URL: {uuidInfo.Url}");
                         }
                     }
@@ -969,7 +960,7 @@ namespace CoreJ2K.j2k.fileformat.reader
                         var skipBytes = boxLen - 8;
                         if (skipBytes > 0)
                         {
-                            in_Renamed.seek(in_Renamed.Pos + skipBytes);
+                            inStream.seek(inStream.Pos + skipBytes);
                         }
                     }
                 }
@@ -978,7 +969,7 @@ namespace CoreJ2K.j2k.fileformat.reader
             }
             catch (Exception e)
             {
-                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING,
+                FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING,
                     $"Error reading UUID Info box: {e.Message}");
             }
         }
@@ -995,34 +986,34 @@ namespace CoreJ2K.j2k.fileformat.reader
                 var readerReq = new ReaderRequirementsBox();
 
                 // Read ML (mask length) - 1 byte
-                var maskLength = in_Renamed.readByte();
+                var maskLength = inStream.readByte();
 
                 // Read FUAM (fully understand aspects mask) - maskLength bytes
                 var fuam = new byte[maskLength];
-                in_Renamed.readFully(fuam, 0, maskLength);
+                inStream.readFully(fuam, 0, maskLength);
 
                 // Read DCM (decode completely mask) - maskLength bytes
                 var dcm = new byte[maskLength];
-                in_Renamed.readFully(dcm, 0, maskLength);
+                inStream.readFully(dcm, 0, maskLength);
 
                 // Read NSF (number of standard features) - 2 bytes
-                var numStdFeatures = in_Renamed.readShort();
+                var numStdFeatures = inStream.readShort();
 
                 // Read standard features
                 for (int i = 0; i < numStdFeatures; i++)
                 {
-                    var featureId = (ushort)in_Renamed.readShort();
+                    var featureId = (ushort)inStream.readShort();
                     readerReq.StandardFeatures.Add(featureId);
                 }
 
                 // Read NVF (number of vendor features) - 2 bytes
-                var numVendorFeatures = in_Renamed.readShort();
+                var numVendorFeatures = inStream.readShort();
 
                 // Read vendor features (UUIDs)
                 for (int i = 0; i < numVendorFeatures; i++)
                 {
                     var uuidBytes = new byte[16];
-                    in_Renamed.readFully(uuidBytes, 0, 16);
+                    inStream.readFully(uuidBytes, 0, 16);
                     readerReq.VendorFeatures.Add(new Guid(uuidBytes));
                 }
 
@@ -1031,12 +1022,12 @@ namespace CoreJ2K.j2k.fileformat.reader
 
                 Metadata.ReaderRequirements = readerReq;
 
-                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO,
                     $"Found Reader Requirements: {numStdFeatures} standard feature(s), {numVendorFeatures} vendor feature(s)");
             }
             catch (Exception e)
             {
-                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING,
+                FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING,
                     $"Error reading Reader Requirements box: {e.Message}");
             }
         }
@@ -1055,7 +1046,7 @@ namespace CoreJ2K.j2k.fileformat.reader
                 // Read the JPR content (length includes 8-byte box header)
                 var dataLength = length - 8;
                 var jprBytes = new byte[dataLength];
-                in_Renamed.readFully(jprBytes, 0, dataLength);
+                inStream.readFully(jprBytes, 0, dataLength);
 
                 // Try to decode as UTF-8 text
                 try
@@ -1065,7 +1056,7 @@ namespace CoreJ2K.j2k.fileformat.reader
                     // Add to metadata with text
                     Metadata.IntellectualPropertyRights.Add(new JprBox { Text = jprText });
 
-                    FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                    FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO,
                         $"Found Intellectual Property Rights (JPR) box ({dataLength} bytes): {jprText.Substring(0, Math.Min(50, jprText.Length))}...");
                 }
                 catch
@@ -1073,13 +1064,13 @@ namespace CoreJ2K.j2k.fileformat.reader
                     // If not valid UTF-8, store as binary
                     Metadata.IntellectualPropertyRights.Add(new JprBox { RawData = jprBytes });
 
-                    FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                    FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO,
                         $"Found Intellectual Property Rights (JPR) box ({dataLength} bytes, binary data)");
                 }
             }
             catch (Exception e)
             {
-                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING,
+                FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING,
                     $"Error reading Intellectual Property Rights (JPR) box: {e.Message}");
             }
         }
@@ -1098,7 +1089,7 @@ namespace CoreJ2K.j2k.fileformat.reader
                 // Read the Label content (length includes 8-byte box header)
                 var dataLength = length - 8;
                 var labelBytes = new byte[dataLength];
-                in_Renamed.readFully(labelBytes, 0, dataLength);
+                inStream.readFully(labelBytes, 0, dataLength);
 
                 // Try to decode as UTF-8 text
                 try
@@ -1108,7 +1099,7 @@ namespace CoreJ2K.j2k.fileformat.reader
                     // Add to metadata with text
                     Metadata.Labels.Add(new LabelBox { Label = labelText });
 
-                    FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                    FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO,
                         $"Found Label (LBL) box ({dataLength} bytes): {labelText.Substring(0, Math.Min(50, labelText.Length))}...");
                 }
                 catch
@@ -1116,13 +1107,13 @@ namespace CoreJ2K.j2k.fileformat.reader
                     // If not valid UTF-8, store as binary
                     Metadata.Labels.Add(new LabelBox { RawData = labelBytes });
 
-                    FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                    FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO,
                         $"Found Label (LBL) box ({dataLength} bytes, binary data)");
                 }
             }
             catch (Exception e)
             {
-                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING,
+                FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING,
                     $"Error reading Label (LBL) box: {e.Message}");
             }
         }
@@ -1140,14 +1131,14 @@ namespace CoreJ2K.j2k.fileformat.reader
             try
             {
                 // Read NE (number of entries) - 2 bytes
-                var numEntries = in_Renamed.readShort() & 0xFFFF;
+                var numEntries = inStream.readShort() & 0xFFFF;
                 
                 // Read NPC (number of palette columns) - 1 byte
-                var numColumns = in_Renamed.readByte() & 0xFF;
+                var numColumns = inStream.readByte() & 0xFF;
 
                 if (numEntries == 0 || numColumns == 0)
                 {
-                    FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING,
+                    FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING,
                         "Invalid palette: zero entries or columns");
                     return;
                 }
@@ -1156,7 +1147,7 @@ namespace CoreJ2K.j2k.fileformat.reader
                 var bitDepths = new short[numColumns];
                 for (int i = 0; i < numColumns; i++)
                 {
-                    bitDepths[i] = (short)(in_Renamed.readByte() & 0xFF);
+                    bitDepths[i] = (short)(inStream.readByte() & 0xFF);
                 }
 
                 // Read palette entries
@@ -1168,18 +1159,18 @@ namespace CoreJ2K.j2k.fileformat.reader
                     for (int colIdx = 0; colIdx < numColumns; colIdx++)
                     {
                         var bitDepth = (bitDepths[colIdx] & 0x7F) + 1; // Bits 0-6 are depth minus 1
-                        var isSigned = (bitDepths[colIdx] & 0x80) != 0; // Bit 7 is sign flag
+                        var IsSigned = (bitDepths[colIdx] & 0x80) != 0; // Bit 7 is sign flag
                         
                         int value;
                         if (bitDepth <= 8)
                         {
                             // 8-bit entry
-                            value = in_Renamed.readByte() & 0xFF;
+                            value = inStream.readByte() & 0xFF;
                         }
                         else if (bitDepth <= 16)
                         {
                             // 16-bit entry
-                            value = in_Renamed.readShort() & 0xFFFF;
+                            value = inStream.readShort() & 0xFFFF;
                         }
                         else
                         {
@@ -1187,7 +1178,7 @@ namespace CoreJ2K.j2k.fileformat.reader
                         }
 
                         // Handle sign extension for signed values
-                        if (isSigned && (value & (1 << (bitDepth - 1))) != 0)
+                        if (IsSigned && (value & (1 << (bitDepth - 1))) != 0)
                         {
                             // Sign bit is set, extend sign
                             var mask = unchecked((int)(0xFFFFFFFF << bitDepth));
@@ -1205,12 +1196,12 @@ namespace CoreJ2K.j2k.fileformat.reader
                 // Store in metadata
                 Metadata.SetPalette(numEntries, numColumns, bitDepths, entries);
 
-                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO,
                     $"Found Palette Box: {numEntries} entries, {numColumns} columns");
             }
             catch (Exception e)
             {
-                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING,
+                FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING,
                     $"Error reading Palette Box: {e.Message}");
             }
         }
@@ -1233,7 +1224,7 @@ namespace CoreJ2K.j2k.fileformat.reader
                 // MTYP (mapping type) - 1 byte, PCOL (palette column) - 1 byte
                 if (dataLength % 4 != 0)
                 {
-                    FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING,
+                    FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING,
                         $"Invalid Component Mapping Box: length {dataLength} is not multiple of 4");
                     return;
                 }
@@ -1246,14 +1237,14 @@ namespace CoreJ2K.j2k.fileformat.reader
                 for (int i = 0; i < numChannels; i++)
                 {
                     // Read CMP (component index) - 2 bytes
-                    var componentIndex = (ushort)(in_Renamed.readShort() & 0xFFFF);
+                    var componentIndex = (ushort)(inStream.readShort() & 0xFFFF);
                     
                     // Read MTYP (mapping type) - 1 byte
                     // 0 = direct use, 1 = palette mapping
-                    var mappingType = (byte)(in_Renamed.readByte() & 0xFF);
+                    var mappingType = (byte)(inStream.readByte() & 0xFF);
                     
                     // Read PCOL (palette column) - 1 byte
-                    var paletteColumn = (byte)(in_Renamed.readByte() & 0xFF);
+                    var paletteColumn = (byte)(inStream.readByte() & 0xFF);
 
                     componentMapping.AddMapping(componentIndex, mappingType, paletteColumn);
                 }
@@ -1262,12 +1253,12 @@ namespace CoreJ2K.j2k.fileformat.reader
                 Metadata.ComponentMapping = componentMapping;
 
                 var paletteInfo = componentMapping.UsesPalette ? " (uses palette)" : " (direct mapping)";
-                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO,
                     $"Found Component Mapping Box: {numChannels} channels{paletteInfo}");
             }
             catch (Exception e)
             {
-                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING,
+                FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING,
                     $"Error reading Component Mapping Box: {e.Message}");
             }
         }

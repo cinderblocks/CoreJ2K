@@ -1,13 +1,4 @@
 /* 
-* CVS identifier:
-* 
-* $Id: StdEntropyCoder.java,v 1.41 2002/07/04 15:53:32 grosbois Exp $
-* 
-* Class:                   StdEntropyCoder
-* 
-* Description:             Entropy coding engine of stripes in code-blocks
-* 
-* 
 * 
 * COPYRIGHT:
 * 
@@ -69,7 +60,7 @@ namespace CoreJ2K.j2k.entropy.encoder
     /// one of these threads can run on a separate processor speeding up the
     /// encoding time. By default the single-threaded implementation is used. The
     /// multi-threaded implementation currently assumes that the vast majority of
-    /// consecutive calls to 'getNextCodeBlock()' will be done on the same
+    /// consecutive calls to 'GetNextCodeBlock()' will be done on the same
     /// component. If this is not the case, the speed-up that can be expected on
     /// multiprocessor machines might be significantly decreased.
     /// 
@@ -611,7 +602,6 @@ namespace CoreJ2K.j2k.entropy.encoder
 			time = new long[src.NumComps];
 			// If we are timing make sure that 'finalize' gets called.
 			// CONVERSION PROBLEM?
-            //System_Renamed.runFinalizersOnExit(true);
 #endif
 
             tsl = 1;
@@ -660,15 +650,15 @@ namespace CoreJ2K.j2k.entropy.encoder
             precinctPartition = new bool[src.NumComps][];
             for (var i8 = 0; i8 < src.NumComps; i8++)
             {
-                precinctPartition[i8] = new bool[src.getNumTiles()];
+                precinctPartition[i8] = new bool[src.GetNumTiles()];
             }
 
             // Create the subband description for each component and each tile
             //Subband sb = null;
             Coord numTiles = null;
             var nc = NumComps;
-            numTiles = src.getNumTiles(numTiles);
-            initTileComp(getNumTiles(), nc);
+            numTiles = src.GetNumTiles(numTiles);
+            initTileComp(GetNumTiles(), nc);
 
             for (var c = 0; c < nc; c++)
             {
@@ -703,7 +693,7 @@ namespace CoreJ2K.j2k.entropy.encoder
                 sb.Append(time[c]);
                 sb.Append(" ms");
             }
-            FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO, sb.ToString());
+            FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO, sb.ToString());
         }
 #endif
 
@@ -719,9 +709,9 @@ namespace CoreJ2K.j2k.entropy.encoder
         /// <returns> The code-block width for the specified tile and component
         /// 
         /// </returns>
-        public override int getCBlkWidth(int t, int c)
+        public override int GetCBlkWidth(int t, int c)
         {
-            return cblks.getCBlkWidth(ModuleSpec.SPEC_TILE_COMP, t, c);
+            return cblks.GetCBlkWidth(ModuleSpec.SPEC_TILE_COMP, t, c);
         }
 
         /// <summary> Returns the code-block height for the specified tile and component.
@@ -736,9 +726,9 @@ namespace CoreJ2K.j2k.entropy.encoder
         /// <returns> The code-block height for the specified tile and component.
         /// 
         /// </returns>
-        public override int getCBlkHeight(int t, int c)
+        public override int GetCBlkHeight(int t, int c)
         {
-            return cblks.getCBlkHeight(ModuleSpec.SPEC_TILE_COMP, t, c);
+            return cblks.GetCBlkHeight(ModuleSpec.SPEC_TILE_COMP, t, c);
         }
 
         /// <summary> Returns the next coded code-block in the current tile for the specified
@@ -749,7 +739,7 @@ namespace CoreJ2K.j2k.entropy.encoder
         /// the code-blocks have been returned for the current tile calls to this
         /// method will return 'null'.
         /// 
-        /// When changing the current tile (through 'setTile()' or 'nextTile()')
+        /// When changing the current tile (through 'SetTile()' or 'NextTile()')
         /// this method will always return the first code-block, as if this method
         /// was never called before for the new current tile.
         /// 
@@ -773,14 +763,14 @@ namespace CoreJ2K.j2k.entropy.encoder
         /// 
         /// </returns>
         /// <seealso cref="CBlkRateDistStats" />
-        public override CBlkRateDistStats getNextCodeBlock(int c, CBlkRateDistStats ccb)
+        public override CBlkRateDistStats GetNextCodeBlock(int c, CBlkRateDistStats ccb)
         {
 #if DO_TIMING
 			var stime = 0L; // Start time for timed sections
 #endif
             // Use single threaded implementation
             // Get code-block data from source
-            srcblkT[0] = src.getNextInternCodeBlock(c, srcblkT[0]);
+            srcblkT[0] = src.GetNextInternCodeBlock(c, srcblkT[0]);
 
 #if DO_TIMING
 			stime = (System.DateTime.Now.Ticks - 621355968000000000) / 10000;
@@ -802,7 +792,7 @@ namespace CoreJ2K.j2k.entropy.encoder
                 ccb = new CBlkRateDistStats();
             }
             // Compress code-block
-            compressCodeBlock(c, ccb, srcblkT[0], mqT[0], boutT[0], outT[0], stateT[0], distbufT[0], ratebufT[0], istermbufT[0], symbufT[0], ctxtbufT[0], opts[tIdx][c], isReversible(tIdx, c), lenCalc[tIdx][c], tType[tIdx][c]);
+            compressCodeBlock(c, ccb, srcblkT[0], mqT[0], boutT[0], outT[0], stateT[0], distbufT[0], ratebufT[0], istermbufT[0], symbufT[0], ctxtbufT[0], opts[tIdx][c], IsReversible(tIdx, c), lenCalc[tIdx][c], tType[tIdx][c]);
 
 #if DO_TIMING
 			time[c] += (System.DateTime.Now.Ticks - 621355968000000000) / 10000 - stime;
@@ -825,9 +815,9 @@ namespace CoreJ2K.j2k.entropy.encoder
         /// <param name="y">The vertical index of the new tile.
         /// 
         /// </param>
-        public override void setTile(int x, int y)
+        public override void SetTile(int x, int y)
         {
-            base.setTile(x, y);
+            base.SetTile(x, y);
             // Reset the tile specific variables
             if (finishedTileComponent != null)
             {
@@ -846,7 +836,7 @@ namespace CoreJ2K.j2k.entropy.encoder
         /// source.
         /// 
         /// </summary>
-        public override void nextTile()
+        public override void NextTile()
         {
             // Reset the tilespecific variables
             if (finishedTileComponent != null)
@@ -856,7 +846,7 @@ namespace CoreJ2K.j2k.entropy.encoder
                     finishedTileComponent[c] = false;
                 }
             }
-            base.nextTile();
+            base.NextTile();
         }
 
 
@@ -920,8 +910,8 @@ namespace CoreJ2K.j2k.entropy.encoder
         /// <param name="tType">The type of termination to use with the MQ coder.
         /// 
         /// </param>
-        /// <seealso cref="getNextCodeBlock" />
-        private static void compressCodeBlock(int c, CBlkRateDistStats ccb, CBlkWTData srcblk, MQCoder mq, BitToByteOutput bout, ByteOutputBuffer out_Renamed, int[] state, double[] distbuf, int[] ratebuf, bool[] istermbuf, int[] symbuf, int[] ctxtbuf, int options, bool rev, int lcType, int tType)
+        /// <seealso cref="GetNextCodeBlock" />
+        private static void compressCodeBlock(int c, CBlkRateDistStats ccb, CBlkWTData srcblk, MQCoder mq, BitToByteOutput bout, ByteOutputBuffer outputBuffer, int[] state, double[] distbuf, int[] ratebuf, bool[] istermbuf, int[] symbuf, int[] ctxtbuf, int options, bool rev, int lcType, int tType)
         {
             // NOTE: This method should not access any non-final instance or
             // static variables, either directly or indirectly through other
@@ -1088,8 +1078,8 @@ namespace CoreJ2K.j2k.entropy.encoder
             }
 
             // Copy compressed data and rate-distortion statistics to output
-            ccb.data = new byte[out_Renamed.size()];
-            out_Renamed.toByteArray(0, out_Renamed.size(), ccb.data, 0);
+            ccb.data = new byte[outputBuffer.size()];
+            outputBuffer.toByteArray(0, outputBuffer.size(), ccb.data, 0);
             checkEndOfPassFF(ccb.data, ratebuf, istermbuf, npass);
             ccb.selectConvexHull(ratebuf, distbuf, (options & (StdEntropyCoderOptions.OPT_BYPASS | StdEntropyCoderOptions.OPT_TERM_PASS)) != 0 ? istermbuf : null, npass, rev);
 
@@ -2934,33 +2924,33 @@ namespace CoreJ2K.j2k.entropy.encoder
                     opts[t][c] = 0;
 
                     // Bypass coding mode ?
-                    if (string.Equals((string)bms.getTileCompVal(t, c), "on", StringComparison.OrdinalIgnoreCase))
+                    if (string.Equals((string)bms.GetTileCompVal(t, c), "on", StringComparison.OrdinalIgnoreCase))
                     {
                         opts[t][c] |= StdEntropyCoderOptions.OPT_BYPASS;
                     }
                     // MQ reset after each coding pass ?
-                    if (string.Equals((string)mqrs.getTileCompVal(t, c), "on", StringComparison.OrdinalIgnoreCase))
+                    if (string.Equals((string)mqrs.GetTileCompVal(t, c), "on", StringComparison.OrdinalIgnoreCase))
                     {
                         opts[t][c] |= StdEntropyCoderOptions.OPT_RESET_MQ;
                     }
                     // MQ termination after each arithmetically coded coding pass ?
-                    if (string.Equals((string)rts.getTileCompVal(t, c), "on", StringComparison.OrdinalIgnoreCase))
+                    if (string.Equals((string)rts.GetTileCompVal(t, c), "on", StringComparison.OrdinalIgnoreCase))
                     {
                         opts[t][c] |= StdEntropyCoderOptions.OPT_TERM_PASS;
                     }
                     // Vertically stripe-causal context mode ?
-                    if (string.Equals((string)css.getTileCompVal(t, c), "on", StringComparison.OrdinalIgnoreCase))
+                    if (string.Equals((string)css.GetTileCompVal(t, c), "on", StringComparison.OrdinalIgnoreCase))
                     {
                         opts[t][c] |= StdEntropyCoderOptions.OPT_VERT_STR_CAUSAL;
                     }
                     // Error resilience segmentation symbol insertion ?
-                    if (string.Equals((string)sss.getTileCompVal(t, c), "on", StringComparison.OrdinalIgnoreCase))
+                    if (string.Equals((string)sss.GetTileCompVal(t, c), "on", StringComparison.OrdinalIgnoreCase))
                     {
                         opts[t][c] |= StdEntropyCoderOptions.OPT_SEG_SYMBOLS;
                     }
 
                     // Set length calculation type of the MQ coder
-                    var lCalcType = (string)lcs.getTileCompVal(t, c);
+                    var lCalcType = (string)lcs.GetTileCompVal(t, c);
                     if (lCalcType.Equals("near_opt"))
                     {
                         lenCalc[t][c] = MQCoder.LENGTH_NEAR_OPT;
@@ -2979,7 +2969,7 @@ namespace CoreJ2K.j2k.entropy.encoder
                     }
 
                     // Set termination type of MQ coder
-                    var termType = (string)tts.getTileCompVal(t, c);
+                    var termType = (string)tts.GetTileCompVal(t, c);
                     if (string.Equals(termType, "easy", StringComparison.OrdinalIgnoreCase))
                     {
                         tType[t][c] = MQCoder.TERM_EASY;
@@ -2998,7 +2988,7 @@ namespace CoreJ2K.j2k.entropy.encoder
                         opts[t][c] |= StdEntropyCoderOptions.OPT_PRED_TERM;
                         if ((opts[t][c] & (StdEntropyCoderOptions.OPT_TERM_PASS | StdEntropyCoderOptions.OPT_BYPASS)) == 0)
                         {
-                            FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO, "Using error resilient MQ" + " termination, but terminating only at " + "the end of code-blocks. The error " + "protection offered by this option will" + " be very weak. Specify the " + "'Cterminate' " + "and/or 'Cbypass' option for " + "increased error resilience.");
+                            FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO, "Using error resilient MQ" + " termination, but terminating only at " + "the end of code-blocks. The error " + "protection offered by this option will" + " be very weak. Specify the " + "'Cterminate' " + "and/or 'Cbypass' option for " + "increased error resilience.");
                         }
                     }
                     else
@@ -3026,9 +3016,9 @@ namespace CoreJ2K.j2k.entropy.encoder
         /// and resolution level
         /// 
         /// </returns>
-        public override int getPPX(int t, int c, int rl)
+        public override int GetPPX(int t, int c, int rl)
         {
-            return pss.getPPX(t, c, rl);
+            return pss.GetPPX(t, c, rl);
         }
 
         /// <summary> Returns the precinct partition height for the specified component, tile
@@ -3048,9 +3038,9 @@ namespace CoreJ2K.j2k.entropy.encoder
         /// and resolution level
         /// 
         /// </returns>
-        public override int getPPY(int t, int c, int rl)
+        public override int GetPPY(int t, int c, int rl)
         {
-            return pss.getPPY(t, c, rl);
+            return pss.GetPPY(t, c, rl);
         }
 
         /// <summary> Returns true if precinct partition is used for the specified component

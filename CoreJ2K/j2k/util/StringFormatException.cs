@@ -1,14 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: StringFormatException.java,v 1.9 2000/09/05 09:25:31 grosbois Exp $
-*
-* Class:                   ArgumentFormatException
-*
-* Description:             Exception for badly formatted string
-*                          argument exceptions.
-*
-*
 *
 * COPYRIGHT:
 * 

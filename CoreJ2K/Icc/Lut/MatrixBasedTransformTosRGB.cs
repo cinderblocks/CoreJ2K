@@ -1,6 +1,5 @@
 /// <summary>**************************************************************************
 /// 
-/// $Id: MatrixBasedTransformTosRGB.java,v 1.1 2002/07/25 14:56:49 grosbois Exp $
 /// 
 /// Copyright Eastman Kodak Company, 343 State Street, Rochester, NY 14650
 /// $Date $
@@ -209,7 +208,7 @@ namespace CoreJ2K.Icc.Lut
         /// </exception>
         public virtual void apply(image_DataBlkInt[] inb, image_DataBlkInt[] outb)
         {
-            int[][] in_Renamed = new int[3][], out_Renamed = new int[3][]; // data references.
+            int[][] inputData = new int[3][], output = new int[3][]; // data references.
 
             int nrows = inb[0].h, ncols = inb[0].w;
 
@@ -228,14 +227,14 @@ namespace CoreJ2K.Icc.Lut
             {
 
                 // Reference the input and output samples.
-                in_Renamed[c] = (int[])inb[c].Data;
-                out_Renamed[c] = (int[])outb[c].Data;
+                inputData[c] = (int[])inb[c].Data;
+                output[c] = (int[])outb[c].Data;
 
                 // Assure a properly sized output buffer.
-                if (out_Renamed[c] == null || out_Renamed[c].Length < in_Renamed[c].Length)
+                if (output[c] == null || output[c].Length < inputData[c].Length)
                 {
-                    out_Renamed[c] = new int[in_Renamed[c].Length];
-                    outb[c].Data = out_Renamed[c];
+                    output[c] = new int[inputData[c].Length];
+                    outb[c].Data = output[c];
                 }
 
                 // The first thing to do is to process the input into a standard form
@@ -248,9 +247,9 @@ namespace CoreJ2K.Icc.Lut
             var ga = fBuf[GREEN];
             var ba = fBuf[BLUE];
 
-            var ro = out_Renamed[RED];
-            var go = out_Renamed[GREEN];
-            var bo = out_Renamed[BLUE];
+            var ro = output[RED];
+            var go = output[GREEN];
+            var bo = output[BLUE];
             var lut32 = lut.lut;
 
             double r, g, b;
@@ -319,7 +318,7 @@ namespace CoreJ2K.Icc.Lut
         public virtual void apply(image_DataBlkFloat[] inb, image_DataBlkFloat[] outb)
         {
 
-            float[][] in_Renamed = new float[3][], out_Renamed = new float[3][]; // data references.
+            float[][] inputData = new float[3][], output = new float[3][]; // data references.
 
             int nrows = inb[0].h, ncols = inb[0].w;
 
@@ -338,14 +337,14 @@ namespace CoreJ2K.Icc.Lut
             {
 
                 // Reference the input and output pixels.
-                in_Renamed[c] = (float[])inb[c].Data;
-                out_Renamed[c] = (float[])outb[c].Data;
+                inputData[c] = (float[])inb[c].Data;
+                output[c] = (float[])outb[c].Data;
 
                 // Assure a properly sized output buffer.
-                if (out_Renamed[c] == null || out_Renamed[c].Length < in_Renamed[c].Length)
+                if (output[c] == null || output[c].Length < inputData[c].Length)
                 {
-                    out_Renamed[c] = new float[in_Renamed[c].Length];
-                    outb[c].Data = out_Renamed[c];
+                    output[c] = new float[inputData[c].Length];
+                    outb[c].Data = output[c];
                 }
 
                 // The first thing to do is to process the input into a standard form
@@ -369,62 +368,62 @@ namespace CoreJ2K.Icc.Lut
                     val = (int)(matrix[M00] * fBuf[RED][index] + matrix[M01] * fBuf[GREEN][index] + matrix[M02] * fBuf[BLUE][index] + 0.5);
                     // Clip the calculated value if necessary..
                     if (val < 0)
-                        out_Renamed[0][index] = lut32[0];
+                        output[0][index] = lut32[0];
                     else if (val >= lut32.Length)
-                        out_Renamed[0][index] = lut32[lut32.Length - 1];
+                        output[0][index] = lut32[lut32.Length - 1];
                     else
-                        out_Renamed[0][index] = lut32[val];
+                        output[0][index] = lut32[val];
 
                     val = (int)(matrix[M10] * fBuf[RED][index] + matrix[M11] * fBuf[GREEN][index] + matrix[M12] * fBuf[BLUE][index] + 0.5);
                     // Clip the calculated value if necessary..
                     if (val < 0)
-                        out_Renamed[1][index] = lut32[0];
+                        output[1][index] = lut32[0];
                     else if (val >= lut32.Length)
-                        out_Renamed[1][index] = lut32[lut32.Length - 1];
+                        output[1][index] = lut32[lut32.Length - 1];
                     else
-                        out_Renamed[1][index] = lut32[val];
+                        output[1][index] = lut32[val];
 
                     val = (int)(matrix[M20] * fBuf[RED][index] + matrix[M21] * fBuf[GREEN][index] + matrix[M22] * fBuf[BLUE][index] + 0.5);
                     // Clip the calculated value if necessary..
                     if (val < 0)
-                        out_Renamed[2][index] = lut32[0];
+                        output[2][index] = lut32[0];
                     else if (val >= lut32.Length)
-                        out_Renamed[2][index] = lut32[lut32.Length - 1];
+                        output[2][index] = lut32[lut32.Length - 1];
                     else
-                        out_Renamed[2][index] = lut32[val];
+                        output[2][index] = lut32[val];
 
                     index++;
                 }
             }
         }
 
-        private static void standardizeMatrixLineThroughLut(image_DataBlkInt inb, float[] out_Renamed, int dwInputMaxValue, LookUpTableFP lut)
+        private static void standardizeMatrixLineThroughLut(image_DataBlkInt inb, float[] output, int dwInputMaxValue, LookUpTableFP lut)
         {
             int wTemp, j = 0;
-            var in_Renamed = (int[])inb.Data; // input pixel reference
+            var inputData = (int[])inb.Data; // input pixel reference
             var lutFP = lut.lut;
             for (var y = inb.uly; y < inb.uly + inb.h; ++y)
             {
                 for (var x = inb.ulx; x < inb.ulx + inb.w; ++x)
                 {
                     var i = inb.offset + (y - inb.uly) * inb.scanw + (x - inb.ulx); // pixel index.
-                    if (in_Renamed[i] > dwInputMaxValue)
+                    if (inputData[i] > dwInputMaxValue)
                         wTemp = dwInputMaxValue;
-                    else if (in_Renamed[i] < 0)
+                    else if (inputData[i] < 0)
                         wTemp = 0;
                     else
-                        wTemp = in_Renamed[i];
-                    out_Renamed[j++] = lutFP[wTemp];
+                        wTemp = inputData[i];
+                    output[j++] = lutFP[wTemp];
                 }
             }
         }
 
 
-        private static void standardizeMatrixLineThroughLut(image_DataBlkFloat inb, float[] out_Renamed, float dwInputMaxValue, LookUpTableFP lut)
+        private static void standardizeMatrixLineThroughLut(image_DataBlkFloat inb, float[] output, float dwInputMaxValue, LookUpTableFP lut)
         {
             var j = 0;
             float wTemp;
-            var in_Renamed = (float[])inb.Data; // input pixel reference
+            var inputData = (float[])inb.Data; // input pixel reference
             var lutFP = lut.lut;
 
             for (var y = inb.uly; y < inb.uly + inb.h; ++y)
@@ -432,18 +431,16 @@ namespace CoreJ2K.Icc.Lut
                 for (var x = inb.ulx; x < inb.ulx + inb.w; ++x)
                 {
                     var i = inb.offset + (y - inb.uly) * inb.scanw + (x - inb.ulx); // pixel index.
-                    if (in_Renamed[i] > dwInputMaxValue)
+                    if (inputData[i] > dwInputMaxValue)
                         wTemp = dwInputMaxValue;
-                    else if (in_Renamed[i] < 0)
+                    else if (inputData[i] < 0)
                         wTemp = 0;
                     else
-                        wTemp = in_Renamed[i];
-                    out_Renamed[j++] = lutFP[(int)wTemp];
+                        wTemp = inputData[i];
+                    output[j++] = lutFP[(int)wTemp];
                 }
             }
         }
-
-        /* end class MatrixBasedTransformTosRGB */
         static MatrixBasedTransformTosRGB()
         {
             RED = ICCProfile.RED;

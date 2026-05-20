@@ -1,13 +1,4 @@
 /* 
-* CVS identifier:
-* 
-* $Id: CBlkWTDataFloat.java,v 1.11 2001/08/15 17:18:43 grosbois Exp $
-* 
-* Class:                   CBlkWTDataFloat
-* 
-* Description:             Implementation of CBlkWTData for 'float' data
-* 
-* 
 * 
 * COPYRIGHT:
 * 

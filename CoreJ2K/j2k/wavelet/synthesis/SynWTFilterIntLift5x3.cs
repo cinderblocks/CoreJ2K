@@ -1,14 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: SynWTFilterIntLift5x3.java,v 1.11 2001/08/02 11:24:23 grosbois Exp $
-*
-* Class:                   SynWTFilterIntLift5x3
-*
-* Description:             A synthetizing wavelet filter implementing the
-*                          lifting 5x3 transform.
-*
-*
 *
 * COPYRIGHT:
 * 
@@ -436,7 +426,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// processing is applied in the analyze() method.
         /// 
         /// </returns>
-        public override bool isSameAsFullWT(int tailOvrlp, int headOvrlp, int inLen)
+        public override bool IsSameAsFullWT(int tailOvrlp, int headOvrlp, int inLen)
         {
 
             //If the input signal has even length.

@@ -84,7 +84,7 @@ namespace CoreJ2K.Tests
             }
 
             // Test seeking to middle tile
-            var numTiles = decoder.getNumTiles();
+            var numTiles = decoder.GetNumTiles();
             if (numTiles < 10)
             {
                 _output.WriteLine($"Test file has only {numTiles} tiles, need at least 10");
@@ -121,7 +121,7 @@ namespace CoreJ2K.Tests
             Assert.False(decoder.SupportsFastTileAccess());
 
             // Should still work via sequential access
-            var numTiles = decoder.getNumTiles();
+            var numTiles = decoder.GetNumTiles();
             if (numTiles > 1)
             {
                 var usedFastPath = decoder.SeekToTile(1);
@@ -143,7 +143,7 @@ namespace CoreJ2K.Tests
             using var stream = File.OpenRead(testFile);
             var decoder = CreateBitstreamReader(stream);
 
-            var numTiles = decoder.getNumTiles();
+            var numTiles = decoder.GetNumTiles();
 
             // Test negative index
             Assert.Throws<ArgumentOutOfRangeException>(() => decoder.SeekToTile(-1));
@@ -174,7 +174,7 @@ namespace CoreJ2K.Tests
                 return;
             }
 
-            var numTiles = decoder.getNumTiles();
+            var numTiles = decoder.GetNumTiles();
             if (numTiles < 100)
             {
                 _output.WriteLine($"Test file has only {numTiles} tiles, need at least 100 for meaningful performance test");
@@ -231,7 +231,7 @@ namespace CoreJ2K.Tests
             }
 
             // Get number of tiles - using actual tile count API
-            var numTiles = decoder.getNumTiles();
+            var numTiles = decoder.GetNumTiles();
 
             if (numTiles < 4)
             {
@@ -239,15 +239,15 @@ namespace CoreJ2K.Tests
                 return;
             }
 
-            // Test setTile with coordinates (should use TLM internally)
+            // Test SetTile with coordinates (should use TLM internally)
             var sw = Stopwatch.StartNew();
-            decoder.setTile(1, 1); // Access tile at position (1,1)
+            decoder.SetTile(1, 1); // Access tile at position (1,1)
             sw.Stop();
 
             Assert.True(sw.ElapsedMilliseconds < 100, 
-                $"setTile should use TLM fast path, took {sw.ElapsedMilliseconds}ms");
+                $"SetTile should use TLM fast path, took {sw.ElapsedMilliseconds}ms");
 
-            _output.WriteLine($"? setTile(1,1) completed in {sw.ElapsedMilliseconds}ms using TLM");
+            _output.WriteLine($"? SetTile(1,1) completed in {sw.ElapsedMilliseconds}ms using TLM");
         }
 
         [Fact]
@@ -269,7 +269,7 @@ namespace CoreJ2K.Tests
                 return;
             }
 
-            var numTiles = decoder.getNumTiles();
+            var numTiles = decoder.GetNumTiles();
             if (numTiles < 5)
             {
                 _output.WriteLine($"Need at least 5 tiles, found {numTiles}");
@@ -303,7 +303,7 @@ namespace CoreJ2K.Tests
             using var stream = File.OpenRead(testFile);
             var decoder = CreateBitstreamReader(stream);
 
-            var numTiles = decoder.getNumTiles();
+            var numTiles = decoder.GetNumTiles();
             if (tileIndex >= numTiles)
             {
                 _output.WriteLine($"Tile {tileIndex} not available (only {numTiles} tiles)");
@@ -352,7 +352,7 @@ namespace CoreJ2K.Tests
             _output.WriteLine("else");
             _output.WriteLine("{");
             _output.WriteLine("    // Falls back to O(n) sequential");
-            _output.WriteLine("    decoder.setTile(x, y); // Slower");
+            _output.WriteLine("    decoder.SetTile(x, y); // Slower");
             _output.WriteLine("}");
             _output.WriteLine("");
             _output.WriteLine("Expected performance improvements:");

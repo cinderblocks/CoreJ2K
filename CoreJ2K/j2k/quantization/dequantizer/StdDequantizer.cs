@@ -1,17 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: StdDequantizer.java,v 1.15 2002/07/19 12:50:23 grosbois Exp $
-*
-* Class:                   StdDequantizer
-*
-* Description:             Scalar deadzone dequantizer that returns integers
-*                          or floats.
-*                          This is a merger of the ScalarDZDeqInt and
-*                          ScalarDZDeqFloat classes by Joel Askelof and Diego
-*                          Santa Cruz.
-*
-*
 *
 * COPYRIGHT:
 * 
@@ -92,7 +79,7 @@ namespace CoreJ2K.j2k.quantization.dequantizer
         private readonly GuardBitsSpec gbs;
 
         /// <summary>The decoding parameters of the dequantizer </summary>
-        //private StdDequantizerParams params_Renamed;
+        //private StdDequantizerParams dequantParams;
 
         /// <summary>The 'DataBlkInt' object used to request data, used when output data is
         /// not int 
@@ -102,8 +89,8 @@ namespace CoreJ2K.j2k.quantization.dequantizer
         /// <summary>Type of the current output data </summary>
         private int outdtype;
 
-        // Cache for the isReversible / isDerived results per (tile, component).
-        // QuantTypeSpec.isReversible / isDerived perform a string equality check on
+        // Cache for the IsReversible / IsDerived results per (tile, component).
+        // QuantTypeSpec.IsReversible / IsDerived perform a string equality check on
         // every call; caching avoids repeating that per code-block.
         private int _cachedRevTile = -1;
         private int _cachedRevComp = -1;
@@ -134,7 +121,7 @@ namespace CoreJ2K.j2k.quantization.dequantizer
         /// </param>
         /// <param name="rb">The number of "range bits" (bitdepth) for each component
         /// (must be the "range bits" of the un-transformed components). For a
-        /// definition of "range bits" see the getNomRangeBits() method.
+        /// definition of "range bits" see the GetNomRangeBits() method.
         /// 
         /// </param>
         /// <param name="qts">The quantizer type spec
@@ -143,7 +130,7 @@ namespace CoreJ2K.j2k.quantization.dequantizer
         /// <param name="qsss">The dequantizer step sizes spec
         /// 
         /// </param>
-        /// <seealso cref="Dequantizer.getNomRangeBits" />
+        /// <seealso cref="Dequantizer.GetNomRangeBits" />
         /// <exception cref="IllegalArgumentException">Thrown if 'outdt' is neither
         /// TYPE_FLOAT nor TYPE_INT, or if 'param' specify reversible quantization
         /// and 'outdt' is not TYPE_INT or 'fp' has non-zero values, or if 'outdt'
@@ -181,7 +168,7 @@ namespace CoreJ2K.j2k.quantization.dequantizer
         /// number of fractional bits. For floating-point data 0 is returned.
         /// 
         /// </returns>
-        public override int getFixedPoint(int c)
+        public override int GetFixedPoint(int c)
         {
             return 0;
         }
@@ -230,9 +217,9 @@ namespace CoreJ2K.j2k.quantization.dequantizer
         /// 
         /// </returns>
         /// <seealso cref="DataBlk" />
-        public override DataBlk getCodeBlock(int c, int m, int n, SubbandSyn sb, DataBlk cblk)
+        public override DataBlk GetCodeBlock(int c, int m, int n, SubbandSyn sb, DataBlk cblk)
         {
-            return getInternCodeBlock(c, m, n, sb, cblk);
+            return GetInternCodeBlock(c, m, n, sb, cblk);
         }
 
         /// <summary> Returns the specified code-block in the current tile for the specified
@@ -278,9 +265,9 @@ namespace CoreJ2K.j2k.quantization.dequantizer
         /// 
         /// </returns>
         /// <seealso cref="DataBlk" />
-        public override DataBlk getInternCodeBlock(int c, int m, int n, SubbandSyn sb, DataBlk cblk)
+        public override DataBlk GetInternCodeBlock(int c, int m, int n, SubbandSyn sb, DataBlk cblk)
         {
-            // This method is declared final since getNextCodeBlock() relies on
+            // This method is declared final since GetNextCodeBlock() relies on
             // the actual implementation of this method.
             int j, jmin, k;
             int temp;
@@ -297,7 +284,7 @@ namespace CoreJ2K.j2k.quantization.dequantizer
             }
             else
             {
-                reversible = qts.isReversible(tIdx, c);
+                reversible = qts.IsReversible(tIdx, c);
                 _cachedReversible = reversible;
                 _cachedRevTile = tIdx;
                 _cachedRevComp = c;
@@ -310,20 +297,20 @@ namespace CoreJ2K.j2k.quantization.dequantizer
             }
             else
             {
-                derived = qts.isDerived(tIdx, c);
+                derived = qts.IsDerived(tIdx, c);
                 _cachedDerived = derived;
                 _cachedDerTile = tIdx;
                 _cachedDerComp = c;
             }
-            StdDequantizerParams params_Renamed;
+            StdDequantizerParams dequantParams;
             if (_cachedParamsTile == tIdx && _cachedParamsComp == c)
             {
-                params_Renamed = _cachedParams;
+                dequantParams = _cachedParams;
             }
             else
             {
-                params_Renamed = (StdDequantizerParams)qsss.getTileCompVal(tIdx, c);
-                _cachedParams = params_Renamed;
+                dequantParams = (StdDequantizerParams)qsss.GetTileCompVal(tIdx, c);
+                _cachedParams = dequantParams;
                 _cachedParamsTile = tIdx;
                 _cachedParamsComp = c;
             }
@@ -348,7 +335,7 @@ namespace CoreJ2K.j2k.quantization.dequantizer
                     // With int data we can use the same DataBlk object to get the
                     // data from the source and return the dequantized data, and we
                     // can also work "in place" (i.e. same buffer).
-                    cblk = src.getCodeBlock(c, m, n, sb, cblk);
+                    cblk = src.GetCodeBlock(c, m, n, sb, cblk);
                     // Input and output arrays are the same
                     outiarr = (int[])cblk.Data;
                     break;
@@ -356,7 +343,7 @@ namespace CoreJ2K.j2k.quantization.dequantizer
                 case DataBlk.TYPE_FLOAT:
                     // With float data we must use a different DataBlk objects to get
                     // the data from the source and to return the dequantized data.
-                    inblk = (DataBlkInt)src.getInternCodeBlock(c, m, n, sb, inblk);
+                    inblk = (DataBlkInt)src.GetInternCodeBlock(c, m, n, sb, inblk);
                     inarr = inblk.DataInt;
                     // Copy the attributes of the CodeBlock object
                     cblk.ulx = inblk.ulx;
@@ -398,7 +385,7 @@ namespace CoreJ2K.j2k.quantization.dequantizer
                 // Not reversible
                 if (derived)
                 {
-                    // Cache getSynSubbandTree().resLvl per (tile, component) — it is
+                    // Cache GetSynSubbandTree().resLvl per (tile, component) — it is
                     // constant within a tile and the virtual dispatch chain is non-trivial.
                     int mrl;
                     if (_cachedMrlTile == tIdx && _cachedMrlComp == c)
@@ -407,16 +394,16 @@ namespace CoreJ2K.j2k.quantization.dequantizer
                     }
                     else
                     {
-                        mrl = src.getSynSubbandTree(TileIdx, c).resLvl;
+                        mrl = src.GetSynSubbandTree(TileIdx, c).resLvl;
                         _cachedMrl = mrl;
                         _cachedMrlTile = tIdx;
                         _cachedMrlComp = c;
                     }
-                    step = params_Renamed.nStep[0][0] * (1L << (rb[c] + sb.anGainExp + mrl - sb.level));
+                    step = dequantParams.nStep[0][0] * (1L << (rb[c] + sb.anGainExp + mrl - sb.level));
                 }
                 else
                 {
-                    step = params_Renamed.nStep[sb.resLvl][sb.sbandIdx] * (1L << (rb[c] + sb.anGainExp));
+                    step = dequantParams.nStep[sb.resLvl][sb.sbandIdx] * (1L << (rb[c] + sb.anGainExp));
                 }
                 shiftBits = 31 - magBits;
 

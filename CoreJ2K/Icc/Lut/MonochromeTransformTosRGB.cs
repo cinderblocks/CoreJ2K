@@ -1,6 +1,5 @@
 /// <summary>**************************************************************************
 /// 
-/// $Id: MonochromeTransformTosRGB.java,v 1.1 2002/07/25 14:56:50 grosbois Exp $
 /// 
 /// Copyright Eastman Kodak Company, 343 State Street, Rochester, NY 14650
 /// $Date $
@@ -125,13 +124,13 @@ namespace CoreJ2K.Icc.Lut
 
             int i, j, o; //  x, y removed
 
-            var in_Renamed = (int[])inb.Data;
-            var out_Renamed = (int[])outb.Data;
+            var inputData = (int[])inb.Data;
+            var output = (int[])outb.Data;
 
-            if (out_Renamed == null || out_Renamed.Length < in_Renamed.Length)
+            if (output == null || output.Length < inputData.Length)
             {
-                out_Renamed = new int[in_Renamed.Length];
-                outb.Data = out_Renamed;
+                output = new int[inputData.Length];
+                outb.Data = output;
             }
 
             outb.uly = inb.uly;
@@ -144,12 +143,12 @@ namespace CoreJ2K.Icc.Lut
             o = inb.offset;
             for (i = 0; i < inb.h * inb.w; ++i)
             {
-                j = in_Renamed[i];
+                j = inputData[i];
                 if (j < 0)
                     j = 0;
                 else if (j > dwInputMaxValue)
                     j = dwInputMaxValue;
-                out_Renamed[i] = lut[j];
+                output[i] = lut[j];
             }
         }
 
@@ -167,14 +166,14 @@ namespace CoreJ2K.Icc.Lut
 
             int i, j, o; // x, y removed
 
-            var in_Renamed = (float[])inb.Data;
-            var out_Renamed = (float[])outb.Data;
+            var inputData = (float[])inb.Data;
+            var output = (float[])outb.Data;
 
 
-            if (out_Renamed == null || out_Renamed.Length < in_Renamed.Length)
+            if (output == null || output.Length < inputData.Length)
             {
-                out_Renamed = new float[in_Renamed.Length];
-                outb.Data = out_Renamed;
+                output = new float[inputData.Length];
+                outb.Data = output;
 
                 outb.uly = inb.uly;
                 outb.ulx = inb.ulx;
@@ -187,16 +186,13 @@ namespace CoreJ2K.Icc.Lut
             o = inb.offset;
             for (i = 0; i < inb.h * inb.w; ++i)
             {
-                j = (int)in_Renamed[i];
+                j = (int)inputData[i];
                 if (j < 0)
                     j = 0;
                 else if (j > dwInputMaxValue)
                     j = dwInputMaxValue;
-                out_Renamed[i] = lut[j];
+                output[i] = lut[j];
             }
         }
-
-
-        /* end class MonochromeTransformTosRGB */
     }
 }

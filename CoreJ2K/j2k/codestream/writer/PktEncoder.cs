@@ -1,14 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: PktEncoder.java,v 1.29 2001/11/08 18:32:09 grosbois Exp $
-*
-* Class:                   PktEncoder
-*
-* Description:             Builds bit stream packets and keeps
-*                          interpacket dependencies.
-*
-*
 *
 * COPYRIGHT:
 * 
@@ -314,7 +304,7 @@ namespace CoreJ2K.j2k.codestream.writer
 
             // Get number of components and tiles
             var nc = infoSrc.NumComps;
-            var nt = infoSrc.getNumTiles();
+            var nt = infoSrc.GetNumTiles();
 
             // Do initial allocation
             ttIncl = new TagTreeEncoder[nt][][][][];
@@ -350,7 +340,7 @@ namespace CoreJ2K.j2k.codestream.writer
             //Coord tmpCoord = null;
             int numcb; // Number of code-blocks
                        //System.Collections.ArrayList cblks = null;
-            infoSrc.setTile(0, 0);
+            infoSrc.SetTile(0, 0);
             for (var t = 0; t < nt; t++)
             {
                 // Loop on tiles
@@ -358,7 +348,7 @@ namespace CoreJ2K.j2k.codestream.writer
                 {
                     // Loop on components
                     // Get number of resolution levels
-                    root = infoSrc.getAnSubbandTree(t, c);
+                    root = infoSrc.GetAnSubbandTree(t, c);
                     mrl = root.resLvl;
 
                     lblock[t][c] = new int[mrl + 1][][];
@@ -395,7 +385,7 @@ namespace CoreJ2K.j2k.codestream.writer
                         for (var s = mins; s < maxs; s++)
                         {
                             // Loop on subbands
-                            sb = (SubbandAn)root.getSubbandByIdx(r, s);
+                            sb = (SubbandAn)root.GetSubbandByIdx(r, s);
                             numcb = sb.numCb.x * sb.numCb.y;
 
                             lblock[t][c][r][s] = new int[numcb];
@@ -407,7 +397,7 @@ namespace CoreJ2K.j2k.codestream.writer
                     }
                 }
                 if (t != nt - 1)
-                    infoSrc.nextTile();
+                    infoSrc.NextTile();
             }
         }
 
@@ -431,8 +421,8 @@ namespace CoreJ2K.j2k.codestream.writer
                 return; // No precinct in this
                         // resolution level
 
-            var tileI = infoSrc.getTile(null);
-            var nTiles = infoSrc.getNumTiles(null);
+            var tileI = infoSrc.GetTile(null);
+            var nTiles = infoSrc.GetNumTiles(null);
 
             var x0siz = infoSrc.ImgULX;
             var y0siz = infoSrc.ImgULY;
@@ -448,15 +438,15 @@ namespace CoreJ2K.j2k.codestream.writer
             var tx1 = (tileI.x != nTiles.x - 1) ? xt0siz + (tileI.x + 1) * xtsiz : xsiz;
             var ty1 = (tileI.y != nTiles.y - 1) ? yt0siz + (tileI.y + 1) * ytsiz : ysiz;
 
-            var xrsiz = infoSrc.getCompSubsX(c);
-            var yrsiz = infoSrc.getCompSubsY(c);
+            var xrsiz = infoSrc.GetCompSubsX(c);
+            var yrsiz = infoSrc.GetCompSubsY(c);
 
             var tcx0 = (int)Math.Ceiling(tx0 / (double)(xrsiz));
             var tcy0 = (int)Math.Ceiling(ty0 / (double)(yrsiz));
             var tcx1 = (int)Math.Ceiling(tx1 / (double)(xrsiz));
             var tcy1 = (int)Math.Ceiling(ty1 / (double)(yrsiz));
 
-            var ndl = infoSrc.getAnSubbandTree(t, c).resLvl - r;
+            var ndl = infoSrc.GetAnSubbandTree(t, c).resLvl - r;
             var trx0 = (int)Math.Ceiling(tcx0 / (double)(1 << ndl));
             var try0 = (int)Math.Ceiling(tcy0 / (double)(1 << ndl));
             var trx1 = (int)Math.Ceiling(tcx1 / (double)(1 << ndl));
@@ -465,8 +455,8 @@ namespace CoreJ2K.j2k.codestream.writer
             var cb0x = infoSrc.CbULX;
             var cb0y = infoSrc.CbULY;
 
-            double twoppx = encSpec.pss.getPPX(t, c, r);
-            double twoppy = encSpec.pss.getPPY(t, c, r);
+            double twoppx = encSpec.pss.GetPPX(t, c, r);
+            double twoppy = encSpec.pss.GetPPY(t, c, r);
             var twoppx2 = (int)(twoppx / 2);
             var twoppy2 = (int)(twoppy / 2);
 
@@ -483,7 +473,7 @@ namespace CoreJ2K.j2k.codestream.writer
 
             int acb0x, acb0y;
 
-            var root = infoSrc.getAnSubbandTree(t, c);
+            var root = infoSrc.GetAnSubbandTree(t, c);
             SubbandAn sb = null;
 
             int p0x, p0y, p1x, p1y; // Precinct projection in subband
@@ -532,7 +522,7 @@ namespace CoreJ2K.j2k.codestream.writer
                         p0y = acb0y + i * (int)twoppy;
                         p1y = p0y + (int)twoppy;
 
-                        sb = (SubbandAn)root.getSubbandByIdx(0, 0);
+                        sb = (SubbandAn)root.GetSubbandByIdx(0, 0);
                         s0x = (p0x < sb.ulcx) ? sb.ulcx : p0x;
                         s1x = (p1x > sb.ulcx + sb.w) ? sb.ulcx + sb.w : p1x;
                         s0y = (p0y < sb.ulcy) ? sb.ulcy : p0y;
@@ -591,7 +581,7 @@ namespace CoreJ2K.j2k.codestream.writer
                         p0y = acb0y + i * twoppy2;
                         p1y = p0y + twoppy2;
 
-                        sb = (SubbandAn)root.getSubbandByIdx(r, 1);
+                        sb = (SubbandAn)root.GetSubbandByIdx(r, 1);
                         s0x = (p0x < sb.ulcx) ? sb.ulcx : p0x;
                         s1x = (p1x > sb.ulcx + sb.w) ? sb.ulcx + sb.w : p1x;
                         s0y = (p0y < sb.ulcy) ? sb.ulcy : p0y;
@@ -646,7 +636,7 @@ namespace CoreJ2K.j2k.codestream.writer
                         p0y = acb0y + i * twoppy2;
                         p1y = p0y + twoppy2;
 
-                        sb = (SubbandAn)root.getSubbandByIdx(r, 2);
+                        sb = (SubbandAn)root.GetSubbandByIdx(r, 2);
                         s0x = (p0x < sb.ulcx) ? sb.ulcx : p0x;
                         s1x = (p1x > sb.ulcx + sb.w) ? sb.ulcx + sb.w : p1x;
                         s0y = (p0y < sb.ulcy) ? sb.ulcy : p0y;
@@ -701,7 +691,7 @@ namespace CoreJ2K.j2k.codestream.writer
                         p0y = acb0y + i * twoppy2;
                         p1y = p0y + twoppy2;
 
-                        sb = (SubbandAn)root.getSubbandByIdx(r, 3);
+                        sb = (SubbandAn)root.GetSubbandByIdx(r, 3);
                         s0x = (p0x < sb.ulcx) ? sb.ulcx : p0x;
                         s1x = (p1x > sb.ulcx + sb.w) ? sb.ulcx + sb.w : p1x;
                         s0y = (p0y < sb.ulcy) ? sb.ulcy : p0y;
@@ -823,7 +813,7 @@ namespace CoreJ2K.j2k.codestream.writer
             var minsb = (r == 0) ? 0 : 1;
             var maxsb = (r == 0) ? 1 : 4;
             Coord cbCoord = null;
-            var root = infoSrc.getAnSubbandTree(t, c);
+            var root = infoSrc.GetAnSubbandTree(t, c);
             SubbandAn sb;
             roiInPkt = false;
             roiLen = 0;
@@ -899,7 +889,7 @@ namespace CoreJ2K.j2k.codestream.writer
             for (var s = minsb; s < maxsb; s++)
             {
                 // Loop on subbands
-                sb = (SubbandAn)root.getSubbandByIdx(r, s);
+                sb = (SubbandAn)root.GetSubbandByIdx(r, s);
 
                 // Go directly to next subband if the precinct has no code-block
                 // in the current one.
@@ -927,12 +917,12 @@ namespace CoreJ2K.j2k.codestream.writer
                         if (cur_tIndx[b] > cur_prevtIdxs[b] && cur_prevtIdxs[b] < 0)
                         {
                             // First inclusion
-                            cur_ttIncl.setValue(m, n, ly - 1);
+                            cur_ttIncl.SetValue(m, n, ly - 1);
                         }
                         if (ly == 1)
                         {
                             // First layer, need to set the skip of MSBP
-                            cur_ttMaxBP.setValue(m, n, cur_cbs[b].skipMSBP);
+                            cur_ttMaxBP.SetValue(m, n, cur_cbs[b].skipMSBP);
                         }
                     }
                 }
@@ -1152,7 +1142,7 @@ namespace CoreJ2K.j2k.codestream.writer
             for (var s = minsb; s < maxsb; s++)
             {
                 // Loop on subbands
-                sb = (SubbandAn)root.getSubbandByIdx(r, s);
+                sb = (SubbandAn)root.GetSubbandByIdx(r, s);
 
                 cur_prevtIdxs = prevtIdxs[t][c][r][s];
                 cur_cbs = cbs[s];
@@ -1469,7 +1459,7 @@ namespace CoreJ2K.j2k.codestream.writer
         /// <param name="p">Precinct index
         /// 
         /// </param>
-        public virtual PrecInfo getPrecInfo(int t, int c, int r, int p)
+        public virtual PrecInfo GetPrecInfo(int t, int c, int r, int p)
         {
             return ppinfo[t][c][r][p];
         }

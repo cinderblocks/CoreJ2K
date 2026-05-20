@@ -637,7 +637,7 @@ namespace CoreJ2K.j2k.codestream
             {
                 var ssiz = data[pos++];
                 var bitDepth = (ssiz & 0x7F) + 1;
-                var isSigned = (ssiz & 0x80) != 0;
+                var IsSigned = (ssiz & 0x80) != 0;
 
                 if (bitDepth > Markers.MAX_COMP_BITDEPTH)
                 {

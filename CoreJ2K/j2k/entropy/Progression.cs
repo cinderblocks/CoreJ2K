@@ -3,10 +3,6 @@
 *
 * $Id : $
 *
-* Class:                   Progression
-*
-* Description:             Holds the type(s) of progression
-*
 *
 * Modified by:
 *

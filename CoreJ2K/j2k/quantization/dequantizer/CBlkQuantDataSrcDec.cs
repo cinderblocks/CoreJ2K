@@ -1,15 +1,4 @@
 /* 
-* CVS identifier:
-* 
-* $Id: CBlkQuantDataSrcDec.java,v 1.9 2001/09/14 08:58:36 grosbois Exp $
-* 
-* Class:                   CBlkQuantDataSrcDec
-* 
-* Description:             Interface that defines a source of
-*                          quantized wavelet data to be transferred in a
-*                          code-block by code-block basis (decoder side).
-* 
-* 
 * 
 * COPYRIGHT:
 * 
@@ -52,7 +41,7 @@ namespace CoreJ2K.j2k.quantization.dequantizer
 
     /// <summary> This interface defines a source of quantized wavelet coefficients and
     /// methods to transfer them in a code-block by code-block basis, fro the
-    /// decoder side. In each call to 'getCodeBlock()' or 'getInternCodeBlock()' a
+    /// decoder side. In each call to 'GetCodeBlock()' or 'GetInternCodeBlock()' a
     /// new code-block is returned.
     /// 
     /// This class is the source of data for the dequantizer. See the
@@ -124,7 +113,7 @@ namespace CoreJ2K.j2k.quantization.dequantizer
         /// 
         /// </returns>
         /// <seealso cref="DataBlk" />
-        DataBlk getCodeBlock(int c, int m, int n, SubbandSyn sb, DataBlk cblk);
+        DataBlk GetCodeBlock(int c, int m, int n, SubbandSyn sb, DataBlk cblk);
 
         /// <summary> Returns the specified code-block in the current tile for the specified
         /// component (as a reference or copy).
@@ -173,6 +162,6 @@ namespace CoreJ2K.j2k.quantization.dequantizer
         /// 
         /// </returns>
         /// <seealso cref="DataBlk" />
-        DataBlk getInternCodeBlock(int c, int m, int n, SubbandSyn sb, DataBlk cblk);
+        DataBlk GetInternCodeBlock(int c, int m, int n, SubbandSyn sb, DataBlk cblk);
     }
 }

@@ -1,13 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: Dequantizer.java,v 1.37 2001/10/29 20:07:28 qtxjoas Exp $
-*
-* Class:                   Dequantizer
-*
-* Description:             The abstract class for all dequantizers.
-*
-*
 *
 * COPYRIGHT:
 * 
@@ -68,7 +59,7 @@ namespace CoreJ2K.j2k.quantization.dequantizer
     /// 
     /// The output data is either in floating-point, or in fixed-point two's
     /// complement. In case of floating-point data the the value returned by
-    /// getFixedPoint() must be 0. If the case of fixed-point data the number of
+    /// GetFixedPoint() must be 0. If the case of fixed-point data the number of
     /// fractional bits must be defined at the constructor of the implementing
     /// class and all operations must be performed accordingly. Each component may
     /// have a different number of fractional bits.
@@ -138,10 +129,10 @@ namespace CoreJ2K.j2k.quantization.dequantizer
         /// </param>
         /// <param name="rb">The number of "range bits" for each component (must be the
         /// "range bits" of the un-transformed components. For a definition of
-        /// "range bits" see the getNomRangeBits() method.
+        /// "range bits" see the GetNomRangeBits() method.
         /// 
         /// </param>
-        /// <seealso cref="getNomRangeBits" />
+        /// <seealso cref="GetNomRangeBits" />
         protected Dequantizer(CBlkQuantDataSrcDec src, int[] utrb, DecoderSpecs decSpec) : base(src)
         {
             if (utrb.Length != src.NumComps)
@@ -163,7 +154,7 @@ namespace CoreJ2K.j2k.quantization.dequantizer
         /// themselves. This is because different subbands have different gains and
         /// thus different nominal ranges. To have an idea of the nominal range in
         /// each subband the subband analysis gain value from the subband tree
-        /// structure, returned by the getSynSubbandTree() method, can be used. See
+        /// structure, returned by the GetSynSubbandTree() method, can be used. See
         /// the Subband class for more details.
         /// 
         /// If this number is <i>b</b> then for unsigned data the nominal range
@@ -179,7 +170,7 @@ namespace CoreJ2K.j2k.quantization.dequantizer
         /// 
         /// </returns>
         /// <seealso cref="Subband" />
-        public virtual int getNomRangeBits(int c)
+        public virtual int GetNomRangeBits(int c)
         {
             return rb[c];
         }
@@ -203,9 +194,9 @@ namespace CoreJ2K.j2k.quantization.dequantizer
         /// <returns> The root of the tree structure.
         /// 
         /// </returns>
-        public override SubbandSyn getSynSubbandTree(int t, int c)
+        public override SubbandSyn GetSynSubbandTree(int t, int c)
         {
-            return src.getSynSubbandTree(t, c);
+            return src.GetSynSubbandTree(t, c);
         }
 
         /// <summary> Changes the current tile, given the new indexes. An
@@ -222,9 +213,9 @@ namespace CoreJ2K.j2k.quantization.dequantizer
         /// <param name="y">The vertical index of the new tile.
         /// 
         /// </param>
-        public override void setTile(int x, int y)
+        public override void SetTile(int x, int y)
         {
-            src.setTile(x, y);
+            src.SetTile(x, y);
             tIdx = TileIdx; // index of the current tile
 
             // initializations
@@ -236,7 +227,7 @@ namespace CoreJ2K.j2k.quantization.dequantizer
                 var nc = src.NumComps > 3 ? 3 : src.NumComps;
                 var rev = 0;
                 for (var c = 0; c < nc; c++)
-                    rev += (wfs.isReversible(tIdx, c) ? 1 : 0);
+                    rev += (wfs.IsReversible(tIdx, c) ? 1 : 0);
                 if (rev == 3)
                 {
                     // All WT are reversible
@@ -284,9 +275,9 @@ namespace CoreJ2K.j2k.quantization.dequantizer
         /// source and re-initializes properly component transformation variables.
         /// 
         /// </summary>
-        public override void nextTile()
+        public override void NextTile()
         {
-            src.nextTile();
+            src.NextTile();
             tIdx = TileIdx; // index of the current tile
 
             // initializations
@@ -311,8 +302,8 @@ namespace CoreJ2K.j2k.quantization.dequantizer
 
             }
         }
-        public abstract DataBlk getCodeBlock(int param1, int param2, int param3, SubbandSyn param4, DataBlk param5);
-        public abstract int getFixedPoint(int param1);
-        public abstract DataBlk getInternCodeBlock(int param1, int param2, int param3, SubbandSyn param4, DataBlk param5);
+        public abstract DataBlk GetCodeBlock(int param1, int param2, int param3, SubbandSyn param4, DataBlk param5);
+        public abstract int GetFixedPoint(int param1);
+        public abstract DataBlk GetInternCodeBlock(int param1, int param2, int param3, SubbandSyn param4, DataBlk param5);
     }
 }

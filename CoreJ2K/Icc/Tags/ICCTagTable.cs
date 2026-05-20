@@ -1,6 +1,5 @@
 /// <summary>**************************************************************************
 /// 
-/// $Id: ICCTagTable.java,v 1.1 2002/07/25 14:56:37 grosbois Exp $
 /// 
 /// Copyright Eastman Kodak Company, 343 State Street, Rochester, NY 14650
 /// $Date $
@@ -98,14 +97,14 @@ namespace CoreJ2K.Icc.Tags
         /// </param>
         protected internal ICCTagTable(byte[] data)
         {
-            tagCount = ICCProfile.getInt(data, offTagCount);
+            tagCount = ICCProfile.GetInt(data, offTagCount);
 
             var offset = offTags;
             for (var i = 0; i < tagCount; ++i)
             {
-                var signature = ICCProfile.getInt(data, offset);
-                var tagOffset = ICCProfile.getInt(data, offset + ICCProfile.int_size);
-                var length = ICCProfile.getInt(data, offset + 2 * ICCProfile.int_size);
+                var signature = ICCProfile.GetInt(data, offset);
+                var tagOffset = ICCProfile.GetInt(data, offset + ICCProfile.int_size);
+                var length = ICCProfile.GetInt(data, offset + 2 * ICCProfile.int_size);
                 trios.Add(new Triplet(signature, tagOffset, length));
                 offset += 3 * ICCProfile.int_size;
             }
@@ -143,10 +142,10 @@ namespace CoreJ2K.Icc.Tags
             var currentTagOff = tagOff;
             var currentDataOff = dataOff;
 
-            System.Collections.IEnumerator enum_Renamed = trios.GetEnumerator();
-            while (enum_Renamed.MoveNext())
+            System.Collections.IEnumerator enumerator = trios.GetEnumerator();
+            while (enumerator.MoveNext())
             {
-                var trio = (Triplet)enum_Renamed.Current;
+                var trio = (Triplet)enumerator.Current;
                 var tag = this[trio.signature];
 
                 raf.Seek(currentTagOff, SeekOrigin.Begin);
@@ -166,8 +165,6 @@ namespace CoreJ2K.Icc.Tags
                 currentDataOff += tag.count;
             }
         }
-
-        /* end class ICCTagTable */
         static ICCTagTable()
         {
             offTagCount = ICCProfileHeader.size;

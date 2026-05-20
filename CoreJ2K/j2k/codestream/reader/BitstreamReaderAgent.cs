@@ -1,14 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: BitstreamReaderAgent.java,v 1.27 2002/07/25 14:59:32 grosbois Exp $
-*
-* Class:                   BitstreamReaderAgent
-*
-* Description:             The generic interface for bit stream
-*                          transport agents.
-*
-*
 *
 * COPYRIGHT:
 * 
@@ -197,10 +187,10 @@ namespace CoreJ2K.j2k.codestream.reader
         public virtual int ActualNbytes => anbytes;
 
         /// <summary>Returns the horizontal offset of tile partition </summary>
-        public virtual int TilePartULX => hd.getTilingOrigin(null).x;
+        public virtual int TilePartULX => hd.GetTilingOrigin(null).x;
 
         /// <summary>Returns the vertical offset of tile partition </summary>
-        public virtual int TilePartULY => hd.getTilingOrigin(null).y;
+        public virtual int TilePartULY => hd.GetTilingOrigin(null).y;
 
         /// <summary>Returns the nominal tile width </summary>
         public virtual int NomTileWidth => hd.NomTileWidth;
@@ -213,7 +203,7 @@ namespace CoreJ2K.j2k.codestream.reader
 
         /// <summary> Whether or not the components in the current tile uses a derived
         /// quantization step size (only relevant in non reversible quantization
-        /// mode). This field is actualized by the setTile method in
+        /// mode). This field is actualized by the SetTile method in
         /// FileBitstreamReaderAgent.
         /// 
         /// </summary>
@@ -221,19 +211,19 @@ namespace CoreJ2K.j2k.codestream.reader
         protected internal bool[] derived = null;
 
         /// <summary> Number of guard bits off all component in the current tile. This field
-        /// is actualized by the setTile method in FileBitstreamReaderAgent.
+        /// is actualized by the SetTile method in FileBitstreamReaderAgent.
         /// 
         /// </summary>
         /// <seealso cref="FileBitstreamReaderAgent.initSubbandsFields" />
         protected internal int[] gb = null;
 
         /// <summary> Dequantization parameters of all subbands and all components in the
-        /// current tile. The value is actualized by the setTile method in
+        /// current tile. The value is actualized by the SetTile method in
         /// FileBitstreamReaderAgent.
         /// 
         /// </summary>
         /// <seealso cref="FileBitstreamReaderAgent.initSubbandsFields" />
-        protected internal StdDequantizerParams[] params_Renamed = null;
+        protected internal StdDequantizerParams[] dequantParams = null;
 
         /// <summary>The prefix for bit stream reader options: 'B' </summary>
         public const char OPT_PREFIX = 'B';
@@ -385,7 +375,7 @@ namespace CoreJ2K.j2k.codestream.reader
             ay = hd.ImgULY;
 
             // Tiles
-            co = hd.getTilingOrigin(null);
+            co = hd.GetTilingOrigin(null);
             px = co.x;
             py = co.y;
             ntW = hd.NomTileWidth;
@@ -408,9 +398,9 @@ namespace CoreJ2K.j2k.codestream.reader
         /// 
         /// </returns>
         /// <seealso cref="j2k.image.ImgData" />
-        public int getCompSubsX(int c)
+        public int GetCompSubsX(int c)
         {
-            return hd.getCompSubsX(c);
+            return hd.GetCompSubsX(c);
         }
 
         /// <summary> Returns the component subsampling factor in the vertical direction, for
@@ -426,9 +416,9 @@ namespace CoreJ2K.j2k.codestream.reader
         /// 
         /// </returns>
         /// <seealso cref="j2k.image.ImgData" />
-        public virtual int getCompSubsY(int c)
+        public virtual int GetCompSubsY(int c)
         {
-            return hd.getCompSubsY(c);
+            return hd.GetCompSubsY(c);
         }
 
         /// <summary> Returns the overall width of the current tile in pixels for the given
@@ -453,11 +443,11 @@ namespace CoreJ2K.j2k.codestream.reader
         /// <returns> The current tile's width in pixels.
         /// 
         /// </returns>
-        public virtual int getTileWidth(int rl)
+        public virtual int GetTileWidth(int rl)
         {
             // The minumum number of decomposition levels between all the
             // components
-            var mindl = decSpec.dls.getMinInTile(TileIdx);
+            var mindl = decSpec.dls.GetMinInTile(TileIdx);
             if (rl > mindl)
             {
                 throw new ArgumentException(
@@ -498,11 +488,11 @@ namespace CoreJ2K.j2k.codestream.reader
         /// <returns> The total current tile's height in pixels.
         /// 
         /// </returns>
-        public virtual int getTileHeight(int rl)
+        public virtual int GetTileHeight(int rl)
         {
             // The minumum number of decomposition levels between all the
             // components
-            var mindl = decSpec.dls.getMinInTile(TileIdx);
+            var mindl = decSpec.dls.GetMinInTile(TileIdx);
             if (rl > mindl)
             {
                 throw new ArgumentException(
@@ -542,7 +532,7 @@ namespace CoreJ2K.j2k.codestream.reader
         /// <returns> The total image's width in pixels.
         /// 
         /// </returns>
-        public virtual int getImgWidth(int rl)
+        public virtual int GetImgWidth(int rl)
         {
             // The minimum number of decomposition levels of each
             // tile-component
@@ -578,7 +568,7 @@ namespace CoreJ2K.j2k.codestream.reader
         /// <returns> The total image's height in pixels.
         /// 
         /// </returns>
-        public virtual int getImgHeight(int rl)
+        public virtual int GetImgHeight(int rl)
         {
             var mindl = decSpec.dls.Min;
             if (rl > mindl)
@@ -613,7 +603,7 @@ namespace CoreJ2K.j2k.codestream.reader
         /// system, on the reference grid.
         /// 
         /// </returns>
-        public virtual int getImgULX(int rl)
+        public virtual int GetImgULX(int rl)
         {
             var mindl = decSpec.dls.Min;
             if (rl > mindl)
@@ -648,7 +638,7 @@ namespace CoreJ2K.j2k.codestream.reader
         /// system, on the reference grid.
         /// 
         /// </returns>
-        public virtual int getImgULY(int rl)
+        public virtual int GetImgULY(int rl)
         {
             var mindl = decSpec.dls.Min;
             if (rl > mindl)
@@ -678,7 +668,7 @@ namespace CoreJ2K.j2k.codestream.reader
         /// for resolution level <tt>rl</tt>.
         /// 
         /// </returns>
-        public int getTileCompWidth(int t, int c, int rl)
+        public int GetTileCompWidth(int t, int c, int rl)
         {
             var tIdx = TileIdx;
             if (t != tIdx)
@@ -690,7 +680,7 @@ namespace CoreJ2K.j2k.codestream.reader
             // Calculate starting X of next tile X-wise at reference grid hi-res
             ntulx = (ctX < ntX - 1) ? px + (ctX + 1) * ntW : ax + imgW;
             // Convert reference grid hi-res to component grid hi-res
-            ntulx = (ntulx + hd.getCompSubsX(c) - 1) / hd.getCompSubsX(c);
+            ntulx = (ntulx + hd.GetCompSubsX(c) - 1) / hd.GetCompSubsX(c);
             // Starting X of current tile at component grid hi-res is culx[c]
             // The difference at the rl level is the width
             return (ntulx + (1 << dl) - 1) / (1 << dl) - (culx[c] + (1 << dl) - 1) / (1 << dl);
@@ -713,7 +703,7 @@ namespace CoreJ2K.j2k.codestream.reader
         /// tile.
         /// 
         /// </returns>
-        public int getTileCompHeight(int t, int c, int rl)
+        public int GetTileCompHeight(int t, int c, int rl)
         {
             var tIdx = TileIdx;
             if (t != tIdx)
@@ -725,7 +715,7 @@ namespace CoreJ2K.j2k.codestream.reader
                                   // Calculate starting Y of next tile Y-wise at reference grid hi-res
             ntuly = (ctY < ntY - 1) ? py + (ctY + 1) * ntH : ay + imgH;
             // Convert reference grid hi-res to component grid hi-res
-            ntuly = (ntuly + hd.getCompSubsY(c) - 1) / hd.getCompSubsY(c);
+            ntuly = (ntuly + hd.GetCompSubsY(c) - 1) / hd.GetCompSubsY(c);
             // Starting Y of current tile at component grid hi-res is culy[c]
             // The difference at the rl level is the height
             return (ntuly + (1 << dl) - 1) / (1 << dl) - (culy[c] + (1 << dl) - 1) / (1 << dl);
@@ -756,15 +746,15 @@ namespace CoreJ2K.j2k.codestream.reader
         /// image.
         /// 
         /// </returns>
-        public int getCompImgWidth(int c, int rl)
+        public int GetCompImgWidth(int c, int rl)
         {
             int sx, ex;
-            var dl = decSpec.dls.getMinInComp(c) - rl;
+            var dl = decSpec.dls.GetMinInComp(c) - rl;
             // indexation (0 is hi-res)
             // Calculate image starting x at component hi-res grid
-            sx = (ax + hd.getCompSubsX(c) - 1) / hd.getCompSubsX(c);
+            sx = (ax + hd.GetCompSubsX(c) - 1) / hd.GetCompSubsX(c);
             // Calculate image ending (excluding) x at component hi-res grid
-            ex = (ax + imgW + hd.getCompSubsX(c) - 1) / hd.getCompSubsX(c);
+            ex = (ax + imgW + hd.GetCompSubsX(c) - 1) / hd.GetCompSubsX(c);
             // The difference at the rl level is the width
             return (ex + (1 << dl) - 1) / (1 << dl) - (sx + (1 << dl) - 1) / (1 << dl);
         }
@@ -794,15 +784,15 @@ namespace CoreJ2K.j2k.codestream.reader
         /// image.
         /// 
         /// </returns>
-        public int getCompImgHeight(int c, int rl)
+        public int GetCompImgHeight(int c, int rl)
         {
             int sy, ey;
-            var dl = decSpec.dls.getMinInComp(c) - rl;
+            var dl = decSpec.dls.GetMinInComp(c) - rl;
             // indexation (0 is hi-res)
             // Calculate image starting x at component hi-res grid
-            sy = (ay + hd.getCompSubsY(c) - 1) / hd.getCompSubsY(c);
+            sy = (ay + hd.GetCompSubsY(c) - 1) / hd.GetCompSubsY(c);
             // Calculate image ending (excluding) x at component hi-res grid
-            ey = (ay + imgH + hd.getCompSubsY(c) - 1) / hd.getCompSubsY(c);
+            ey = (ay + imgH + hd.GetCompSubsY(c) - 1) / hd.GetCompSubsY(c);
             // The difference at the rl level is the width
             return (ey + (1 << dl) - 1) / (1 << dl) - (sy + (1 << dl) - 1) / (1 << dl);
         }
@@ -818,14 +808,14 @@ namespace CoreJ2K.j2k.codestream.reader
         /// <param name="y">The vertical indexes of the new tile.
         /// 
         /// </param>
-        public abstract void setTile(int x, int y);
+        public abstract void SetTile(int x, int y);
 
         /// <summary> Advances to the next tile, in standard scan-line order (by rows then
         /// columns). An NoNextElementException is thrown if the current tile is
         /// the last one (i.e. there is no next tile).
         /// 
         /// </summary>
-        public abstract void nextTile();
+        public abstract void NextTile();
 
         /// <summary> Returns the indexes of the current tile. These are the horizontal and
         /// vertical indexes of the current tile.
@@ -838,7 +828,7 @@ namespace CoreJ2K.j2k.codestream.reader
         /// <returns> The current tile's indexes (vertical and horizontal indexes).
         /// 
         /// </returns>
-        public Coord getTile(Coord co)
+        public Coord GetTile(Coord co)
         {
             if (co != null)
             {
@@ -862,7 +852,7 @@ namespace CoreJ2K.j2k.codestream.reader
         /// <param name="rl">The resolution level index.
         /// 
         /// </param>
-        public int getResULX(int c, int rl)
+        public int GetResULX(int c, int rl)
         {
             var dl = mdl[c] - rl;
             if (dl < 0)
@@ -871,7 +861,7 @@ namespace CoreJ2K.j2k.codestream.reader
                     $"Requested resolution level is not available for, at least, one component in tile: {ctX}x{ctY}");
             }
             var tx0 = Math.Max(px + ctX * ntW, ax);
-            var tcx0 = (int)Math.Ceiling(tx0 / (double)getCompSubsX(c));
+            var tcx0 = (int)Math.Ceiling(tx0 / (double)GetCompSubsX(c));
             return (int)Math.Ceiling(tcx0 / (double)(1 << dl));
         }
 
@@ -885,7 +875,7 @@ namespace CoreJ2K.j2k.codestream.reader
         /// <param name="rl">The resolution level index.
         /// 
         /// </param>
-        public int getResULY(int c, int rl)
+        public int GetResULY(int c, int rl)
         {
             var dl = mdl[c] - rl;
             if (dl < 0)
@@ -894,7 +884,7 @@ namespace CoreJ2K.j2k.codestream.reader
                     $"Requested resolution level is not available for, at least, one component in tile: {ctX}x{ctY}");
             }
             var ty0 = Math.Max(py + ctY * ntH, ay);
-            var tcy0 = (int)Math.Ceiling(ty0 / (double)getCompSubsY(c));
+            var tcy0 = (int)Math.Ceiling(ty0 / (double)GetCompSubsY(c));
             return (int)Math.Ceiling(tcy0 / (double)(1 << dl));
         }
 
@@ -909,7 +899,7 @@ namespace CoreJ2K.j2k.codestream.reader
         /// (Coord.y) directions.
         /// 
         /// </returns>
-        public Coord getNumTiles(Coord co)
+        public Coord GetNumTiles(Coord co)
         {
             if (co != null)
             {
@@ -929,7 +919,7 @@ namespace CoreJ2K.j2k.codestream.reader
         /// <returns> The total number of tiles in the image.
         /// 
         /// </returns>
-        public int getNumTiles()
+        public int GetNumTiles()
         {
             return ntX * ntY;
         }
@@ -954,7 +944,7 @@ namespace CoreJ2K.j2k.codestream.reader
         /// <returns> The root of the tree structure.
         /// 
         /// </returns>
-        public SubbandSyn getSynSubbandTree(int t, int c)
+        public SubbandSyn GetSynSubbandTree(int t, int c)
         {
             if (t != TileIdx)
             {
@@ -999,13 +989,13 @@ namespace CoreJ2K.j2k.codestream.reader
         /// reader option is present.
         /// 
         /// </exception>
-        public static BitstreamReaderAgent createInstance(RandomAccessIO in_Renamed, HeaderDecoder hd, ParameterList pl, DecoderSpecs decSpec, bool cdstrInfo, HeaderInfo hi)
+        public static BitstreamReaderAgent createInstance(RandomAccessIO inStream, HeaderDecoder hd, ParameterList pl, DecoderSpecs decSpec, bool cdstrInfo, HeaderInfo hi)
         {
 
             // Check parameters
             pl.checkList(OPT_PREFIX, ParameterList.toNameArray(ParameterInfo));
 
-            return new FileBitstreamReaderAgent(hd, in_Renamed, decSpec, pl, cdstrInfo, hi);
+            return new FileBitstreamReaderAgent(hd, inStream, decSpec, pl, cdstrInfo, hi);
         }
 
         /// <summary> Returns the precinct partition width for the specified tile-component
@@ -1025,9 +1015,9 @@ namespace CoreJ2K.j2k.codestream.reader
         /// resolution level and tile.
         /// 
         /// </returns>
-        public int getPPX(int t, int c, int rl)
+        public int GetPPX(int t, int c, int rl)
         {
-            return decSpec.pss.getPPX(t, c, rl);
+            return decSpec.pss.GetPPX(t, c, rl);
         }
 
         /// <summary> Returns the precinct partition height for the specified tile-component
@@ -1047,9 +1037,9 @@ namespace CoreJ2K.j2k.codestream.reader
         /// the specified resolution level, for the current tile.
         /// 
         /// </returns>
-        public int getPPY(int t, int c, int rl)
+        public int GetPPY(int t, int c, int rl)
         {
-            return decSpec.pss.getPPY(t, c, rl);
+            return decSpec.pss.GetPPY(t, c, rl);
         }
 
         /// <summary> Initialises subbands fields, such as number of code-blocks, code-blocks
@@ -1071,8 +1061,8 @@ namespace CoreJ2K.j2k.codestream.reader
             var rl = sb.resLvl;
             int cbw, cbh;
 
-            cbw = decSpec.cblks.getCBlkWidth(ModuleSpec.SPEC_TILE_COMP, t, c);
-            cbh = decSpec.cblks.getCBlkHeight(ModuleSpec.SPEC_TILE_COMP, t, c);
+            cbw = decSpec.cblks.GetCBlkWidth(ModuleSpec.SPEC_TILE_COMP, t, c);
+            cbh = decSpec.cblks.GetCBlkHeight(ModuleSpec.SPEC_TILE_COMP, t, c);
 
             if (!sb.isNode)
             {
@@ -1083,8 +1073,8 @@ namespace CoreJ2K.j2k.codestream.reader
                     int ppxExp, ppyExp, cbwExp, cbhExp;
 
                     // Get exponents
-                    ppxExp = MathUtil.log2(getPPX(t, c, rl));
-                    ppyExp = MathUtil.log2(getPPY(t, c, rl));
+                    ppxExp = MathUtil.log2(GetPPX(t, c, rl));
+                    ppyExp = MathUtil.log2(GetPPY(t, c, rl));
                     cbwExp = MathUtil.log2(cbw);
                     cbhExp = MathUtil.log2(cbh);
 
@@ -1177,46 +1167,46 @@ namespace CoreJ2K.j2k.codestream.reader
                 if (derived[c])
                 {
                     // Validate array bounds before accessing
-                    if (params_Renamed[c].exp == null || params_Renamed[c].exp.Length == 0)
+                    if (dequantParams[c].exp == null || dequantParams[c].exp.Length == 0)
                     {
                         throw new CorruptedCodestreamException(
                             $"Quantization exponent array not initialized for component {c}. " +
                             "QCD or QCC marker may be missing or corrupted.");
                     }
                     
-                    if (params_Renamed[c].exp[0] == null || params_Renamed[c].exp[0].Length == 0)
+                    if (dequantParams[c].exp[0] == null || dequantParams[c].exp[0].Length == 0)
                     {
                         throw new CorruptedCodestreamException(
                             $"Quantization exponent sub-array not initialized for component {c}. " +
                             "QCD or QCC marker may be missing or corrupted.");
                     }
                     
-                    sb.magbits = gb[c] + (params_Renamed[c].exp[0][0] - (mdl[c] - sb.level)) - 1;
+                    sb.magbits = gb[c] + (dequantParams[c].exp[0][0] - (mdl[c] - sb.level)) - 1;
                 }
                 else
                 {
                     // Validate array bounds before accessing
-                    if (params_Renamed[c].exp == null || 
-                        sb.resLvl >= params_Renamed[c].exp.Length ||
+                    if (dequantParams[c].exp == null || 
+                        sb.resLvl >= dequantParams[c].exp.Length ||
                         sb.resLvl < 0)
                     {
                         throw new CorruptedCodestreamException(
                             $"Invalid resolution level {sb.resLvl} for component {c}. " +
-                            $"Exponent array has {params_Renamed[c].exp?.Length ?? 0} elements. " +
+                            $"Exponent array has {dequantParams[c].exp?.Length ?? 0} elements. " +
                             "QCD or QCC marker may specify incorrect decomposition levels.");
                     }
                     
-                    if (params_Renamed[c].exp[sb.resLvl] == null ||
-                        sb.sbandIdx >= params_Renamed[c].exp[sb.resLvl].Length ||
+                    if (dequantParams[c].exp[sb.resLvl] == null ||
+                        sb.sbandIdx >= dequantParams[c].exp[sb.resLvl].Length ||
                         sb.sbandIdx < 0)
                     {
                         throw new CorruptedCodestreamException(
                             $"Invalid subband index {sb.sbandIdx} at resolution level {sb.resLvl} for component {c}. " +
-                            $"Subband array has {params_Renamed[c].exp[sb.resLvl]?.Length ?? 0} elements. " +
+                            $"Subband array has {dequantParams[c].exp[sb.resLvl]?.Length ?? 0} elements. " +
                             "Subband structure may be corrupted.");
                     }
                     
-                    sb.magbits = gb[c] + params_Renamed[c].exp[sb.resLvl][sb.sbandIdx] - 1;
+                    sb.magbits = gb[c] + dequantParams[c].exp[sb.resLvl][sb.sbandIdx] - 1;
                 }
             }
             else
@@ -1227,6 +1217,6 @@ namespace CoreJ2K.j2k.codestream.reader
                 initSubbandsFields(c, (SubbandSyn)sb.HH);
             }
         }
-        public abstract DecLyrdCBlk getCodeBlock(int param1, int param2, int param3, SubbandSyn param4, int param5, int param6, DecLyrdCBlk param7);
+        public abstract DecLyrdCBlk GetCodeBlock(int param1, int param2, int param3, SubbandSyn param4, int param5, int param6, DecLyrdCBlk param7);
     }
 }

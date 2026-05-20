@@ -1,12 +1,5 @@
 /*
-* CVS Identifier:
-*
-* $Id: DataBlk.java,v 1.7 2001/04/15 14:32:05 grosbois Exp $
-*
 * Interface:           DataBlk
-*
-* Description:         A generic interface to hold 2D blocks of data.
-*
 *
 *
 * COPYRIGHT:
@@ -79,7 +72,7 @@ namespace CoreJ2K.j2k.image
         public abstract int DataType { get; }
 
         /// <summary> Returns the array containing the data, or null if there is no data. The
-        /// returned array is of the type returned by <tt>getDataType()</tt> (e.g.,
+        /// returned array is of the type returned by <tt>GetDataType()</tt> (e.g.,
         /// for <tt>TYPE_INT</tt>, it is a <tt>int[]</tt>).
         /// 
         /// Each implementing class should provide a type specific equivalent
@@ -87,9 +80,9 @@ namespace CoreJ2K.j2k.image
         /// returns an array of the correct type explicetely and not through an
         /// <tt>Object</tt>.</summary>
         /// <returns> The array containing the data, or <tt>null</tt> if there is no data.</returns>
-        /// <seealso cref="getDataType" />
+        /// <seealso cref="GetDataType" />
         /// <summary> Sets the data array to the specified one. The type of the specified
-        /// data array must match the one returned by <tt>getDataType()</tt> (e.g.,
+        /// data array must match the one returned by <tt>GetDataType()</tt> (e.g.,
         /// for <tt>TYPE_INT</tt>, it should be a <tt>int[]</tt>). If the wrong
         /// type of array is given a <tt>ClassCastException</tt> will be thrown.
         /// 
@@ -100,7 +93,7 @@ namespace CoreJ2K.j2k.image
         /// method (e.g., <tt>setDataInt()</tt> in <tt>DataBlkInt</tt>) which takes
         /// an array of the correct type explicitly and not through an
         /// <tt>Object</tt>.</summary>
-        /// <seealso cref="getDataType" />
+        /// <seealso cref="GetDataType" />
         public abstract object Data { get; set; }
 
         /// <summary>The identifier for the <tt>byte</tt> data type, as signed 8 bits. </summary>
@@ -145,7 +138,7 @@ namespace CoreJ2K.j2k.image
         /// thrown if <tt>type</tt> is not defined in this class.</summary>
         /// <param name="type">The data type.</param>
         /// <returns> The size in bits of the data type.</returns>
-        public static int getSize(int type)
+        public static int GetSize(int type)
         {
             switch (type)
             {

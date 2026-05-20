@@ -38,17 +38,17 @@ namespace CoreJ2K.j2k.codestream.writer.markers
 
             if (isMainHeader)
             {
-                mrl = ((int)encSpec.dls.getDefault());
-                ppx = encSpec.pss.getPPX(-1, -1, mrl);
-                ppy = encSpec.pss.getPPY(-1, -1, mrl);
-                prog = (Progression[])(encSpec.pocs.getDefault());
+                mrl = ((int)encSpec.dls.GetDefault());
+                ppx = encSpec.pss.GetPPX(-1, -1, mrl);
+                ppy = encSpec.pss.GetPPY(-1, -1, mrl);
+                prog = (Progression[])(encSpec.pocs.GetDefault());
             }
             else
             {
-                mrl = ((int)encSpec.dls.getTileDef(tileIdx));
-                ppx = encSpec.pss.getPPX(tileIdx, -1, mrl);
-                ppy = encSpec.pss.getPPY(tileIdx, -1, mrl);
-                prog = (Progression[])(encSpec.pocs.getTileDef(tileIdx));
+                mrl = ((int)encSpec.dls.GetTileDef(tileIdx));
+                ppx = encSpec.pss.GetPPX(tileIdx, -1, mrl);
+                ppy = encSpec.pss.GetPPY(tileIdx, -1, mrl);
+                prog = (Progression[])(encSpec.pocs.GetTileDef(tileIdx));
             }
 
             precinctPartitionUsed = (ppx != Markers.PRECINCT_PARTITION_DEF_SIZE || 
@@ -76,14 +76,14 @@ namespace CoreJ2K.j2k.codestream.writer.markers
             // SOP markers
             if (isMainHeader)
             {
-                if (string.Equals(encSpec.sops.getDefault().ToString(), "ON", StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(encSpec.sops.GetDefault().ToString(), "ON", StringComparison.OrdinalIgnoreCase))
                 {
                     tmp |= Markers.SCOX_USE_SOP;
                 }
             }
             else
             {
-                if (string.Equals(encSpec.sops.getTileDef(tileIdx).ToString(), "ON", StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(encSpec.sops.GetTileDef(tileIdx).ToString(), "ON", StringComparison.OrdinalIgnoreCase))
                 {
                     tmp |= Markers.SCOX_USE_SOP;
                 }
@@ -92,14 +92,14 @@ namespace CoreJ2K.j2k.codestream.writer.markers
             // EPH markers
             if (isMainHeader)
             {
-                if (string.Equals(encSpec.ephs.getDefault().ToString(), "ON", StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(encSpec.ephs.GetDefault().ToString(), "ON", StringComparison.OrdinalIgnoreCase))
                 {
                     tmp |= Markers.SCOX_USE_EPH;
                 }
             }
             else
             {
-                if (string.Equals(encSpec.ephs.getTileDef(tileIdx).ToString(), "ON", StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(encSpec.ephs.GetTileDef(tileIdx).ToString(), "ON", StringComparison.OrdinalIgnoreCase))
                 {
                     tmp |= Markers.SCOX_USE_EPH;
                 }
@@ -120,8 +120,8 @@ namespace CoreJ2K.j2k.codestream.writer.markers
 
             // Multiple component transform
             string str = isMainHeader ? 
-                ((string)encSpec.cts.getDefault()) : 
-                ((string)encSpec.cts.getTileDef(tileIdx));
+                ((string)encSpec.cts.GetDefault()) : 
+                ((string)encSpec.cts.GetTileDef(tileIdx));
 
             writer.Write((byte)(str.Equals("none") ? 0 : 1));
 
@@ -131,16 +131,16 @@ namespace CoreJ2K.j2k.codestream.writer.markers
             // Code-block width and height
             if (isMainHeader)
             {
-                tmp = encSpec.cblks.getCBlkWidth(ModuleSpec.SPEC_DEF, -1, -1);
+                tmp = encSpec.cblks.GetCBlkWidth(ModuleSpec.SPEC_DEF, -1, -1);
                 writer.Write((byte)(MathUtil.log2(tmp) - 2));
-                tmp = encSpec.cblks.getCBlkHeight(ModuleSpec.SPEC_DEF, -1, -1);
+                tmp = encSpec.cblks.GetCBlkHeight(ModuleSpec.SPEC_DEF, -1, -1);
                 writer.Write((byte)(MathUtil.log2(tmp) - 2));
             }
             else
             {
-                tmp = encSpec.cblks.getCBlkWidth(ModuleSpec.SPEC_TILE_DEF, tileIdx, -1);
+                tmp = encSpec.cblks.GetCBlkWidth(ModuleSpec.SPEC_TILE_DEF, tileIdx, -1);
                 writer.Write((byte)(MathUtil.log2(tmp) - 2));
-                tmp = encSpec.cblks.getCBlkHeight(ModuleSpec.SPEC_TILE_DEF, tileIdx, -1);
+                tmp = encSpec.cblks.GetCBlkHeight(ModuleSpec.SPEC_TILE_DEF, tileIdx, -1);
                 writer.Write((byte)(MathUtil.log2(tmp) - 2));
             }
 
@@ -151,12 +151,12 @@ namespace CoreJ2K.j2k.codestream.writer.markers
             // Wavelet filter
             if (isMainHeader)
             {
-                filt = ((AnWTFilter[][])encSpec.wfs.getDefault());
+                filt = ((AnWTFilter[][])encSpec.wfs.GetDefault());
                 writer.Write((byte)filt[0][0].FilterType);
             }
             else
             {
-                filt = ((AnWTFilter[][])encSpec.wfs.getTileDef(tileIdx));
+                filt = ((AnWTFilter[][])encSpec.wfs.GetTileDef(tileIdx));
                 writer.Write((byte)filt[0][0].FilterType);
             }
 
@@ -173,32 +173,32 @@ namespace CoreJ2K.j2k.codestream.writer.markers
 
             if (isMainHeader)
             {
-                if (((string)encSpec.bms.getDefault()).Equals("on"))
+                if (((string)encSpec.bms.GetDefault()).Equals("on"))
                     tmp |= StdEntropyCoderOptions.OPT_BYPASS;
-                if (((string)encSpec.mqrs.getDefault()).Equals("on"))
+                if (((string)encSpec.mqrs.GetDefault()).Equals("on"))
                     tmp |= StdEntropyCoderOptions.OPT_RESET_MQ;
-                if (((string)encSpec.rts.getDefault()).Equals("on"))
+                if (((string)encSpec.rts.GetDefault()).Equals("on"))
                     tmp |= StdEntropyCoderOptions.OPT_TERM_PASS;
-                if (((string)encSpec.css.getDefault()).Equals("on"))
+                if (((string)encSpec.css.GetDefault()).Equals("on"))
                     tmp |= StdEntropyCoderOptions.OPT_VERT_STR_CAUSAL;
-                if (((string)encSpec.tts.getDefault()).Equals("predict"))
+                if (((string)encSpec.tts.GetDefault()).Equals("predict"))
                     tmp |= StdEntropyCoderOptions.OPT_PRED_TERM;
-                if (((string)encSpec.sss.getDefault()).Equals("on"))
+                if (((string)encSpec.sss.GetDefault()).Equals("on"))
                     tmp |= StdEntropyCoderOptions.OPT_SEG_SYMBOLS;
             }
             else
             {
-                if (((string)encSpec.bms.getTileDef(tileIdx)).Equals("on"))
+                if (((string)encSpec.bms.GetTileDef(tileIdx)).Equals("on"))
                     tmp |= StdEntropyCoderOptions.OPT_BYPASS;
-                if (((string)encSpec.mqrs.getTileDef(tileIdx)).Equals("on"))
+                if (((string)encSpec.mqrs.GetTileDef(tileIdx)).Equals("on"))
                     tmp |= StdEntropyCoderOptions.OPT_RESET_MQ;
-                if (((string)encSpec.rts.getTileDef(tileIdx)).Equals("on"))
+                if (((string)encSpec.rts.GetTileDef(tileIdx)).Equals("on"))
                     tmp |= StdEntropyCoderOptions.OPT_TERM_PASS;
-                if (((string)encSpec.css.getTileDef(tileIdx)).Equals("on"))
+                if (((string)encSpec.css.GetTileDef(tileIdx)).Equals("on"))
                     tmp |= StdEntropyCoderOptions.OPT_VERT_STR_CAUSAL;
-                if (((string)encSpec.tts.getTileDef(tileIdx)).Equals("predict"))
+                if (((string)encSpec.tts.GetTileDef(tileIdx)).Equals("predict"))
                     tmp |= StdEntropyCoderOptions.OPT_PRED_TERM;
-                if (((string)encSpec.sss.getTileDef(tileIdx)).Equals("on"))
+                if (((string)encSpec.sss.GetTileDef(tileIdx)).Equals("on"))
                     tmp |= StdEntropyCoderOptions.OPT_SEG_SYMBOLS;
             }
 
@@ -208,8 +208,8 @@ namespace CoreJ2K.j2k.codestream.writer.markers
         private void WritePrecinctPartition(BinaryWriter writer, bool isMainHeader, int tileIdx, int mrl)
         {
             System.Collections.Generic.List<int>[] v = isMainHeader ?
-                (System.Collections.Generic.List<int>[])encSpec.pss.getDefault() :
-                (System.Collections.Generic.List<int>[])encSpec.pss.getTileDef(tileIdx);
+                (System.Collections.Generic.List<int>[])encSpec.pss.GetDefault() :
+                (System.Collections.Generic.List<int>[])encSpec.pss.GetTileDef(tileIdx);
 
             for (var r = mrl; r >= 0; r--)
             {

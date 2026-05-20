@@ -1,13 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: HeaderDecoder.java,v 1.61 2002/07/25 15:01:00 grosbois Exp $
-*
-* Class:                   HeaderDecoder
-*
-* Description:             Reads main and tile-part headers.
-*
-*
 *
 * COPYRIGHT:
 * 
@@ -401,7 +392,7 @@ namespace CoreJ2K.j2k.codestream.reader
         /// 
         /// </returns>
         /// <seealso cref="j2k.image.ImgData" />
-        public Coord getTilingOrigin(Coord co)
+        public Coord GetTilingOrigin(Coord co)
         {
             if (co != null)
             {
@@ -426,9 +417,9 @@ namespace CoreJ2K.j2k.codestream.reader
         /// <returns> True if the original image component was signed.
         /// 
         /// </returns>
-        public bool isOriginalSigned(int c)
+        public bool IsOriginalSigned(int c)
         {
-            return hi.sizValue.isOrigSigned(c);
+            return hi.sizValue.IsOrigSigned(c);
         }
 
         /// <summary> Returns the original bitdepth of the specified component.
@@ -440,9 +431,9 @@ namespace CoreJ2K.j2k.codestream.reader
         /// <returns> The bitdepth of the component
         /// 
         /// </returns>
-        public int getOriginalBitDepth(int c)
+        public int GetOriginalBitDepth(int c)
         {
-            return hi.sizValue.getOrigBitDepth(c);
+            return hi.sizValue.GetOrigBitDepth(c);
         }
 
         /// <summary> Returns the component sub-sampling factor, with respect to the
@@ -456,7 +447,7 @@ namespace CoreJ2K.j2k.codestream.reader
         /// <returns> The component sub-sampling factor X-wise.
         /// 
         /// </returns>
-        public int getCompSubsX(int c)
+        public int GetCompSubsX(int c)
         {
             return hi.sizValue.xrsiz[c];
         }
@@ -472,7 +463,7 @@ namespace CoreJ2K.j2k.codestream.reader
         /// <returns> The component sub-sampling factor Y-wise.
         /// 
         /// </returns>
-        public int getCompSubsY(int c)
+        public int GetCompSubsY(int c)
         {
             return hi.sizValue.yrsiz[c];
         }
@@ -516,9 +507,9 @@ namespace CoreJ2K.j2k.codestream.reader
         /// and resolution level
         /// 
         /// </returns>
-        public int getPPX(int t, int c, int rl)
+        public int GetPPX(int t, int c, int rl)
         {
-            return decSpec.pss.getPPX(t, c, rl);
+            return decSpec.pss.GetPPX(t, c, rl);
         }
 
         /// <summary> Returns the precinct partition height for the specified tile-component
@@ -538,9 +529,9 @@ namespace CoreJ2K.j2k.codestream.reader
         /// and resolution level
         /// 
         /// </returns>
-        public int getPPY(int t, int c, int rl)
+        public int GetPPY(int t, int c, int rl)
         {
-            return decSpec.pss.getPPY(t, c, rl);
+            return decSpec.pss.GetPPY(t, c, rl);
         }
 
         /// <summary> Returns the boolean used to know if the precinct partition is used
@@ -603,7 +594,7 @@ namespace CoreJ2K.j2k.codestream.reader
             var available = ehs.BaseStream.Length - ehs.BaseStream.Position;
             if ((int)available != 0)
             {
-                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING,
+                FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING,
                     $"{str} length was short, attempting to resync.");
             }
         }
@@ -716,7 +707,7 @@ namespace CoreJ2K.j2k.codestream.reader
             ms.xcrg = new int[nComp];
             ms.ycrg = new int[nComp];
 
-            FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING, "Information in CRG marker segment " + "not taken into account. This may affect the display " + "of the decoded image.");
+            FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING, "Information in CRG marker segment " + "not taken into account. This may affect the display " + "of the decoded image.");
             for (var c = 0; c < nComp; c++)
             {
                 ms.xcrg[c] = ehs.ReadUInt16();
@@ -774,7 +765,7 @@ namespace CoreJ2K.j2k.codestream.reader
                 default:
                     // --- Unknown or unsupported markers ---
                     // (skip them and see if we can get way with it)
-                    FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING,
+                    FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING,
                         $"COM marker registered as 0x{Convert.ToString(ms.rcom, 16)} unknown, ignoring (this might crash the decoder or decode a quality degraded or even useless image)");
                     var temp_BinaryReader = ehs;
                     var temp_Int64 = temp_BinaryReader.BaseStream.Position;
@@ -844,15 +835,15 @@ namespace CoreJ2K.j2k.codestream.reader
                 {
 
                     case Markers.SQCX_NO_QUANTIZATION:
-                        decSpec.qts.setDefault("reversible");
+                        decSpec.qts.SetDefault("reversible");
                         break;
 
                     case Markers.SQCX_SCALAR_DERIVED:
-                        decSpec.qts.setDefault("derived");
+                        decSpec.qts.SetDefault("derived");
                         break;
 
                     case Markers.SQCX_SCALAR_EXPOUNDED:
-                        decSpec.qts.setDefault("expounded");
+                        decSpec.qts.SetDefault("expounded");
                         break;
 
                     default:
@@ -869,15 +860,15 @@ namespace CoreJ2K.j2k.codestream.reader
                 {
 
                     case Markers.SQCX_NO_QUANTIZATION:
-                        decSpec.qts.setTileDef(tileIdx, "reversible");
+                        decSpec.qts.SetTileDef(tileIdx, "reversible");
                         break;
 
                     case Markers.SQCX_SCALAR_DERIVED:
-                        decSpec.qts.setTileDef(tileIdx, "derived");
+                        decSpec.qts.SetTileDef(tileIdx, "derived");
                         break;
 
                     case Markers.SQCX_SCALAR_EXPOUNDED:
-                        decSpec.qts.setTileDef(tileIdx, "expounded");
+                        decSpec.qts.SetTileDef(tileIdx, "expounded");
                         break;
 
                     default:
@@ -892,7 +883,7 @@ namespace CoreJ2K.j2k.codestream.reader
             if (qType == Markers.SQCX_NO_QUANTIZATION)
             {
                 // Get maximum resolution level
-                object maxrlObj = mainh ? decSpec.dls.getDefault() : decSpec.dls.getTileDef(tileIdx);
+                object maxrlObj = mainh ? decSpec.dls.GetDefault() : decSpec.dls.GetTileDef(tileIdx);
                 
                 // Validate that decomposition level specification exists
                 if (maxrlObj == null)
@@ -963,7 +954,7 @@ namespace CoreJ2K.j2k.codestream.reader
                 }
                 else
                 {
-                    object maxrlObj = mainh ? decSpec.dls.getDefault() : decSpec.dls.getTileDef(tileIdx);
+                    object maxrlObj = mainh ? decSpec.dls.GetDefault() : decSpec.dls.GetTileDef(tileIdx);
                     
                     // Validate that decomposition level specification exists
                     if (maxrlObj == null)
@@ -1036,13 +1027,13 @@ namespace CoreJ2K.j2k.codestream.reader
             // Fill qsss, gbs
             if (mainh)
             {
-                decSpec.qsss.setDefault(qParms);
-                decSpec.gbs.setDefault(guardBits);
+                decSpec.qsss.SetDefault(qParms);
+                decSpec.gbs.SetDefault(guardBits);
             }
             else
             {
-                decSpec.qsss.setTileDef(tileIdx, qParms);
-                decSpec.gbs.setTileDef(tileIdx, guardBits);
+                decSpec.qsss.SetTileDef(tileIdx, qParms);
+                decSpec.gbs.SetTileDef(tileIdx, guardBits);
             }
 
             // Check marker length
@@ -1110,15 +1101,15 @@ namespace CoreJ2K.j2k.codestream.reader
                 {
 
                     case Markers.SQCX_NO_QUANTIZATION:
-                        decSpec.qts.setCompDef(cComp, "reversible");
+                        decSpec.qts.SetCompDef(cComp, "reversible");
                         break;
 
                     case Markers.SQCX_SCALAR_DERIVED:
-                        decSpec.qts.setCompDef(cComp, "derived");
+                        decSpec.qts.SetCompDef(cComp, "derived");
                         break;
 
                     case Markers.SQCX_SCALAR_EXPOUNDED:
-                        decSpec.qts.setCompDef(cComp, "expounded");
+                        decSpec.qts.SetCompDef(cComp, "expounded");
                         break;
 
                     default:
@@ -1135,15 +1126,15 @@ namespace CoreJ2K.j2k.codestream.reader
                 {
 
                     case Markers.SQCX_NO_QUANTIZATION:
-                        decSpec.qts.setTileCompVal(tileIdx, cComp, "reversible");
+                        decSpec.qts.SetTileCompVal(tileIdx, cComp, "reversible");
                         break;
 
                     case Markers.SQCX_SCALAR_DERIVED:
-                        decSpec.qts.setTileCompVal(tileIdx, cComp, "derived");
+                        decSpec.qts.SetTileCompVal(tileIdx, cComp, "derived");
                         break;
 
                     case Markers.SQCX_SCALAR_EXPOUNDED:
-                        decSpec.qts.setTileCompVal(tileIdx, cComp, "expounded");
+                        decSpec.qts.SetTileCompVal(tileIdx, cComp, "expounded");
                         break;
 
                     default:
@@ -1157,7 +1148,7 @@ namespace CoreJ2K.j2k.codestream.reader
 
             if (qType == Markers.SQCX_NO_QUANTIZATION)
             {
-                var maxrl = (mainh ? ((int)decSpec.dls.getCompDef(cComp)) : ((int)decSpec.dls.getTileCompVal(tileIdx, cComp)));
+                var maxrl = (mainh ? ((int)decSpec.dls.GetCompDef(cComp)) : ((int)decSpec.dls.GetTileCompVal(tileIdx, cComp)));
                 int j, rl; // i removed
                 int minb, maxb, hpd;
 
@@ -1209,7 +1200,7 @@ namespace CoreJ2K.j2k.codestream.reader
             }
             else
             {
-                var maxrl = (qType == Markers.SQCX_SCALAR_DERIVED) ? 0 : (mainh ? ((int)decSpec.dls.getCompDef(cComp)) : ((int)decSpec.dls.getTileCompVal(tileIdx, cComp)));
+                var maxrl = (qType == Markers.SQCX_SCALAR_DERIVED) ? 0 : (mainh ? ((int)decSpec.dls.GetCompDef(cComp)) : ((int)decSpec.dls.GetTileCompVal(tileIdx, cComp)));
                 int j, rl; // i removed
                 int minb, maxb, hpd;
 
@@ -1269,13 +1260,13 @@ namespace CoreJ2K.j2k.codestream.reader
             // Fill qsss, gbs
             if (mainh)
             {
-                decSpec.qsss.setCompDef(cComp, qParms);
-                decSpec.gbs.setCompDef(cComp, guardBits);
+                decSpec.qsss.SetCompDef(cComp, qParms);
+                decSpec.gbs.SetCompDef(cComp, guardBits);
             }
             else
             {
-                decSpec.qsss.setTileCompVal(tileIdx, cComp, qParms);
-                decSpec.gbs.setTileCompVal(tileIdx, cComp, guardBits);
+                decSpec.qsss.SetTileCompVal(tileIdx, cComp, qParms);
+                decSpec.gbs.SetTileCompVal(tileIdx, cComp, guardBits);
             }
 
             // Check marker length
@@ -1400,7 +1391,7 @@ namespace CoreJ2K.j2k.codestream.reader
             // Code-block partition origin
             if ((cstyle & (Markers.SCOX_HOR_CB_PART | Markers.SCOX_VER_CB_PART)) != 0)
             {
-                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING, "Code-block partition origin " + "different from (0,0). This is defined in JPEG 2000" + " part 2 and may not be supported by all JPEG " + "2000 decoders.");
+                FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING, "Code-block partition origin " + "different from (0,0). This is defined in JPEG 2000" + " part 2 and may not be supported by all JPEG " + "2000 decoders.");
             }
             if ((cstyle & Markers.SCOX_HOR_CB_PART) != 0)
             {
@@ -1482,11 +1473,11 @@ namespace CoreJ2K.j2k.codestream.reader
             }
             if (mainh)
             {
-                decSpec.cblks.setDefault(cblk);
+                decSpec.cblks.SetDefault(cblk);
             }
             else
             {
-                decSpec.cblks.setTileDef(tileIdx, cblk);
+                decSpec.cblks.SetTileDef(tileIdx, cblk);
             }
 
             // Style of the code-block coding passes
@@ -1536,11 +1527,11 @@ namespace CoreJ2K.j2k.codestream.reader
             }
             if (mainh)
             {
-                decSpec.pss.setDefault(v);
+                decSpec.pss.SetDefault(v);
             }
             else
             {
-                decSpec.pss.setTileDef(tileIdx, v);
+                decSpec.pss.SetTileDef(tileIdx, v);
             }
             precinctPartitionIsUsed = true;
 
@@ -1550,21 +1541,21 @@ namespace CoreJ2K.j2k.codestream.reader
             // Store specifications in decSpec
             if (mainh)
             {
-                decSpec.wfs.setDefault(hvfilters);
-                decSpec.dls.setDefault(mrl);
-                decSpec.ecopts.setDefault(ecOptions);
-                decSpec.cts.setDefault(ms.sgcod_mct);
-                decSpec.nls.setDefault(ms.sgcod_nl);
-                decSpec.pos.setDefault(ms.sgcod_po);
+                decSpec.wfs.SetDefault(hvfilters);
+                decSpec.dls.SetDefault(mrl);
+                decSpec.ecopts.SetDefault(ecOptions);
+                decSpec.cts.SetDefault(ms.sgcod_mct);
+                decSpec.nls.SetDefault(ms.sgcod_nl);
+                decSpec.pos.SetDefault(ms.sgcod_po);
             }
             else
             {
-                decSpec.wfs.setTileDef(tileIdx, hvfilters);
-                decSpec.dls.setTileDef(tileIdx, mrl);
-                decSpec.ecopts.setTileDef(tileIdx, ecOptions);
-                decSpec.cts.setTileDef(tileIdx, ms.sgcod_mct);
-                decSpec.nls.setTileDef(tileIdx, ms.sgcod_nl);
-                decSpec.pos.setTileDef(tileIdx, ms.sgcod_po);
+                decSpec.wfs.SetTileDef(tileIdx, hvfilters);
+                decSpec.dls.SetTileDef(tileIdx, mrl);
+                decSpec.ecopts.SetTileDef(tileIdx, ecOptions);
+                decSpec.cts.SetTileDef(tileIdx, ms.sgcod_mct);
+                decSpec.nls.SetTileDef(tileIdx, ms.sgcod_nl);
+                decSpec.pos.SetTileDef(tileIdx, ms.sgcod_po);
             }
         }
 
@@ -1654,11 +1645,11 @@ namespace CoreJ2K.j2k.codestream.reader
             }
             if (mainh)
             {
-                decSpec.cblks.setCompDef(cComp, cblk);
+                decSpec.cblks.SetCompDef(cComp, cblk);
             }
             else
             {
-                decSpec.cblks.setTileCompVal(tileIdx, cComp, cblk);
+                decSpec.cblks.SetTileCompVal(tileIdx, cComp, cblk);
             }
 
             // Read entropy block mode options
@@ -1709,11 +1700,11 @@ namespace CoreJ2K.j2k.codestream.reader
             }
             if (mainh)
             {
-                decSpec.pss.setCompDef(cComp, v);
+                decSpec.pss.SetCompDef(cComp, v);
             }
             else
             {
-                decSpec.pss.setTileCompVal(tileIdx, cComp, v);
+                decSpec.pss.SetTileCompVal(tileIdx, cComp, v);
             }
             precinctPartitionIsUsed = true;
 
@@ -1723,16 +1714,16 @@ namespace CoreJ2K.j2k.codestream.reader
             if (mainh)
             {
                 hi.cocValue[$"main_c{cComp}"] = ms;
-                decSpec.wfs.setCompDef(cComp, hvfilters);
-                decSpec.dls.setCompDef(cComp, mrl);
-                decSpec.ecopts.setCompDef(cComp, ecOptions);
+                decSpec.wfs.SetCompDef(cComp, hvfilters);
+                decSpec.dls.SetCompDef(cComp, mrl);
+                decSpec.ecopts.SetCompDef(cComp, ecOptions);
             }
             else
             {
                 hi.cocValue[$"t{tileIdx}_c{cComp}"] = ms;
-                decSpec.wfs.setTileCompVal(tileIdx, cComp, hvfilters);
-                decSpec.dls.setTileCompVal(tileIdx, cComp, mrl);
-                decSpec.ecopts.setTileCompVal(tileIdx, cComp, ecOptions);
+                decSpec.wfs.SetTileCompVal(tileIdx, cComp, hvfilters);
+                decSpec.dls.SetTileCompVal(tileIdx, cComp, mrl);
+                decSpec.ecopts.SetTileCompVal(tileIdx, cComp, ecOptions);
             }
         }
 
@@ -1801,7 +1792,7 @@ namespace CoreJ2K.j2k.codestream.reader
                 var tmpppoc = new int[ntotChg];
 
                 // Copy old values
-                var prevChg = (int[][])decSpec.pcs.getTileDef(t);
+                var prevChg = (int[][])decSpec.pcs.GetTileDef(t);
                 for (var chg = 0; chg < nOldChg; chg++)
                 {
                     change[chg] = prevChg[chg];
@@ -1900,12 +1891,12 @@ namespace CoreJ2K.j2k.codestream.reader
             if (mainh)
             {
                 hi.pocValue["main"] = ms;
-                decSpec.pcs.setDefault(change);
+                decSpec.pcs.SetDefault(change);
             }
             else
             {
                 hi.pocValue[$"t{t}"] = ms;
-                decSpec.pcs.setTileDef(t, change);
+                decSpec.pcs.SetTileDef(t, change);
             }
         }
 
@@ -1953,14 +1944,14 @@ namespace CoreJ2K.j2k.codestream.reader
                 // Validate field sizes
                 if (ttlmSize == 3)
                 {
-                    FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING,
+                    FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING,
                         "Invalid TLM marker: reserved Ttlm size value (3)");
                     return null;
                 }
                 
                 if (((stlm >> 4) & 0x03) > 1)
                 {
-                    FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING,
+                    FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING,
                         "Invalid TLM marker: reserved Ptlm size value");
                     return null;
                 }
@@ -1969,7 +1960,7 @@ namespace CoreJ2K.j2k.codestream.reader
                 int entrySize = ttlmSize + ptlmSize;
                 if (entrySize == 0)
                 {
-                    FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING,
+                    FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING,
                         "Invalid TLM marker: entry size is zero");
                     return null;
                 }
@@ -2048,14 +2039,14 @@ namespace CoreJ2K.j2k.codestream.reader
                     }
                 }
                 
-                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO,
                     $"TLM marker parsed: {numEntries} tile-part entries (Ztlm={ztlm})");
                 
                 return tlm;
             }
             catch (Exception e)
             {
-                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING,
+                FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING,
                     $"Error parsing TLM marker: {e.Message}");
                 return null;
             }
@@ -2082,7 +2073,7 @@ namespace CoreJ2K.j2k.codestream.reader
             // CONVERSION PROBLEM?
             var generatedAux = (int)temp_Int64;
 
-            FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO, "Skipping unsupported PLM marker");
+            FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO, "Skipping unsupported PLM marker");
         }
 
         /// <summary> Reads the PLT fields and realigns the codestream where the next marker
@@ -2119,13 +2110,13 @@ namespace CoreJ2K.j2k.codestream.reader
                 PLTMarkerReader.ReadPLT(ehs.BaseStream, pltData, currentTileIndex);
                 
                 // Log successful PLT reading
-                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO,
                     $"PLT marker read for tile {currentTileIndex}: {pltData.GetPacketCount(currentTileIndex)} packet lengths");
             }
             catch (Exception e)
             {
                 // Fall back to skipping if reading fails
-                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING,
+                FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING,
                     $"Error reading PLT marker for tile {currentTileIndex}: {e.Message}. Skipping marker.");
                 
                 // Skip the marker content
@@ -2197,12 +2188,12 @@ namespace CoreJ2K.j2k.codestream.reader
             if (mainh)
             {
                 hi.rgnValue[$"main_c{comp}"] = ms;
-                decSpec.rois.setCompDef(comp, ms.sprgn);
+                decSpec.rois.SetCompDef(comp, ms.sprgn);
             }
             else
             {
                 hi.rgnValue[$"t{tileIdx}_c{comp}"] = ms;
-                decSpec.rois.setTileCompVal(tileIdx, comp, ms.sprgn);
+                decSpec.rois.SetTileCompVal(tileIdx, comp, ms.sprgn);
             }
 
             // Check marker length
@@ -2425,7 +2416,7 @@ namespace CoreJ2K.j2k.codestream.reader
                     {
                         throw new CorruptedCodestreamException("More than one PLM " + "marker " + "found in main header");
                     }
-                    FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING, "PLM marker segment found but " + "not used by by JJ2000 decoder.");
+                    FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING, "PLM marker segment found but " + "not used by by JJ2000 decoder.");
                     nfMarkSeg |= PLM_FOUND;
                     htKey = "PLM";
                     break;
@@ -2450,7 +2441,7 @@ namespace CoreJ2K.j2k.codestream.reader
 
                 default:
                     htKey = "UNKNOWN";
-                    FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING,
+                    FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING,
                         $"Non recognized marker segment (0x{Convert.ToString(marker, 16)}) in main header!");
                     break;
 
@@ -2610,7 +2601,7 @@ namespace CoreJ2K.j2k.codestream.reader
 
                 default:
                     htKey = "UNKNOWN";
-                    FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING,
+                    FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING,
                         $"Non recognized marker segment (0x{Convert.ToString(marker, 16)}) in tile-part header of tile {tileIdx} !");
                     break;
 
@@ -2938,12 +2929,12 @@ namespace CoreJ2K.j2k.codestream.reader
             // Check parameters
             pl.checkList(EntropyDecoder.OPT_PREFIX, ParameterList.toNameArray(EntropyDecoder.ParameterInfo));
             // Get error detection option
-            var doer = pl.getBooleanParameter("Cer");
+            var doer = pl.GetBooleanParameter("Cer");
             // Get verbose error detection option
-            var verber = pl.getBooleanParameter("Cverber");
+            var verber = pl.GetBooleanParameter("Cverber");
 
             // Get maximum number of bit planes from m quit condition
-            var mMax = pl.getIntParameter("m_quit");
+            var mMax = pl.GetIntParameter("m_quit");
             return new StdEntropyDecoder(src, decSpec, doer, verber, mMax);
         }
 

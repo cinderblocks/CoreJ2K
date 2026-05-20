@@ -1,12 +1,5 @@
 /*
-* CVS Identifier:
-*
-* $Id: BEBufferedRandomAccessFile.java,v 1.18 2001/07/17 13:13:35 grosbois Exp $
-*
 * Interface:           RandomAccessIO.java
-*
-* Description:         Class for random access I/O (big-endian ordering).
-*
 *
 *
 * COPYRIGHT:

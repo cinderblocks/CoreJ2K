@@ -1,13 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: AnWTFilter.java,v 1.15 2001/05/08 16:14:52 grosbois Exp $
-*
-* Class:                   AnWTFilter
-*
-* Description:             The abstract class for all analysis wavelet filters
-*
-*
 *
 * COPYRIGHT:
 * 
@@ -137,7 +128,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// sample) is given by inOff. The number of samples to filter is given by
         /// inLen. This array must be of the same type as the one for which the
         /// particular implementation works with (which is returned by the
-        /// getDataType() method).
+        /// GetDataType() method).
         /// 
         /// The input signal can be interleaved with other signals in the same
         /// inSig array, and this is determined by the inStep argument. This means
@@ -176,7 +167,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// 
         /// </summary>
         /// <param name="inSig">This is the array that contains the input signal. It must
-        /// be of the correct type (e.g., it must be int[] if getDataType() returns
+        /// be of the correct type (e.g., it must be int[] if GetDataType() returns
         /// TYPE_INT).
         /// 
         /// </param>
@@ -227,7 +218,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// high-pass output samples in the highSig array. See above.
         /// 
         /// </param>
-        /// <seealso cref="WaveletFilter.getDataType" />
+        /// <seealso cref="WaveletFilter.GetDataType" />
         public abstract void analyze_lpf(object inSig, int inOff, int inLen, int inStep, object lowSig, int lowOff, int lowStep, object highSig, int highOff, int highStep);
 
         /// <summary> Filters the input signal by this analysis filter, decomposing it in a
@@ -239,7 +230,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// sample) is given by inOff. The number of samples to filter is given by
         /// inLen. This array must be of the same type as the one for which the
         /// particular implementation works with (which is returned by the
-        /// getDataType() method).
+        /// GetDataType() method).
         /// 
         /// The input signal can be interleaved with other signals in the same
         /// inSig array, and this is determined by the inStep argument. This means
@@ -262,7 +253,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// 
         /// </summary>
         /// <param name="inSig">This is the array that contains the input signal. It must
-        /// be of the correct type (e.g., it must be int[] if getDataType() returns
+        /// be of the correct type (e.g., it must be int[] if GetDataType() returns
         /// TYPE_INT).
         /// 
         /// </param>
@@ -303,7 +294,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// high-pass output samples in the highSig array. See above.
         /// 
         /// </param>
-        /// <seealso cref="WaveletFilter.getDataType" />
+        /// <seealso cref="WaveletFilter.GetDataType" />
         public abstract void analyze_hpf(object inSig, int inOff, int inLen, int inStep, object lowSig, int lowOff, int lowStep, object highSig, int highOff, int highStep);
 
         /// <summary> Returns the time-reversed low-pass synthesis waveform of the filter,
@@ -320,7 +311,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// <returns> The time-reversed low-pass synthesis waveform of the filter.
         /// 
         /// </returns>
-        public abstract float[] getLPSynthesisFilter();
+        public abstract float[] GetLPSynthesisFilter();
 
         /// <summary> Returns the time-reversed high-pass synthesis waveform of the filter,
         /// which is the high-pass filter. This is the time-reversed impulse
@@ -336,7 +327,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// <returns> The time-reversed high-pass synthesis waveform of the filter.
         /// 
         /// </returns>
-        public abstract float[] getHPSynthesisFilter();
+        public abstract float[] GetHPSynthesisFilter();
 
         /// <summary> Returns the equivalent low-pass synthesis waveform of a cascade of
         /// filters, given the syhthesis waveform of the previous stage. This is
@@ -360,9 +351,9 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// <seealso cref="getSynLowNegSupport">
         /// </seealso>
         /// <seealso cref="getSynLowPosSupport" />
-        public virtual float[] getLPSynWaveForm(float[] in_Renamed, float[] out_Renamed)
+        public virtual float[] GetLPSynWaveForm(float[] input, float[] output)
         {
-            return upsampleAndConvolve(in_Renamed, getLPSynthesisFilter(), out_Renamed);
+            return upsampleAndConvolve(input, GetLPSynthesisFilter(), output);
         }
 
         /// <summary> Returns the equivalent high-pass synthesis waveform of a cascade of
@@ -387,9 +378,9 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// <seealso cref="getSynHighNegSupport">
         /// </seealso>
         /// <seealso cref="getSynHighPosSupport" />
-        public virtual float[] getHPSynWaveForm(float[] in_Renamed, float[] out_Renamed)
+        public virtual float[] GetHPSynWaveForm(float[] input, float[] output)
         {
-            return upsampleAndConvolve(in_Renamed, getHPSynthesisFilter(), out_Renamed);
+            return upsampleAndConvolve(input, GetHPSynthesisFilter(), output);
         }
 
         /// <summary> Returns the signal resulting of upsampling (by 2) the input signal 'in'
@@ -417,7 +408,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// <returns> The resulting signal, of length in.length*2+wf.length-2
         /// 
         /// </returns>
-        private static float[] upsampleAndConvolve(float[] in_Renamed, float[] wf, float[] out_Renamed)
+        private static float[] upsampleAndConvolve(float[] input, float[] wf, float[] output)
         {
             // NOTE: the effective length of the signal 'in' upsampled by
             // 2 is 2*in.length-1 (not 2*in.length), so the resulting signal
@@ -429,19 +420,19 @@ namespace CoreJ2K.j2k.wavelet.analysis
             int maxi, maxk;
 
             // If in null, then simulate dirac
-            if (in_Renamed == null)
+            if (input == null)
             {
-                in_Renamed = new float[1];
-                in_Renamed[0] = 1.0f;
+                input = new float[1];
+                input[0] = 1.0f;
             }
 
             // Get output buffer if necessary
-            if (out_Renamed == null)
+            if (output == null)
             {
-                out_Renamed = new float[in_Renamed.Length * 2 + wf.Length - 2];
+                output = new float[input.Length * 2 + wf.Length - 2];
             }
             // Convolve the signals
-            for (i = 0, maxi = in_Renamed.Length * 2 + wf.Length - 2; i < maxi; i++)
+            for (i = 0, maxi = input.Length * 2 + wf.Length - 2; i < maxi; i++)
             {
                 tmp = 0.0f;
 
@@ -450,20 +441,20 @@ namespace CoreJ2K.j2k.wavelet.analysis
                 if (k < 0)
                     k = 0;
                 maxk = i / 2 + 1;
-                if (maxk > in_Renamed.Length)
-                    maxk = in_Renamed.Length;
+                if (maxk > input.Length)
+                    maxk = input.Length;
 
                 // Calculate dot-product with upsampling of 'in' by 2.
                 for (j = 2 * k - i + wf.Length - 1; k < maxk; k++, j += 2)
                 {
-                    tmp += in_Renamed[k] * wf[j];
+                    tmp += input[k] * wf[j];
                 }
                 // Store result
-                out_Renamed[i] = tmp;
+                output[i] = tmp;
             }
 
-            return out_Renamed;
+            return output;
         }
-        public abstract bool isSameAsFullWT(int param1, int param2, int param3);
+        public abstract bool IsSameAsFullWT(int param1, int param2, int param3);
     }
 }

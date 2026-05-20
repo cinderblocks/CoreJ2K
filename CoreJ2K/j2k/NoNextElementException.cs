@@ -1,14 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: NoNextElementException.java,v 1.9 2000/09/05 09:22:12 grosbois Exp $
-*
-* Class:                   NoNextElementException
-*
-* Description:             Exception to indicate that there is no next
-*                          element.
-*
-*
 *
 * COPYRIGHT:
 * 

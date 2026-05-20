@@ -1,13 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: LayersInfo.java,v 1.7 2001/04/15 14:31:22 grosbois Exp $
-*
-* Class:                   LayersInfo
-*
-* Description:             Specification of a layer
-*
-*
 *
 * COPYRIGHT:
 * 
@@ -156,7 +147,7 @@ namespace CoreJ2K.j2k.entropy.encoder
         /// <returns> The target bitrate (in bpp) for the optimization point 'n'.
         /// 
         /// </returns>
-        public virtual float getTargetBitrate(int n)
+        public virtual float GetTargetBitrate(int n)
         {
             // overall target bitrate is counted as extra
             return (n < nopt) ? optbrate[n] : totbrate;
@@ -175,7 +166,7 @@ namespace CoreJ2K.j2k.entropy.encoder
         /// optimization point 'n'
         /// 
         /// </returns>
-        public virtual int getExtraLayers(int n)
+        public virtual int GetExtraLayers(int n)
         {
             // overall target bitrate is counted as extra
             return (n < nopt) ? extralyrs[n] : 0;

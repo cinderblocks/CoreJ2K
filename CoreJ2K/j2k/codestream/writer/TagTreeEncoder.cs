@@ -1,13 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: TagTreeEncoder.java,v 1.10 2001/08/17 16:02:06 grosbois Exp $
-*
-* Class:                   TagTreeEncoder
-*
-* Description:             Encoder of tag trees
-*
-*
 *
 * COPYRIGHT:
 * 
@@ -58,7 +49,7 @@ namespace CoreJ2K.j2k.codestream.writer
     /// change a value of the matrix, provided both new and old values of the
     /// element are both greater than or equal to the largest threshold which has
     /// yet been supplied to the coding procedure 'encode()'. This property can be
-    /// exploited through the 'setValue()' method.
+    /// exploited through the 'SetValue()' method.
     /// 
     /// This class allows saving the state of the tree at any point and
     /// restoring it at a later time, by calling save() and restore().
@@ -98,7 +89,7 @@ namespace CoreJ2K.j2k.codestream.writer
         /// to 'encode()'. However such a leaf can keep its old value (i.e. new and
         /// old value must be identical.
         /// 
-        /// This method is more efficient than the setValue() method if a large
+        /// This method is more efficient than the SetValue() method if a large
         /// proportion of the leafs change their value. Note that for leafs which
         /// don't have their value defined yet the value should be
         /// Integer.MAX_VALUE (which is the default initialization value).
@@ -107,7 +98,7 @@ namespace CoreJ2K.j2k.codestream.writer
         /// <param name="val">The new values for the leafs, in lexicographical order.
         /// 
         /// </param>
-        /// <seealso cref="setValue" />
+        /// <seealso cref="SetValue" />
         public virtual int[] Values
         {
             set
@@ -362,7 +353,7 @@ namespace CoreJ2K.j2k.codestream.writer
         /// <param name="v">The new value of the element.
         /// 
         /// </param>
-        public virtual void setValue(int m, int n, int v)
+        public virtual void SetValue(int m, int n, int v)
         {
             int k, idx;
             // Check arguments
@@ -409,7 +400,7 @@ namespace CoreJ2K.j2k.codestream.writer
         /// <param name="out">The stream where to write the coded information.
         /// 
         /// </param>
-        public virtual void encode(int m, int n, int t, BitOutputBuffer out_Renamed)
+        public virtual void encode(int m, int n, int t, BitOutputBuffer outStream)
         {
             int k, ts, idx, tmin;
 
@@ -438,11 +429,11 @@ namespace CoreJ2K.j2k.codestream.writer
                 {
                     if (treeV[k][idx] > ts)
                     {
-                        out_Renamed.writeBit(0); // Send '0' bit
+                        outStream.writeBit(0); // Send '0' bit
                     }
                     else if (treeV[k][idx] == ts)
                     {
-                        out_Renamed.writeBit(1); // Send '1' bit
+                        outStream.writeBit(1); // Send '1' bit
                     }
                     else
                     {

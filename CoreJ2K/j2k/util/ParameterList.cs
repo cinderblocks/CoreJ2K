@@ -1,13 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: ParameterList.java,v 1.18 2001/07/17 16:21:35 grosbois Exp $
-*
-* Class:                   ParameterList
-*
-* Description:             Class to hold parameters.
-*
-*
 *
 * COPYRIGHT:
 * 
@@ -236,7 +227,7 @@ namespace CoreJ2K.j2k.util
         /// <param name="pname">The parameter name.</param>
         /// <returns> the value of the parameter as a string, or null if there is no
         /// parameter with the name 'pname'.</returns>
-        public virtual string getParameter(string pname)
+        public virtual string GetParameter(string pname)
         {
             if (TryGetValue(pname, out var pval) || defaults == null) { return pval; }
 
@@ -257,9 +248,9 @@ namespace CoreJ2K.j2k.util
         /// neither "on" nor "off".</exception>
         /// <exception cref="ArgumentException">If there is no parameter with the
         /// name 'pname' in the parameter list.</exception>
-        public virtual bool getBooleanParameter(string pname)
+        public virtual bool GetBooleanParameter(string pname)
         {
-            var s = getParameter(pname);
+            var s = GetParameter(pname);
 
             switch (s)
             {
@@ -287,9 +278,9 @@ namespace CoreJ2K.j2k.util
         /// value.</exception>
         /// <exception cref="ArgumentException">If there is no parameter with the
         /// name 'pname' in the parameter list.</exception>
-        public virtual int getIntParameter(string pname)
+        public virtual int GetIntParameter(string pname)
         {
-            var s = getParameter(pname);
+            var s = GetParameter(pname);
 
             if (s == null)
             {
@@ -318,9 +309,9 @@ namespace CoreJ2K.j2k.util
         /// <exception cref="ArgumentException">If there is no parameter with the
         /// name 'pname' in the parameter list.</exception>
         /// <returns> the value of the parameter as a float.</returns>
-        public virtual float getFloatParameter(string pname)
+        public virtual float GetFloatParameter(string pname)
         {
-            var s = getParameter(pname);
+            var s = GetParameter(pname);
 
             if (s == null)
             {

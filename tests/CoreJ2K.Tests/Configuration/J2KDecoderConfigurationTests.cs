@@ -197,9 +197,9 @@ namespace CoreJ2K.Tests.Configuration
             var pl = config.ToParameterList();
             
             Assert.NotNull(pl);
-            Assert.Equal("2", pl.getParameter("res"));
-            Assert.Equal("1", pl.getParameter("rate"));
-            Assert.Equal("on", pl.getParameter("nocolorspace")); // inverted
+            Assert.Equal("2", pl.GetParameter("res"));
+            Assert.Equal("1", pl.GetParameter("rate"));
+            Assert.Equal("on", pl.GetParameter("nocolorspace")); // inverted
         }
         
         [Fact]
@@ -210,9 +210,9 @@ namespace CoreJ2K.Tests.Configuration
             var pl = config.ToParameterList();
             
             Assert.NotNull(pl);
-            Assert.Equal("off", pl.getParameter("nocolorspace")); // colorspace enabled
-            Assert.Equal("on", pl.getParameter("parsing"));
-            Assert.Equal("on", pl.getParameter("verbose"));
+            Assert.Equal("off", pl.GetParameter("nocolorspace")); // colorspace enabled
+            Assert.Equal("on", pl.GetParameter("parsing"));
+            Assert.Equal("on", pl.GetParameter("verbose"));
         }
         
         [Fact]

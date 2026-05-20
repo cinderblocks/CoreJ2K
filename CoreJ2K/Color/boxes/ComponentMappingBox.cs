@@ -1,6 +1,5 @@
 /// <summary>**************************************************************************
 /// 
-/// $Id: ComponentMappingBox.java,v 1.1 2002/07/25 14:50:46 grosbois Exp $
 /// 
 /// Copyright Eastman Kodak Company, 343 State Street, Rochester, NY 14650
 /// $Date $
@@ -36,7 +35,7 @@ namespace CoreJ2K.Color.Boxes
         /// </param>
         /// <exception cref="IOException,">ColorSpaceException 
         /// </exception>
-        public ComponentMappingBox(io_RandomAccessIO in_Renamed, int boxStart) : base(in_Renamed, boxStart)
+        public ComponentMappingBox(io_RandomAccessIO inStream, int boxStart) : base(inStream, boxStart)
         {
             readBox();
         }
@@ -45,31 +44,31 @@ namespace CoreJ2K.Color.Boxes
         internal void readBox()
         {
             NChannels = (boxEnd - dataStart) / 4;
-            in_Renamed.seek(dataStart);
+            inStream.seek(dataStart);
             for (var offset = dataStart; offset < boxEnd; offset += 4)
             {
                 var mapping = new byte[4];
-                in_Renamed.readFully(mapping, 0, 4);
+                inStream.readFully(mapping, 0, 4);
                 map.Add(mapping);
             }
         }
 
         /* Return the component mapped to the channel. */
-        public int getCMP(int channel)
+        public int GetCMP(int channel)
         {
             var mapping = map[channel];
-            return ICCProfile.getShort(mapping, 0) & 0x0000ffff;
+            return ICCProfile.GetShort(mapping, 0) & 0x0000ffff;
         }
 
         /// <summary>Return the channel type. </summary>
-        public short getMTYP(int channel)
+        public short GetMTYP(int channel)
         {
             var mapping = map[channel];
             return (short)(mapping[2] & 0x00ff);
         }
 
         /// <summary>Return the palette index for the channel. </summary>
-        public short getPCOL(int channel)
+        public short GetPCOL(int channel)
         {
             var mapping = map[channel];
             return (short)(mapping[3] & 0x000ff);
@@ -84,30 +83,28 @@ namespace CoreJ2K.Color.Boxes
             while (Enum.MoveNext())
             {
                 var bfr = (byte[])Enum.Current;
-                rep.Append(Environment.NewLine).Append("  ").Append("CMP= ").Append(Convert.ToString(getCMP(bfr))).Append(", ");
-                rep.Append("MTYP= ").Append(Convert.ToString(getMTYP(bfr))).Append(", ");
-                rep.Append("PCOL= ").Append(Convert.ToString(getPCOL(bfr)));
+                rep.Append(Environment.NewLine).Append("  ").Append("CMP= ").Append(Convert.ToString(GetCMP(bfr))).Append(", ");
+                rep.Append("MTYP= ").Append(Convert.ToString(GetMTYP(bfr))).Append(", ");
+                rep.Append("PCOL= ").Append(Convert.ToString(GetPCOL(bfr)));
             }
             rep.Append("]");
             return rep.ToString();
         }
 
-        private int getCMP(byte[] mapping)
+        private int GetCMP(byte[] mapping)
         {
-            return ICCProfile.getShort(mapping, 0) & 0x0000ffff;
+            return ICCProfile.GetShort(mapping, 0) & 0x0000ffff;
         }
 
-        private short getMTYP(byte[] mapping)
+        private short GetMTYP(byte[] mapping)
         {
             return (short)(mapping[2] & 0x00ff);
         }
 
-        private short getPCOL(byte[] mapping)
+        private short GetPCOL(byte[] mapping)
         {
             return (short)(mapping[3] & 0x000ff);
         }
-
-        /* end class ComponentMappingBox */
         static ComponentMappingBox()
         {
             {

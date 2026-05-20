@@ -1,14 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: EBCOTRateAllocator.java,v 1.97 2002/05/22 14:59:44 grosbois Exp $
-*
-* Class:                   EBCOTRateAllocator
-*
-* Description:             Generic interface for post-compression
-*                          rate allocator.
-*
-*
 *
 * COPYRIGHT:
 * 
@@ -211,7 +201,6 @@ namespace CoreJ2K.j2k.entropy.encoder
 #if DO_TIMING
 			// If we are timing make sure that 'finalize' gets called.
 			// CONVERSION PROBLEM?
-            //System_Renamed.runFinalizersOnExit(true);
 			// The System.runFinalizersOnExit() method is deprecated in Java
 			// 1.2 since it can cause a deadlock in some cases. However, here
 			// we use it only for profiling purposes and is disabled in
@@ -228,7 +217,7 @@ namespace CoreJ2K.j2k.entropy.encoder
             RDSlopesRates = new int[RD_SUMMARY_SIZE];
 
             //Get number of tiles, components
-            var nt = src.getNumTiles();
+            var nt = src.GetNumTiles();
             var nc = NumComps;
 
             //Allocate the coded code-blocks and truncation points indexes arrays
@@ -269,12 +258,12 @@ namespace CoreJ2K.j2k.entropy.encoder
             var cb0x = src.CbULX;
             var cb0y = src.CbULY;
 
-            src.setTile(0, 0);
+            src.SetTile(0, 0);
             for (var t = 0; t < nt; t++)
             {
                 // Loop on tiles
-                nTiles = src.getNumTiles(nTiles);
-                tileI = src.getTile(tileI);
+                nTiles = src.GetNumTiles(nTiles);
+                tileI = src.GetTile(tileI);
                 x0siz = ImgULX;
                 y0siz = ImgULY;
                 xsiz = x0siz + ImgWidth;
@@ -295,7 +284,7 @@ namespace CoreJ2K.j2k.entropy.encoder
                     // loop on components
 
                     //Get the number of resolution levels
-                    sb = src.getAnSubbandTree(t, c);
+                    sb = src.GetAnSubbandTree(t, c);
                     mrl = sb.resLvl + 1;
 
                     // Initialize maximum number of precincts per resolution array
@@ -314,8 +303,8 @@ namespace CoreJ2K.j2k.entropy.encoder
                     }
 
                     // Subsampling factors
-                    xrsiz = src.getCompSubsX(c);
-                    yrsiz = src.getCompSubsY(c);
+                    xrsiz = src.GetCompSubsX(c);
+                    yrsiz = src.GetCompSubsY(c);
 
                     // Tile's coordinates in the image component domain
                     tcx0 = (int)Math.Ceiling(tx0 / (double)(xrsiz));
@@ -344,8 +333,8 @@ namespace CoreJ2K.j2k.entropy.encoder
                         // Calculate the maximum number of precincts for each
                         // resolution level taking into account tile specific
                         // options.
-                        double twoppx = encSpec.pss.getPPX(t, c, r);
-                        double twoppy = encSpec.pss.getPPY(t, c, r);
+                        double twoppx = encSpec.pss.GetPPX(t, c, r);
+                        double twoppy = encSpec.pss.GetPPY(t, c, r);
                         numPrec[t][c][r] = new Coord();
                         if (trx1 > trx0)
                         {
@@ -377,7 +366,7 @@ namespace CoreJ2K.j2k.entropy.encoder
                         {
                             // loop on subbands
                             //Get the number of blocks in the current subband
-                            sb2 = (SubbandAn)sb.getSubbandByIdx(r, s);
+                            sb2 = (SubbandAn)sb.GetSubbandByIdx(r, s);
                             ncblks = sb2.numCb;
                             cblkPerSubband = ncblks.x * ncblks.y;
                             cblks[t][c][r][s] = new CBlkRateDistStats[cblkPerSubband];
@@ -395,7 +384,7 @@ namespace CoreJ2K.j2k.entropy.encoder
                 } // End loop on components
                 if (t != nt - 1)
                 {
-                    src.nextTile();
+                    src.NextTile();
                 }
             } // End loop on tiles
 
@@ -426,7 +415,7 @@ namespace CoreJ2K.j2k.entropy.encoder
             sb.Append("  final writing:  ");
             sb.Append(writeTime);
             sb.Append(" ms");
-            FacilityManager.getMsgLogger().printmsg(CoreJ2K.j2k.util.MsgLogger_Fields.INFO, sb.ToString());
+            FacilityManager.GetMsgLogger().printmsg(CoreJ2K.j2k.util.MsgLogger_Fields.INFO, sb.ToString());
         }
 #endif
         /// <summary> Runs the rate allocation algorithm and writes the data to the bit
@@ -457,7 +446,7 @@ namespace CoreJ2K.j2k.entropy.encoder
             int minlsz; // The minimum allowable number of bytes in a layer
             int totenclength;
             int maxpkt;
-            var numTiles = src.getNumTiles();
+            var numTiles = src.GetNumTiles();
             var numComps = src.NumComps;
             int numLvls;
             int avgPktLen;
@@ -466,7 +455,7 @@ namespace CoreJ2K.j2k.entropy.encoder
 #endif
             // Start by getting all the code-blocks, we need this in order to have 
             // an idea of the total encoded bitrate.
-            getAllCodeBlocks();
+            GetAllCodeBlocks();
 
 #if DO_TIMING
 				stime = (System.DateTime.Now.Ticks - 621355968000000000) / 10000;
@@ -481,19 +470,19 @@ namespace CoreJ2K.j2k.entropy.encoder
             {
                 avgPktLen = 2;
                 // Add SOP length if set
-                if (string.Equals((string)encSpec.sops.getTileDef(t), "on", StringComparison.OrdinalIgnoreCase))
+                if (string.Equals((string)encSpec.sops.GetTileDef(t), "on", StringComparison.OrdinalIgnoreCase))
                 {
                     avgPktLen += Markers.SOP_LENGTH;
                 }
                 // Add EPH length if set
-                if (string.Equals((string)encSpec.ephs.getTileDef(t), "on", StringComparison.OrdinalIgnoreCase))
+                if (string.Equals((string)encSpec.ephs.GetTileDef(t), "on", StringComparison.OrdinalIgnoreCase))
                 {
                     avgPktLen += Markers.EPH_LENGTH;
                 }
 
                 for (var c = 0; c < numComps; c++)
                 {
-                    numLvls = src.getAnSubbandTree(t, c).resLvl + 1;
+                    numLvls = src.GetAnSubbandTree(t, c).resLvl + 1;
                     if (!src.precinctPartitionUsed(c, t))
                     {
                         // Precinct partition is not used so there is only
@@ -544,7 +533,7 @@ namespace CoreJ2K.j2k.entropy.encoder
             {
                 for (var c = 0; c < numComps; c++)
                 {
-                    numLvls = src.getAnSubbandTree(t, c).resLvl + 1;
+                    numLvls = src.GetAnSubbandTree(t, c).resLvl + 1;
 
                     if (!src.precinctPartitionUsed(c, t))
                     {
@@ -571,10 +560,10 @@ namespace CoreJ2K.j2k.entropy.encoder
             while (n < num_Layers - 1)
             {
                 // At an optimized layer
-                basebytes = Math.Floor(lyrSpec.getTargetBitrate(i) * np);
+                basebytes = Math.Floor(lyrSpec.GetTargetBitrate(i) * np);
                 if (i < lyrSpec.NOptPoints - 1)
                 {
-                    nextbytes = (int)(lyrSpec.getTargetBitrate(i + 1) * np);
+                    nextbytes = (int)(lyrSpec.GetTargetBitrate(i + 1) * np);
                     // Limit target length to 'totenclength'
                     if (nextbytes > totenclength)
                         nextbytes = totenclength;
@@ -583,7 +572,7 @@ namespace CoreJ2K.j2k.entropy.encoder
                 {
                     nextbytes = 1;
                 }
-                loopnlyrs = lyrSpec.getExtraLayers(i) + 1;
+                loopnlyrs = lyrSpec.GetExtraLayers(i) + 1;
                 ls = Math.Exp(Math.Log(nextbytes / basebytes) / loopnlyrs);
                 layers[n].optimize = true;
                 for (l = 0; l < loopnlyrs; l++)
@@ -631,7 +620,7 @@ namespace CoreJ2K.j2k.entropy.encoder
 
             // Re-initialize progression order changes if needed Default values
             Progression[] prog1; // prog2 removed
-            prog1 = (Progression[])encSpec.pocs.getDefault();
+            prog1 = (Progression[])encSpec.pocs.GetDefault();
             var nValidProg = prog1.Length;
             foreach (var prg in prog1)
             {
@@ -648,9 +637,9 @@ namespace CoreJ2K.j2k.entropy.encoder
             // Tile specific values
             for (var t = 0; t < numTiles; t++)
             {
-                if (encSpec.pocs.isTileSpecified(t))
+                if (encSpec.pocs.IsTileSpecified(t))
                 {
-                    prog1 = (Progression[])encSpec.pocs.getTileDef(t);
+                    prog1 = (Progression[])encSpec.pocs.GetTileDef(t);
                     nValidProg = prog1.Length;
                     foreach (var prg in prog1)
                     {
@@ -681,7 +670,7 @@ namespace CoreJ2K.j2k.entropy.encoder
         /// into the mantissa-exponent representation.
         /// 
         /// </summary>
-        private void getAllCodeBlocks()
+        private void GetAllCodeBlocks()
         {
 
             int numComps, numTiles; // numBytes removed
@@ -700,37 +689,37 @@ namespace CoreJ2K.j2k.entropy.encoder
 
             //Get the number of components and tiles
             numComps = src.NumComps;
-            numTiles = src.getNumTiles();
+            numTiles = src.GetNumTiles();
 
             SubbandAn root, sb;
             var cblkToEncode = 0;
 
             //Get all coded code-blocks Goto first tile
-            src.setTile(0, 0);
+            src.SetTile(0, 0);
             for (t = 0; t < numTiles; t++)
             {
                 //loop on tiles
                 cblkToEncode = 0;
                 for (c = 0; c < numComps; c++)
                 {
-                    root = src.getAnSubbandTree(t, c);
+                    root = src.GetAnSubbandTree(t, c);
                     for (r = 0; r <= root.resLvl; r++)
                     {
                         if (r == 0)
                         {
-                            sb = (SubbandAn)root.getSubbandByIdx(0, 0);
+                            sb = (SubbandAn)root.GetSubbandByIdx(0, 0);
                             if (sb != null)
                                 cblkToEncode += sb.numCb.x * sb.numCb.y;
                         }
                         else
                         {
-                            sb = (SubbandAn)root.getSubbandByIdx(r, 1);
+                            sb = (SubbandAn)root.GetSubbandByIdx(r, 1);
                             if (sb != null)
                                 cblkToEncode += sb.numCb.x * sb.numCb.y;
-                            sb = (SubbandAn)root.getSubbandByIdx(r, 2);
+                            sb = (SubbandAn)root.GetSubbandByIdx(r, 2);
                             if (sb != null)
                                 cblkToEncode += sb.numCb.x * sb.numCb.y;
-                            sb = (SubbandAn)root.getSubbandByIdx(r, 3);
+                            sb = (SubbandAn)root.GetSubbandByIdx(r, 3);
                             if (sb != null)
                                 cblkToEncode += sb.numCb.x * sb.numCb.y;
                         }
@@ -742,7 +731,7 @@ namespace CoreJ2K.j2k.entropy.encoder
                     //loop on components
 
                     //Get next coded code-block coordinates
-                    while ((ccb = src.getNextCodeBlock(c, ccb)) != null)
+                    while ((ccb = src.GetNextCodeBlock(c, ccb)) != null)
                     {
 #if DO_TIMING
 						stime = (System.DateTime.Now.Ticks - 621355968000000000) / 10000;
@@ -769,12 +758,12 @@ namespace CoreJ2K.j2k.entropy.encoder
                                 maxSlope = fslope;
                             if (fslope < minSlope)
                                 minSlope = fslope;
-                            sidx = getLimitedSIndexFromSlope(fslope);
+                            sidx = GetLimitedSIndexFromSlope(fslope);
                             for (; sidx > last_sidx; sidx--)
                             {
                                 RDSlopesRates[sidx] += ccb.truncRates[ccb.truncIdxs[k]];
                             }
-                            last_sidx = getLimitedSIndexFromSlope(fslope);
+                            last_sidx = GetLimitedSIndexFromSlope(fslope);
                         }
 
                         //Fills code-blocks array
@@ -790,7 +779,7 @@ namespace CoreJ2K.j2k.entropy.encoder
                 //Goto next tile
                 if (t < numTiles - 1)
                     //not at last tile
-                    src.nextTile();
+                    src.NextTile();
             }
         }
 
@@ -814,7 +803,7 @@ namespace CoreJ2K.j2k.entropy.encoder
             bool sopUsed; // Should SOP markers be used ?
             bool ephUsed; // Should EPH markers be used ?
             var nc = src.NumComps;
-            var nt = src.getNumTiles();
+            var nt = src.GetNumTiles();
             int mrl;
 #if DO_TIMING
 			long stime = 0L;
@@ -879,12 +868,12 @@ namespace CoreJ2K.j2k.entropy.encoder
                         //loop on components
 
                         // set boolean sopUsed here (SOP markers)
-                        sopUsed = string.Equals((string)encSpec.sops.getTileDef(t), "on", StringComparison.OrdinalIgnoreCase);
+                        sopUsed = string.Equals((string)encSpec.sops.GetTileDef(t), "on", StringComparison.OrdinalIgnoreCase);
                         // set boolean ephUsed here (EPH markers)
-                        ephUsed = string.Equals((string)encSpec.ephs.getTileDef(t), "on", StringComparison.OrdinalIgnoreCase);
+                        ephUsed = string.Equals((string)encSpec.ephs.GetTileDef(t), "on", StringComparison.OrdinalIgnoreCase);
 
                         // Go to LL band
-                        sb = src.getAnSubbandTree(t, c);
+                        sb = src.GetAnSubbandTree(t, c);
                         mrl = sb.resLvl + 1;
 
                         while (sb.subb_LL != null)
@@ -959,7 +948,7 @@ namespace CoreJ2K.j2k.entropy.encoder
                 var lys = new int[nc][];
                 for (var c = 0; c < nc; c++)
                 {
-                    mrlc[c] = src.getAnSubbandTree(t, c).resLvl;
+                    mrlc[c] = src.GetAnSubbandTree(t, c).resLvl;
                     lys[c] = new int[mrlc[c] + 1];
                 }
 
@@ -967,7 +956,7 @@ namespace CoreJ2K.j2k.entropy.encoder
                 headEnc.reset();
                 headEnc.encodeTilePartHeader(tileLengths[t], t);
                 bsWriter.commitBitstreamHeader(headEnc);
-                prog = (Progression[])encSpec.pocs.getTileDef(t);
+                prog = (Progression[])encSpec.pocs.GetTileDef(t);
 
                 foreach (var p in prog)
                 {
@@ -1070,7 +1059,7 @@ namespace CoreJ2K.j2k.entropy.encoder
             var maxResLvl = 0;
             for (var c = 0; c < nc; c++)
             {
-                mrl[c] = src.getAnSubbandTree(t, c).resLvl;
+                mrl[c] = src.GetAnSubbandTree(t, c).resLvl;
                 if (mrl[c] > maxResLvl)
                     maxResLvl = mrl[c];
             }
@@ -1113,11 +1102,11 @@ namespace CoreJ2K.j2k.entropy.encoder
                             // loop on precincts
 
                             // set boolean sopUsed here (SOP markers)
-                            sopUsed = ((string)encSpec.sops.getTileDef(t)).Equals("on");
+                            sopUsed = ((string)encSpec.sops.GetTileDef(t)).Equals("on");
                             // set boolean ephUsed here (EPH markers)
-                            ephUsed = ((string)encSpec.ephs.getTileDef(t)).Equals("on");
+                            ephUsed = ((string)encSpec.ephs.GetTileDef(t)).Equals("on");
 
-                            sb = src.getAnSubbandTree(t, c);
+                            sb = src.GetAnSubbandTree(t, c);
                             for (var i = mrl[c]; i > r; i--)
                             {
                                 sb = sb.subb_LL;
@@ -1198,7 +1187,7 @@ namespace CoreJ2K.j2k.entropy.encoder
                     for (var c = cs; c < ce; c++)
                     {
                         // loop on components
-                        mrl = src.getAnSubbandTree(t, c).resLvl;
+                        mrl = src.GetAnSubbandTree(t, c).resLvl;
                         if (r > mrl)
                             continue;
                         if (r >= lys[c].Length)
@@ -1212,11 +1201,11 @@ namespace CoreJ2K.j2k.entropy.encoder
                             // loop on precincts
 
                             // set boolean sopUsed here (SOP markers)
-                            sopUsed = ((string)encSpec.sops.getTileDef(t)).Equals("on");
+                            sopUsed = ((string)encSpec.sops.GetTileDef(t)).Equals("on");
                             // set boolean ephUsed here (EPH markers)
-                            ephUsed = ((string)encSpec.ephs.getTileDef(t)).Equals("on");
+                            ephUsed = ((string)encSpec.ephs.GetTileDef(t)).Equals("on");
 
-                            sb = src.getAnSubbandTree(t, c);
+                            sb = src.GetAnSubbandTree(t, c);
                             for (var i = mrl; i > r; i--)
                             {
                                 sb = sb.subb_LL;
@@ -1276,8 +1265,8 @@ namespace CoreJ2K.j2k.entropy.encoder
             byte[] bBuff = null;
 
             // Computes current tile offset in the reference grid
-            var nTiles = src.getNumTiles(null);
-            var tileI = src.getTile(null);
+            var nTiles = src.GetNumTiles(null);
+            var tileI = src.GetTile(null);
             var x0siz = src.ImgULX;
             var y0siz = src.ImgULY;
             var xsiz = x0siz + src.ImgWidth;
@@ -1310,7 +1299,7 @@ namespace CoreJ2K.j2k.entropy.encoder
             var maxy = ty0; // Max. vert. offset of precincts in the ref. grid
             for (var c = cs; c < ce; c++)
             {
-                mrl = src.getAnSubbandTree(t, c).resLvl;
+                mrl = src.GetAnSubbandTree(t, c).resLvl;
                 nextPrec[c] = new int[mrl + 1];
                 for (var r = rs; r < re; r++)
                 {
@@ -1323,7 +1312,7 @@ namespace CoreJ2K.j2k.entropy.encoder
                     p = numPrec[t][c][r].y * numPrec[t][c][r].x - 1;
                     for (; p >= 0; p--)
                     {
-                        prec = pktEnc.getPrecInfo(t, c, r, p);
+                        prec = pktEnc.GetPrecInfo(t, c, r, p);
                         if (prec.rgulx != tx0)
                         {
                             if (prec.rgulx < minx)
@@ -1372,7 +1361,7 @@ namespace CoreJ2K.j2k.entropy.encoder
                     for (var c = cs; c < ce; c++)
                     {
                         // Components
-                        mrl = src.getAnSubbandTree(t, c).resLvl;
+                        mrl = src.GetAnSubbandTree(t, c).resLvl;
                         for (var r = rs; r < re; r++)
                         {
                             // Resolution levels
@@ -1382,7 +1371,7 @@ namespace CoreJ2K.j2k.entropy.encoder
                             {
                                 continue;
                             }
-                            prec = pktEnc.getPrecInfo(t, c, r, nextPrec[c][r]);
+                            prec = pktEnc.GetPrecInfo(t, c, r, nextPrec[c][r]);
                             if ((prec.rgulx != x) || (prec.rguly != y))
                             {
                                 continue;
@@ -1396,11 +1385,11 @@ namespace CoreJ2K.j2k.entropy.encoder
                                     continue;
 
                                 // set boolean sopUsed here (SOP markers)
-                                sopUsed = ((string)encSpec.sops.getTileDef(t)).Equals("on");
+                                sopUsed = ((string)encSpec.sops.GetTileDef(t)).Equals("on");
                                 // set boolean ephUsed here (EPH markers)
-                                ephUsed = ((string)encSpec.ephs.getTileDef(t)).Equals("on");
+                                ephUsed = ((string)encSpec.ephs.GetTileDef(t)).Equals("on");
 
-                                sb = src.getAnSubbandTree(t, c);
+                                sb = src.GetAnSubbandTree(t, c);
                                 for (var i = mrl; i > r; i--)
                                 {
                                     sb = sb.subb_LL;
@@ -1442,7 +1431,7 @@ namespace CoreJ2K.j2k.entropy.encoder
             // Check that all precincts have been written
             for (var c = cs; c < ce; c++)
             {
-                mrl = src.getAnSubbandTree(t, c).resLvl;
+                mrl = src.GetAnSubbandTree(t, c).resLvl;
                 for (var r = rs; r < re; r++)
                 {
                     if (r > mrl)
@@ -1494,8 +1483,8 @@ namespace CoreJ2K.j2k.entropy.encoder
             byte[] bBuff = null;
 
             // Computes current tile offset in the reference grid
-            var nTiles = src.getNumTiles(null);
-            var tileI = src.getTile(null);
+            var nTiles = src.GetNumTiles(null);
+            var tileI = src.GetTile(null);
             var x0siz = src.ImgULX;
             var y0siz = src.ImgULY;
             var xsiz = x0siz + src.ImgWidth;
@@ -1528,7 +1517,7 @@ namespace CoreJ2K.j2k.entropy.encoder
             var maxy = ty0; // Max. vert. offset of precincts in the ref. grid
             for (var c = cs; c < ce; c++)
             {
-                mrl = src.getAnSubbandTree(t, c).resLvl;
+                mrl = src.GetAnSubbandTree(t, c).resLvl;
                 for (var r = rs; r < re; r++)
                 {
                     if (r > mrl)
@@ -1541,7 +1530,7 @@ namespace CoreJ2K.j2k.entropy.encoder
                     p = numPrec[t][c][r].y * numPrec[t][c][r].x - 1;
                     for (; p >= 0; p--)
                     {
-                        prec = pktEnc.getPrecInfo(t, c, r, p);
+                        prec = pktEnc.GetPrecInfo(t, c, r, p);
                         if (prec.rgulx != tx0)
                         {
                             if (prec.rgulx < minx)
@@ -1586,7 +1575,7 @@ namespace CoreJ2K.j2k.entropy.encoder
                 // Loop on components
                 y = ty0;
                 x = tx0;
-                mrl = src.getAnSubbandTree(t, c).resLvl;
+                mrl = src.GetAnSubbandTree(t, c).resLvl;
                 for (var py = 0; py <= pyend; py++)
                 {
                     // Vertical precincts
@@ -1602,7 +1591,7 @@ namespace CoreJ2K.j2k.entropy.encoder
                             {
                                 continue;
                             }
-                            prec = pktEnc.getPrecInfo(t, c, r, nextPrec[c][r]);
+                            prec = pktEnc.GetPrecInfo(t, c, r, nextPrec[c][r]);
                             if ((prec.rgulx != x) || (prec.rguly != y))
                             {
                                 continue;
@@ -1617,11 +1606,11 @@ namespace CoreJ2K.j2k.entropy.encoder
                                     continue;
 
                                 // set boolean sopUsed here (SOP markers)
-                                sopUsed = ((string)encSpec.sops.getTileDef(t)).Equals("on");
+                                sopUsed = ((string)encSpec.sops.GetTileDef(t)).Equals("on");
                                 // set boolean ephUsed here (EPH markers)
-                                ephUsed = ((string)encSpec.ephs.getTileDef(t)).Equals("on");
+                                ephUsed = ((string)encSpec.ephs.GetTileDef(t)).Equals("on");
 
-                                sb = src.getAnSubbandTree(t, c);
+                                sb = src.GetAnSubbandTree(t, c);
                                 for (var i = mrl; i > r; i--)
                                 {
                                     sb = sb.subb_LL;
@@ -1663,7 +1652,7 @@ namespace CoreJ2K.j2k.entropy.encoder
             // Check that all precincts have been written
             for (var c = cs; c < ce; c++)
             {
-                mrl = src.getAnSubbandTree(t, c).resLvl;
+                mrl = src.GetAnSubbandTree(t, c).resLvl;
                 for (var r = rs; r < re; r++)
                 {
                     if (r > mrl)
@@ -1715,8 +1704,8 @@ namespace CoreJ2K.j2k.entropy.encoder
             byte[] bBuff = null;
 
             // Computes current tile offset in the reference grid
-            var nTiles = src.getNumTiles(null);
-            var tileI = src.getTile(null);
+            var nTiles = src.GetNumTiles(null);
+            var tileI = src.GetTile(null);
             var x0siz = src.ImgULX;
             var y0siz = src.ImgULY;
             var xsiz = x0siz + src.ImgWidth;
@@ -1749,7 +1738,7 @@ namespace CoreJ2K.j2k.entropy.encoder
             var maxy = ty0; // Max. vert. offset of precincts in the ref. grid
             for (var c = cs; c < ce; c++)
             {
-                mrl = src.getAnSubbandTree(t, c).resLvl;
+                mrl = src.GetAnSubbandTree(t, c).resLvl;
                 nextPrec[c] = new int[mrl + 1];
                 for (var r = rs; r < re; r++)
                 {
@@ -1762,7 +1751,7 @@ namespace CoreJ2K.j2k.entropy.encoder
                     p = numPrec[t][c][r].y * numPrec[t][c][r].x - 1;
                     for (; p >= 0; p--)
                     {
-                        prec = pktEnc.getPrecInfo(t, c, r, p);
+                        prec = pktEnc.GetPrecInfo(t, c, r, p);
                         if (prec.rgulx != tx0)
                         {
                             if (prec.rgulx < minx)
@@ -1815,14 +1804,14 @@ namespace CoreJ2K.j2k.entropy.encoder
                         for (var c = cs; c < ce; c++)
                         {
                             // Components
-                            mrl = src.getAnSubbandTree(t, c).resLvl;
+                            mrl = src.GetAnSubbandTree(t, c).resLvl;
                             if (r > mrl)
                                 continue;
                             if (nextPrec[c][r] >= numPrec[t][c][r].x * numPrec[t][c][r].y)
                             {
                                 continue;
                             }
-                            prec = pktEnc.getPrecInfo(t, c, r, nextPrec[c][r]);
+                            prec = pktEnc.GetPrecInfo(t, c, r, nextPrec[c][r]);
                             if ((prec.rgulx != x) || (prec.rguly != y))
                             {
                                 continue;
@@ -1835,11 +1824,11 @@ namespace CoreJ2K.j2k.entropy.encoder
                                     continue;
 
                                 // set boolean sopUsed here (SOP markers)
-                                sopUsed = ((string)encSpec.sops.getTileDef(t)).Equals("on");
+                                sopUsed = ((string)encSpec.sops.GetTileDef(t)).Equals("on");
                                 // set boolean ephUsed here (EPH markers)
-                                ephUsed = ((string)encSpec.ephs.getTileDef(t)).Equals("on");
+                                ephUsed = ((string)encSpec.ephs.GetTileDef(t)).Equals("on");
 
-                                sb = src.getAnSubbandTree(t, c);
+                                sb = src.GetAnSubbandTree(t, c);
                                 for (var i = mrl; i > r; i--)
                                 {
                                     sb = sb.subb_LL;
@@ -1881,7 +1870,7 @@ namespace CoreJ2K.j2k.entropy.encoder
             // Check that all precincts have been written
             for (var c = cs; c < ce; c++)
             {
-                mrl = src.getAnSubbandTree(t, c).resLvl;
+                mrl = src.GetAnSubbandTree(t, c).resLvl;
                 for (var r = rs; r < re; r++)
                 {
                     if (r > mrl)
@@ -1943,7 +1932,7 @@ namespace CoreJ2K.j2k.entropy.encoder
             // Save the packet encoder state
             pktEnc.save();
 
-            nt = src.getNumTiles();
+            nt = src.GetNumTiles();
             nc = src.NumComps;
             hBuff = null;
             bBuff = null;
@@ -1962,12 +1951,12 @@ namespace CoreJ2K.j2k.entropy.encoder
                 }
             }
             // Get the corresponding minimum slope
-            fmint = getSlopeFromSIndex(sidx);
+            fmint = GetSlopeFromSIndex(sidx);
             // Ensure that it is smaller the maximum slope
             if (fmint >= fmaxt)
             {
                 sidx--;
-                fmint = getSlopeFromSIndex(sidx);
+                fmint = GetSlopeFromSIndex(sidx);
             }
             // If we are using the last entry of the summary, then that
             // corresponds to all the data, Thus, set the minimum slope to 0.
@@ -2001,21 +1990,21 @@ namespace CoreJ2K.j2k.entropy.encoder
                 // Get the number of bytes used by this layer, if 'ft' is the
                 // threshold, by simulation.
                 actualBytes = prevBytes;
-                src.setTile(0, 0);
+                src.SetTile(0, 0);
 
                 for (var t = 0; t < nt; t++)
                 {
                     for (var c = 0; c < nc; c++)
                     {
                         // set boolean sopUsed here (SOP markers)
-                        sopUsed = string.Equals((string)encSpec.sops.getTileDef(t), "on", StringComparison.OrdinalIgnoreCase);
+                        sopUsed = string.Equals((string)encSpec.sops.GetTileDef(t), "on", StringComparison.OrdinalIgnoreCase);
                         // set boolean ephUsed here (EPH markers)
-                        ephUsed = string.Equals((string)encSpec.ephs.getTileDef(t), "on", StringComparison.OrdinalIgnoreCase);
+                        ephUsed = string.Equals((string)encSpec.ephs.GetTileDef(t), "on", StringComparison.OrdinalIgnoreCase);
 
                         // Get LL subband
-                        sb = src.getAnSubbandTree(t, c);
+                        sb = src.GetAnSubbandTree(t, c);
                         numLvls = sb.resLvl + 1;
-                        sb = (SubbandAn)sb.getSubbandByIdx(0, 0);
+                        sb = (SubbandAn)sb.GetSubbandByIdx(0, 0);
                         //loop on resolution levels
                         for (var r = 0; r < numLvls; r++)
                         {
@@ -2139,7 +2128,7 @@ namespace CoreJ2K.j2k.entropy.encoder
             // all the rest (not possible to do better).
             if (lthresh < FLOAT_ABS_PRECISION)
                 return 0f;
-            sidx = getLimitedSIndexFromSlope(lthresh);
+            sidx = GetLimitedSIndexFromSlope(lthresh);
             // If the index is outside of the summary info array use the last two, 
             // or first two, indexes, as appropriate
             if (sidx >= RD_SUMMARY_SIZE - 1)
@@ -2163,8 +2152,8 @@ namespace CoreJ2K.j2k.entropy.encoder
                 log_ab = (float)Math.Log(lastLayer.actualBytes);
             }
 
-            log_sl1 = (float)Math.Log(getSlopeFromSIndex(sidx));
-            log_sl2 = (float)Math.Log(getSlopeFromSIndex(sidx + 1));
+            log_sl1 = (float)Math.Log(GetSlopeFromSIndex(sidx));
+            log_sl2 = (float)Math.Log(GetSlopeFromSIndex(sidx + 1));
 
             log_isl = (float)Math.Log(lthresh);
 
@@ -2219,8 +2208,8 @@ namespace CoreJ2K.j2k.entropy.encoder
                 log_ilen = (float)Math.Log(tlen);
             }
 
-            log_sl1 = (float)Math.Log(getSlopeFromSIndex(sidx));
-            log_sl2 = (float)Math.Log(getSlopeFromSIndex(sidx - 1));
+            log_sl1 = (float)Math.Log(GetSlopeFromSIndex(sidx));
+            log_sl2 = (float)Math.Log(GetSlopeFromSIndex(sidx - 1));
 
             // 4) Interpolate the two thresholds to find the target threshold.
 
@@ -2270,7 +2259,7 @@ namespace CoreJ2K.j2k.entropy.encoder
                                       //Coord ncblks = null;
             SubbandAn sb;
             CBlkRateDistStats cur_cblk;
-            var prec = pktEnc.getPrecInfo(tileIdx, compIdx, lvlIdx, precinctIdx);
+            var prec = pktEnc.GetPrecInfo(tileIdx, compIdx, lvlIdx, precinctIdx);
             Coord cbCoord;
 
             sb = subb;
@@ -2283,7 +2272,7 @@ namespace CoreJ2K.j2k.entropy.encoder
 
             int yend, xend;
 
-            sb = (SubbandAn)subb.getSubbandByIdx(lvlIdx, minsbi);
+            sb = (SubbandAn)subb.GetSubbandByIdx(lvlIdx, minsbi);
             for (var s = minsbi; s < maxsbi; s++)
             {
                 //loop on subbands
@@ -2333,7 +2322,7 @@ namespace CoreJ2K.j2k.entropy.encoder
         /// <returns> The index for the summary table of the slope.
         /// 
         /// </returns>
-        private static int getLimitedSIndexFromSlope(float slope)
+        private static int GetLimitedSIndexFromSlope(float slope)
         {
             int idx;
 
@@ -2363,7 +2352,7 @@ namespace CoreJ2K.j2k.entropy.encoder
         /// <returns> The minimum slope value associated with a summary table index.
         /// 
         /// </returns>
-        private static float getSlopeFromSIndex(int index)
+        private static float GetSlopeFromSIndex(int index)
         {
             return (float)Math.Pow(2, (index - RD_SUMMARY_OFF));
         }

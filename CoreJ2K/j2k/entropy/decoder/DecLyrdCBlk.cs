@@ -1,14 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: DecLyrdCBlk.java,v 1.9 2001/09/14 09:25:01 grosbois Exp $
-*
-* Class:                   DecLyrdCBlk
-*
-* Description:             The coded (compressed) code-block
-*                          with layered organization for the decoder.
-*
-*
 *
 * COPYRIGHT:
 * 

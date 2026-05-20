@@ -1,13 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: CoordInfo.java,v 1.10 2001/09/14 09:32:11 grosbois Exp $
-*
-* Class:                   CoordInfo
-*
-* Description: Used to store the coordinates of code-blocks/packets
-*
-*
 *
 * COPYRIGHT:
 * 

@@ -1,12 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: ProgressionSpec.java,v 1.19 2001/05/02 14:08:42 grosbois Exp $
-*
-* Class:                   ProgressionSpec
-*
-* Description:             Specification of the progression(s) type(s) and
-*                          changes of progression.
 *
 * COPYRIGHT:
 * 
@@ -108,14 +100,14 @@ namespace CoreJ2K.j2k.entropy
         public ProgressionSpec(int nt, int nc, int nl, IntegerSpec dls, byte type, ParameterList pl) : base(nt, nc, type)
         {
 
-            var param = pl.getParameter("Aptype");
+            var param = pl.GetParameter("Aptype");
             Progression[] prog;
             var mode = -1;
 
             if (param == null)
             {
                 // No parameter specified
-                mode = checkProgMode(pl.getParameter("Rroi") == null ? "res" : "layer");
+                mode = checkProgMode(pl.GetParameter("Rroi") == null ? "res" : "layer");
 
                 if (mode == -1)
                 {
@@ -124,7 +116,7 @@ namespace CoreJ2K.j2k.entropy
                 }
                 prog = new Progression[1];
                 prog[0] = new Progression(mode, 0, nc, 0, dls.Max + 1, nl);
-                setDefault(prog);
+                SetDefault(prog);
                 return;
             }
 
@@ -162,14 +154,14 @@ namespace CoreJ2K.j2k.entropy
                             progression.CopyTo(prog);
                             if (curSpecType == SPEC_DEF)
                             {
-                                setDefault(prog);
+                                SetDefault(prog);
                             }
                             else if (curSpecType == SPEC_TILE_DEF)
                             {
                                 for (var i = tileSpec.Length - 1; i >= 0; i--)
                                     if (tileSpec[i])
                                     {
-                                        setTileDef(i, prog);
+                                        SetTileDef(i, prog);
                                     }
                             }
                         }
@@ -285,7 +277,7 @@ namespace CoreJ2K.j2k.entropy
             if (progression.Count == 0)
             {
                 // No progression defined
-                mode = checkProgMode(pl.getParameter("Rroi") == null ? "res" : "layer");
+                mode = checkProgMode(pl.GetParameter("Rroi") == null ? "res" : "layer");
                 if (mode == -1)
                 {
                     errMsg2 = $"Unknown progression type : '{param}'";
@@ -293,7 +285,7 @@ namespace CoreJ2K.j2k.entropy
                 }
                 prog = new Progression[1];
                 prog[0] = new Progression(mode, 0, nc, 0, dls.Max + 1, nl);
-                setDefault(prog);
+                SetDefault(prog);
                 return;
             }
 
@@ -308,19 +300,19 @@ namespace CoreJ2K.j2k.entropy
 
             if (curSpecType == SPEC_DEF)
             {
-                setDefault(prog);
+                SetDefault(prog);
             }
             else if (curSpecType == SPEC_TILE_DEF)
             {
                 for (var i = tileSpec.Length - 1; i >= 0; i--)
                     if (tileSpec[i])
                     {
-                        setTileDef(i, prog);
+                        SetTileDef(i, prog);
                     }
             }
 
             // Check that default value has been specified
-            if (getDefault() == null)
+            if (GetDefault() == null)
             {
                 var ndefspec = 0;
                 for (var t = nt - 1; t >= 0; t--)
@@ -338,7 +330,7 @@ namespace CoreJ2K.j2k.entropy
                 // receive the default progressiveness.
                 if (ndefspec != 0)
                 {
-                    mode = checkProgMode(pl.getParameter("Rroi") == null ? "res" : "layer");
+                    mode = checkProgMode(pl.GetParameter("Rroi") == null ? "res" : "layer");
                     if (mode == -1)
                     {
                         errMsg2 = $"Unknown progression type : '{param}'";
@@ -346,13 +338,13 @@ namespace CoreJ2K.j2k.entropy
                     }
                     prog = new Progression[1];
                     prog[0] = new Progression(mode, 0, nc, 0, dls.Max + 1, nl);
-                    setDefault(prog);
+                    SetDefault(prog);
                 }
                 else
                 {
                     // All tile-component have been specified, takes the first
                     // tile-component value as default.
-                    setDefault(getTileCompVal(0, 0));
+                    SetDefault(GetTileCompVal(0, 0));
                     switch (specValType[0][0])
                     {
 

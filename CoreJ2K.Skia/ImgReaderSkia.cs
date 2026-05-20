@@ -81,7 +81,7 @@ namespace CoreJ2K.j2k.image.input
         /// data.</returns>
         /// <exception cref="ArgumentException">Unsupported <seealso cref="SKColorType" /></exception>
         /// <exception cref="ArgumentOutOfRangeException">Component index outside range</exception>
-        public override int getNomRangeBits(int compIndex)
+        public override int GetNomRangeBits(int compIndex)
         {
             // Check component index
             if (compIndex < 0 || compIndex > this.nc)

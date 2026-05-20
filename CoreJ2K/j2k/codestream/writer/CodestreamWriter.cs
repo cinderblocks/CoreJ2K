@@ -1,13 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: CodestreamWriter.java,v 1.11 2001/07/24 17:03:30 grosbois Exp $
-*
-* Class:                   CodestreamWriter
-*
-* Description:             Interface for writing bit streams
-*
-*
 *
 * COPYRIGHT:
 * 

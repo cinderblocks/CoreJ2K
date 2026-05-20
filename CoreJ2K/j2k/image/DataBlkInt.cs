@@ -1,12 +1,5 @@
 /*
-* CVS Identifier:
-*
-* $Id: DataBlkInt.java,v 1.7 2001/10/09 12:51:54 grosbois Exp $
-*
 * Interface:           DataBlkInt
-*
-* Description:         A signed int implementation of DataBlk
-*
 *
 *
 * COPYRIGHT:

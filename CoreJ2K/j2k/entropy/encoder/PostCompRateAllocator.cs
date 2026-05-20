@@ -1,14 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: PostCompRateAllocator.java,v 1.53 2001/08/28 09:24:47 grosbois Exp $
-*
-* Class:                   PostCompRateAllocator
-*
-* Description:             Generic interface for post-compression
-*                          rate allocator.
-*
-*
 *
 * COPYRIGHT:
 * 
@@ -162,7 +152,7 @@ namespace CoreJ2K.j2k.entropy.encoder
             pl.checkList(OPT_PREFIX, ParameterList.toNameArray(pinfo));
 
             // Construct the layer specification from the 'Alayers' option
-            var lyrs = parseAlayers(pl.getParameter("Alayers"), rate);
+            var lyrs = parseAlayers(pl.GetParameter("Alayers"), rate);
 
             var nTiles = encSpec.nTiles;
             var nComp = encSpec.nComp;
@@ -178,10 +168,10 @@ namespace CoreJ2K.j2k.entropy.encoder
         /// <param name="params">The parameters of the 'Alayers' option</param>
         /// <param name="rate">The overall target bitrate</param>
         /// <returns>The layer specification.</returns>
-        private static LayersInfo parseAlayers(string params_Renamed, float rate)
+        private static LayersInfo parseAlayers(string layerParams, float rate)
         {
             var lyrs = new LayersInfo(rate);
-            var stok = new StreamTokenizerSupport(new System.IO.StringReader(params_Renamed));
+            var stok = new StreamTokenizerSupport(new System.IO.StringReader(layerParams));
             stok.EOLIsSignificant(false);
 
             try

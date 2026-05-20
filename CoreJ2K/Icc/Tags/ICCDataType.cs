@@ -15,10 +15,10 @@ namespace CoreJ2K.Icc.Tags
         protected internal ICCDataType(int signature, byte[] data, int offset, int length)
             : base(signature, data, offset, offset + 2 * ICCProfile.int_size)
         {
-            type = ICCProfile.getInt(data, offset);
-            reserved = ICCProfile.getInt(data, offset + ICCProfile.int_size);
-            dataFlag = ICCProfile.getInt(data, offset + ICCProfile.int_size);
-            //Data = ICCProfile.getString(data, offset + ICCProfile.int_size, length, true);
+            type = ICCProfile.GetInt(data, offset);
+            reserved = ICCProfile.GetInt(data, offset + ICCProfile.int_size);
+            dataFlag = ICCProfile.GetInt(data, offset + ICCProfile.int_size);
+            //Data = ICCProfile.GetString(data, offset + ICCProfile.int_size, length, true);
         }
     }
 }

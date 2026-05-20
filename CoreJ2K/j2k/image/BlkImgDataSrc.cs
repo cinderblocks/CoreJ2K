@@ -1,13 +1,4 @@
 /* 
-* CVS identifier:
-* 
-* $Id: BlkImgDataSrc.java,v 1.9 2001/01/24 14:58:12 grosbois Exp $
-* 
-* Class:                   BlkImgDataSrc
-* 
-* Description:             Defines methods to transfer image data in blocks.
-* 
-* 
 * 
 * COPYRIGHT:
 * 

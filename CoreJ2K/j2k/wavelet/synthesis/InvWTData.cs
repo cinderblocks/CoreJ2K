@@ -1,13 +1,4 @@
 /* 
-* CVS identifier:
-* 
-* $Id: InvWTData.java,v 1.15 2001/09/20 13:07:09 grosbois Exp $
-* 
-* Class:                   InvWTData
-* 
-* Description:             <short description of class>
-* 
-* 
 * 
 * COPYRIGHT:
 * 
@@ -85,6 +76,6 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// <returns> The root of the tree structure.
         /// 
         /// </returns>
-        new SubbandSyn getSynSubbandTree(int t, int c);
+        new SubbandSyn GetSynSubbandTree(int t, int c);
     }
 }

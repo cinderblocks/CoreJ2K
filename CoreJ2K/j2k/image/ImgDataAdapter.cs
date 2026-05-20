@@ -1,15 +1,4 @@
 /* 
-* CVS identifier:
-* 
-* $Id: ImgDataAdapter.java,v 1.8 2001/09/14 09:17:23 grosbois Exp $
-* 
-* Class:                   ImgDataAdapter
-* 
-* Description:             A default implementation of the ImgData
-*                          interface that has an ImgData source and just
-*                          returns the values of the source.
-* 
-* 
 * 
 * COPYRIGHT:
 * 
@@ -198,9 +187,9 @@ namespace CoreJ2K.j2k.image
         /// 
         /// </returns>
         /// <seealso cref="ImgData" />
-        public virtual int getCompSubsX(int c)
+        public virtual int GetCompSubsX(int c)
         {
-            return imgdatasrc.getCompSubsX(c);
+            return imgdatasrc.GetCompSubsX(c);
         }
 
         /// <summary> Returns the component subsampling factor in the vertical direction, for
@@ -218,9 +207,9 @@ namespace CoreJ2K.j2k.image
         /// 
         /// </returns>
         /// <seealso cref="ImgData" />
-        public virtual int getCompSubsY(int c)
+        public virtual int GetCompSubsY(int c)
         {
-            return imgdatasrc.getCompSubsY(c);
+            return imgdatasrc.GetCompSubsY(c);
         }
 
         /// <summary> Returns the width in pixels of the specified tile-component
@@ -238,9 +227,9 @@ namespace CoreJ2K.j2k.image
         /// <returns> The width in pixels of component <tt>c</tt> in tile<tt>t</tt>.
         /// 
         /// </returns>
-        public virtual int getTileCompWidth(int t, int c)
+        public virtual int GetTileCompWidth(int t, int c)
         {
-            return imgdatasrc.getTileCompWidth(t, c);
+            return imgdatasrc.GetTileCompWidth(t, c);
         }
 
         /// <summary> Returns the height in pixels of the specified tile-component.
@@ -258,9 +247,9 @@ namespace CoreJ2K.j2k.image
         /// <tt>t</tt>.
         /// 
         /// </returns>
-        public virtual int getTileCompHeight(int t, int c)
+        public virtual int GetTileCompHeight(int t, int c)
         {
-            return imgdatasrc.getTileCompHeight(t, c);
+            return imgdatasrc.GetTileCompHeight(t, c);
         }
 
         /// <summary> Returns the width in pixels of the specified component in the overall
@@ -276,9 +265,9 @@ namespace CoreJ2K.j2k.image
         /// image.
         /// 
         /// </returns>
-        public virtual int getCompImgWidth(int c)
+        public virtual int GetCompImgWidth(int c)
         {
-            return imgdatasrc.getCompImgWidth(c);
+            return imgdatasrc.GetCompImgWidth(c);
         }
 
         /// <summary> Returns the height in pixels of the specified component in the overall
@@ -294,9 +283,9 @@ namespace CoreJ2K.j2k.image
         /// image.
         /// 
         /// </returns>
-        public virtual int getCompImgHeight(int c)
+        public virtual int GetCompImgHeight(int c)
         {
-            return imgdatasrc.getCompImgHeight(c);
+            return imgdatasrc.GetCompImgHeight(c);
         }
 
         /// <summary> Returns the number of bits, referred to as the "range bits",
@@ -317,9 +306,9 @@ namespace CoreJ2K.j2k.image
         /// image data (in the image domain).
         /// 
         /// </returns>
-        public virtual int getNomRangeBits(int compIndex)
+        public virtual int GetNomRangeBits(int compIndex)
         {
-            return imgdatasrc.getNomRangeBits(compIndex);
+            return imgdatasrc.GetNomRangeBits(compIndex);
         }
 
         /// <summary> Changes the current tile, given the new indexes. An
@@ -335,9 +324,9 @@ namespace CoreJ2K.j2k.image
         /// <param name="y">The vertical index of the new tile.
         /// 
         /// </param>
-        public virtual void setTile(int x, int y)
+        public virtual void SetTile(int x, int y)
         {
-            imgdatasrc.setTile(x, y);
+            imgdatasrc.SetTile(x, y);
             tIdx = TileIdx;
         }
 
@@ -349,9 +338,9 @@ namespace CoreJ2K.j2k.image
         /// source.
         /// 
         /// </summary>
-        public virtual void nextTile()
+        public virtual void NextTile()
         {
-            imgdatasrc.nextTile();
+            imgdatasrc.NextTile();
             tIdx = TileIdx;
         }
 
@@ -368,9 +357,9 @@ namespace CoreJ2K.j2k.image
         /// <returns> The current tile's indexes (vertical and horizontal indexes).
         /// 
         /// </returns>
-        public virtual Coord getTile(Coord co)
+        public virtual Coord GetTile(Coord co)
         {
-            return imgdatasrc.getTile(co);
+            return imgdatasrc.GetTile(co);
         }
 
         /// <summary> Returns the horizontal coordinate of the upper-left corner of the
@@ -382,9 +371,9 @@ namespace CoreJ2K.j2k.image
         /// <param name="c">The component index.
         /// 
         /// </param>
-        public virtual int getCompULX(int c)
+        public virtual int GetCompULX(int c)
         {
-            return imgdatasrc.getCompULX(c);
+            return imgdatasrc.GetCompULX(c);
         }
 
         /// <summary> Returns the vertical coordinate of the upper-left corner of the
@@ -396,9 +385,9 @@ namespace CoreJ2K.j2k.image
         /// <param name="c">The component index.
         /// 
         /// </param>
-        public virtual int getCompULY(int c)
+        public virtual int GetCompULY(int c)
         {
-            return imgdatasrc.getCompULY(c);
+            return imgdatasrc.GetCompULY(c);
         }
 
         /// <summary> Returns the number of tiles in the horizontal and vertical directions.
@@ -414,9 +403,9 @@ namespace CoreJ2K.j2k.image
         /// (Coord.y) directions.
         /// 
         /// </returns>
-        public virtual Coord getNumTiles(Coord co)
+        public virtual Coord GetNumTiles(Coord co)
         {
-            return imgdatasrc.getNumTiles(co);
+            return imgdatasrc.GetNumTiles(co);
         }
 
         /// <summary> Returns the total number of tiles in the image.
@@ -427,9 +416,9 @@ namespace CoreJ2K.j2k.image
         /// <returns> The total number of tiles in the image.
         /// 
         /// </returns>
-        public virtual int getNumTiles()
+        public virtual int GetNumTiles()
         {
-            return imgdatasrc.getNumTiles();
+            return imgdatasrc.GetNumTiles();
         }
     }
 }

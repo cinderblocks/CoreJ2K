@@ -1,12 +1,5 @@
 /*
-* CVS Identifier:
-*
-* $Id: BufferedRandomAccessFile.java,v 1.21 2001/04/15 14:34:29 grosbois Exp $
-*
 * Interface:           RandomAccessIO.java
-*
-* Description:         Abstract class for buffered random access I/O.
-*
 *
 *
 * COPYRIGHT:

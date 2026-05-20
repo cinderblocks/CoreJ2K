@@ -1,15 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: WaveletTransform.java,v 1.18 2001/10/24 12:02:35 grosbois Exp $
-*
-* Class:                   WaveletTransform
-*
-* Description:             Interface that defines how a forward or
-*                          inverse wavelet transform should present
-*                          itself.
-*
-*
 *
 * COPYRIGHT:
 * 
@@ -93,7 +82,7 @@ namespace CoreJ2K.j2k.wavelet
         /// <returns> true is the wavelet transform is reversible, false if not.
         /// 
         /// </returns>
-        bool isReversible(int t, int c);
+        bool IsReversible(int t, int c);
 
         /// <summary> Returns the implementation type of this wavelet transform (WT_IMPL_LINE
         /// or WT_IMPL_FRAME) for the specified component, in the current tile.
@@ -106,6 +95,6 @@ namespace CoreJ2K.j2k.wavelet
         /// transforms.
         /// 
         /// </returns>
-        int getImplementationType(int c);
+        int GetImplementationType(int c);
     }
 }

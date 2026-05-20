@@ -1,14 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: AnWTFilterFloatLift9x7.java,v 1.18 2002/01/22 13:31:31 grosbois Exp $
-*
-* Class:                   AnWTFilterFloatLift9x7
-*
-* Description:             An analyzing wavelet filter implementing the
-*                          lifting 9x7 transform.
-*
-*
 *
 * COPYRIGHT:
 * 
@@ -617,7 +607,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// filter.
         /// 
         /// </returns>
-        public override float[] getLPSynthesisFilter()
+        public override float[] GetLPSynthesisFilter()
         {
             return LPSynthesisFilter;
         }
@@ -638,7 +628,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// filter.
         /// 
         /// </returns>
-        public override float[] getHPSynthesisFilter()
+        public override float[] GetHPSynthesisFilter()
         {
             return HPSynthesisFilter;
         }
@@ -676,7 +666,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// processing is applied in the analyze() method.
         /// 
         /// </returns>
-        public override bool isSameAsFullWT(int tailOvrlp, int headOvrlp, int inLen)
+        public override bool IsSameAsFullWT(int tailOvrlp, int headOvrlp, int inLen)
         {
 
             //If the input signal has even length.

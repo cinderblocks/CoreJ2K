@@ -1,14 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: ImgWriter.java,v 1.12 2001/09/14 09:13:11 grosbois Exp $
-*
-* Class:                   ImgWriter
-*
-* Description:             Generic interface for all image writer
-*                          classes (to file or other resource)
-*
-*
 *
 * COPYRIGHT:
 * 
@@ -137,7 +127,7 @@ namespace CoreJ2K.j2k.image.output
         public virtual void writeAll()
         {
             // Find the list of tile to decode.
-            var nT = src.getNumTiles(null);
+            var nT = src.GetNumTiles(null);
 
             // Loop on vertical tiles
             for (var y = 0; y < nT.y; y++)
@@ -145,7 +135,7 @@ namespace CoreJ2K.j2k.image.output
                 // Loop on horizontal tiles
                 for (var x = 0; x < nT.x; x++)
                 {
-                    src.setTile(x, y);
+                    src.SetTile(x, y);
                     write();
                 } // End loop on horizontal tiles            
             } // End loop on vertical tiles

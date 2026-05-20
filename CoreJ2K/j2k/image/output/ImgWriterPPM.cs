@@ -1,14 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: ImgWriterPPM.java,v 1.16 2002/07/25 15:10:14 grosbois Exp $
-*
-* Class:                   ImgWriterRawPPM
-*
-* Description:             Image writer for unsigned 8 bit data in
-*                          PPM file format.
-* 
-*
 *
 * COPYRIGHT:
 * 
@@ -79,7 +69,7 @@ namespace CoreJ2K.j2k.image.output
         private readonly int[] levShift = new int[3];
 
         /// <summary>Where to write the data </summary>
-        private System.IO.Stream out_Renamed;
+        private System.IO.Stream outStream;
 
         /// <summary>The array of indexes of the components from where to get the data </summary>
         private readonly int[] cps = new int[3];
@@ -128,19 +118,19 @@ namespace CoreJ2K.j2k.image.output
         /// 
         /// </param>
         /// <seealso cref="DataBlk" />
-        public ImgWriterPPM(IFileInfo out_Renamed, BlkImgDataSrc imgSrc, int n1, int n2, int n3)
+        public ImgWriterPPM(IFileInfo outStream, BlkImgDataSrc imgSrc, int n1, int n2, int n3)
         {
             // Check that imgSrc is of the correct type
             // Check that the component index is valid
-            if ((n1 < 0) || (n1 >= imgSrc.NumComps) || (n2 < 0) || (n2 >= imgSrc.NumComps) || (n3 < 0) || (n3 >= imgSrc.NumComps) || (imgSrc.getNomRangeBits(n1) > 8) || (imgSrc.getNomRangeBits(n2) > 8) || (imgSrc.getNomRangeBits(n3) > 8))
+            if ((n1 < 0) || (n1 >= imgSrc.NumComps) || (n2 < 0) || (n2 >= imgSrc.NumComps) || (n3 < 0) || (n3 >= imgSrc.NumComps) || (imgSrc.GetNomRangeBits(n1) > 8) || (imgSrc.GetNomRangeBits(n2) > 8) || (imgSrc.GetNomRangeBits(n3) > 8))
             {
                 throw new ArgumentException("Invalid component indexes");
             }
             // Initialize
-            w = imgSrc.getCompImgWidth(n1);
-            h = imgSrc.getCompImgHeight(n1);
+            w = imgSrc.GetCompImgWidth(n1);
+            h = imgSrc.GetCompImgHeight(n1);
             // Check that all components have same width and height
-            if (w != imgSrc.getCompImgWidth(n2) || w != imgSrc.getCompImgWidth(n3) || h != imgSrc.getCompImgHeight(n2) || h != imgSrc.getCompImgHeight(n3))
+            if (w != imgSrc.GetCompImgWidth(n2) || w != imgSrc.GetCompImgWidth(n3) || h != imgSrc.GetCompImgHeight(n2) || h != imgSrc.GetCompImgHeight(n3))
             {
                 throw new ArgumentException("All components must have the same dimensions and no subsampling");
             }
@@ -148,11 +138,11 @@ namespace CoreJ2K.j2k.image.output
             h = imgSrc.ImgHeight;
 
             // Continue initialization
-            if (out_Renamed.Exists && !out_Renamed.Delete())
+            if (outStream.Exists && !outStream.Delete())
             {
                 throw new System.IO.IOException("Could not reset file");
             }
-            this.out_Renamed = FileStreamFactory.New(out_Renamed.FullName, "rw");
+            this.outStream = FileStreamFactory.New(outStream.FullName, "rw");
             src = imgSrc;
             cps[0] = n1;
             cps[1] = n2;
@@ -161,9 +151,9 @@ namespace CoreJ2K.j2k.image.output
             fb[1] = imgSrc.GetFixedPoint(n2);
             fb[2] = imgSrc.GetFixedPoint(n3);
 
-            levShift[0] = 1 << (imgSrc.getNomRangeBits(n1) - 1);
-            levShift[1] = 1 << (imgSrc.getNomRangeBits(n2) - 1);
-            levShift[2] = 1 << (imgSrc.getNomRangeBits(n3) - 1);
+            levShift[0] = 1 << (imgSrc.GetNomRangeBits(n1) - 1);
+            levShift[1] = 1 << (imgSrc.GetNomRangeBits(n2) - 1);
+            levShift[2] = 1 << (imgSrc.GetNomRangeBits(n3) - 1);
 
             writeHeaderInfo();
         }
@@ -211,19 +201,19 @@ namespace CoreJ2K.j2k.image.output
             int i;
             // Finish writing the file, writing 0s at the end if the data at end
             // has not been written.
-            if (out_Renamed.Length != 3 * w * h + offset)
+            if (outStream.Length != 3 * w * h + offset)
             {
                 // Goto end of file
-                out_Renamed.Seek(out_Renamed.Length, System.IO.SeekOrigin.Begin);
+                outStream.Seek(outStream.Length, System.IO.SeekOrigin.Begin);
                 // Fill with 0s n all the components
-                for (i = 3 * w * h + offset - (int)out_Renamed.Length; i > 0; i--)
+                for (i = 3 * w * h + offset - (int)outStream.Length; i > 0; i--)
                 {
-                    out_Renamed.WriteByte(0);
+                    outStream.WriteByte(0);
                 }
             }
-            out_Renamed.Dispose();
+            outStream.Dispose();
             src = null;
-            out_Renamed = null;
+            outStream = null;
             db = null;
         }
 
@@ -280,8 +270,8 @@ namespace CoreJ2K.j2k.image.output
 
             // Active tiles in all components have same offset since they are at
             // same resolution (PPM does not support anything else)
-            tOffx = src.getCompULX(cps[0]) - (int)Math.Ceiling(src.ImgULX / (double)src.getCompSubsX(cps[0]));
-            tOffy = src.getCompULY(cps[0]) - (int)Math.Ceiling(src.ImgULY / (double)src.getCompSubsY(cps[0]));
+            tOffx = src.GetCompULX(cps[0]) - (int)Math.Ceiling(src.ImgULX / (double)src.GetCompSubsX(cps[0]));
+            tOffy = src.GetCompULY(cps[0]) - (int)Math.Ceiling(src.ImgULY / (double)src.GetCompSubsY(cps[0]));
 
             // Check the array size
             if (db.data_array != null && db.data_array.Length < w)
@@ -304,7 +294,7 @@ namespace CoreJ2K.j2k.image.output
                 // write for each
                 for (c = 0; c < 3; c++)
                 {
-                    maxVal = (1 << src.getNomRangeBits(cps[c])) - 1;
+                    maxVal = (1 << src.GetNomRangeBits(cps[c])) - 1;
                     shift = levShift[c];
 
                     // Initialize db
@@ -342,8 +332,8 @@ namespace CoreJ2K.j2k.image.output
                     }
                 }
                 // Write buffer into file
-                out_Renamed.Seek(offset + 3 * (this.w * (uly + tOffy + i) + ulx + tOffx), System.IO.SeekOrigin.Begin);
-                out_Renamed.Write(buf, 0, 3 * w);
+                outStream.Seek(offset + 3 * (this.w * (uly + tOffy + i) + ulx + tOffx), System.IO.SeekOrigin.Begin);
+                outStream.Write(buf, 0, 3 * w);
             }
         }
 
@@ -363,8 +353,8 @@ namespace CoreJ2K.j2k.image.output
         {
             int i;
             var tIdx = src.TileIdx;
-            var tw = src.getTileCompWidth(tIdx, 0); // Tile width 
-            var th = src.getTileCompHeight(tIdx, 0); // Tile height
+            var tw = src.GetTileCompWidth(tIdx, 0); // Tile width 
+            var th = src.GetTileCompHeight(tIdx, 0); // Tile height
                                                      // Write in strips
             for (i = 0; i < th; i += DEF_STRIP_HEIGHT)
             {
@@ -391,35 +381,35 @@ namespace CoreJ2K.j2k.image.output
             string val;
 
             // write 'P6' to file
-            out_Renamed.Seek(0, System.IO.SeekOrigin.Begin);
-            out_Renamed.WriteByte(80);
-            out_Renamed.WriteByte(54);
-            out_Renamed.WriteByte(10); // new line
+            outStream.Seek(0, System.IO.SeekOrigin.Begin);
+            outStream.WriteByte(80);
+            outStream.WriteByte(54);
+            outStream.WriteByte(10); // new line
             offset = 3;
             // Write width in ASCII
             val = Convert.ToString(w);
             byteVals = System.Text.Encoding.UTF8.GetBytes(val);
             for (i = 0; i < byteVals.Length; i++)
             {
-                out_Renamed.WriteByte(byteVals[i]);
+                outStream.WriteByte(byteVals[i]);
                 offset++;
             }
-            out_Renamed.WriteByte(32); // blank
+            outStream.WriteByte(32); // blank
             offset++;
             // Write height in ASCII
             val = Convert.ToString(h);
             byteVals = System.Text.Encoding.UTF8.GetBytes(val);
             for (i = 0; i < byteVals.Length; i++)
             {
-                out_Renamed.WriteByte(byteVals[i]);
+                outStream.WriteByte(byteVals[i]);
                 offset++;
             }
 
-            out_Renamed.WriteByte(10); // newline
-            out_Renamed.WriteByte(50); // '2'
-            out_Renamed.WriteByte(53); // '5'
-            out_Renamed.WriteByte(53); // '5'
-            out_Renamed.WriteByte(10); // newline
+            outStream.WriteByte(10); // newline
+            outStream.WriteByte(50); // '2'
+            outStream.WriteByte(53); // '5'
+            outStream.WriteByte(53); // '5'
+            outStream.WriteByte(10); // newline
             offset += 5;
         }
 
@@ -435,7 +425,7 @@ namespace CoreJ2K.j2k.image.output
         public override string ToString()
         {
             return
-                $"ImgWriterPPM: WxH = {w}x{h}, Components = {cps[0]},{cps[1]},{cps[2]}\nUnderlying RandomAccessFile:\n{out_Renamed}";
+                $"ImgWriterPPM: WxH = {w}x{h}, Components = {cps[0]},{cps[1]},{cps[2]}\nUnderlying RandomAccessFile:\n{outStream}";
         }
     }
 }

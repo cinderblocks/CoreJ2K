@@ -1,7 +1,6 @@
 using CoreJ2K.j2k.image;
 /// <summary>**************************************************************************
 /// 
-/// $Id: Resampler.java,v 1.2 2002/08/08 14:07:31 grosbois Exp $
 /// 
 /// Copyright Eastman Kodak Company, 343 State Street, Rochester, NY 14650
 /// $Date $
@@ -71,8 +70,8 @@ namespace CoreJ2K.Color
             _subsY = new int[ncomps];
             for (c = 0; c < ncomps; ++c)
             {
-                _subsX[c] = src.getCompSubsX(c);
-                _subsY[c] = src.getCompSubsY(c);
+                _subsX[c] = src.GetCompSubsX(c);
+                _subsY[c] = src.GetCompSubsY(c);
             }
 
             // Calculate the minimum and maximum subsampling factor
@@ -101,8 +100,6 @@ namespace CoreJ2K.Color
             minCompSubsY = minY;
             maxCompSubsX = maxX;
             maxCompSubsY = maxY;
-
-            /* end Resampler ctor */
         }
 
         /// <summary> Return a DataBlk containing the requested component
@@ -393,23 +390,23 @@ namespace CoreJ2K.Color
         /// <summary> Returns the height in pixels of the specified component in the
         /// overall image.
         /// </summary>
-        public override int getCompImgHeight(int c)
+        public override int GetCompImgHeight(int c)
         {
-            return src.getCompImgHeight(c) * _subsY[c];
+            return src.GetCompImgHeight(c) * _subsY[c];
         }
 
         /// <summary> Returns the width in pixels of the specified component in the
         /// overall image.
         /// </summary>
-        public override int getCompImgWidth(int c)
+        public override int GetCompImgWidth(int c)
         {
-            return src.getCompImgWidth(c) * _subsX[c];
+            return src.GetCompImgWidth(c) * _subsX[c];
         }
 
         /// <summary> Returns the component subsampling factor in the horizontal
         /// direction, for the specified component.
         /// </summary>
-        public override int getCompSubsX(int c)
+        public override int GetCompSubsX(int c)
         {
             return 1;
         }
@@ -417,23 +414,21 @@ namespace CoreJ2K.Color
         /// <summary> Returns the component subsampling factor in the vertical
         /// direction, for the specified component.
         /// </summary>
-        public override int getCompSubsY(int c)
+        public override int GetCompSubsY(int c)
         {
             return 1;
         }
 
         /// <summary> Returns the height in pixels of the specified tile-component.</summary>
-        public override int getTileCompHeight(int t, int c)
+        public override int GetTileCompHeight(int t, int c)
         {
-            return src.getTileCompHeight(t, c) * src.getCompSubsY(c);
+            return src.GetTileCompHeight(t, c) * src.GetCompSubsY(c);
         }
 
         /// <summary> Returns the width in pixels of the specified tile-component..</summary>
-        public override int getTileCompWidth(int t, int c)
+        public override int GetTileCompWidth(int t, int c)
         {
-            return src.getTileCompWidth(t, c) * src.getCompSubsX(c);
+            return src.GetTileCompWidth(t, c) * src.GetCompSubsX(c);
         }
-
-        /* end class Resampler */
     }
 }

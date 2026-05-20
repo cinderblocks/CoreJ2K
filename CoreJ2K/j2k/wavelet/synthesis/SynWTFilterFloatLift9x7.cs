@@ -1,14 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: SynWTFilterFloatLift9x7.java,v 1.15 2002/05/22 15:01:56 grosbois Exp $
-*
-* Class:                   SynWTFilterFloatLift9x7
-*
-* Description:             A synthetizing wavelet filter implementing the
-*                          lifting 9x7 transform.
-*
-*
 *
 * COPYRIGHT:
 * 
@@ -782,7 +772,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// 
         /// 
         /// </returns>
-        public override bool isSameAsFullWT(int tailOvrlp, int headOvrlp, int inLen)
+        public override bool IsSameAsFullWT(int tailOvrlp, int headOvrlp, int inLen)
         {
 
             //If the input signal has even length.

@@ -1,14 +1,4 @@
 /* 
-* CVS identifier:
-* 
-* $Id: MultiResImgData.java,v 1.11 2002/07/25 15:11:33 grosbois Exp $
-* 
-* Class:                   MultiResImgData
-* 
-* Description:             The interface for classes that provide
-*                          multi-resolution image data.
-* 
-* 
 * 
 * COPYRIGHT:
 * 
@@ -143,7 +133,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// <returns> The total current tile's width in pixels.
         /// 
         /// </returns>
-        int getTileWidth(int rl);
+        int GetTileWidth(int rl);
 
         /// <summary> Returns the overall height of the current tile in pixels, for the given
         /// resolution level. This is the tile's height without accounting for any
@@ -157,7 +147,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// <returns> The total current tile's height in pixels.
         /// 
         /// </returns>
-        int getTileHeight(int rl);
+        int GetTileHeight(int rl);
 
         /// <summary> Returns the overall width of the image in pixels, for the given
         /// resolution level. This is the image's width without accounting for any
@@ -172,7 +162,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// <returns> The total image's width in pixels.
         /// 
         /// </returns>
-        int getImgWidth(int rl);
+        int GetImgWidth(int rl);
 
         /// <summary> Returns the overall height of the image in pixels, for the given
         /// resolution level. This is the image's height without accounting for any
@@ -187,7 +177,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// <returns> The total image's height in pixels.
         /// 
         /// </returns>
-        int getImgHeight(int rl);
+        int GetImgHeight(int rl);
 
         /// <summary> Returns the component subsampling factor in the horizontal direction,
         /// for the specified component. This is, approximately, the ratio of
@@ -202,7 +192,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// 
         /// </returns>
         /// <seealso cref="j2k.image.ImgData" />
-        int getCompSubsX(int c);
+        int GetCompSubsX(int c);
 
         /// <summary> Returns the component subsampling factor in the vertical direction, for
         /// the specified component. This is, approximately, the ratio of
@@ -217,7 +207,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// 
         /// </returns>
         /// <seealso cref="j2k.image.ImgData" />
-        int getCompSubsY(int c);
+        int GetCompSubsY(int c);
 
         /// <summary> Returns the width in pixels of the specified tile-component for the
         /// given resolution level.
@@ -236,7 +226,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// for resolution <tt>rl</tt>.
         /// 
         /// </returns>
-        int getTileCompWidth(int t, int c, int rl);
+        int GetTileCompWidth(int t, int c, int rl);
 
         /// <summary> Returns the height in pixels of the specified tile-component for the
         /// given resolution level.
@@ -255,7 +245,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// <tt>t</tt>.
         /// 
         /// </returns>
-        int getTileCompHeight(int t, int c, int rl);
+        int GetTileCompHeight(int t, int c, int rl);
 
         /// <summary> Returns the width in pixels of the specified component in the overall
         /// image, for the given resolution level.
@@ -271,7 +261,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// image.
         /// 
         /// </returns>
-        int getCompImgWidth(int c, int rl);
+        int GetCompImgWidth(int c, int rl);
 
         /// <summary> Returns the height in pixels of the specified component in the overall
         /// image, for the given resolution level.
@@ -287,7 +277,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// image.
         /// 
         /// </returns>
-        int getCompImgHeight(int n, int rl);
+        int GetCompImgHeight(int n, int rl);
 
         /// <summary> Changes the current tile, given the new indexes. An
         /// IllegalArgumentException is thrown if the indexes do not correspond to
@@ -300,14 +290,14 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// <param name="y">The vertical indexes of the new tile.
         /// 
         /// </param>
-        void setTile(int x, int y);
+        void SetTile(int x, int y);
 
         /// <summary> Advances to the next tile, in standard scan-line order (by rows then
         /// columns). An NoNextElementException is thrown if the current tile is
         /// the last one (i.e. there is no next tile).
         /// 
         /// </summary>
-        void nextTile();
+        void NextTile();
 
         /// <summary> Returns the indexes of the current tile. These are the horizontal and
         /// vertical indexes of the current tile.
@@ -320,7 +310,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// <returns> The current tile's indexes (vertical and horizontal indexes).
         /// 
         /// </returns>
-        Coord getTile(Coord co);
+        Coord GetTile(Coord co);
 
         /// <summary> Returns the horizontal coordinate of the upper-left corner of the
         /// specified resolution in the given component of the current tile.
@@ -332,7 +322,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// <param name="rl">The resolution level index.
         /// 
         /// </param>
-        int getResULX(int c, int rl);
+        int GetResULX(int c, int rl);
 
         /// <summary> Returns the vertical coordinate of the upper-left corner of the
         /// specified resolution in the given component of the current tile.
@@ -344,7 +334,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// <param name="rl">The resolution level index.
         /// 
         /// </param>
-        int getResULY(int c, int rl);
+        int GetResULY(int c, int rl);
 
         /// <summary> Returns the horizontal coordinate of the image origin, the top-left
         /// corner, in the canvas system, on the reference grid at the specified
@@ -359,7 +349,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// system, on the reference grid.
         /// 
         /// </returns>
-        int getImgULX(int rl);
+        int GetImgULX(int rl);
 
         /// <summary> Returns the vertical coordinate of the image origin, the top-left
         /// corner, in the canvas system, on the reference grid at the specified
@@ -374,7 +364,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// system, on the reference grid.
         /// 
         /// </returns>
-        int getImgULY(int rl);
+        int GetImgULY(int rl);
 
         /// <summary> Returns the number of tiles in the horizontal and vertical directions.
         /// 
@@ -387,7 +377,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// (Coord.y) directions.
         /// 
         /// </returns>
-        Coord getNumTiles(Coord co);
+        Coord GetNumTiles(Coord co);
 
         /// <summary> Returns the total number of tiles in the image.
         /// 
@@ -395,7 +385,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// <returns> The total number of tiles in the image.
         /// 
         /// </returns>
-        int getNumTiles();
+        int GetNumTiles();
 
         /// <summary> Returns the specified synthesis subband tree 
         /// 
@@ -406,6 +396,6 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// <param name="c">Component index.
         /// 
         /// </param>
-        SubbandSyn getSynSubbandTree(int t, int c);
+        SubbandSyn GetSynSubbandTree(int t, int c);
     }
 }

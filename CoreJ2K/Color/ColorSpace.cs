@@ -1,6 +1,5 @@
 /// <summary>**************************************************************************
 /// 
-/// $Id: ColorSpace.java,v 1.2 2002/07/25 16:31:11 grosbois Exp $
 /// 
 /// Copyright Eastman Kodak Company, 343 State Street, Rochester, NY 14650
 /// $Date $
@@ -73,7 +72,7 @@ namespace CoreJ2K.Color
         private ImageHeaderBox ihbox = null;
 
         /// <summary>Input image </summary>
-        private readonly io_RandomAccessIO in_Renamed = null;
+        private readonly io_RandomAccessIO inStream = null;
 
         /// <summary>Indent a String that contains newlines. </summary>
         public static string indent(string ident, System.Text.StringBuilder instr)
@@ -106,18 +105,18 @@ namespace CoreJ2K.Color
         /// </param>
         /// <exception cref="IOException,">ColorSpaceException
         /// </exception>
-        public ColorSpace(io_RandomAccessIO in_Renamed, reader_HeaderDecoder hd, util_ParameterList pl)
+        public ColorSpace(io_RandomAccessIO inStream, reader_HeaderDecoder hd, util_ParameterList pl)
         {
             this.pl = pl;
-            this.in_Renamed = in_Renamed;
+            this.inStream = inStream;
             this.hd = hd;
-            getBoxes();
+            GetBoxes();
         }
 
         /// <summary> Retrieve the various boxes from the JP2 file.</summary>
         /// <exception cref="ColorSpaceException,">IOException
         /// </exception>
-        protected internal void getBoxes()
+        protected internal void GetBoxes()
         {
             //byte[] data;
             int type;
@@ -129,15 +128,15 @@ namespace CoreJ2K.Color
             // Search the toplevel boxes for the header box
             while (true)
             {
-                in_Renamed.seek(boxStart);
-                in_Renamed.readFully(boxHeader, 0, 16);
+                inStream.seek(boxStart);
+                inStream.readFully(boxHeader, 0, 16);
                 // CONVERSION PROBLEM?
 
-                len = Icc.ICCProfile.getInt(boxHeader, 0);
+                len = Icc.ICCProfile.GetInt(boxHeader, 0);
                 if (len == 1)
-                    len = Icc.ICCProfile.getLong(boxHeader, 8); // Extended
+                    len = Icc.ICCProfile.GetLong(boxHeader, 8); // Extended
                                                                 // length
-                type = Icc.ICCProfile.getInt(boxHeader, 4);
+                type = Icc.ICCProfile.GetInt(boxHeader, 4);
 
                 // Verify the contents of the file so far.
                 if (i == 0 && type != FileFormatBoxes.JP2_SIGNATURE_BOX)
@@ -171,34 +170,34 @@ namespace CoreJ2K.Color
 
             for (boxStart += 8; boxStart < headerBoxEnd; boxStart = (int)(boxStart + len))
             {
-                in_Renamed.seek(boxStart);
-                in_Renamed.readFully(boxHeader, 0, 16);
-                len = Icc.ICCProfile.getInt(boxHeader, 0);
+                inStream.seek(boxStart);
+                inStream.readFully(boxHeader, 0, 16);
+                len = Icc.ICCProfile.GetInt(boxHeader, 0);
                 if (len == 1)
                     throw new ColorSpaceException("Extended length boxes " + "not supported");
-                type = Icc.ICCProfile.getInt(boxHeader, 4);
+                type = Icc.ICCProfile.GetInt(boxHeader, 4);
 
                 switch (type)
                 {
 
                     case FileFormatBoxes.IMAGE_HEADER_BOX:
-                        ihbox = new ImageHeaderBox(in_Renamed, boxStart);
+                        ihbox = new ImageHeaderBox(inStream, boxStart);
                         break;
 
                     case FileFormatBoxes.COLOUR_SPECIFICATION_BOX:
-                        csbox = new ColorSpecificationBox(in_Renamed, boxStart);
+                        csbox = new ColorSpecificationBox(inStream, boxStart);
                         break;
 
                     case FileFormatBoxes.CHANNEL_DEFINITION_BOX:
-                        cdbox = new ChannelDefinitionBox(in_Renamed, boxStart);
+                        cdbox = new ChannelDefinitionBox(inStream, boxStart);
                         break;
 
                     case FileFormatBoxes.COMPONENT_MAPPING_BOX:
-                        cmbox = new ComponentMappingBox(in_Renamed, boxStart);
+                        cmbox = new ComponentMappingBox(inStream, boxStart);
                         break;
 
                     case FileFormatBoxes.PALETTE_BOX:
-                        pbox = new PaletteBox(in_Renamed, boxStart);
+                        pbox = new PaletteBox(inStream, boxStart);
                         break;
 
                     default:
@@ -216,21 +215,21 @@ namespace CoreJ2K.Color
 
 
         /// <summary>Return the channel definition of the input component. </summary>
-        public virtual int getChannelDefinition(int c)
+        public virtual int GetChannelDefinition(int c)
         {
-            return cdbox?.getCn(c + 1) ?? c;
+            return cdbox?.GetCn(c + 1) ?? c;
         }
 
         /// <summary>Return the colorspace (sYCC, sRGB, sGreyScale). </summary>
-        public virtual CSEnum getColorSpace()
+        public virtual CSEnum GetColorSpace()
         {
             return csbox.ColorSpace;
         }
 
         /// <summary>Return bitdepth of the palette entries. </summary>
-        public virtual int getPaletteChannelBits(int c)
+        public virtual int GetPaletteChannelBits(int c)
         {
-            return pbox?.getBitDepth(c) ?? 0;
+            return pbox?.GetBitDepth(c) ?? 0;
         }
 
         /// <summary> Return a palettized sample</summary>
@@ -240,15 +239,15 @@ namespace CoreJ2K.Color
         /// </param>
         /// <returns> palettized sample
         /// </returns>
-        public virtual int getPalettizedSample(int channel, int index)
+        public virtual int GetPalettizedSample(int channel, int index)
         {
-            return pbox?.getEntry(channel, index) ?? 0;
+            return pbox?.GetEntry(index, channel) ?? 0;
         }
 
         /// <summary>Signed output predicate. </summary>
-        public virtual bool isOutputSigned(int channel)
+        public virtual bool IsOutputSigned(int channel)
         {
-            return pbox?.isSigned(channel) ?? hd.isOriginalSigned(channel);
+            return pbox?.IsSigned(channel) ?? hd.IsOriginalSigned(channel);
         }
 
         /// <summary>Return a suitable String representation of the class instance. </summary>
@@ -326,14 +325,14 @@ namespace CoreJ2K.Color
 		/// </author>
 		public class Enumeration
 		{
-			public System.String value_Renamed;
-			public Enumeration(System.String value_Renamed)
+			public System.String value;
+			public Enumeration(System.String value)
 			{
-				this.value_Renamed = value_Renamed;
+				this.value = value;
 			}
 			public override System.String ToString()
 			{
-				return value_Renamed;
+				return value;
 			}
 		}
 		
@@ -345,7 +344,7 @@ namespace CoreJ2K.Color
 		/// </author>
 		public class MethodEnum:Enumeration
 		{
-			public MethodEnum(System.String value_Renamed):base(value_Renamed)
+			public MethodEnum(System.String value):base(value)
 			{
 			}
 		}
@@ -357,11 +356,10 @@ namespace CoreJ2K.Color
 		/// </author>
 		public class CSEnum:Enumeration
 		{
-			public CSEnum(System.String value_Renamed):base(value_Renamed)
+			public CSEnum(System.String value):base(value)
 			{
 			}
 		}
 		*/
-        /* end class ColorSpace */
     }
 }

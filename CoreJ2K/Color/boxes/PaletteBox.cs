@@ -1,6 +1,5 @@
 /// <summary>**************************************************************************
 /// 
-/// $Id: PaletteBox.java,v 1.1 2002/07/25 14:50:47 grosbois Exp $
 /// 
 /// Copyright Eastman Kodak Company, 343 State Street, Rochester, NY 14650
 /// $Date $
@@ -39,7 +38,7 @@ namespace CoreJ2K.Color.Boxes
         /// </param>
         /// <exception cref="IOException,">ColorSpaceException 
         /// </exception>
-        public PaletteBox(io_RandomAccessIO in_Renamed, int boxStart) : base(in_Renamed, boxStart)
+        public PaletteBox(io_RandomAccessIO inStream, int boxStart) : base(inStream, boxStart)
         {
             readBox();
         }
@@ -52,21 +51,21 @@ namespace CoreJ2K.Color.Boxes
             //int entry;
 
             // Read the number of palette entries and columns per entry.
-            in_Renamed.seek(dataStart);
-            in_Renamed.readFully(bfr, 0, 3);
-            NumEntries = ICCProfile.getShort(bfr, 0) & 0x0000ffff;
+            inStream.seek(dataStart);
+            inStream.readFully(bfr, 0, 3);
+            NumEntries = ICCProfile.GetShort(bfr, 0) & 0x0000ffff;
             NumColumns = bfr[2] & 0x0000ffff;
 
             // Read the bitdepths for each column
             bitdepth = new short[NumColumns];
             bfr = new byte[NumColumns];
-            in_Renamed.readFully(bfr, 0, NumColumns);
+            inStream.readFully(bfr, 0, NumColumns);
             for (i = 0; i < NumColumns; ++i)
             {
                 bitdepth[i] = (short)(bfr[i] & 0x00fff);
             }
 
-            entries = new int[NumEntries * NumColumns][];
+            entries = new int[NumEntries][];
 
             bfr = new byte[2];
             for (i = 0; i < NumEntries; ++i)
@@ -76,21 +75,21 @@ namespace CoreJ2K.Color.Boxes
                 for (j = 0; j < NumColumns; ++j)
                 {
 
-                    int bd = getBitDepth(j);
-                    var signed = isSigned(j);
+                    int bd = GetBitDepth(j);
+                    var signed = IsSigned(j);
 
-                    switch (getEntrySize(j))
+                    switch (GetEntrySize(j))
                     {
 
                         case 1:  // 8 bit entries
-                            in_Renamed.readFully(bfr, 0, 1);
+                            inStream.readFully(bfr, 0, 1);
                             b = bfr[0];
                             break;
 
 
                         case 2:  // 16 bits
-                            in_Renamed.readFully(bfr, 0, 2);
-                            b = ICCProfile.getShort(bfr, 0);
+                            inStream.readFully(bfr, 0, 2);
+                            b = ICCProfile.GetShort(bfr, 0);
                             break;
 
 
@@ -127,25 +126,25 @@ namespace CoreJ2K.Color.Boxes
         }
 
         /// <summary>Are entries signed predicate. </summary>
-        public bool isSigned(int column)
+        public bool IsSigned(int column)
         {
             return (bitdepth[column] & 0x80) == 1;
         }
 
         /// <summary>Are entries unsigned predicate. </summary>
-        public bool isUnSigned(int column)
+        public bool IsUnSigned(int column)
         {
-            return !isSigned(column);
+            return !IsSigned(column);
         }
 
         /// <summary>Return the bitdepth of palette entries. </summary>
-        public short getBitDepth(int column)
+        public short GetBitDepth(int column)
         {
             return (short)((bitdepth[column] & 0x7f) + 1);
         }
 
         /// <summary>Return an entry for a given index and column. </summary>
-        public int getEntry(int column, int entry)
+        public int GetEntry(int entry, int column)
         {
             return entries[entry][column];
         }
@@ -155,17 +154,15 @@ namespace CoreJ2K.Color.Boxes
         {
             var rep = new System.Text.StringBuilder("[PaletteBox ").Append("nentries= ").Append(Convert.ToString(NumEntries)).Append(", ncolumns= ").Append(Convert.ToString(NumColumns)).Append(", bitdepth per column= (");
             for (var i = 0; i < NumColumns; ++i)
-                rep.Append(getBitDepth(i)).Append(isSigned(i) ? "S" : "U").Append(i < NumColumns - 1 ? ", " : "");
+                rep.Append(GetBitDepth(i)).Append(IsSigned(i) ? "S" : "U").Append(i < NumColumns - 1 ? ", " : "");
             return rep.Append(")]").ToString();
         }
 
-        private int getEntrySize(int column)
+        private int GetEntrySize(int column)
         {
-            int bd = getBitDepth(column);
+            int bd = GetBitDepth(column);
             return bd / 8 + (bd % 8) == 0 ? 0 : 1;
         }
-
-        /* end class PaletteBox */
         static PaletteBox()
         {
             {

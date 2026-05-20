@@ -64,7 +64,7 @@ namespace CoreJ2K.j2k.image.input
             barr = null;
         }
 
-        public override int getNomRangeBits(int compIndex)
+        public override int GetNomRangeBits(int compIndex)
         {
             if (compIndex < 0 || compIndex >= nc) throw new ArgumentOutOfRangeException(nameof(compIndex));
             return bitsPerComponent;

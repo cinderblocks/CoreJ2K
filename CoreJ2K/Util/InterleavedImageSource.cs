@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2007-2016 CSJ2K contributors.
+// Copyright (c) 2007-2016 CSJ2K contributors.
 // Copyright (c) 2025 Sjofn LLC.
 // Licensed under the BSD 3-Clause License.
 
@@ -68,17 +68,17 @@ namespace CoreJ2K.Util
 
         #region METHODS
 
-        public int getCompSubsX(int c)
+        public int GetCompSubsX(int c)
         {
             return 1;
         }
 
-        public int getCompSubsY(int c)
+        public int GetCompSubsY(int c)
         {
             return 1;
         }
 
-        public int getTileCompWidth(int t, int c)
+        public int GetTileCompWidth(int t, int c)
         {
             if (t != 0)
             {
@@ -87,7 +87,7 @@ namespace CoreJ2K.Util
             return TileWidth;
         }
 
-        public int getTileCompHeight(int t, int c)
+        public int GetTileCompHeight(int t, int c)
         {
             if (t != 0)
             {
@@ -96,22 +96,22 @@ namespace CoreJ2K.Util
             return TileHeight;
         }
 
-        public int getCompImgWidth(int c)
+        public int GetCompImgWidth(int c)
         {
             return TileWidth;
         }
 
-        public int getCompImgHeight(int c)
+        public int GetCompImgHeight(int c)
         {
             return TileHeight;
         }
 
-        public int getNomRangeBits(int compIndex)
+        public int GetNomRangeBits(int compIndex)
         {
             return rb;
         }
 
-        public void setTile(int x, int y)
+        public void SetTile(int x, int y)
         {
             if (x != 0 || y != 0)
             {
@@ -119,12 +119,12 @@ namespace CoreJ2K.Util
             }
         }
 
-        public void nextTile()
+        public void NextTile()
         {
             throw new NoNextElementException();
         }
 
-        public Coord getTile(Coord co)
+        public Coord GetTile(Coord co)
         {
             if (co != null)
             {
@@ -136,17 +136,17 @@ namespace CoreJ2K.Util
             return new Coord(0, 0);
         }
 
-        public int getCompULX(int c)
+        public int GetCompULX(int c)
         {
             return 0;
         }
 
-        public int getCompULY(int c)
+        public int GetCompULY(int c)
         {
             return 0;
         }
 
-        public Coord getNumTiles(Coord co)
+        public Coord GetNumTiles(Coord co)
         {
             if (co != null)
             {
@@ -158,7 +158,7 @@ namespace CoreJ2K.Util
             return new Coord(1, 1);
         }
 
-        public int getNumTiles()
+        public int GetNumTiles()
         {
             return 1;
         }

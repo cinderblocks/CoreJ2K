@@ -1,14 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: SubbandAn.java,v 1.30 2001/08/02 09:13:53 grosbois Exp $
-*
-* Class:                   SubbandAn
-*
-* Description:             Element for a tree structure for a descripotion
-*                          of subbands on the anslysis side.
-*
-*
 *
 * COPYRIGHT:
 * 
@@ -312,26 +302,26 @@ namespace CoreJ2K.j2k.wavelet.analysis
                     if (subb_LL.l2Norm < 0f)
                     {
                         subb_LL.calcBasisWaveForms(wfs);
-                        wfs[0] = hFilter.getLPSynWaveForm(wfs[0], null);
-                        wfs[1] = vFilter.getLPSynWaveForm(wfs[1], null);
+                        wfs[0] = hFilter.GetLPSynWaveForm(wfs[0], null);
+                        wfs[1] = vFilter.GetLPSynWaveForm(wfs[1], null);
                     }
                     else if (subb_HL.l2Norm < 0f)
                     {
                         subb_HL.calcBasisWaveForms(wfs);
-                        wfs[0] = hFilter.getHPSynWaveForm(wfs[0], null);
-                        wfs[1] = vFilter.getLPSynWaveForm(wfs[1], null);
+                        wfs[0] = hFilter.GetHPSynWaveForm(wfs[0], null);
+                        wfs[1] = vFilter.GetLPSynWaveForm(wfs[1], null);
                     }
                     else if (subb_LH.l2Norm < 0f)
                     {
                         subb_LH.calcBasisWaveForms(wfs);
-                        wfs[0] = hFilter.getLPSynWaveForm(wfs[0], null);
-                        wfs[1] = vFilter.getHPSynWaveForm(wfs[1], null);
+                        wfs[0] = hFilter.GetLPSynWaveForm(wfs[0], null);
+                        wfs[1] = vFilter.GetHPSynWaveForm(wfs[1], null);
                     }
                     else if (subb_HH.l2Norm < 0f)
                     {
                         subb_HH.calcBasisWaveForms(wfs);
-                        wfs[0] = hFilter.getHPSynWaveForm(wfs[0], null);
-                        wfs[1] = vFilter.getHPSynWaveForm(wfs[1], null);
+                        wfs[0] = hFilter.GetHPSynWaveForm(wfs[0], null);
+                        wfs[1] = vFilter.GetHPSynWaveForm(wfs[1], null);
                     }
                     else
                     {

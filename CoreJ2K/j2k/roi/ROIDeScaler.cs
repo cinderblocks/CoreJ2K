@@ -1,13 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: ROIDeScaler.java,v 1.39 2001/10/24 12:02:51 grosbois Exp $
-*
-*
-* Class:                   ROIDeScaler
-*
-* Description:             The class taking care of de-scaling ROI coeffs.
-*
 *
 *
 * COPYRIGHT:
@@ -147,9 +138,9 @@ namespace CoreJ2K.j2k.roi
         /// <returns> The root of the tree structure.
         /// 
         /// </returns>
-        public override SubbandSyn getSynSubbandTree(int t, int c)
+        public override SubbandSyn GetSynSubbandTree(int t, int c)
         {
-            return src.getSynSubbandTree(t, c);
+            return src.GetSynSubbandTree(t, c);
         }
 
         /// <summary> Returns the specified code-block in the current tile for the specified
@@ -200,9 +191,9 @@ namespace CoreJ2K.j2k.roi
         /// 
         /// </returns>
         /// <seealso cref="DataBlk" />
-        public virtual DataBlk getCodeBlock(int c, int m, int n, SubbandSyn sb, DataBlk cblk)
+        public virtual DataBlk GetCodeBlock(int c, int m, int n, SubbandSyn sb, DataBlk cblk)
         {
-            return getInternCodeBlock(c, m, n, sb, cblk);
+            return GetInternCodeBlock(c, m, n, sb, cblk);
         }
 
         /// <summary> Returns the specified code-block in the current tile for the specified
@@ -251,7 +242,7 @@ namespace CoreJ2K.j2k.roi
         /// 
         /// </returns>
         /// <seealso cref="DataBlk" />
-        public virtual DataBlk getInternCodeBlock(int c, int m, int n, SubbandSyn sb, DataBlk cblk)
+        public virtual DataBlk GetInternCodeBlock(int c, int m, int n, SubbandSyn sb, DataBlk cblk)
         {
             int i, j, k, wrap; // mi removed
             int ulx, uly, w, h;
@@ -260,10 +251,10 @@ namespace CoreJ2K.j2k.roi
             //int limit;
 
             // Get data block from entropy decoder
-            cblk = src.getInternCodeBlock(c, m, n, sb, cblk);
+            cblk = src.GetInternCodeBlock(c, m, n, sb, cblk);
 
             // If there are no ROIs in the tile, Or if we already got all blocks
-            var noRoiInTile = false || mss?.getTileCompVal(TileIdx, c) == null;
+            var noRoiInTile = false || mss?.GetTileCompVal(TileIdx, c) == null;
 
             if (noRoiInTile || cblk == null)
             {
@@ -338,7 +329,7 @@ namespace CoreJ2K.j2k.roi
 
             // Check if no_roi specified in command line or no roi signalled
             // in bit stream
-            noRoi = pl.getParameter("Rno_roi");
+            noRoi = pl.GetParameter("Rno_roi");
             if (noRoi != null || decSpec.rois == null)
             {
                 // no_roi specified in commandline!

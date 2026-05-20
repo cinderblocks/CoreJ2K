@@ -18,11 +18,11 @@ namespace CoreJ2K.Icc.Tags
         protected internal ICCViewType(int signature, byte[] data, int offset, int length)
             : base(signature, data, offset, offset + 2 * ICCProfile.int_size)
         {
-            type = ICCProfile.getInt(data, offset);
-            reserved = ICCProfile.getInt(data, offset + ICCProfile.int_size);
-            CIEilluminant = ICCProfile.getXYZNumber(data, offset + ICCProfile.int_size);
-            CIEsurround = ICCProfile.getXYZNumber(data, offset + (ICCProfile.int_size * 3));
-            illuminant = ICCProfile.getInt(data, offset + (ICCProfile.int_size * 3));
+            type = ICCProfile.GetInt(data, offset);
+            reserved = ICCProfile.GetInt(data, offset + ICCProfile.int_size);
+            CIEilluminant = ICCProfile.GetXYZNumber(data, offset + ICCProfile.int_size);
+            CIEsurround = ICCProfile.GetXYZNumber(data, offset + (ICCProfile.int_size * 3));
+            illuminant = ICCProfile.GetInt(data, offset + (ICCProfile.int_size * 3));
         }
     }
 }

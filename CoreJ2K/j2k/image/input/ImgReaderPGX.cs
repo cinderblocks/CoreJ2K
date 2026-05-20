@@ -1,14 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: ImgReaderPGX.java,v 1.13 2002/07/25 15:08:13 grosbois Exp $
-*
-* Class:                   ImgReaderPGX
-*
-* Description:             Image Reader for PGX files (custom file format
-*                          for VM3A)
-*
-*
 *
 * COPYRIGHT:
 * 
@@ -106,7 +96,7 @@ namespace CoreJ2K.j2k.image.input
         private readonly int bitDepth;
 
         /// <summary>Whether the input datas are signed or not </summary>
-        private readonly bool isSigned;
+        private readonly bool IsSigned;
 
 
         /// <summary>The pack length of one sample (in bytes, according to the output
@@ -181,9 +171,9 @@ namespace CoreJ2K.j2k.image.input
                 {
                     tmp = st.NextToken();
                     if (tmp.Equals("+"))
-                        isSigned = false;
+                        IsSigned = false;
                     else if (tmp.Equals("-"))
-                        isSigned = true;
+                        IsSigned = true;
                     else
                         throw new System.IO.IOException("Not a PGX file");
                 }
@@ -271,7 +261,7 @@ namespace CoreJ2K.j2k.image.input
         /// <param name="compIndex">The index of the component.</param>
         /// <returns> The number of bits corresponding to the nominal range of the
         /// data.</returns>
-        public override int getNomRangeBits(int compIndex)
+        public override int GetNomRangeBits(int compIndex)
         {
             // Check component index
             if (compIndex != 0)
@@ -376,7 +366,7 @@ namespace CoreJ2K.j2k.image.input
                     case 1:  // Samples packed into 1 byte
                              // Read line by line
                         mi = blk.uly + blk.h;
-                        if (isSigned)
+                        if (IsSigned)
                         {
                             for (i = blk.uly; i < mi; i++)
                             {
@@ -405,7 +395,7 @@ namespace CoreJ2K.j2k.image.input
                     case 2:  // Samples packed into 2 bytes
                              // Read line by line
                         mi = blk.uly + blk.h;
-                        if (isSigned)
+                        if (IsSigned)
                         {
                             for (i = blk.uly; i < mi; i++)
                             {
@@ -472,7 +462,7 @@ namespace CoreJ2K.j2k.image.input
                     case 4:  // Samples packed into 4 bytes
                              // Read line by line
                         mi = blk.uly + blk.h;
-                        if (isSigned)
+                        if (IsSigned)
                         {
                             for (i = blk.uly; i < mi; i++)
                             {
@@ -604,7 +594,7 @@ namespace CoreJ2K.j2k.image.input
             // Check component index
             if (compIndex != 0)
                 throw new ArgumentOutOfRangeException(nameof(compIndex) + " is out of range");
-            return isSigned;
+            return IsSigned;
         }
 
         /// <summary> Returns a string of information about the object, more than 1 line
@@ -614,7 +604,7 @@ namespace CoreJ2K.j2k.image.input
         public override string ToString()
         {
             return
-                $"ImgReaderPGX: WxH = {w}x{h}, Component = 0, Bit-depth = {bitDepth}, signed = {isSigned}\nUnderlying RandomAccessIO:\n{inRenamed}";
+                $"ImgReaderPGX: WxH = {w}x{h}, Component = 0, Bit-depth = {bitDepth}, signed = {IsSigned}\nUnderlying RandomAccessIO:\n{inRenamed}";
         }
     }
 }

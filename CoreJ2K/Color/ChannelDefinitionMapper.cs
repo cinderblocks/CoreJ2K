@@ -1,7 +1,6 @@
 using CoreJ2K.j2k.image;
 /// <summary>**************************************************************************
 /// 
-/// $Id: ChannelDefinitionMapper.java,v 1.2 2002/08/08 14:06:53 grosbois Exp $
 /// 
 /// Copyright Eastman Kodak Company, 343 State Street, Rochester, NY 14650
 /// $Date $
@@ -23,7 +22,7 @@ namespace CoreJ2K.Color
     /// </author>
     public class ChannelDefinitionMapper : ColorSpaceMapper
     {
-        // Channel definition mapping cached at construction; csMap.getChannelDefinition
+        // Channel definition mapping cached at construction; csMap.GetChannelDefinition
         // calls into the cdef box on every invocation and is called per-row per-component.
         private readonly int[] _channelDef;
         /// <summary> Factory method for creating instances of this class.</summary>
@@ -53,8 +52,7 @@ namespace CoreJ2K.Color
         {
             _channelDef = new int[ncomps];
             for (var i = 0; i < ncomps; i++)
-                _channelDef[i] = csMap.getChannelDefinition(i);
-            /* end ChannelDefinitionMapper ctor */
+                _channelDef[i] = csMap.GetChannelDefinition(i);
         }
 
 
@@ -92,9 +90,9 @@ namespace CoreJ2K.Color
         /// 
         /// </returns>
         /// <seealso cref="GetInternCompData" />
-        public override DataBlk GetCompData(DataBlk out_Renamed, int c)
+        public override DataBlk GetCompData(DataBlk output, int c)
         {
-            return src.GetCompData(out_Renamed, _channelDef[c]);
+            return src.GetCompData(output, _channelDef[c]);
         }
 
         /// <summary> Returns, in the blk argument, a block of image data containing the
@@ -133,9 +131,9 @@ namespace CoreJ2K.Color
         /// 
         /// </param>
         /// <seealso cref="GetCompData" />
-        public override DataBlk GetInternCompData(DataBlk out_Renamed, int compIndex)
+        public override DataBlk GetInternCompData(DataBlk output, int compIndex)
         {
-            return src.GetInternCompData(out_Renamed, _channelDef[compIndex]);
+            return src.GetInternCompData(output, _channelDef[compIndex]);
         }
 
         /// <summary> Returns the number of bits, referred to as the "range bits",
@@ -158,49 +156,49 @@ namespace CoreJ2K.Color
             return src.GetFixedPoint(_channelDef[compIndex]);
         }
 
-        public override int getNomRangeBits(int compIndex)
+        public override int GetNomRangeBits(int compIndex)
         {
-            return src.getNomRangeBits(_channelDef[compIndex]);
+            return src.GetNomRangeBits(_channelDef[compIndex]);
         }
 
-        public override int getCompImgHeight(int c)
+        public override int GetCompImgHeight(int c)
         {
-            return src.getCompImgHeight(_channelDef[c]);
+            return src.GetCompImgHeight(_channelDef[c]);
         }
 
-        public override int getCompImgWidth(int c)
+        public override int GetCompImgWidth(int c)
         {
-            return src.getCompImgWidth(_channelDef[c]);
+            return src.GetCompImgWidth(_channelDef[c]);
         }
 
-        public override int getCompSubsX(int c)
+        public override int GetCompSubsX(int c)
         {
-            return src.getCompSubsX(_channelDef[c]);
+            return src.GetCompSubsX(_channelDef[c]);
         }
 
-        public override int getCompSubsY(int c)
+        public override int GetCompSubsY(int c)
         {
-            return src.getCompSubsY(_channelDef[c]);
+            return src.GetCompSubsY(_channelDef[c]);
         }
 
-        public override int getCompULX(int c)
+        public override int GetCompULX(int c)
         {
-            return src.getCompULX(_channelDef[c]);
+            return src.GetCompULX(_channelDef[c]);
         }
 
-        public override int getCompULY(int c)
+        public override int GetCompULY(int c)
         {
-            return src.getCompULY(_channelDef[c]);
+            return src.GetCompULY(_channelDef[c]);
         }
 
-        public override int getTileCompHeight(int t, int c)
+        public override int GetTileCompHeight(int t, int c)
         {
-            return src.getTileCompHeight(t, _channelDef[c]);
+            return src.GetTileCompHeight(t, _channelDef[c]);
         }
 
-        public override int getTileCompWidth(int t, int c)
+        public override int GetTileCompWidth(int t, int c)
         {
-            return src.getTileCompWidth(t, _channelDef[c]);
+            return src.GetTileCompWidth(t, _channelDef[c]);
         }
 
         public override string ToString()
@@ -215,7 +213,5 @@ namespace CoreJ2K.Color
 
             return rep.Append("]").ToString();
         }
-
-        /* end class ChannelDefinitionMapper */
     }
 }

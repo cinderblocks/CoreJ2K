@@ -1,13 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: PrecinctSizeSpec.java,v 1.18 2001/09/14 09:26:58 grosbois Exp $
-*
-* Class:                   PrecinctSizeSpec
-*
-* Description:             Specification of the precinct sizes
-*
-*
 *
 * COPYRIGHT:
 * 
@@ -134,14 +125,14 @@ namespace CoreJ2K.j2k.entropy
             // size or if we were reading something else.
             var wasReadingPrecinctSize = false;
 
-            var param = pl.getParameter(optName);
+            var param = pl.GetParameter(optName);
 
             // Set precinct sizes to default i.e. 2^15 =
             // Markers.PRECINCT_PARTITION_DEF_SIZE
             var tmpv = new List<int>[2];
             tmpv[0] = new List<int>(10) { Markers.PRECINCT_PARTITION_DEF_SIZE }; // ppx
             tmpv[1] = new List<int>(10) { Markers.PRECINCT_PARTITION_DEF_SIZE }; // ppy
-            setDefault(tmpv);
+            SetDefault(tmpv);
 
             if (param == null)
             {
@@ -255,7 +246,7 @@ namespace CoreJ2K.j2k.entropy
 
                                     if (curSpecType == SPEC_DEF)
                                     {
-                                        setDefault(v);
+                                        SetDefault(v);
                                     }
                                     else if (curSpecType == SPEC_TILE_DEF)
                                     {
@@ -263,7 +254,7 @@ namespace CoreJ2K.j2k.entropy
                                         {
                                             if (tileSpec[ti])
                                             {
-                                                setTileDef(ti, v);
+                                                SetTileDef(ti, v);
                                             }
                                         }
                                     }
@@ -273,7 +264,7 @@ namespace CoreJ2K.j2k.entropy
                                         {
                                             if (compSpec[ci])
                                             {
-                                                setCompDef(ci, v);
+                                                SetCompDef(ci, v);
                                             }
                                         }
                                     }
@@ -285,7 +276,7 @@ namespace CoreJ2K.j2k.entropy
                                             {
                                                 if (tileSpec[ti] && compSpec[ci])
                                                 {
-                                                    setTileCompVal(ti, ci, v);
+                                                    SetTileCompVal(ti, ci, v);
                                                 }
                                             }
                                         }
@@ -309,7 +300,7 @@ namespace CoreJ2K.j2k.entropy
                                 // we store the last precinct's sizes and we stop
                                 if (curSpecType == SPEC_DEF)
                                 {
-                                    setDefault(v);
+                                    SetDefault(v);
                                 }
                                 else if (curSpecType == SPEC_TILE_DEF)
                                 {
@@ -317,7 +308,7 @@ namespace CoreJ2K.j2k.entropy
                                     {
                                         if (tileSpec[ti])
                                         {
-                                            setTileDef(ti, v);
+                                            SetTileDef(ti, v);
                                         }
                                     }
                                 }
@@ -327,7 +318,7 @@ namespace CoreJ2K.j2k.entropy
                                     {
                                         if (compSpec[ci])
                                         {
-                                            setCompDef(ci, v);
+                                            SetCompDef(ci, v);
                                         }
                                     }
                                 }
@@ -339,7 +330,7 @@ namespace CoreJ2K.j2k.entropy
                                         {
                                             if (tileSpec[ti] && compSpec[ci])
                                             {
-                                                setTileCompVal(ti, ci, v);
+                                                SetTileCompVal(ti, ci, v);
                                             }
                                         }
                                     }
@@ -375,7 +366,7 @@ namespace CoreJ2K.j2k.entropy
         /// resolution level 'rl'.
         /// 
         /// </returns>
-        public int getPPX(int t, int c, int rl)
+        public int GetPPX(int t, int c, int rl)
         {
             int mrl, idx;
             List<int>[] v = null;
@@ -388,22 +379,22 @@ namespace CoreJ2K.j2k.entropy
             if (tileSpecified && compSpecified)
             {
                 mrl = dls.GetIntTileCompVal(t, c);
-                v = (List<int>[])getTileCompVal(t, c);
+                v = (List<int>[])GetTileCompVal(t, c);
             }
             else if (tileSpecified && !compSpecified)
             {
                 mrl = dls.GetIntTileDef(t);
-                v = (List<int>[])getTileDef(t);
+                v = (List<int>[])GetTileDef(t);
             }
             else if (!tileSpecified && compSpecified)
             {
                 mrl = dls.GetIntCompDef(c);
-                v = (List<int>[])getCompDef(c);
+                v = (List<int>[])GetCompDef(c);
             }
             else
             {
                 mrl = dls.GetIntDefault();
-                v = (List<int>[])getDefault();
+                v = (List<int>[])GetDefault();
             }
             idx = mrl - rl;
             return v[0].Count > idx ? v[0][idx] : v[0][v[0].Count - 1];
@@ -430,7 +421,7 @@ namespace CoreJ2K.j2k.entropy
         /// resolution level 'rl'.
         /// 
         /// </returns>
-        public int getPPY(int t, int c, int rl)
+        public int GetPPY(int t, int c, int rl)
         {
             int mrl, idx;
             List<int>[] v = null;
@@ -443,22 +434,22 @@ namespace CoreJ2K.j2k.entropy
             if (tileSpecified && compSpecified)
             {
                 mrl = dls.GetIntTileCompVal(t, c);
-                v = (List<int>[])getTileCompVal(t, c);
+                v = (List<int>[])GetTileCompVal(t, c);
             }
             else if (tileSpecified && !compSpecified)
             {
                 mrl = dls.GetIntTileDef(t);
-                v = (List<int>[])getTileDef(t);
+                v = (List<int>[])GetTileDef(t);
             }
             else if (!tileSpecified && compSpecified)
             {
                 mrl = dls.GetIntCompDef(c);
-                v = (List<int>[])getCompDef(c);
+                v = (List<int>[])GetCompDef(c);
             }
             else
             {
                 mrl = dls.GetIntDefault();
-                v = (List<int>[])getDefault();
+                v = (List<int>[])GetDefault();
             }
             idx = mrl - rl;
             return v[1].Count > idx ? v[1][idx] : v[1][v[1].Count - 1];

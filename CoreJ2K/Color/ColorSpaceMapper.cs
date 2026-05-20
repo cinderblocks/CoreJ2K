@@ -3,7 +3,6 @@ using CoreJ2K.j2k.image;
 using CoreJ2K.j2k.util;
 /// <summary>**************************************************************************
 /// 
-/// $Id: ColorSpaceMapper.java,v 1.2 2002/07/25 16:30:55 grosbois Exp $
 /// 
 /// Copyright Eastman Kodak Company, 343 State Street, Rochester, NY 14650
 /// $Date $
@@ -170,10 +169,10 @@ namespace CoreJ2K.Color
             public ComputedComponents(ColorSpaceMapper enclosingInstance, DataBlk db)
             {
                 InitBlock(enclosingInstance);
-                set_Renamed(db);
+                SetFrom(db);
             }
 
-            public void set_Renamed(DataBlk db)
+            public void SetFrom(DataBlk db)
             {
                 h = db.h;
                 w = db.w;
@@ -193,8 +192,6 @@ namespace CoreJ2K.Color
                 return (h == cc.h && w == cc.w && ulx == cc.ulx && uly == cc.uly && offset == cc.offset
                         && scanw == cc.scanw);
             }
-
-            /* end class ComputedComponents */
         }
 
         protected internal ComputedComponents computed;
@@ -244,7 +241,7 @@ namespace CoreJ2K.Color
             }
             else
             {
-                var colorspace = csMap.getColorSpace();
+                var colorspace = csMap.GetColorSpace();
 
                 if (colorspace == ColorSpace.CSEnum.sRGB)
                 {
@@ -289,7 +286,6 @@ namespace CoreJ2K.Color
             this.src = src;
             this.csMap = csMap;
             initialize();
-            /* end ColorSpaceMapper ctor */
         }
 
         /// <summary>General utility used by ctors </summary>
@@ -313,8 +309,8 @@ namespace CoreJ2K.Color
 			*/
 			for (var i = 0; i < ncomps; ++i)
 			{
-				shiftValueArray[i] = 1 << (src.getNomRangeBits(i) - 1);
-				maxValueArray[i] = (1 << src.getNomRangeBits(i)) - 1;
+				shiftValueArray[i] = 1 << (src.GetNomRangeBits(i) - 1);
+				maxValueArray[i] = (1 << src.GetNomRangeBits(i)) - 1;
 				fixedPtBitsArray[i] = src.GetFixedPoint(i);
 
 				inInt[i] = new DataBlkInt();
@@ -380,9 +376,9 @@ namespace CoreJ2K.Color
         /// <seealso cref="GetInternCompData">
         /// 
         /// </seealso>
-        public virtual DataBlk GetCompData(DataBlk out_Renamed, int c)
+        public virtual DataBlk GetCompData(DataBlk output, int c)
         {
-            return src.GetCompData(out_Renamed, c);
+            return src.GetCompData(output, c);
         }
 
         /// <summary> Closes the underlying file or network connection from where the
@@ -458,11 +454,9 @@ namespace CoreJ2K.Color
         /// <seealso cref="GetCompData">
         /// 
         /// </seealso>
-        public virtual DataBlk GetInternCompData(DataBlk out_Renamed, int compIndex)
+        public virtual DataBlk GetInternCompData(DataBlk output, int compIndex)
         {
-            return src.GetInternCompData(out_Renamed, compIndex);
+            return src.GetInternCompData(output, compIndex);
         }
-
-        /* end class ColorSpaceMapper */
     }
 }

@@ -1,13 +1,4 @@
 /*
-* cvs identifier:
-*
-* $Id: FileFormatWriter.java,v 1.13 2001/02/16 11:53:54 qtxjoas Exp $
-* 
-* Class:                   FileFormatWriter
-*
-* Description:             Writes the file format
-*
-*
 *
 * COPYRIGHT:
 * 

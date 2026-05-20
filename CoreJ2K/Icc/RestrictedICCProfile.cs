@@ -1,6 +1,5 @@
 /// <summary>**************************************************************************
 /// 
-/// $Id: RestrictedICCProfile.java,v 1.1 2002/07/25 14:56:56 grosbois Exp $
 /// 
 /// Copyright Eastman Kodak Company, 343 State Street, Rochester, NY 14650
 /// $Date $
@@ -117,8 +116,6 @@ namespace CoreJ2K.Icc
             colorant[GREEN] = gcolorant;
             colorant[BLUE] = bcolorant;
         }
-
-        /* end class RestrictedICCProfile */
         static RestrictedICCProfile()
         {
             GRAY = ICCProfile.GRAY;

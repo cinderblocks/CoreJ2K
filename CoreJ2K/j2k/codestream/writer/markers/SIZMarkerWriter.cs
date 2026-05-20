@@ -56,7 +56,7 @@ namespace CoreJ2K.j2k.codestream.writer.markers
             // YTsiz (nominal tile height)
             writer.Write(tiler.NomTileHeight);
 
-            var torig = tiler.getTilingOrigin(null);
+            var torig = tiler.GetTilingOrigin(null);
             // XTOsiz (horizontal offset from origin to first tile)
             writer.Write(torig.x);
 
@@ -70,15 +70,15 @@ namespace CoreJ2K.j2k.codestream.writer.markers
             for (var c = 0; c < nComp; c++)
             {
                 // Ssiz bit-depth before mixing
-                tmp = origSrc.getNomRangeBits(c) - 1;
+                tmp = origSrc.GetNomRangeBits(c) - 1;
                 tmp |= ((isOrigSig[c] ? 1 : 0) << Markers.SSIZ_DEPTH_BITS);
                 writer.Write((byte)tmp);
 
                 // XRsiz (component sub-sampling value x-wise)
-                writer.Write((byte)tiler.getCompSubsX(c));
+                writer.Write((byte)tiler.GetCompSubsX(c));
 
                 // YRsiz (component sub-sampling value y-wise)
-                writer.Write((byte)tiler.getCompSubsY(c));
+                writer.Write((byte)tiler.GetCompSubsY(c));
             }
         }
     }

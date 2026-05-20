@@ -1,11 +1,4 @@
 /* 
-* CVS identifier:
-* 
-* $Id: GuardBitsSpec.java,v 1.13 2000/09/19 14:11:01 grosbois Exp $
-* 
-* Class:                   GuardBitsSpec
-* 
-* Description:             Guard bits specifications
 * 
 * COPYRIGHT:
 * 
@@ -94,7 +87,7 @@ namespace CoreJ2K.j2k.quantization
         public GuardBitsSpec(int nt, int nc, byte type, ParameterList pl) : base(nt, nc, type)
         {
 
-            var param = pl.getParameter("Qguard_bits");
+            var param = pl.GetParameter("Qguard_bits");
             if (param == null)
             {
                 throw new ArgumentException("Qguard_bits option not specified");
@@ -107,7 +100,7 @@ namespace CoreJ2K.j2k.quantization
                                         // current parameter
             bool[] tileSpec = null; // Tiles concerned by the specification
             bool[] compSpec = null; // Components concerned by the specification
-            int value_Renamed; // value of the guard bits
+            int value; // value of the guard bits
 
             while (stk.HasMoreTokens())
             {
@@ -129,29 +122,29 @@ namespace CoreJ2K.j2k.quantization
                     default:  // Step size value
                         try
                         {
-                            value_Renamed = int.Parse(word);
+                            value = int.Parse(word);
                         }
                         catch (FormatException)
                         {
                             throw new ArgumentException($"Bad parameter for -Qguard_bits option : {word}");
                         }
 
-                        if (value_Renamed <= 0.0f)
+                        if (value <= 0.0f)
                         {
-                            throw new ArgumentException($"Guard bits value must be positive : {value_Renamed}");
+                            throw new ArgumentException($"Guard bits value must be positive : {value}");
                         }
 
 
                         if (curSpecType == SPEC_DEF)
                         {
-                            setDefault(value_Renamed);
+                            SetDefault(value);
                         }
                         else if (curSpecType == SPEC_TILE_DEF)
                         {
                             for (var i = tileSpec.Length - 1; i >= 0; i--)
                                 if (tileSpec[i])
                                 {
-                                    setTileDef(i, value_Renamed);
+                                    SetTileDef(i, value);
                                 }
                         }
                         else if (curSpecType == SPEC_COMP_DEF)
@@ -159,7 +152,7 @@ namespace CoreJ2K.j2k.quantization
                             for (var i = compSpec.Length - 1; i >= 0; i--)
                                 if (compSpec[i])
                                 {
-                                    setCompDef(i, value_Renamed);
+                                    SetCompDef(i, value);
                                 }
                         }
                         else
@@ -170,7 +163,7 @@ namespace CoreJ2K.j2k.quantization
                                 {
                                     if (tileSpec[i] && compSpec[j])
                                     {
-                                        setTileCompVal(i, j, value_Renamed);
+                                        SetTileCompVal(i, j, value);
                                     }
                                 }
                             }
@@ -186,7 +179,7 @@ namespace CoreJ2K.j2k.quantization
             }
 
             // Check that default value has been specified
-            if (getDefault() == null)
+            if (GetDefault() == null)
             {
                 var ndefspec = 0;
                 for (var t = nt - 1; t >= 0; t--)
@@ -204,13 +197,13 @@ namespace CoreJ2K.j2k.quantization
                 // the default value defined in ParameterList
                 if (ndefspec != 0)
                 {
-                    setDefault(int.Parse(pl.DefaultParameterList.getParameter("Qguard_bits")));
+                    SetDefault(int.Parse(pl.DefaultParameterList.GetParameter("Qguard_bits")));
                 }
                 else
                 {
                     // All tile-component have been specified, takes the first
                     // tile-component value as default.
-                    setDefault(getTileCompVal(0, 0));
+                    SetDefault(GetTileCompVal(0, 0));
                     switch (specValType[0][0])
                     {
 

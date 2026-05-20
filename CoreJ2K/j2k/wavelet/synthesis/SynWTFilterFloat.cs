@@ -1,14 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: SynWTFilterFloat.java,v 1.7 2000/09/05 09:26:32 grosbois Exp $
-*
-* Class:                   SynWTFilterFloat
-*
-* Description:             A specialized synthesis wavelet filter interface
-*                          that works on float data.
-*
-*
 *
 * COPYRIGHT:
 * 

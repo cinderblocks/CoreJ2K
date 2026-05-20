@@ -1,6 +1,5 @@
 /// <summary>**************************************************************************
 /// 
-/// $Id: ICCProfileInvalidException.java,v 1.1 2002/07/25 14:56:55 grosbois Exp $
 /// 
 /// Copyright Eastman Kodak Company, 343 State Street, Rochester, NY 14650
 /// $Date $
@@ -35,7 +34,5 @@ namespace CoreJ2K.Icc
         internal ICCProfileInvalidException() : base("icc profile is invalid")
         {
         }
-
-        /* end class ICCProfileInvalidException */
     }
 }

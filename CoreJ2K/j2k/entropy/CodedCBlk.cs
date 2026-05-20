@@ -1,13 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: CodedCBlk.java,v 1.9 2001/08/17 09:42:13 grosbois Exp $
-*
-* Class:                   CodedCBlk
-*
-* Description:             The generic coded (compressed) code-block
-*
-*
 *
 * COPYRIGHT:
 * 

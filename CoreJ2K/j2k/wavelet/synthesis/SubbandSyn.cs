@@ -1,14 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: SubbandSyn.java,v 1.25 2001/07/26 08:54:59 grosbois Exp $
-*
-* Class:                   SubbandSyn
-*
-* Description:             Element for a tree structure for a description
-*                          of subband for the synthesis side.
-*
-*
 *
 * COPYRIGHT:
 * 

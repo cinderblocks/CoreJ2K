@@ -1,13 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: ArrayUtil.java,v 1.10 2000/09/05 09:25:15 grosbois Exp $
-*
-* Class:                   ArrayUtil
-*
-* Description:             Utillities for arrays.
-*
-*
 *
 * COPYRIGHT:
 * 

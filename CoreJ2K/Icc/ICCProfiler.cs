@@ -4,7 +4,6 @@ using CoreJ2K.j2k.image;
 using CoreJ2K.j2k.util;
 /// <summary>**************************************************************************
 /// 
-/// $Id: ICCProfiler.java,v 1.2 2002/08/08 14:08:27 grosbois Exp $
 /// 
 /// Copyright Eastman Kodak Company, 343 State Street, Rochester, NY 14650
 /// $Date $
@@ -85,7 +84,7 @@ namespace CoreJ2K.Icc
         {
             initialize();
 
-            iccp = getICCProfile(csMap);
+            iccp = GetICCProfile(csMap);
             if (ncomps == 1)
             {
                 xform = new MonochromeTransformTosRGB(iccp, maxValueArray[0], shiftValueArray[0]);
@@ -94,8 +93,6 @@ namespace CoreJ2K.Icc
             {
                 xform = new MatrixBasedTransformTosRGB(iccp, maxValueArray, shiftValueArray);
             }
-
-            /* end ICCProfiler ctor */
         }
 
 		/// <summary>General utility used by ctors </summary>
@@ -134,7 +131,7 @@ namespace CoreJ2K.Icc
         /// </exception>
         /// <exception cref="IllegalArgumentException">
         /// </exception>
-        private RestrictedICCProfile getICCProfile(ColorSpace csm)
+        private RestrictedICCProfile GetICCProfile(ColorSpace csm)
         {
 
             switch (ncomps)
@@ -203,7 +200,7 @@ namespace CoreJ2K.Icc
                 if (ncomps != 1 && ncomps != 3)
                 {
                     var msg = $"ICCProfiler: icc profile _not_ applied to {ncomps} component image";
-                    FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING, msg);
+                    FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING, msg);
                     return src.GetCompData(outblk, c);
                 }
 
@@ -358,29 +355,29 @@ namespace CoreJ2K.Icc
             }
             catch (MatrixBasedTransformException e)
             {
-                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.ERROR,
+                FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.ERROR,
                     $"matrix transform problem:\n{e.Message}");
-                if (pl.getParameter("debug").Equals("on"))
+                if (pl.GetParameter("debug").Equals("on"))
                 {
-                    FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.ERROR, e.StackTrace);
+                    FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.ERROR, e.StackTrace);
                 }
                 else
                 {
-                    FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.ERROR, "Use '-debug' option for more details");
+                    FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.ERROR, "Use '-debug' option for more details");
                 }
                 return null;
             }
             catch (MonochromeTransformException e)
             {
-                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.ERROR,
+                FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.ERROR,
                     $"monochrome transform problem:\n{e.Message}");
-                if (pl.getParameter("debug").Equals("on"))
+                if (pl.GetParameter("debug").Equals("on"))
                 {
-                    FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.ERROR, e.StackTrace);
+                    FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.ERROR, e.StackTrace);
                 }
                 else
                 {
-                    FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.ERROR, "Use '-debug' option for more details");
+                    FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.ERROR, "Use '-debug' option for more details");
                 }
                 return null;
             }
@@ -433,9 +430,9 @@ namespace CoreJ2K.Icc
         /// 
         /// </returns>
         /// <seealso cref="GetCompData" />
-        public override DataBlk GetInternCompData(DataBlk out_Renamed, int compIndex)
+        public override DataBlk GetInternCompData(DataBlk output, int compIndex)
         {
-            return GetCompData(out_Renamed, compIndex);
+            return GetCompData(output, compIndex);
         }
 
         /// <summary>Return a suitable String representation of the class instance. </summary>
@@ -454,8 +451,6 @@ namespace CoreJ2K.Icc
             rep.Append(ColorSpace.indent("  ", body));
             return rep.Append("]").ToString();
         }
-
-        /* end class ICCProfiler */
         static ICCProfiler()
         {
             GRAY = RestrictedICCProfile.GRAY;

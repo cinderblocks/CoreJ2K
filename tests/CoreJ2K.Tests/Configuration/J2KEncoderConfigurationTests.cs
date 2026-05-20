@@ -227,9 +227,9 @@ namespace CoreJ2K.Tests.Configuration
             var pl = config.ToParameterList();
             
             Assert.NotNull(pl);
-            Assert.Equal("on", pl.getParameter("file_format"));
-            Assert.Equal("2", pl.getParameter("rate"));
-            Assert.Equal("1024 1024", pl.getParameter("tiles"));
+            Assert.Equal("on", pl.GetParameter("file_format"));
+            Assert.Equal("2", pl.GetParameter("rate"));
+            Assert.Equal("1024 1024", pl.GetParameter("tiles"));
         }
         
         [Fact]
@@ -241,10 +241,10 @@ namespace CoreJ2K.Tests.Configuration
             
             var pl = config.ToParameterList();
             
-            Assert.Equal("on", pl.getParameter("lossless"));
-            Assert.Equal("-1", pl.getParameter("rate"));
-            Assert.Equal("w5x3", pl.getParameter("Ffilters"));
-            Assert.Equal("reversible", pl.getParameter("Qtype"));
+            Assert.Equal("on", pl.GetParameter("lossless"));
+            Assert.Equal("-1", pl.GetParameter("rate"));
+            Assert.Equal("w5x3", pl.GetParameter("Ffilters"));
+            Assert.Equal("reversible", pl.GetParameter("Qtype"));
         }
         
         [Fact]

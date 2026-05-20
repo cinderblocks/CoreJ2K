@@ -25,32 +25,32 @@ namespace CoreJ2K.j2k.codestream.writer
 
         public bool ShouldWriteCOC(int compIdx, bool isEresUsed)
         {
-            var isEresUsedinComp = ((string)encSpec.tts.getCompDef(compIdx)).Equals("predict");
+            var isEresUsedinComp = ((string)encSpec.tts.GetCompDef(compIdx)).Equals("predict");
             
-            return encSpec.wfs.isCompSpecified(compIdx) ||
-                   encSpec.dls.isCompSpecified(compIdx) ||
-                   encSpec.bms.isCompSpecified(compIdx) ||
-                   encSpec.mqrs.isCompSpecified(compIdx) ||
-                   encSpec.rts.isCompSpecified(compIdx) ||
-                   encSpec.sss.isCompSpecified(compIdx) ||
-                   encSpec.css.isCompSpecified(compIdx) ||
-                   encSpec.pss.isCompSpecified(compIdx) ||
-                   encSpec.cblks.isCompSpecified(compIdx) ||
+            return encSpec.wfs.IsCompSpecified(compIdx) ||
+                   encSpec.dls.IsCompSpecified(compIdx) ||
+                   encSpec.bms.IsCompSpecified(compIdx) ||
+                   encSpec.mqrs.IsCompSpecified(compIdx) ||
+                   encSpec.rts.IsCompSpecified(compIdx) ||
+                   encSpec.sss.IsCompSpecified(compIdx) ||
+                   encSpec.css.IsCompSpecified(compIdx) ||
+                   encSpec.pss.IsCompSpecified(compIdx) ||
+                   encSpec.cblks.IsCompSpecified(compIdx) ||
                    (isEresUsed != isEresUsedinComp);
         }
 
         public bool ShouldWriteQCC(int compIdx, int defimgn)
         {
-            return dwt.getNomRangeBits(compIdx) != defimgn ||
-                   encSpec.qts.isCompSpecified(compIdx) ||
-                   encSpec.qsss.isCompSpecified(compIdx) ||
-                   encSpec.dls.isCompSpecified(compIdx) ||
-                   encSpec.gbs.isCompSpecified(compIdx);
+            return dwt.GetNomRangeBits(compIdx) != defimgn ||
+                   encSpec.qts.IsCompSpecified(compIdx) ||
+                   encSpec.qsss.IsCompSpecified(compIdx) ||
+                   encSpec.dls.IsCompSpecified(compIdx) ||
+                   encSpec.gbs.IsCompSpecified(compIdx);
         }
 
         public bool ShouldWritePOC()
         {
-            var prog = (Progression[])(encSpec.pocs.getDefault());
+            var prog = (Progression[])(encSpec.pocs.GetDefault());
             return prog.Length > 1;
         }
     }

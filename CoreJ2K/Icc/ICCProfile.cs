@@ -1,7 +1,6 @@
 /// <summary>
 /// **************************************************************************
 /// 
-/// $Id: ICCProfile.java,v 1.1 2002/07/25 14:56:55 grosbois Exp $
 /// 
 /// Copyright Eastman Kodak Company, 343 State Street, Rochester, NY 14650
 /// $Date $
@@ -251,7 +250,7 @@ namespace CoreJ2K.Icc
                 map[type] = desc;
             }
 
-            public static string get_Renamed(int type)
+            public static string GetDescription(int type)
             {
                 return map[type];
             }
@@ -307,10 +306,10 @@ namespace CoreJ2K.Icc
         /// </param>
         /// <returns> the integer which is denoted by the input String.
         /// </returns>
-        public static int getIntFromString(string fourChar)
+        public static int GetIntFromString(string fourChar)
         {
             var bytes = System.Text.Encoding.UTF8.GetBytes(fourChar);
-            return getInt(bytes, 0);
+            return GetInt(bytes, 0);
         }
 
         /// <summary> Create an XYZNumber from byte [] input</summary>
@@ -320,12 +319,12 @@ namespace CoreJ2K.Icc
         /// </param>
         /// <returns> the created XYZNumber
         /// </returns>
-        public static XYZNumber getXYZNumber(byte[] data, int offset)
+        public static XYZNumber GetXYZNumber(byte[] data, int offset)
         {
             int x, y, z;
-            x = getInt(data, offset);
-            y = getInt(data, offset + int_size);
-            z = getInt(data, offset + 2 * int_size);
+            x = GetInt(data, offset);
+            y = GetInt(data, offset + int_size);
+            z = GetInt(data, offset + 2 * int_size);
             return new XYZNumber(x, y, z);
         }
 
@@ -336,7 +335,7 @@ namespace CoreJ2K.Icc
         /// </param>
         /// <returns>  the created ICCProfileVersion
         /// </returns>
-        public static ICCProfileVersion getICCProfileVersion(byte[] data, int offset)
+        public static ICCProfileVersion GetICCProfileVersion(byte[] data, int offset)
         {
             var major = data[offset];
             var minor = data[offset + byte_size];
@@ -352,14 +351,14 @@ namespace CoreJ2K.Icc
         /// </param>
         /// <returns> the created ICCProfileVersion
         /// </returns>
-        public static ICCDateTime getICCDateTime(byte[] data, int offset)
+        public static ICCDateTime GetICCDateTime(byte[] data, int offset)
         {
-            var wYear = getShort(data, offset); // Number of the actual year (i.e. 1994)
-            var wMonth = getShort(data, offset + short_size); // Number of the month (1-12)
-            var wDay = getShort(data, offset + 2 * short_size); // Number of the day
-            var wHours = getShort(data, offset + 3 * short_size); // Number of hours (0-23)
-            var wMinutes = getShort(data, offset + 4 * short_size); // Number of minutes (0-59)
-            var wSeconds = getShort(data, offset + 5 * short_size); // Number of seconds (0-59)
+            var wYear = GetShort(data, offset); // Number of the actual year (i.e. 1994)
+            var wMonth = GetShort(data, offset + short_size); // Number of the month (1-12)
+            var wDay = GetShort(data, offset + 2 * short_size); // Number of the day
+            var wHours = GetShort(data, offset + 3 * short_size); // Number of hours (0-23)
+            var wMinutes = GetShort(data, offset + 4 * short_size); // Number of minutes (0-59)
+            var wSeconds = GetShort(data, offset + 5 * short_size); // Number of seconds (0-59)
             return new ICCDateTime(wYear, wMonth, wDay, wHours, wMinutes, wSeconds);
         }
 
@@ -378,7 +377,7 @@ namespace CoreJ2K.Icc
         /// </param>
         /// <returns> String rep of data
         /// </returns>
-        public static string getString(byte[] bfr, int offset, int length, bool swap)
+        public static string GetString(byte[] bfr, int offset, int length, bool swap)
         {
 
             var result = new byte[length];
@@ -401,7 +400,7 @@ namespace CoreJ2K.Icc
         /// </param>
         /// <returns> native type from representation.
         /// </returns>
-        public static short getShort(byte[] bfr, int off, bool swap)
+        public static short GetShort(byte[] bfr, int off, bool swap)
         {
 
             var tmp0 = bfr[off] & 0xff; // Clear the sign extended bits in the int.
@@ -418,7 +417,7 @@ namespace CoreJ2K.Icc
         /// </param>
         /// <returns> native type from representation.
         /// </returns>
-        public static short getShort(byte[] bfr, int off)
+        public static short GetShort(byte[] bfr, int off)
         {
             var tmp0 = bfr[off] & 0xff; // Clear the sign extended bits in the int.
             var tmp1 = bfr[off + 1] & 0xff;
@@ -430,9 +429,9 @@ namespace CoreJ2K.Icc
         /// </param>
         /// <returns> byte [] containing separated int.
         /// </returns>
-        public static byte[] setInt(int d)
+        public static byte[] SetInt(int d)
         {
-            return setInt(d, new byte[BYTES_PER_INT]);
+            return SetInt(d, new byte[BYTES_PER_INT]);
         }
 
         /// <summary> Separate bytes in an int into a byte array lsb to msb order.
@@ -444,7 +443,7 @@ namespace CoreJ2K.Icc
         /// </param>
         /// <returns> reference to output.
         /// </returns>
-        public static byte[] setInt(int d, byte[] b)
+        public static byte[] SetInt(int d, byte[] b)
         {
             if (b == null) b = new byte[BYTES_PER_INT];
             for (var i = 0; i < BYTES_PER_INT; ++i)
@@ -460,9 +459,9 @@ namespace CoreJ2K.Icc
         /// </param>
         /// <returns> byte [] containing separated int.
         /// </returns>
-        public static byte[] setLong(long d)
+        public static byte[] SetLong(long d)
         {
-            return setLong(d, new byte[BYTES_PER_INT]);
+            return SetLong(d, new byte[BYTES_PER_INT]);
         }
 
         /// <summary> Separate bytes in a long into a byte array lsb to msb order.
@@ -474,7 +473,7 @@ namespace CoreJ2K.Icc
         /// </param>
         /// <returns> reference to output.
         /// </returns>
-        public static byte[] setLong(long d, byte[] b)
+        public static byte[] SetLong(long d, byte[] b)
         {
             if (b == null) b = new byte[BYTES_PER_LONG];
             for (var i = 0; i < BYTES_PER_LONG; ++i)
@@ -495,11 +494,11 @@ namespace CoreJ2K.Icc
         /// </param>
         /// <returns> native type from representation.
         /// </returns>
-        public static int getInt(byte[] bfr, int off, bool swap)
+        public static int GetInt(byte[] bfr, int off, bool swap)
         {
 
-            var tmp0 = getShort(bfr, off, swap) & 0xffff; // Clear the sign extended bits in the int.
-            var tmp1 = getShort(bfr, off + 2, swap) & 0xffff;
+            var tmp0 = GetShort(bfr, off, swap) & 0xffff; // Clear the sign extended bits in the int.
+            var tmp1 = GetShort(bfr, off + 2, swap) & 0xffff;
 
             return swap ? (tmp1 << BITS_PER_SHORT | tmp0) : (tmp0 << BITS_PER_SHORT | tmp1);
         }
@@ -511,11 +510,11 @@ namespace CoreJ2K.Icc
         /// </param>
         /// <returns> native type from representation.
         /// </returns>
-        public static int getInt(byte[] bfr, int off)
+        public static int GetInt(byte[] bfr, int off)
         {
 
-            var tmp0 = getShort(bfr, off) & 0xffff; // Clear the sign extended bits in the int.
-            var tmp1 = getShort(bfr, off + 2) & 0xffff;
+            var tmp0 = GetShort(bfr, off) & 0xffff; // Clear the sign extended bits in the int.
+            var tmp1 = GetShort(bfr, off + 2) & 0xffff;
 
             return tmp0 << BITS_PER_SHORT | tmp1;
         }
@@ -527,11 +526,11 @@ namespace CoreJ2K.Icc
         /// </param>
         /// <returns> native type from representation.
         /// </returns>
-        public static long getLong(byte[] bfr, int off)
+        public static long GetLong(byte[] bfr, int off)
         {
 
-            long tmp0 = getInt(bfr, off) & unchecked((int)0xffffffff); // Clear the sign extended bits in the int.
-            long tmp1 = getInt(bfr, off + 4) & unchecked((int)0xffffffff);
+            long tmp0 = GetInt(bfr, off) & unchecked((int)0xffffffff); // Clear the sign extended bits in the int.
+            long tmp1 = GetInt(bfr, off + 4) & unchecked((int)0xffffffff);
 
             return tmp0 << BITS_PER_INT | tmp1;
         }
@@ -654,7 +653,7 @@ namespace CoreJ2K.Icc
                                        + " a Restricted ICC profile, so this code will ignore this state"
                                        + " and proceed with processing.";
 
-                FacilityManager.getMsgLogger().printmsg(j2k.util.MsgLogger_Fields.WARNING, message);
+                FacilityManager.GetMsgLogger().printmsg(j2k.util.MsgLogger_Fields.WARNING, message);
             }
 
             if ((ProfileSignature != kdwProfileSignature)
@@ -844,10 +843,6 @@ namespace CoreJ2K.Icc
             Header.write(os);
             TagTable.write(os);
         }
-
-
-        /* end class ICCProfile */
-
         static ICCProfile()
         {
             kdwProfileSignature = GetTagInt("acsp");

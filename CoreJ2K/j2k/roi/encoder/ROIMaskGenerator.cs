@@ -1,13 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: ROIMaskGenerator.java,v 1.2 2000/11/27 15:03:51 grosbois Exp $
-*
-* Class:                   ROIMaskGenerator
-*
-* Description:             This class describes generators of ROI masks
-*
-*
 *
 * COPYRIGHT:
 * 
@@ -114,7 +105,7 @@ namespace CoreJ2K.j2k.roi.encoder
         /// </param>
         /// <returns> Whether or not a mask was needed for this tile 
         /// </returns>
-        public abstract bool getROIMask(DataBlkInt db, Subband sb, int magbits, int c);
+        public abstract bool GetROIMask(DataBlkInt db, Subband sb, int magbits, int c);
 
         /// <summary> This function generates the ROI mask for the entire tile. The mask is
         /// generated for one component. This method is called once for each tile

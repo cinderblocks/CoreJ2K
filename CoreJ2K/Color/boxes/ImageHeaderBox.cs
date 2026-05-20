@@ -1,6 +1,5 @@
 /// <summary>**************************************************************************
 /// 
-/// $Id: ImageHeaderBox.java,v 1.1 2002/07/25 14:50:47 grosbois Exp $
 /// 
 /// Copyright Eastman Kodak Company, 343 State Street, Rochester, NY 14650
 /// $Date $
@@ -41,7 +40,7 @@ namespace CoreJ2K.Color.Boxes
         /// </param>
         /// <exception cref="IOException,">ColorSpaceException
         /// </exception>
-        public ImageHeaderBox(io_RandomAccessIO in_Renamed, int boxStart) : base(in_Renamed, boxStart)
+        public ImageHeaderBox(io_RandomAccessIO inStream, int boxStart) : base(inStream, boxStart)
         {
             readBox();
         }
@@ -67,19 +66,17 @@ namespace CoreJ2K.Color.Boxes
         internal void readBox()
         {
             var bfr = new byte[14];
-            in_Renamed.seek(dataStart);
-            in_Renamed.readFully(bfr, 0, 14);
+            inStream.seek(dataStart);
+            inStream.readFully(bfr, 0, 14);
 
-            height = ICCProfile.getInt(bfr, 0);
-            width = ICCProfile.getInt(bfr, 4);
-            nc = ICCProfile.getShort(bfr, 8);
+            height = ICCProfile.GetInt(bfr, 0);
+            width = ICCProfile.GetInt(bfr, 4);
+            nc = ICCProfile.GetShort(bfr, 8);
             bpc = (short)(bfr[10] & 0x00ff);
             c = (short)(bfr[11] & 0x00ff);
             unk = bfr[12] == 0;
             ipr = bfr[13] == 1;
         }
-
-        /* end class ImageHeaderBox */
         static ImageHeaderBox()
         {
             {

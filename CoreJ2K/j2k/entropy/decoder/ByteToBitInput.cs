@@ -1,14 +1,4 @@
 /* 
-* CVS identifier:
-* 
-* $Id: ByteToBitInput.java,v 1.14 2002/07/19 12:41:33 grosbois Exp $
-* 
-* Class:                   ByteToBitInput
-* 
-* Description:             Adapter to perform bit based input from a byte
-*                          based one.
-* 
-* 
 * 
 * COPYRIGHT:
 * 
@@ -55,7 +45,7 @@ namespace CoreJ2K.j2k.entropy.decoder
     {
 
         /// <summary>The byte based input </summary>
-        internal ByteInputBuffer in_Renamed;
+        internal ByteInputBuffer inputBuffer;
 
         /// <summary>The bit buffer </summary>
         internal int bbuf;
@@ -72,9 +62,9 @@ namespace CoreJ2K.j2k.entropy.decoder
         /// <param name="in">The underlying byte based input.
         /// 
         /// </param>
-        public ByteToBitInput(ByteInputBuffer in_Renamed)
+        public ByteToBitInput(ByteInputBuffer inputBuffer)
         {
-            this.in_Renamed = in_Renamed;
+            this.inputBuffer = inputBuffer;
         }
 
         /// <summary> Reads from the bit stream one bit. If 'bpos' is -1 then a byte is read
@@ -92,13 +82,13 @@ namespace CoreJ2K.j2k.entropy.decoder
                 if ((bbuf & 0xFF) != 0xFF)
                 {
                     // Normal byte to read
-                    bbuf = in_Renamed.read();
+                    bbuf = inputBuffer.read();
                     bpos = 7;
                 }
                 else
                 {
                     // Previous byte is 0xFF => there was bit stuffing
-                    bbuf = in_Renamed.read();
+                    bbuf = inputBuffer.read();
                     bpos = 6;
                 }
             }
@@ -124,7 +114,7 @@ namespace CoreJ2K.j2k.entropy.decoder
             // is a next byte with bit stuffing that we must load.
             if (bpos < 0 && (bbuf & 0xFF) == 0xFF)
             {
-                bbuf = in_Renamed.read();
+                bbuf = inputBuffer.read();
                 bpos = 6;
             }
 
@@ -144,12 +134,12 @@ namespace CoreJ2K.j2k.entropy.decoder
             {
                 if (bbuf == 0xFF && bpos == 0)
                 {
-                    if ((in_Renamed.read() & 0xFF) >= 0x80)
+                    if ((inputBuffer.read() & 0xFF) >= 0x80)
                         return true;
                 }
                 else
                 {
-                    if (in_Renamed.read() != -1)
+                    if (inputBuffer.read() != -1)
                         return true;
                 }
             }
@@ -186,9 +176,9 @@ namespace CoreJ2K.j2k.entropy.decoder
         /// bytes are taken to be 0xFF.
         /// 
         /// </param>
-        internal void setByteArray(byte[] buf, int off, int len)
+        internal void SetByteArray(byte[] buf, int off, int len)
         {
-            in_Renamed.setByteArray(buf, off, len);
+            inputBuffer.SetByteArray(buf, off, len);
             bbuf = 0; // reset any bit stuffing state
             bpos = -1;
         }

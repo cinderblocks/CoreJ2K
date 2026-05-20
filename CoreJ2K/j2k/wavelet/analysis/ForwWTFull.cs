@@ -1,15 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: ForwWTFull.java,v 1.30 2001/09/20 12:42:59 grosbois Exp $
-*
-* Class:                   ForwWTFull
-*
-* Description:             This class implements the full page
-*                          forward wavelet transform for both integer
-*                          and floating point implementations.
-*
-*
 *
 * COPYRIGHT:
 * 
@@ -75,12 +64,12 @@ namespace CoreJ2K.j2k.wavelet.analysis
         private bool intData;
 
         /// <summary> The subband trees of each tile-component. The array is allocated by the
-        /// constructor of this class and updated by the getAnSubbandTree() method
+        /// constructor of this class and updated by the GetAnSubbandTree() method
         /// when needed. The first index is the tile index (in lexicographical
         /// order) and the second index is the component index.
         /// 
         /// The subband tree for a component in the current tile is created on
-        /// the first call to getAnSubbandTree() for that component, in the current
+        /// the first call to GetAnSubbandTree() for that component, in the current
         /// tile. Before that, the element in 'subbTrees' is null.
         /// 
         /// </summary>
@@ -166,7 +155,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
             pss = encSpec.pss;
 
             var ncomp = src.NumComps;
-            var ntiles = src.getNumTiles();
+            var ntiles = src.GetNumTiles();
 
             currentSubband = new SubbandAn[ncomp];
             decomposedComps = new DataBlk[ncomp];
@@ -190,7 +179,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// <returns> WT_IMPL_FULL
         /// 
         /// </returns>
-        public override int getImplementationType(int c)
+        public override int GetImplementationType(int c)
         {
             return WaveletTransform_Fields.WT_IMPL_FULL;
         }
@@ -210,7 +199,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// wavelet transform).
         /// 
         /// </returns>
-        public override int getDecompLevels(int t, int c)
+        public override int GetDecompLevels(int t, int c)
         {
             return dls.GetIntTileCompVal(t, c);
         }
@@ -228,7 +217,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// <returns> The wavelet decomposition.
         /// 
         /// </returns>
-        public override int getDecomp(int t, int c)
+        public override int GetDecomp(int t, int c)
         {
             return WT_DECOMP_DYADIC;
         }
@@ -258,9 +247,9 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// <returns> The horizontal analysis wavelet filters used in each level.
         /// 
         /// </returns>
-        public override WaveletFilter[] getHorAnWaveletFilters(int t, int c)
+        public override WaveletFilter[] GetHorAnWaveletFilters(int t, int c)
         {
-            return filters.getHFilters(t, c);
+            return filters.GetHFilters(t, c);
         }
 
         /// <summary> Returns the vertical analysis wavelet filters used in each level, for
@@ -288,9 +277,9 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// <returns> The vertical analysis wavelet filters used in each level.
         /// 
         /// </returns>
-        public override WaveletFilter[] getVertAnWaveletFilters(int t, int c)
+        public override WaveletFilter[] GetVertAnWaveletFilters(int t, int c)
         {
-            return filters.getVFilters(t, c);
+            return filters.GetVFilters(t, c);
         }
 
         /// <summary> Returns the reversibility of the wavelet transform for the specified
@@ -307,9 +296,9 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// <returns> true is the wavelet transform is reversible, false if not.
         /// 
         /// </returns>
-        public override bool isReversible(int t, int c)
+        public override bool IsReversible(int t, int c)
         {
-            return filters.isReversible(t, c);
+            return filters.IsReversible(t, c);
         }
 
         /// <summary> Returns the position of the fixed point in the specified
@@ -328,7 +317,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// number of fractional bits. For floating-point data 0 is returned.
         /// 
         /// </returns>
-        public override int getFixedPoint(int c)
+        public override int GetFixedPoint(int c)
         {
             return src.GetFixedPoint(c);
         }
@@ -341,7 +330,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// have been returned for the current tile calls to this method will
         /// return 'null'.
         /// 
-        /// When changing the current tile (through 'setTile()' or 'nextTile()')
+        /// When changing the current tile (through 'SetTile()' or 'NextTile()')
         /// this method will always return the first code-block, as if this method
         /// was never called before for the new current tile.
         /// 
@@ -368,12 +357,12 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// 
         /// </returns>
         /// <seealso cref="CBlkWTData" />
-        public override CBlkWTData getNextInternCodeBlock(int c, CBlkWTData cblk)
+        public override CBlkWTData GetNextInternCodeBlock(int c, CBlkWTData cblk)
         {
             int cbm, cbn, cn, cm;
             int acb0x, acb0y;
             SubbandAn sb;
-            intData = (filters.getWTDataType(tIdx, c) == DataBlk.TYPE_INT);
+            intData = (filters.GetWTDataType(tIdx, c) == DataBlk.TYPE_INT);
 
             //If the source image has not been decomposed 
             if (decomposedComps[c] == null)
@@ -382,8 +371,8 @@ namespace CoreJ2K.j2k.wavelet.analysis
                 DataBlk bufblk;
                 object dst_data;
 
-                w = getTileCompWidth(tIdx, c);
-                h = getTileCompHeight(tIdx, c);
+                w = GetTileCompWidth(tIdx, c);
+                h = GetTileCompHeight(tIdx, c);
 
                 //Get the source image data
                 if (intData)
@@ -432,11 +421,11 @@ namespace CoreJ2K.j2k.wavelet.analysis
                 // Get data from source line by line (this diminishes the memory
                 // requirements on the data source)
                 dst_data = decomposedComps[c].Data;
-                var lstart = getCompULX(c);
+                var lstart = GetCompULX(c);
                 bufblk.ulx = lstart;
                 bufblk.w = w;
                 bufblk.h = 1;
-                var kk = getCompULY(c);
+                var kk = GetCompULY(c);
                 for (k = 0; k < h; k++, kk++)
                 {
                     bufblk.uly = kk;
@@ -446,10 +435,10 @@ namespace CoreJ2K.j2k.wavelet.analysis
                 }
 
                 //Decompose source image
-                waveletTreeDecomposition(decomposedComps[c], getAnSubbandTree(tIdx, c), c);
+                waveletTreeDecomposition(decomposedComps[c], GetAnSubbandTree(tIdx, c), c);
 
                 // Make the first subband the current one
-                currentSubband[c] = getNextSubband(c);
+                currentSubband[c] = GetNextSubband(c);
 
                 lastn[c] = -1;
                 lastm[c] = 0;
@@ -477,7 +466,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
                 }
                 // If we get here we already sent all code-blocks in this subband,
                 // goto next subband
-                currentSubband[c] = getNextSubband(c);
+                currentSubband[c] = GetNextSubband(c);
                 lastn[c] = -1;
                 lastm[c] = 0;
                 if (currentSubband[c] == null)
@@ -599,7 +588,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
             }
             cblk.wmseScaling = 1f;
 
-            // Since we are in getNextInternCodeBlock() we can return a
+            // Since we are in GetNextInternCodeBlock() we can return a
             // reference to the internal buffer, no need to copy. Just initialize
             // the 'offset' and 'scanw'
             cblk.offset = cblk.uly * decomposedComps[c].w + cblk.ulx;
@@ -619,7 +608,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// the code-blocks have been returned for the current tile calls to this
         /// method will return 'null'.
         /// 
-        /// When changing the current tile (through 'setTile()' or 'nextTile()')
+        /// When changing the current tile (through 'SetTile()' or 'NextTile()')
         /// this method will always return the first code-block, as if this method
         /// was never called before for the new current tile.
         /// 
@@ -649,9 +638,9 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// 
         /// </returns>
         /// <seealso cref="CBlkWTData" />
-        public override CBlkWTData getNextCodeBlock(int c, CBlkWTData cblk)
+        public override CBlkWTData GetNextCodeBlock(int c, CBlkWTData cblk)
         {
-            // We can not directly use getNextInternCodeBlock() since that returns
+            // We can not directly use GetNextInternCodeBlock() since that returns
             // a reference to the internal buffer, we have to copy that data
 
             int j, k;
@@ -661,7 +650,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
             float[] dst_data_float;
             object src_data; // a int[] or float[] object
 
-            intData = (filters.getWTDataType(tIdx, c) == DataBlk.TYPE_INT);
+            intData = (filters.GetWTDataType(tIdx, c) == DataBlk.TYPE_INT);
 
             dst_data = null;
 
@@ -672,7 +661,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
             }
 
             // Get the next code-block
-            cblk = getNextInternCodeBlock(c, cblk);
+            cblk = GetNextInternCodeBlock(c, cblk);
 
             if (cblk == null)
             {
@@ -728,9 +717,9 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// <returns> Current data type
         /// 
         /// </returns>
-        public override int getDataType(int t, int c)
+        public override int GetDataType(int t, int c)
         {
-            return filters.getWTDataType(t, c);
+            return filters.GetWTDataType(t, c);
         }
 
         /// <summary> Returns the next subband that will be used to get the next code-block
@@ -744,7 +733,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// code-block to return by the getNext[Intern]CodeBlock method.
         /// 
         /// </returns>
-        private SubbandAn getNextSubband(int c)
+        private SubbandAn GetNextSubband(int c)
         {
             const int down = 1;
             const int up = 0;
@@ -755,7 +744,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
             //If it is the first call to this method
             if (nextsb == null)
             {
-                nextsb = getAnSubbandTree(tIdx, c);
+                nextsb = GetAnSubbandTree(tIdx, c);
                 //If there is no decomposition level then send the whole image
                 if (!nextsb.isNode)
                 {
@@ -910,8 +899,8 @@ namespace CoreJ2K.j2k.wavelet.analysis
             uly = subband.uly;
             w = subband.w;
             h = subband.h;
-            band_w = getTileCompWidth(tIdx, c);
-            band_h = getTileCompHeight(tIdx, c);
+            band_w = GetTileCompWidth(tIdx, c);
+            band_h = GetTileCompHeight(tIdx, c);
 
             if (intData)
             {
@@ -1055,12 +1044,12 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// <param name="y">The vertical coordinate of the new tile.
         /// 
         /// </param>
-        public override void setTile(int x, int y)
+        public override void SetTile(int x, int y)
         {
             int i;
 
             // Change tile
-            base.setTile(x, y);
+            base.SetTile(x, y);
 
             // Reset the decomposed component buffers.
             if (decomposedComps != null)
@@ -1089,12 +1078,12 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// component buffers.
         /// 
         /// </summary>
-        public override void nextTile()
+        public override void NextTile()
         {
             int i;
 
             // Change tile
-            base.nextTile();
+            base.NextTile();
             // Reset the decomposed component buffers
             if (decomposedComps != null)
             {
@@ -1129,11 +1118,11 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// <seealso cref="SubbandAn">
         /// </seealso>
         /// <seealso cref="Subband" />
-        public override SubbandAn getAnSubbandTree(int t, int c)
+        public override SubbandAn GetAnSubbandTree(int t, int c)
         {
             if (subbTrees[t][c] == null)
             {
-                subbTrees[t][c] = new SubbandAn(getTileCompWidth(t, c), getTileCompHeight(t, c), getCompULX(c), getCompULY(c), getDecompLevels(t, c), getHorAnWaveletFilters(t, c), getVertAnWaveletFilters(t, c));
+                subbTrees[t][c] = new SubbandAn(GetTileCompWidth(t, c), GetTileCompHeight(t, c), GetCompULX(c), GetCompULY(c), GetDecompLevels(t, c), GetHorAnWaveletFilters(t, c), GetVertAnWaveletFilters(t, c));
                 initSubbandsFields(t, c, subbTrees[t][c]);
             }
             return subbTrees[t][c];
@@ -1155,16 +1144,16 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// </param>
         private void initSubbandsFields(int t, int c, Subband sb)
         {
-            var cbw = cblks.getCBlkWidth(ModuleSpec.SPEC_TILE_COMP, t, c);
-            var cbh = cblks.getCBlkHeight(ModuleSpec.SPEC_TILE_COMP, t, c);
+            var cbw = cblks.GetCBlkWidth(ModuleSpec.SPEC_TILE_COMP, t, c);
+            var cbh = cblks.GetCBlkHeight(ModuleSpec.SPEC_TILE_COMP, t, c);
 
             if (!sb.isNode)
             {
                 // Code-blocks dimension
                 int ppx, ppy;
                 int ppxExp, ppyExp, cbwExp, cbhExp;
-                ppx = pss.getPPX(t, c, sb.resLvl);
-                ppy = pss.getPPY(t, c, sb.resLvl);
+                ppx = pss.GetPPX(t, c, sb.resLvl);
+                ppy = pss.GetPPY(t, c, sb.resLvl);
 
                 if (ppx != Markers.PRECINCT_PARTITION_DEF_SIZE || ppy != Markers.PRECINCT_PARTITION_DEF_SIZE)
                 {

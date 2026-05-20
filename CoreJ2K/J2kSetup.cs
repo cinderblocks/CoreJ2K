@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2007-2016 CSJ2K contributors.
+// Copyright (c) 2007-2016 CSJ2K contributors.
 // Copyright (c) 2025, Sjofn LLC.
 // Licensed under the BSD 3-Clause License.
 
@@ -61,7 +61,7 @@ namespace CoreJ2K
             {
                 try
                 {
-                    CoreJ2K.j2k.util.FacilityManager.getMsgLogger().printmsg(CoreJ2K.j2k.util.MsgLogger_Fields.ERROR,
+                    CoreJ2K.j2k.util.FacilityManager.GetMsgLogger().printmsg(CoreJ2K.j2k.util.MsgLogger_Fields.ERROR,
                         $"J2kSetup.GetSinglePlatformInstance<{typeof(T).FullName}> failed: {ex.Message}");
                 }
                 catch
@@ -93,7 +93,7 @@ namespace CoreJ2K
             {
                 try
                 {
-                    CoreJ2K.j2k.util.FacilityManager.getMsgLogger().printmsg(CoreJ2K.j2k.util.MsgLogger_Fields.ERROR,
+                    CoreJ2K.j2k.util.FacilityManager.GetMsgLogger().printmsg(CoreJ2K.j2k.util.MsgLogger_Fields.ERROR,
                         $"J2kSetup.GetDefaultPlatformInstance<{typeof(T).FullName}> failed: {ex.Message}");
                 }
                 catch
@@ -139,7 +139,7 @@ namespace CoreJ2K
                     {
                         try
                         {
-                            CoreJ2K.j2k.util.FacilityManager.getMsgLogger().printmsg(CoreJ2K.j2k.util.MsgLogger_Fields.INFO,
+                            CoreJ2K.j2k.util.FacilityManager.GetMsgLogger().printmsg(CoreJ2K.j2k.util.MsgLogger_Fields.INFO,
                                 $"Skipping assembly '{dll}' because it failed to load: {loadEx.Message}");
                         }
                         catch
@@ -161,7 +161,7 @@ namespace CoreJ2K
                     {
                         try
                         {
-                            CoreJ2K.j2k.util.FacilityManager.getMsgLogger().printmsg(CoreJ2K.j2k.util.MsgLogger_Fields.INFO,
+                            CoreJ2K.j2k.util.FacilityManager.GetMsgLogger().printmsg(CoreJ2K.j2k.util.MsgLogger_Fields.INFO,
                                 $"Skipping types from assembly '{dll}' because GetTypes failed: {ex.Message}");
                         }
                         catch
@@ -201,7 +201,7 @@ namespace CoreJ2K
             {
                 try
                 {
-                    CoreJ2K.j2k.util.FacilityManager.getMsgLogger().printmsg(CoreJ2K.j2k.util.MsgLogger_Fields.ERROR,
+                    CoreJ2K.j2k.util.FacilityManager.GetMsgLogger().printmsg(CoreJ2K.j2k.util.MsgLogger_Fields.ERROR,
                         $"J2kSetup.FindCodecs<{typeof(T).FullName}> failed: {ex.Message}");
                 }
                 catch
@@ -236,7 +236,7 @@ namespace CoreJ2K
                 {
                     try
                     {
-                        CoreJ2K.j2k.util.FacilityManager.getMsgLogger().printmsg(CoreJ2K.j2k.util.MsgLogger_Fields.INFO,
+                        CoreJ2K.j2k.util.FacilityManager.GetMsgLogger().printmsg(CoreJ2K.j2k.util.MsgLogger_Fields.INFO,
                             $"Failed to create codec instance of type '{t.FullName}': {ex.Message}");
                     }
                     catch

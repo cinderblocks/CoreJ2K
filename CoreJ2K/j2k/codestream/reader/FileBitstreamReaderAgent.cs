@@ -1,13 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: FileBitstreamReaderAgent.java,v 1.68 2002/07/19 12:34:38 grosbois Exp $
-*
-* Class:                   FileBitstreamReaderAgent
-*
-* Description:             Retrieve code-blocks codewords in the bit stream
-*
-*
 *
 * COPYRIGHT:
 * 
@@ -58,7 +49,7 @@ namespace CoreJ2K.j2k.codestream.reader
     /// of all code-block's codewords.
     /// 
     /// Note: All tile-parts headers are read by the constructor whereas packets
-    /// are processed when decoding related tile (when setTile method is
+    /// are processed when decoding related tile (when SetTile method is
     /// called).
     /// 
     /// In parsing mode, the reader simulates a virtual layer-resolution
@@ -86,7 +77,7 @@ namespace CoreJ2K.j2k.codestream.reader
         private ParameterList pl;
 
         /// <summary>The RandomAccessIO where to get data from </summary>
-        private readonly RandomAccessIO in_Renamed;
+        private readonly RandomAccessIO inStream;
 
         /// <summary>Offset of the first packet in each tile-part in each tile </summary>
         private readonly int[][] firstPackOff;
@@ -98,7 +89,7 @@ namespace CoreJ2K.j2k.codestream.reader
         /// 
         /// 
         /// </param>
-        public virtual int getNumTileParts(int t)
+        public virtual int GetNumTileParts(int t)
         {
             return firstPackOff?[t] == null 
                 ? throw new InvalidOperationException($"Tile {t} not found in input codestream.") 
@@ -265,8 +256,8 @@ namespace CoreJ2K.j2k.codestream.reader
             var tlmOffset = GetTileOffsetFromTLM(tileIndex);
             var usedFastPath = tlmOffset >= 0;
 
-            // Use setTile which has TLM fast path integrated
-            setTile(x, y);
+            // Use SetTile which has TLM fast path integrated
+            SetTile(x, y);
 
             return usedFastPath;
         }
@@ -306,14 +297,14 @@ namespace CoreJ2K.j2k.codestream.reader
             }
 
             // Check whether quit conditions used
-            usePOCQuit = pl.getBooleanParameter("poc_quit");
+            usePOCQuit = pl.GetBooleanParameter("poc_quit");
 
             // Get decoding rate
             bool rateInBytes;
-            var parsing = pl.getBooleanParameter("parsing");
+            var parsing = pl.GetBooleanParameter("parsing");
             try
             {
-                trate = pl.getFloatParameter("rate");
+                trate = pl.GetFloatParameter("rate");
                 if (trate == -1)
                 {
                     trate = float.MaxValue;
@@ -321,7 +312,7 @@ namespace CoreJ2K.j2k.codestream.reader
             }
             catch (FormatException)
             {
-                throw new InvalidOperationException($"Invalid value in 'rate' option: {pl.getParameter("rate")}");
+                throw new InvalidOperationException($"Invalid value in 'rate' option: {pl.GetParameter("rate")}");
             }
             catch (ArgumentException)
             {
@@ -330,11 +321,11 @@ namespace CoreJ2K.j2k.codestream.reader
 
             try
             {
-                tnbytes = pl.getIntParameter("nbytes");
+                tnbytes = pl.GetIntParameter("nbytes");
             }
             catch (FormatException)
             {
-                throw new InvalidOperationException($"Invalid value in 'nbytes' option: {pl.getParameter("nbytes")}");
+                throw new InvalidOperationException($"Invalid value in 'nbytes' option: {pl.GetParameter("nbytes")}");
             }
             catch (ArgumentException)
             {
@@ -343,7 +334,7 @@ namespace CoreJ2K.j2k.codestream.reader
 
             // Check that '-rate' and '-nbytes' are not used at the same time
             var defaults = pl.DefaultParameterList;
-            rateInBytes = tnbytes != defaults.getFloatParameter("nbytes");
+            rateInBytes = tnbytes != defaults.GetFloatParameter("nbytes");
 
             // Validate HeaderDecoder has been properly initialized with SIZ marker
             if (hd == null)
@@ -374,18 +365,18 @@ namespace CoreJ2K.j2k.codestream.reader
                 tnbytes = (int)(trate * hd.MaxCompImgWidth * hd.MaxCompImgHeight) / 8;
                 if (tnbytes < 0) tnbytes = int.MaxValue;
             }
-            isTruncMode = !pl.getBooleanParameter("parsing");
+            isTruncMode = !pl.GetBooleanParameter("parsing");
 
             // Check if quit conditions are being used
             int ncbQuit;
             try
             {
-                ncbQuit = pl.getIntParameter("ncb_quit");
+                ncbQuit = pl.GetIntParameter("ncb_quit");
             }
             catch (FormatException)
             {
                 throw new InvalidOperationException(
-                    $"Invalid value in 'ncb_quit' option: {pl.getParameter("ncb_quit")}");
+                    $"Invalid value in 'ncb_quit' option: {pl.GetParameter("ncb_quit")}");
             }
             catch (ArgumentException)
             {
@@ -398,11 +389,11 @@ namespace CoreJ2K.j2k.codestream.reader
 
             try
             {
-                lQuit = pl.getIntParameter("l_quit");
+                lQuit = pl.GetIntParameter("l_quit");
             }
             catch (FormatException)
             {
-                throw new InvalidOperationException($"Invalid value in 'l_quit' option: {pl.getParameter("l_quit")}");
+                throw new InvalidOperationException($"Invalid value in 'l_quit' option: {pl.GetParameter("l_quit")}");
             }
             catch (ArgumentException)
             {
@@ -410,7 +401,7 @@ namespace CoreJ2K.j2k.codestream.reader
             }
 
             // initializations
-            in_Renamed = ehs;
+            inStream = ehs;
             pktDec = new PktDecoder(decSpec, hd, ehs, this, isTruncMode, ncbQuit);
 
             tileParts = new int[nt];
@@ -431,7 +422,7 @@ namespace CoreJ2K.j2k.codestream.reader
 
             // Keeps main header's length, takes file format overhead into account
             var cdstreamStart = hd.mainHeadOff; // Codestream offset in the file
-            mainHeadLen = in_Renamed.Pos - cdstreamStart;
+            mainHeadLen = inStream.Pos - cdstreamStart;
             headLen = mainHeadLen;
 
             // If ncb and lbody quit conditions are used, headers are not counted
@@ -459,7 +450,7 @@ namespace CoreJ2K.j2k.codestream.reader
                 while (remainingTileParts != 0)
                 {
 
-                    tilePartStart = in_Renamed.Pos;
+                    tilePartStart = inStream.Pos;
                     // Read tile-part header
                     try
                     {
@@ -476,16 +467,16 @@ namespace CoreJ2K.j2k.codestream.reader
                             // Psot may equals zero for the
                             // last tile-part: it is assumed that this tile-part
                             // contain all data until EOC
-                            tilePartLen[t][tp] = in_Renamed.length() - 2 - tilePartStart;
+                            tilePartLen[t][tp] = inStream.length() - 2 - tilePartStart;
                         }
                     }
                     catch (System.IO.EndOfStreamException)
                     {
-                        firstPackOff[t][tp] = in_Renamed.length();
+                        firstPackOff[t][tp] = inStream.length();
                         throw;
                     }
 
-                    pos = in_Renamed.Pos;
+                    pos = inStream.Pos;
 
                     // In truncation mode, if target decoding rate is reached in
                     // tile-part header, skips the tile-part and stop reading
@@ -494,7 +485,7 @@ namespace CoreJ2K.j2k.codestream.reader
                     {
                         if ((pos - cdstreamStart) > tnbytes)
                         {
-                            firstPackOff[t][tp] = in_Renamed.length();
+                            firstPackOff[t][tp] = inStream.length();
                             rateReached = true;
                             break;
                         }
@@ -546,7 +537,7 @@ namespace CoreJ2K.j2k.codestream.reader
 
                     // Go to the beginning of next tile part
                     tilePartsRead[t]++;
-                    in_Renamed.seek(tilePartStart + tilePartLen[t][tp]);
+                    inStream.seek(tilePartStart + tilePartLen[t][tp]);
                     remainingTileParts--;
                     maxTP--;
                     tptot++;
@@ -557,7 +548,7 @@ namespace CoreJ2K.j2k.codestream.reader
                     {
                         if (remainingTileParts != 0)
                         {
-                            FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING, "Some tile-parts have not " + "been found. The codestream may be corrupted.");
+                            FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING, "Some tile-parts have not " + "been found. The codestream may be corrupted.");
                         }
                         break;
                     }
@@ -567,12 +558,12 @@ namespace CoreJ2K.j2k.codestream.reader
             {
                 if (printInfo)
                 {
-                    FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO, strInfo);
+                    FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO, strInfo);
                 }
-                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING, $"Codestream truncated in tile {t}");
+                FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING, $"Codestream truncated in tile {t}");
 
                 // Set specified rate to end of file if valid
-                var fileLen = in_Renamed.length();
+                var fileLen = inStream.length();
                 if (fileLen < tnbytes)
                 {
                     tnbytes = fileLen;
@@ -586,7 +577,7 @@ namespace CoreJ2K.j2k.codestream.reader
                 }
 
                 // Update 'res' value once all tile-part headers are read
-                if (pl.getParameter("res") == null)
+                if (pl.GetParameter("res") == null)
                 {
                     targetRes = decSpec.dls.Min;
                 }
@@ -594,7 +585,7 @@ namespace CoreJ2K.j2k.codestream.reader
                 {
                     try
                     {
-                        targetRes = pl.getIntParameter("res");
+                        targetRes = pl.GetIntParameter("res");
                         if (targetRes < 0)
                         {
                             throw new ArgumentException($"Specified negative resolution level index: {targetRes}");
@@ -603,7 +594,7 @@ namespace CoreJ2K.j2k.codestream.reader
                     catch (FormatException)
                     {
                         throw new ArgumentException(
-                            $"Invalid resolution level index ('-res' option) {pl.getParameter("res")}");
+                            $"Invalid resolution level index ('-res' option) {pl.GetParameter("res")}");
                     }
                 }
 
@@ -611,7 +602,7 @@ namespace CoreJ2K.j2k.codestream.reader
                 mdl = decSpec.dls.Min;
                 if (targetRes > mdl)
                 {
-                    FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING,
+                    FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING,
                         $"Specified resolution level ({targetRes}) is larger than the maximum value. Setting it to {mdl} (maximum value)");
                     targetRes = mdl;
                 }
@@ -627,7 +618,7 @@ namespace CoreJ2K.j2k.codestream.reader
             remainingTileParts = 0;
 
             // Update 'res' value once all tile-part headers are read
-            if (pl.getParameter("res") == null)
+            if (pl.GetParameter("res") == null)
             {
                 targetRes = decSpec.dls.Min;
             }
@@ -635,7 +626,7 @@ namespace CoreJ2K.j2k.codestream.reader
             {
                 try
                 {
-                    targetRes = pl.getIntParameter("res");
+                    targetRes = pl.GetIntParameter("res");
                     if (targetRes < 0)
                     {
                         throw new ArgumentException($"Specified negative resolution level index: {targetRes}");
@@ -644,7 +635,7 @@ namespace CoreJ2K.j2k.codestream.reader
                 catch (FormatException)
                 {
                     throw new ArgumentException(
-                        $"Invalid resolution level index ('-res' option) {pl.getParameter("res")}");
+                        $"Invalid resolution level index ('-res' option) {pl.GetParameter("res")}");
                 }
             }
 
@@ -652,14 +643,14 @@ namespace CoreJ2K.j2k.codestream.reader
             mdl = decSpec.dls.Min;
             if (targetRes > mdl)
             {
-                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING,
+                FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING,
                     $"Specified resolution level ({targetRes}) is larger than the maximum possible. Setting it to {mdl} (maximum possible)");
                 targetRes = mdl;
             }
 
             if (printInfo)
             {
-                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO, strInfo);
+                FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO, strInfo);
             }
 
             // Check presence of EOC marker is decoding rate not reached or if
@@ -668,14 +659,14 @@ namespace CoreJ2K.j2k.codestream.reader
             {
                 try
                 {
-                    if (!rateReached && !isPsotEqualsZero && in_Renamed.readShort() != Markers.EOC)
+                    if (!rateReached && !isPsotEqualsZero && inStream.readShort() != Markers.EOC)
                     {
-                        FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING, "EOC marker not found. " + "Codestream is corrupted.");
+                        FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING, "EOC marker not found. " + "Codestream is corrupted.");
                     }
                 }
                 catch (System.IO.EndOfStreamException)
                 {
-                    FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING, "EOC marker is missing");
+                    FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING, "EOC marker is missing");
                 }
             }
 
@@ -687,7 +678,7 @@ namespace CoreJ2K.j2k.codestream.reader
             else
             {
                 // Take EOC into account if rate is not reached
-                if (in_Renamed.Pos >= tnbytes)
+                if (inStream.Pos >= tnbytes)
                     anbytes += 2;
             }
 
@@ -697,7 +688,7 @@ namespace CoreJ2K.j2k.codestream.reader
                 baknBytes[tIdx] = nBytes[tIdx];
                 if (printInfo)
                 {
-                    FacilityManager.getMsgLogger().println($"{hi.toStringTileHeader(tIdx, tilePartLen[tIdx].Length)}", 2, 2);
+                    FacilityManager.GetMsgLogger().println($"{hi.toStringTileHeader(tIdx, tilePartLen[tIdx].Length)}", 2, 2);
                 }
             }
         }
@@ -775,7 +766,7 @@ namespace CoreJ2K.j2k.codestream.reader
             var ms = hi.NewSOT;
 
             // SOT marker
-            var marker = in_Renamed.readShort();
+            var marker = inStream.readShort();
             if (marker != Markers.SOT)
             {
                 if (marker == Markers.EOC)
@@ -791,13 +782,13 @@ namespace CoreJ2K.j2k.codestream.reader
             isEOCFound = false;
 
             // Lsot (shall equals 10)
-            var lsot = in_Renamed.readUnsignedShort();
+            var lsot = inStream.readUnsignedShort();
             ms.lsot = lsot;
             if (lsot != 10)
                 throw new CorruptedCodestreamException($"Wrong length for SOT marker segment: {lsot}");
 
             // Isot
-            var tile = in_Renamed.readUnsignedShort();
+            var tile = inStream.readUnsignedShort();
             ms.isot = tile;
             if (tile > 65534)
             {
@@ -806,7 +797,7 @@ namespace CoreJ2K.j2k.codestream.reader
 
             // Psot (tile-part length)
             // This is a 32-bit unsigned value, but we read it as signed int
-            var psot = in_Renamed.readInt();
+            var psot = inStream.readInt();
             ms.psot = psot;
             isPsotEqualsZero = (psot == 0);
             
@@ -825,19 +816,19 @@ namespace CoreJ2K.j2k.codestream.reader
             const int maxReasonableTilePartSize = 100 * 1024 * 1024; // 100MB
             if (psot > maxReasonableTilePartSize && psot != 0)
             {
-                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING,
+                FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING,
                     $"Very large tile-part detected: {psot} bytes ({psot / (1024.0 * 1024.0):F2} MB). " +
                     "This may indicate a corrupted file or cause memory issues.");
             }
             // TPsot
-            int tilePart = in_Renamed.read();
+            int tilePart = inStream.read();
             ms.tpsot = tilePart;
             if (tilePart != tilePartsRead[tile] || tilePart < 0 || tilePart > 254)
             {
                 throw new CorruptedCodestreamException("Out of order tile-part");
             }
             // TNsot
-            int nrOfTileParts = in_Renamed.read();
+            int nrOfTileParts = inStream.read();
             ms.tnsot = nrOfTileParts;
             hi.sotValue[$"t{tile}_tp{tilePart}"] = ms;
             if (nrOfTileParts == 0)
@@ -864,7 +855,7 @@ namespace CoreJ2K.j2k.codestream.reader
 
                 tileParts[tile] += nExtraTp;
                 nrOfTileParts = tileParts[tile];
-                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING,
+                FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING,
                     $"Header of tile-part {tilePart} of tile {tile}, does not indicate the total number of tile-parts. Assuming that there are {nrOfTileParts} tile-parts for this tile.");
 
                 // Increase and re-copy tilePartLen array
@@ -994,7 +985,7 @@ namespace CoreJ2K.j2k.codestream.reader
             // found)
             do
             {
-                hd.extractTilePartMarkSeg(in_Renamed.readShort(), in_Renamed, tile, tilePart);
+                hd.extractTilePartMarkSeg(inStream.readShort(), inStream, tile, tilePart);
             }
             while ((hd.NumFoundMarkSeg & HeaderDecoder.SOD_FOUND) == 0);
 
@@ -1063,7 +1054,7 @@ namespace CoreJ2K.j2k.codestream.reader
             int start;
             var status = false;
             var lastByte = firstPackOff[t][curTilePart] + tilePartLen[t][curTilePart] - 1 - tilePartHeadLen[t][curTilePart];
-            var numLayers = ((int)decSpec.nls.getTileDef(t));
+            var numLayers = ((int)decSpec.nls.GetTileDef(t));
             var nPrec = 1;
             int hlen, plen;
             string strInfo = printInfo ? $"Tile {TileIdx} (tile-part:{curTilePart}): offset, length, header length\n" : null;
@@ -1089,11 +1080,11 @@ namespace CoreJ2K.j2k.codestream.reader
                         if (l < lys[c][r] || l >= numLayers)
                             continue;
 
-                        nPrec = pktDec.getNumPrecinct(c, r);
+                        nPrec = pktDec.GetNumPrecinct(c, r);
                         for (var p = 0; p < nPrec; p++)
                         {
                             // loop on precincts
-                            start = in_Renamed.Pos;
+                            start = inStream.Pos;
 
                             // If packed packet headers are used, there is no need
                             // to check that there are bytes enough to read header
@@ -1107,8 +1098,8 @@ namespace CoreJ2K.j2k.codestream.reader
                             if (start > lastByte && curTilePart < firstPackOff[t].Length - 1)
                             {
                                 curTilePart++;
-                                in_Renamed.seek(firstPackOff[t][curTilePart]);
-                                lastByte = in_Renamed.Pos + tilePartLen[t][curTilePart] - 1 - tilePartHeadLen[t][curTilePart];
+                                inStream.seek(firstPackOff[t][curTilePart]);
+                                lastByte = inStream.Pos + tilePartLen[t][curTilePart] - 1 - tilePartHeadLen[t][curTilePart];
                             }
 
                             // Read SOP marker segment if necessary
@@ -1118,7 +1109,7 @@ namespace CoreJ2K.j2k.codestream.reader
                             {
                                 if (printInfo)
                                 {
-                                    FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO, strInfo);
+                                    FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO, strInfo);
                                 }
                                 return true;
                             }
@@ -1132,25 +1123,25 @@ namespace CoreJ2K.j2k.codestream.reader
                             {
                                 if (printInfo)
                                 {
-                                    FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO, strInfo);
+                                    FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO, strInfo);
                                 }
                                 return true;
                             }
 
                             // Store packet's head length
-                            hlen = in_Renamed.Pos - start;
+                            hlen = inStream.Pos - start;
                             pktHL.Add(hlen);
 
                             // Reads packet's body
                             status = pktDec.readPktBody(l, r, c, p, cbI[c][r], nBytes);
-                                                plen = in_Renamed.Pos - start;
+                                                plen = inStream.Pos - start;
                             if (printInfo) strInfo += (" Pkt l=" + l + ",r=" + r + ",c=" + c + ",p=" + p + ": " + start + ", " + plen + ", " + hlen + "\n");
 
                             if (status)
                             {
                                 if (printInfo)
                                 {
-                                    FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO, strInfo);
+                                    FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO, strInfo);
                                 }
                                 return true;
                             }
@@ -1161,7 +1152,7 @@ namespace CoreJ2K.j2k.codestream.reader
 
             if (printInfo)
             {
-                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO, strInfo);
+                FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO, strInfo);
             }
             return false; // Decoding rate was not reached
         }
@@ -1218,7 +1209,7 @@ namespace CoreJ2K.j2k.codestream.reader
             }
 
             string strInfo = printInfo ? $"Tile {TileIdx} (tile-part:{curTilePart}): offset, length, header length\n" : null;
-            var numLayers = ((int)decSpec.nls.getTileDef(t));
+            var numLayers = ((int)decSpec.nls.GetTileDef(t));
             var pph = decSpec.pphs.GetBoolTileDef(t);
             var nPrec = 1;
             int start;
@@ -1244,12 +1235,12 @@ namespace CoreJ2K.j2k.codestream.reader
                         if (l < lys[c][r] || l >= numLayers)
                             continue;
 
-                        nPrec = pktDec.getNumPrecinct(c, r);
+                        nPrec = pktDec.GetNumPrecinct(c, r);
 
                         for (var p = 0; p < nPrec; p++)
                         {
                             // loop on precincts
-                            start = in_Renamed.Pos;
+                            start = inStream.Pos;
 
                             // If packed packet headers are used, there is no need
                             // to check that there are bytes enough to read header
@@ -1263,8 +1254,8 @@ namespace CoreJ2K.j2k.codestream.reader
                             if (start > lastByte && curTilePart < firstPackOff[t].Length - 1)
                             {
                                 curTilePart++;
-                                in_Renamed.seek(firstPackOff[t][curTilePart]);
-                                lastByte = in_Renamed.Pos + tilePartLen[t][curTilePart] - 1 - tilePartHeadLen[t][curTilePart];
+                                inStream.seek(firstPackOff[t][curTilePart]);
+                                lastByte = inStream.Pos + tilePartLen[t][curTilePart] - 1 - tilePartHeadLen[t][curTilePart];
                             }
 
                             // Read SOP marker segment if necessary
@@ -1274,7 +1265,7 @@ namespace CoreJ2K.j2k.codestream.reader
                             {
                                 if (printInfo)
                                 {
-                                    FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO, strInfo);
+                                    FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO, strInfo);
                                 }
                                 return true;
                             }
@@ -1288,26 +1279,26 @@ namespace CoreJ2K.j2k.codestream.reader
                             {
                                 if (printInfo)
                                 {
-                                    FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO, strInfo);
+                                    FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO, strInfo);
                                 }
                                 // Output rate of EOF reached
                                 return true;
                             }
 
                             // Store packet's head length
-                            hlen = in_Renamed.Pos - start;
+                            hlen = inStream.Pos - start;
                             pktHL.Add(hlen);
 
                             // Reads packet's body
                             status = pktDec.readPktBody(l, r, c, p, cbI[c][r], nBytes);
-                                                plen = in_Renamed.Pos - start;
+                                                plen = inStream.Pos - start;
                                                 if (printInfo) strInfo += (" Pkt l=" + l + ",r=" + r + ",c=" + c + ",p=" + p + ": " + start + ", " + plen + ", " + hlen + "\n");
 
                                                 if (status)
                                                 {
                                                     if (printInfo)
                                                     {
-                                                        FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO, strInfo);
+                                                        FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO, strInfo);
                                                     }
                                                     // Output rate or EOF reached
                                                     return true;
@@ -1319,7 +1310,7 @@ namespace CoreJ2K.j2k.codestream.reader
 
                                 if (printInfo)
                                 {
-                                    FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO, strInfo);
+                                    FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO, strInfo);
                                 }
                                 return false; // Decoding rate was not reached
                             }
@@ -1353,8 +1344,8 @@ namespace CoreJ2K.j2k.codestream.reader
         {
             // Computes current tile offset in the reference grid
 
-            var nTiles = getNumTiles(null);
-            var tileI = getTile(null);
+            var nTiles = GetNumTiles(null);
+            var tileI = GetTile(null);
             var x0siz = hd.ImgULX;
             var y0siz = hd.ImgULY;
             var xsiz = x0siz + hd.ImgWidth;
@@ -1402,10 +1393,10 @@ namespace CoreJ2K.j2k.codestream.reader
                     {
                         minlys = lys[c][r];
                     }
-                    p = pktDec.getNumPrecinct(c, r) - 1;
+                    p = pktDec.GetNumPrecinct(c, r) - 1;
                     for (; p >= 0; p--)
                     {
-                        prec = pktDec.getPrecInfo(c, r, p);
+                        prec = pktDec.GetPrecInfo(c, r, p);
                         if (prec.rgulx != tx0)
                         {
                             if (prec.rgulx < minx)
@@ -1448,7 +1439,7 @@ namespace CoreJ2K.j2k.codestream.reader
             int start;
             var status = false;
             var lastByte = firstPackOff[t][curTilePart] + tilePartLen[t][curTilePart] - 1 - tilePartHeadLen[t][curTilePart];
-            var numLayers = ((int)decSpec.nls.getTileDef(t));
+            var numLayers = ((int)decSpec.nls.GetTileDef(t));
             string strInfo = printInfo ? $"Tile {TileIdx} (tile-part:{curTilePart}): offset, length, header length\n" : null;
             var pph = decSpec.pphs.GetBoolTileDef(t);
             for (var r = ress; r < rese; r++)
@@ -1469,11 +1460,11 @@ namespace CoreJ2K.j2k.codestream.reader
                                 continue;
                             if (r > mdl[c])
                                 continue;
-                            if (nextPrec[c][r] >= pktDec.getNumPrecinct(c, r))
+                            if (nextPrec[c][r] >= pktDec.GetNumPrecinct(c, r))
                             {
                                 continue;
                             }
-                            prec = pktDec.getPrecInfo(c, r, nextPrec[c][r]);
+                            prec = pktDec.GetPrecInfo(c, r, nextPrec[c][r]);
                             if ((prec.rgulx != x) || (prec.rguly != y))
                             {
                                 continue;
@@ -1486,7 +1477,7 @@ namespace CoreJ2K.j2k.codestream.reader
                                 if (l < lys[c][r] || l >= numLayers)
                                     continue;
 
-                                start = in_Renamed.Pos;
+                                start = inStream.Pos;
 
                                 // If packed packet headers are used, there is no
                                 // need to check that there are bytes enough to
@@ -1501,8 +1492,8 @@ namespace CoreJ2K.j2k.codestream.reader
                                 if (start > lastByte && curTilePart < firstPackOff[t].Length - 1)
                                 {
                                     curTilePart++;
-                                    in_Renamed.seek(firstPackOff[t][curTilePart]);
-                                    lastByte = in_Renamed.Pos + tilePartLen[t][curTilePart] - 1 - tilePartHeadLen[t][curTilePart];
+                                    inStream.seek(firstPackOff[t][curTilePart]);
+                                    lastByte = inStream.Pos + tilePartLen[t][curTilePart] - 1 - tilePartHeadLen[t][curTilePart];
                                 }
 
                                 // Read SOP marker segment if necessary
@@ -1512,7 +1503,7 @@ namespace CoreJ2K.j2k.codestream.reader
                                 {
                                     if (printInfo)
                                     {
-                                        FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO, strInfo);
+                                        FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO, strInfo);
                                     }
                                     return true;
                                 }
@@ -1526,25 +1517,25 @@ namespace CoreJ2K.j2k.codestream.reader
                                 {
                                     if (printInfo)
                                     {
-                                        FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO, strInfo);
+                                        FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO, strInfo);
                                     }
                                     return true;
                                 }
 
                                 // Store packet's head length
-                                hlen = in_Renamed.Pos - start;
+                                hlen = inStream.Pos - start;
                                 pktHL.Add(hlen);
 
                                 // Reads packet's body
                                 status = pktDec.readPktBody(l, r, c, nextPrec[c][r], cbI[c][r], nBytes);
-                                plen = in_Renamed.Pos - start;
+                                plen = inStream.Pos - start;
                                  if (printInfo) strInfo += (" Pkt l=" + l + ",r=" + r + ",c=" + c + ",p=" + nextPrec[c][r] + ": " + start + ", " + plen + ", " + hlen + "\n");
 
                                  if (status)
                                  {
                                      if (printInfo)
                                      {
-                                         FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO, strInfo);
+                                         FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO, strInfo);
                                      }
                                      return true;
                                  }
@@ -1573,7 +1564,7 @@ namespace CoreJ2K.j2k.codestream.reader
 
              if (printInfo)
              {
-                 FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO, strInfo);
+                 FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO, strInfo);
              }
              return false; // Decoding rate was not reached
          }
@@ -1605,8 +1596,8 @@ namespace CoreJ2K.j2k.codestream.reader
         /// </returns>
         private bool readPosCompResLy(int[][] lys, int lye, int ress, int rese, int comps, int compe)
         {
-            var nTiles = getNumTiles(null);
-            var tileI = getTile(null);
+            var nTiles = GetNumTiles(null);
+            var tileI = GetTile(null);
             var x0siz = hd.ImgULX;
             var y0siz = hd.ImgULY;
             var xsiz = x0siz + hd.ImgWidth;
@@ -1654,10 +1645,10 @@ namespace CoreJ2K.j2k.codestream.reader
                     {
                         minlys = lys[c][r];
                     }
-                    p = pktDec.getNumPrecinct(c, r) - 1;
+                    p = pktDec.GetNumPrecinct(c, r) - 1;
                     for (; p >= 0; p--)
                     {
-                        prec = pktDec.getPrecInfo(c, r, p);
+                        prec = pktDec.GetPrecInfo(c, r, p);
                         if (prec.rgulx != tx0)
                         {
                             if (prec.rgulx < minx)
@@ -1699,7 +1690,7 @@ namespace CoreJ2K.j2k.codestream.reader
             int start;
             var status = false;
             var lastByte = firstPackOff[t][curTilePart] + tilePartLen[t][curTilePart] - 1 - tilePartHeadLen[t][curTilePart];
-            var numLayers = ((int)decSpec.nls.getTileDef(t));
+            var numLayers = ((int)decSpec.nls.GetTileDef(t));
             string strInfo = printInfo ? $"Tile {TileIdx} (tile-part:{curTilePart}): offset, length, header length\n" : null;
             var pph = decSpec.pphs.GetBoolTileDef(t);
 
@@ -1721,11 +1712,11 @@ namespace CoreJ2K.j2k.codestream.reader
                             // Resolution levels
                             if (r > mdl[c])
                                 continue;
-                            if (nextPrec[c][r] >= pktDec.getNumPrecinct(c, r))
+                            if (nextPrec[c][r] >= pktDec.GetNumPrecinct(c, r))
                             {
                                 continue;
                             }
-                            prec = pktDec.getPrecInfo(c, r, nextPrec[c][r]);
+                            prec = pktDec.GetPrecInfo(c, r, nextPrec[c][r]);
                             if ((prec.rgulx != x) || (prec.rguly != y))
                             {
                                 continue;
@@ -1738,7 +1729,7 @@ namespace CoreJ2K.j2k.codestream.reader
                                 if (l < lys[c][r] || l >= numLayers)
                                     continue;
 
-                                start = in_Renamed.Pos;
+                                start = inStream.Pos;
 
                                 // If packed packet headers are used, there is no
                                 // need to check that there are bytes enough to
@@ -1753,8 +1744,8 @@ namespace CoreJ2K.j2k.codestream.reader
                                 if (start > lastByte && curTilePart < firstPackOff[t].Length - 1)
                                 {
                                     curTilePart++;
-                                    in_Renamed.seek(firstPackOff[t][curTilePart]);
-                                    lastByte = in_Renamed.Pos + tilePartLen[t][curTilePart] - 1 - tilePartHeadLen[t][curTilePart];
+                                    inStream.seek(firstPackOff[t][curTilePart]);
+                                    lastByte = inStream.Pos + tilePartLen[t][curTilePart] - 1 - tilePartHeadLen[t][curTilePart];
                                 }
 
                                 // Read SOP marker segment if necessary
@@ -1764,7 +1755,7 @@ namespace CoreJ2K.j2k.codestream.reader
                                 {
                                     if (printInfo)
                                     {
-                                        FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO, strInfo);
+                                        FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO, strInfo);
                                     }
                                     return true;
                                 }
@@ -1778,25 +1769,25 @@ namespace CoreJ2K.j2k.codestream.reader
                                 {
                                     if (printInfo)
                                     {
-                                        FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO, strInfo);
+                                        FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO, strInfo);
                                     }
                                     return true;
                                 }
 
                                 // Store packet's head length
-                                hlen = in_Renamed.Pos - start;
+                                hlen = inStream.Pos - start;
                                 pktHL.Add(hlen);
 
                                 // Reads packet's body
                                 status = pktDec.readPktBody(l, r, c, nextPrec[c][r], cbI[c][r], nBytes);
-                                plen = in_Renamed.Pos - start;
+                                plen = inStream.Pos - start;
                                 if (printInfo) strInfo += (" Pkt l=" + l + ",r=" + r + ",c=" + c + ",p=" + nextPrec[c][r] + ": " + start + ", " + plen + ", " + hlen + "\n");
 
                                 if (status)
                                 {
                                     if (printInfo)
                                     {
-                                        FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO, strInfo);
+                                        FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO, strInfo);
                                     }
                                     return true;
                                 }
@@ -1825,7 +1816,7 @@ namespace CoreJ2K.j2k.codestream.reader
 
             if (printInfo)
             {
-                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO, strInfo);
+                FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO, strInfo);
             }
             return false; // Decoding rate was not reached
         }
@@ -1857,8 +1848,8 @@ namespace CoreJ2K.j2k.codestream.reader
         /// </returns>
         private bool readCompPosResLy(int[][] lys, int lye, int ress, int rese, int comps, int compe)
         {
-            var nTiles = getNumTiles(null);
-            var tileI = getTile(null);
+            var nTiles = GetNumTiles(null);
+            var tileI = GetTile(null);
             var x0siz = hd.ImgULX;
             var y0siz = hd.ImgULY;
             var xsiz = x0siz + hd.ImgWidth;
@@ -1906,10 +1897,10 @@ namespace CoreJ2K.j2k.codestream.reader
                     {
                         minlys = lys[c][r];
                     }
-                    p = pktDec.getNumPrecinct(c, r) - 1;
+                    p = pktDec.GetNumPrecinct(c, r) - 1;
                     for (; p >= 0; p--)
                     {
-                        prec = pktDec.getPrecInfo(c, r, p);
+                        prec = pktDec.GetPrecInfo(c, r, p);
                         if (prec.rgulx != tx0)
                         {
                             if (prec.rgulx < minx)
@@ -1951,7 +1942,7 @@ namespace CoreJ2K.j2k.codestream.reader
             int start;
             var status = false;
             var lastByte = firstPackOff[t][curTilePart] + tilePartLen[t][curTilePart] - 1 - tilePartHeadLen[t][curTilePart];
-            var numLayers = ((int)decSpec.nls.getTileDef(t));
+            var numLayers = ((int)decSpec.nls.GetTileDef(t));
             string strInfo = printInfo ? $"Tile {TileIdx} (tile-part:{curTilePart}): offset, length, header length\n" : null;
             var pph = decSpec.pphs.GetBoolTileDef(t);
 
@@ -1974,11 +1965,11 @@ namespace CoreJ2K.j2k.codestream.reader
                             // Resolution levels
                             if (r > mdl[c])
                                 continue;
-                            if (nextPrec[c][r] >= pktDec.getNumPrecinct(c, r))
+                            if (nextPrec[c][r] >= pktDec.GetNumPrecinct(c, r))
                             {
                                 continue;
                             }
-                            prec = pktDec.getPrecInfo(c, r, nextPrec[c][r]);
+                            prec = pktDec.GetPrecInfo(c, r, nextPrec[c][r]);
                             if ((prec.rgulx != x) || (prec.rguly != y))
                             {
                                 continue;
@@ -1992,7 +1983,7 @@ namespace CoreJ2K.j2k.codestream.reader
                                 if (l < lys[c][r])
                                     continue;
 
-                                start = in_Renamed.Pos;
+                                start = inStream.Pos;
 
                                 // If packed packet headers are used, there is no
                                 // need to check that there are bytes enough to
@@ -2007,8 +1998,8 @@ namespace CoreJ2K.j2k.codestream.reader
                                 if (start > lastByte && curTilePart < firstPackOff[t].Length - 1)
                                 {
                                     curTilePart++;
-                                    in_Renamed.seek(firstPackOff[t][curTilePart]);
-                                    lastByte = in_Renamed.Pos + tilePartLen[t][curTilePart] - 1 - tilePartHeadLen[t][curTilePart];
+                                    inStream.seek(firstPackOff[t][curTilePart]);
+                                    lastByte = inStream.Pos + tilePartLen[t][curTilePart] - 1 - tilePartHeadLen[t][curTilePart];
                                 }
 
                                 // Read SOP marker segment if necessary
@@ -2018,7 +2009,7 @@ namespace CoreJ2K.j2k.codestream.reader
                                 {
                                     if (printInfo)
                                     {
-                                        FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO, strInfo);
+                                        FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO, strInfo);
                                     }
                                     return true;
                                 }
@@ -2032,25 +2023,25 @@ namespace CoreJ2K.j2k.codestream.reader
                                 {
                                     if (printInfo)
                                     {
-                                        FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO, strInfo);
+                                        FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO, strInfo);
                                     }
                                     return true;
                                 }
 
                                 // Store packet's head length
-                                hlen = in_Renamed.Pos - start;
+                                hlen = inStream.Pos - start;
                                 pktHL.Add(hlen);
 
                                 // Reads packet's body
                                 status = pktDec.readPktBody(l, r, c, nextPrec[c][r], cbI[c][r], nBytes);
-                                        plen = in_Renamed.Pos - start;
+                                        plen = inStream.Pos - start;
                                         if (printInfo) strInfo += (" Pkt l=" + l + ",r=" + r + ",c=" + c + ",p=" + nextPrec[c][r] + ": " + start + ", " + plen + ", " + hlen + "\n");
 
                                         if (status)
                                         {
                                             if (printInfo)
                                             {
-                                                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO, strInfo);
+                                                FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO, strInfo);
                                             }
                                             return true;
                                         }
@@ -2079,7 +2070,7 @@ namespace CoreJ2K.j2k.codestream.reader
 
             if (printInfo)
             {
-                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO, strInfo);
+                FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO, strInfo);
             }
             return false; // Decoding rate was not reached
         }
@@ -2103,7 +2094,7 @@ namespace CoreJ2K.j2k.codestream.reader
             pktHL = new List<int>(10);
 
             // Number of layers
-            var nl = ((int)decSpec.nls.getTileDef(t));
+            var nl = ((int)decSpec.nls.GetTileDef(t));
 
             // If packed packet headers was used, get the packet headers for this
             // tile
@@ -2122,7 +2113,7 @@ namespace CoreJ2K.j2k.codestream.reader
             }
 
             // Reads packets of the tile according to the progression order
-            var pocSpec = ((int[][])decSpec.pcs.getTileDef(t));
+            var pocSpec = ((int[][])decSpec.pcs.GetTileDef(t));
             var nChg = pocSpec?.Length ?? 1;
 
             // Create an array containing information about changes (progression
@@ -2140,11 +2131,11 @@ namespace CoreJ2K.j2k.codestream.reader
 
             if (pocSpec == null)
             {
-                change[idx][0] = ((int)decSpec.pos.getTileDef(t));
+                change[idx][0] = ((int)decSpec.pos.GetTileDef(t));
                 // Progression type found in COx marker segments
                 change[idx][1] = nl; // Layer index end
                 change[idx][2] = 0; // resolution level start
-                change[idx][3] = decSpec.dls.getMaxInTile(t) + 1; // res. level end
+                change[idx][3] = decSpec.dls.GetMaxInTile(t) + 1; // res. level end
                 change[idx][4] = 0; // Component index start
                 change[idx][5] = nc; // Component index end
             }
@@ -2171,11 +2162,11 @@ namespace CoreJ2K.j2k.codestream.reader
                 {
                     return;
                 }
-                in_Renamed.seek(firstPackOff[t][0]);
+                inStream.seek(firstPackOff[t][0]);
             }
             catch (System.IO.EndOfStreamException)
             {
-                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING, $"Codestream truncated in tile {t}");
+                FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING, $"Codestream truncated in tile {t}");
                 return;
             }
 
@@ -2188,7 +2179,7 @@ namespace CoreJ2K.j2k.codestream.reader
             var lys = new int[this.nc][];
             for (var c = 0; c < this.nc; c++)
             {
-                lys[c] = new int[((int)decSpec.dls.getTileCompVal(t, c)) + 1];
+                lys[c] = new int[((int)decSpec.dls.GetTileCompVal(t, c)) + 1];
             }
 
             for (var chg = 0; chg < nChg; chg++)
@@ -2414,7 +2405,7 @@ namespace CoreJ2K.j2k.codestream.reader
                 // No parsing for this tile, adds tile's body to the total
                 // number of read bytes.
                 anbytes += totTileLen[t] - totTileHeadLen[t];
-                if (t < getNumTiles() - 1)
+                if (t < GetNumTiles() - 1)
                 {
                     nBytes[t + 1] += nBytes[t] - (totTileLen[t] - totTileHeadLen[t]);
                 }
@@ -2432,7 +2423,7 @@ namespace CoreJ2K.j2k.codestream.reader
         /// <param name="y">The vertical indexes of the new tile.
         /// 
         /// </param>
-        public override void setTile(int x, int y)
+        public override void SetTile(int x, int y)
         {
 
             int i; // counter
@@ -2467,10 +2458,10 @@ namespace CoreJ2K.j2k.codestream.reader
                     }
 
                     // Seek directly to tile start using TLM
-                    in_Renamed.seek((int)tlmOffset);
+                    inStream.seek((int)tlmOffset);
 
                     // Verify we're at the correct tile by reading SOT marker
-                    var marker = in_Renamed.readShort();
+                    var marker = inStream.readShort();
                     if (marker != Markers.SOT)
                     {
                         // Not at tile start, TLM might be incorrect
@@ -2478,14 +2469,14 @@ namespace CoreJ2K.j2k.codestream.reader
                     }
 
                     // Read SOT to verify tile index
-                    in_Renamed.readUnsignedShort(); // Lsot
-                    var actualTile = in_Renamed.readUnsignedShort(); // Isot
+                    inStream.readUnsignedShort(); // Lsot
+                    var actualTile = inStream.readUnsignedShort(); // Isot
 
                     if (actualTile == t)
                     {
                         // TLM fast path succeeded!
                         // Seek back to start of SOT marker for normal processing
-                        in_Renamed.seek((int)tlmOffset);
+                        inStream.seek((int)tlmOffset);
 
                         // Set the new current tile
                         ctX = x;
@@ -2496,34 +2487,34 @@ namespace CoreJ2K.j2k.codestream.reader
                         var ctoy = (y == 0) ? ay : py + y * ntH;
                         for (i = nc - 1; i >= 0; i--)
                         {
-                            culx[i] = (ctox + hd.getCompSubsX(i) - 1) / hd.getCompSubsX(i);
-                            culy[i] = (ctoy + hd.getCompSubsY(i) - 1) / hd.getCompSubsY(i);
-                            offX[i] = (px + x * ntW + hd.getCompSubsX(i) - 1) / hd.getCompSubsX(i);
-                            offY[i] = (py + y * ntH + hd.getCompSubsY(i) - 1) / hd.getCompSubsY(i);
+                            culx[i] = (ctox + hd.GetCompSubsX(i) - 1) / hd.GetCompSubsX(i);
+                            culy[i] = (ctoy + hd.GetCompSubsY(i) - 1) / hd.GetCompSubsY(i);
+                            offX[i] = (px + x * ntW + hd.GetCompSubsX(i) - 1) / hd.GetCompSubsX(i);
+                            offY[i] = (py + y * ntH + hd.GetCompSubsY(i) - 1) / hd.GetCompSubsY(i);
                         }
 
                         // Initialize subband tree and number of resolution levels
                         subbTrees = new SubbandSyn[nc];
                         mdl = new int[nc];
                         derived = new bool[nc];
-                        params_Renamed = new StdDequantizerParams[nc];
+                        dequantParams = new StdDequantizerParams[nc];
                         gb = new int[nc];
 
                         for (var c = 0; c < nc; c++)
                         {
-                            derived[c] = decSpec.qts.isDerived(t, c);
-                            params_Renamed[c] = (StdDequantizerParams)decSpec.qsss.getTileCompVal(t, c);
-                            gb[c] = ((int)decSpec.gbs.getTileCompVal(t, c));
-                            mdl[c] = ((int)decSpec.dls.getTileCompVal(t, c));
+                            derived[c] = decSpec.qts.IsDerived(t, c);
+                            dequantParams[c] = (StdDequantizerParams)decSpec.qsss.GetTileCompVal(t, c);
+                            gb[c] = ((int)decSpec.gbs.GetTileCompVal(t, c));
+                            mdl[c] = ((int)decSpec.dls.GetTileCompVal(t, c));
 
                             subbTrees[c] = new SubbandSyn(
-                                getTileCompWidth(t, c, mdl[c]),
-                                getTileCompHeight(t, c, mdl[c]),
-                                getResULX(c, mdl[c]),
-                                getResULY(c, mdl[c]),
+                                GetTileCompWidth(t, c, mdl[c]),
+                                GetTileCompHeight(t, c, mdl[c]),
+                                GetResULX(c, mdl[c]),
+                                GetResULY(c, mdl[c]),
                                 mdl[c],
-                                decSpec.wfs.getHFilters(t, c),
-                                decSpec.wfs.getVFilters(t, c));
+                                decSpec.wfs.GetHFilters(t, c),
+                                decSpec.wfs.GetVFilters(t, c));
                             initSubbandsFields(c, subbTrees[c]);
                         }
 
@@ -2534,7 +2525,7 @@ namespace CoreJ2K.j2k.codestream.reader
                         }
                         catch (System.IO.IOException e)
                         {
-                            FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.ERROR, e.StackTrace);
+                            FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.ERROR, e.StackTrace);
                             throw new InvalidOperationException($"IO Error when reading tile {x} x {y}");
                         }
 
@@ -2544,14 +2535,14 @@ namespace CoreJ2K.j2k.codestream.reader
                     else
                     {
                         // TLM was incorrect - log warning and fall through to sequential path
-                        FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING,
+                        FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING,
                             $"TLM marker data inconsistent for tile {t} (found tile {actualTile}), using sequential parsing");
                     }
                 }
                 catch (System.IO.IOException e)
                 {
                     // TLM seek failed - log warning and fall through to sequential path
-                    FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING,
+                    FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING,
                         $"TLM fast seek failed for tile {t}: {e.Message}, using sequential parsing");
                 }
             }
@@ -2581,29 +2572,29 @@ namespace CoreJ2K.j2k.codestream.reader
                 var ctoy = (y == 0) ? ay : py + y * ntH;
                 for (i = nc - 1; i >= 0; i--)
                 {
-                    culx[i] = (ctox + hd.getCompSubsX(i) - 1) / hd.getCompSubsX(i);
-                    culy[i] = (ctoy + hd.getCompSubsY(i) - 1) / hd.getCompSubsY(i);
-                    offX[i] = (px + x * ntW + hd.getCompSubsX(i) - 1) / hd.getCompSubsX(i);
-                    offY[i] = (py + y * ntH + hd.getCompSubsY(i) - 1) / hd.getCompSubsY(i);
+                    culx[i] = (ctox + hd.GetCompSubsX(i) - 1) / hd.GetCompSubsX(i);
+                    culy[i] = (ctoy + hd.GetCompSubsY(i) - 1) / hd.GetCompSubsY(i);
+                    offX[i] = (px + x * ntW + hd.GetCompSubsX(i) - 1) / hd.GetCompSubsX(i);
+                    offY[i] = (py + y * ntH + hd.GetCompSubsY(i) - 1) / hd.GetCompSubsY(i);
                 }
 
                 // Initialize subband tree and number of resolution levels
                 subbTrees = new SubbandSyn[nc];
                 mdl = new int[nc];
                 derived = new bool[nc];
-                params_Renamed = new StdDequantizerParams[nc];
+                dequantParams = new StdDequantizerParams[nc];
                 gb = new int[nc];
 
                 for (var c = 0; c < nc; c++)
                 {
-                    derived[c] = decSpec.qts.isDerived(t, c);
-                    params_Renamed[c] = (StdDequantizerParams)decSpec.qsss.getTileCompVal(t, c);
-                    gb[c] = ((int)decSpec.gbs.getTileCompVal(t, c));
-                    mdl[c] = ((int)decSpec.dls.getTileCompVal(t, c));
+                    derived[c] = decSpec.qts.IsDerived(t, c);
+                    dequantParams[c] = (StdDequantizerParams)decSpec.qsss.GetTileCompVal(t, c);
+                    gb[c] = ((int)decSpec.gbs.GetTileCompVal(t, c));
+                    mdl[c] = ((int)decSpec.dls.GetTileCompVal(t, c));
 
-                    subbTrees[c] = new SubbandSyn(getTileCompWidth(t, c, mdl[c]), getTileCompHeight(t, c, mdl[c]),
-                        getResULX(c, mdl[c]), getResULY(c, mdl[c]), mdl[c], decSpec.wfs.getHFilters(t, c),
-                        decSpec.wfs.getVFilters(t, c));
+                    subbTrees[c] = new SubbandSyn(GetTileCompWidth(t, c, mdl[c]), GetTileCompHeight(t, c, mdl[c]),
+                        GetResULX(c, mdl[c]), GetResULY(c, mdl[c]), mdl[c], decSpec.wfs.GetHFilters(t, c),
+                        decSpec.wfs.GetVFilters(t, c));
                     initSubbandsFields(c, subbTrees[c]);
                 }
 
@@ -2614,7 +2605,7 @@ namespace CoreJ2K.j2k.codestream.reader
                 }
                 catch (System.IO.IOException e)
                 {
-                    FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.ERROR, e.StackTrace);
+                    FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.ERROR, e.StackTrace);
                     throw new InvalidOperationException($"IO Error when reading tile {x} x {y}");
                 }
             }
@@ -2625,7 +2616,7 @@ namespace CoreJ2K.j2k.codestream.reader
         /// last one (i.e. there is no next tile).
         /// 
         /// </summary>
-        public override void nextTile()
+        public override void NextTile()
         {
             if (ctX == ntX - 1 && ctY == ntY - 1)
             {
@@ -2635,12 +2626,12 @@ namespace CoreJ2K.j2k.codestream.reader
             else if (ctX < ntX - 1)
             {
                 // If not at end of current tile line
-                setTile(ctX + 1, ctY);
+                SetTile(ctX + 1, ctY);
             }
             else
             {
                 // Go to first tile at next line
-                setTile(0, ctY + 1);
+                SetTile(0, ctY + 1);
             }
         }
 
@@ -2702,7 +2693,7 @@ namespace CoreJ2K.j2k.codestream.reader
         /// determined by the available data and 'nl'.
         /// 
         /// </returns>
-        public override DecLyrdCBlk getCodeBlock(int c, int m, int n, SubbandSyn sb, int fl, int nl, DecLyrdCBlk ccb)
+        public override DecLyrdCBlk GetCodeBlock(int c, int m, int n, SubbandSyn sb, int fl, int nl, DecLyrdCBlk ccb)
         {
 
             var t = TileIdx;
@@ -2713,8 +2704,8 @@ namespace CoreJ2K.j2k.codestream.reader
             int passtype;
 
             // Number of layers
-            var numLayers = ((int)decSpec.nls.getTileDef(t));
-            var options = ((int)decSpec.ecopts.getTileCompVal(t, c));
+            var numLayers = ((int)decSpec.nls.GetTileDef(t));
+            var options = ((int)decSpec.ecopts.GetTileCompVal(t, c));
             if (nl < 0)
             {
                 nl = numLayers - fl + 1;
@@ -2729,7 +2720,7 @@ namespace CoreJ2K.j2k.codestream.reader
 
             // Check validity of resquested resolution level (according to the
             // "-res" option).
-            var maxdl = getSynSubbandTree(t, c).resLvl;
+            var maxdl = GetSynSubbandTree(t, c).resLvl;
             if (r > targetRes + maxdl - decSpec.dls.Min)
             {
                 throw new InvalidOperationException("JJ2000 error: requesting a code-block " + "disallowed by the '-res' option.");
@@ -2882,8 +2873,8 @@ namespace CoreJ2K.j2k.codestream.reader
                 // data is checked to be within the file.
                 try
                 {
-                    in_Renamed.seek(rcb.off[l]);
-                    in_Renamed.readFully(ccb.data, dataIdx + 1, rcb.len[l]);
+                    inStream.seek(rcb.off[l]);
+                    inStream.readFully(ccb.data, dataIdx + 1, rcb.len[l]);
                     dataIdx += rcb.len[l];
                 }
                 catch (System.IO.IOException e)

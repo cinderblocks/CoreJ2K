@@ -24,8 +24,8 @@ namespace CoreJ2K.j2k.codestream.writer.markers
         public void Write(BinaryWriter writer, bool isMainHeader, int tileIdx)
         {
             Progression[] prog = isMainHeader ?
-                (Progression[])(encSpec.pocs.getDefault()) :
-                (Progression[])(encSpec.pocs.getTileDef(tileIdx));
+                (Progression[])(encSpec.pocs.GetDefault()) :
+                (Progression[])(encSpec.pocs.GetTileDef(tileIdx));
 
             // Calculate component field length
             int lenCompField = (nComp < 257 ? 1 : 2);

@@ -1,6 +1,5 @@
 /// <summary>**************************************************************************
 /// 
-/// $Id: ICCProfileHeader.java,v 1.1 2002/07/25 14:56:31 grosbois Exp $
 /// 
 /// Copyright Eastman Kodak Company, 343 State Street, Rochester, NY 14650
 /// $Date $
@@ -36,10 +35,10 @@ namespace CoreJ2K.Icc.Types
 		* those codes required for Restricted ICC use are defined here.
 		*/
         /// <summary>Profile header signature </summary>
-        private static int kdwProfileSignature = ICCProfile.getInt(System.Text.Encoding.UTF8.GetBytes("acsp"), 0);
+        private static int kdwProfileSignature = ICCProfile.GetInt(System.Text.Encoding.UTF8.GetBytes("acsp"), 0);
 
         /// <summary>Profile header signature </summary>
-        public static int kdwProfileSigReverse = ICCProfile.getInt(System.Text.Encoding.UTF8.GetBytes("psca"), 0);
+        public static int kdwProfileSigReverse = ICCProfile.GetInt(System.Text.Encoding.UTF8.GetBytes("psca"), 0);
 
         private const string kdwInputProfile = "scnr";
         private const string kdwDisplayProfile = "mntr";
@@ -145,23 +144,23 @@ namespace CoreJ2K.Icc.Types
         public ICCProfileHeader(byte[] data)
         {
 
-            dwProfileSize = ICCProfile.getInt(data, offProfileSize);
-            dwCMMTypeSignature = ICCProfile.getInt(data, offCMMTypeSignature);
-            dwProfileClass = ICCProfile.getInt(data, offProfileClass);
-            dwColorSpaceType = ICCProfile.getInt(data, offColorSpaceType);
-            dwPCSType = ICCProfile.getInt(data, offPCSType);
-            dwProfileSignature = ICCProfile.getInt(data, offProfileSignature);
-            dwPlatformSignature = ICCProfile.getInt(data, offPlatformSignature);
-            dwCMMFlags = ICCProfile.getInt(data, offCMMFlags);
-            dwDeviceManufacturer = ICCProfile.getInt(data, offDeviceManufacturer);
-            dwDeviceModel = ICCProfile.getInt(data, offDeviceModel);
-            dwDeviceAttributes1 = ICCProfile.getInt(data, offDeviceAttributesReserved);
-            dwDeviceAttributesReserved = ICCProfile.getInt(data, offDeviceAttributesReserved);
-            dwRenderingIntent = ICCProfile.getInt(data, offRenderingIntent);
-            dwCreatorSig = ICCProfile.getInt(data, offCreatorSig);
-            profileVersion = ICCProfile.getICCProfileVersion(data, offProfileVersion);
-            dateTime = ICCProfile.getICCDateTime(data, offDateTime);
-            PCSIlluminant = ICCProfile.getXYZNumber(data, offPCSIlluminant);
+            dwProfileSize = ICCProfile.GetInt(data, offProfileSize);
+            dwCMMTypeSignature = ICCProfile.GetInt(data, offCMMTypeSignature);
+            dwProfileClass = ICCProfile.GetInt(data, offProfileClass);
+            dwColorSpaceType = ICCProfile.GetInt(data, offColorSpaceType);
+            dwPCSType = ICCProfile.GetInt(data, offPCSType);
+            dwProfileSignature = ICCProfile.GetInt(data, offProfileSignature);
+            dwPlatformSignature = ICCProfile.GetInt(data, offPlatformSignature);
+            dwCMMFlags = ICCProfile.GetInt(data, offCMMFlags);
+            dwDeviceManufacturer = ICCProfile.GetInt(data, offDeviceManufacturer);
+            dwDeviceModel = ICCProfile.GetInt(data, offDeviceModel);
+            dwDeviceAttributes1 = ICCProfile.GetInt(data, offDeviceAttributesReserved);
+            dwDeviceAttributesReserved = ICCProfile.GetInt(data, offDeviceAttributesReserved);
+            dwRenderingIntent = ICCProfile.GetInt(data, offRenderingIntent);
+            dwCreatorSig = ICCProfile.GetInt(data, offCreatorSig);
+            profileVersion = ICCProfile.GetICCProfileVersion(data, offProfileVersion);
+            dateTime = ICCProfile.GetICCDateTime(data, offDateTime);
+            PCSIlluminant = ICCProfile.GetXYZNumber(data, offPCSIlluminant);
 
             for (var i = 0; i < reserved.Length; ++i)
                 reserved[i] = data[offReserved + i];
@@ -221,7 +220,5 @@ namespace CoreJ2K.Icc.Types
             rep.Append($"{Environment.NewLine}       PCSIlluminant: {PCSIlluminant}");
             return rep.Append("]").ToString();
         }
-
-        /* end class ICCProfileHeader */
     }
 }

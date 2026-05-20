@@ -1,14 +1,4 @@
 /* 
-* CVS identifier:
-* 
-* $Id: ForwWTDataProps.java,v 1.10 2001/09/20 12:42:42 grosbois Exp $
-* 
-* Class:                   ForwWTDataProps
-* 
-* Description:             Extends ImgData with forward wavelet specific
-*                          things.
-* 
-* 
 * 
 * COPYRIGHT:
 * 
@@ -86,7 +76,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// <returns> true is the data is reversible, false if not.
         /// 
         /// </returns>
-        bool isReversible(int t, int c);
+        bool IsReversible(int t, int c);
 
         /// <summary> Returns a reference to the root of subband tree structure representing
         /// the subband decomposition for the specified tile-component.
@@ -103,6 +93,6 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// </returns>
         /// <seealso cref="SubbandAn" />
         /// <seealso cref="Subband" />
-        SubbandAn getAnSubbandTree(int t, int c);
+        SubbandAn GetAnSubbandTree(int t, int c);
     }
 }

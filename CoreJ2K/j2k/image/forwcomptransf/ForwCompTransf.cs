@@ -1,13 +1,4 @@
 /*
-* CVS Identifier:
-*
-* $Id: ForwCompTransf.java,v 1.20 2001/09/14 09:14:57 grosbois Exp $
-*
-* Class:               ForwCompTransf
-*
-* Description:         Component transformations applied to tiles
-*
-*
 *
 * COPYRIGHT:
 * 
@@ -247,7 +238,7 @@ namespace CoreJ2K.j2k.image.forwcomptransf
                 throw new ArgumentException();
             }
             // Check that the 3 components have the same dimensions
-            if (src.getTileCompWidth(tIdx, 0) != src.getTileCompWidth(tIdx, 1) || src.getTileCompWidth(tIdx, 0) != src.getTileCompWidth(tIdx, 2) || src.getTileCompHeight(tIdx, 0) != src.getTileCompHeight(tIdx, 1) || src.getTileCompHeight(tIdx, 0) != src.getTileCompHeight(tIdx, 2))
+            if (src.GetTileCompWidth(tIdx, 0) != src.GetTileCompWidth(tIdx, 1) || src.GetTileCompWidth(tIdx, 0) != src.GetTileCompWidth(tIdx, 2) || src.GetTileCompHeight(tIdx, 0) != src.GetTileCompHeight(tIdx, 1) || src.GetTileCompHeight(tIdx, 0) != src.GetTileCompHeight(tIdx, 2))
             {
                 throw new ArgumentException("Can not use RCT " + "on components with different " + "dimensions");
             }
@@ -256,7 +247,7 @@ namespace CoreJ2K.j2k.image.forwcomptransf
             utd = new int[src.NumComps];
             for (i = utd.Length - 1; i >= 0; i--)
             {
-                utd[i] = src.getNomRangeBits(i);
+                utd[i] = src.GetNomRangeBits(i);
             }
             tdepth = calcMixedBitDepths(utd, FORW_RCT, null);
         }
@@ -273,7 +264,7 @@ namespace CoreJ2K.j2k.image.forwcomptransf
                 throw new ArgumentException();
             }
             // Check that the 3 components have the same dimensions
-            if (src.getTileCompWidth(tIdx, 0) != src.getTileCompWidth(tIdx, 1) || src.getTileCompWidth(tIdx, 0) != src.getTileCompWidth(tIdx, 2) || src.getTileCompHeight(tIdx, 0) != src.getTileCompHeight(tIdx, 1) || src.getTileCompHeight(tIdx, 0) != src.getTileCompHeight(tIdx, 2))
+            if (src.GetTileCompWidth(tIdx, 0) != src.GetTileCompWidth(tIdx, 1) || src.GetTileCompWidth(tIdx, 0) != src.GetTileCompWidth(tIdx, 2) || src.GetTileCompHeight(tIdx, 0) != src.GetTileCompHeight(tIdx, 1) || src.GetTileCompHeight(tIdx, 0) != src.GetTileCompHeight(tIdx, 2))
             {
                 throw new ArgumentException("Can not use ICT " + "on components with different " + "dimensions");
             }
@@ -282,7 +273,7 @@ namespace CoreJ2K.j2k.image.forwcomptransf
             utd = new int[src.NumComps];
             for (i = utd.Length - 1; i >= 0; i--)
             {
-                utd[i] = src.getNomRangeBits(i);
+                utd[i] = src.GetNomRangeBits(i);
             }
             tdepth = calcMixedBitDepths(utd, FORW_ICT, null);
         }
@@ -319,7 +310,7 @@ namespace CoreJ2K.j2k.image.forwcomptransf
         /// affected by the multiple component transform.</summary>
         /// <param name="compIndex">The index of the component.</param>
         /// <returns> The bitdepth of component 'c' after mixing.</returns>
-        public override int getNomRangeBits(int compIndex)
+        public override int GetNomRangeBits(int compIndex)
         {
             switch (transfType)
             {
@@ -329,7 +320,7 @@ namespace CoreJ2K.j2k.image.forwcomptransf
                     return tdepth[compIndex];
 
                 case NONE:
-                    return src.getNomRangeBits(compIndex);
+                    return src.GetNomRangeBits(compIndex);
 
                 default:
                     throw new ArgumentException("Non JPEG 2000 part I" + " component transformation");
@@ -770,13 +761,13 @@ namespace CoreJ2K.j2k.image.forwcomptransf
         /// re-initializes properly component transformation variables.</summary>
         /// <param name="x">The horizontal index of the tile.</param>
         /// <param name="y">The vertical index of the new tile.</param>
-        public override void setTile(int x, int y)
+        public override void SetTile(int x, int y)
         {
-            src.setTile(x, y);
+            src.SetTile(x, y);
             tIdx = TileIdx; // index of the current tile
 
             // initializations
-            var str = (string)cts.getTileDef(tIdx);
+            var str = (string)cts.GetTileDef(tIdx);
             if (str.Equals("none"))
             {
                 transfType = NONE;
@@ -804,13 +795,13 @@ namespace CoreJ2K.j2k.image.forwcomptransf
         /// This default implementation just advances to the next tile in the
         /// source and re-initializes properly component transformation
         /// variables.</summary>
-        public override void nextTile()
+        public override void NextTile()
         {
-            src.nextTile();
+            src.NextTile();
             tIdx = TileIdx; // index of the current tile
 
             // initializations
-            var str = (string)cts.getTileDef(tIdx);
+            var str = (string)cts.GetTileDef(tIdx);
             if (str.Equals("none"))
             {
                 transfType = NONE;

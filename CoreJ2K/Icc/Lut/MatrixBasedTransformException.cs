@@ -1,6 +1,5 @@
 /// <summary>**************************************************************************
 /// 
-/// $Id: MatrixBasedTransformException.java,v 1.1 2002/07/25 14:56:49 grosbois Exp $
 /// 
 /// Copyright Eastman Kodak Company, 343 State Street, Rochester, NY 14650
 /// $Date $
@@ -34,7 +33,5 @@ namespace CoreJ2K.Icc.Lut
         internal MatrixBasedTransformException()
         {
         }
-
-        /* end class MatrixBasedTransformException */
     }
 }

@@ -79,7 +79,7 @@ namespace CoreJ2K.j2k.image.input
         /// return value is undefined.
         /// 
         /// </returns>
-        public override int getNomRangeBits(int compIndex)
+        public override int GetNomRangeBits(int compIndex)
         {
             // Check component index
             if (compIndex < 0 || compIndex > 2)

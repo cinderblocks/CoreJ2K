@@ -1,13 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: SubbandRectROIMask.java,v 1.3 2001/02/28 14:53:12 grosbois Exp $
-*
-* Class:                   ROI
-*
-* Description:             This class describes the ROI mask for a subband
-*
-*
 *
 * COPYRIGHT:
 * 

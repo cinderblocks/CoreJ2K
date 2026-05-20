@@ -1,13 +1,4 @@
 /* 
-* CVS identifier:
-* 
-* $Id: QuantStepSizeSpec.java,v 1.12 2001/10/24 12:05:04 grosbois Exp $
-* 
-* Class:                   QuantStepSizeSpec
-* 
-* Description:    Quantization base normalized step size specifications
-* 
-* 
 * 
 * COPYRIGHT:
 * 
@@ -93,7 +84,7 @@ namespace CoreJ2K.j2k.quantization
         public QuantStepSizeSpec(int nt, int nc, byte type, ParameterList pl) : base(nt, nc, type)
         {
 
-            var param = pl.getParameter("Qstep");
+            var param = pl.GetParameter("Qstep");
             if (param == null)
             {
                 throw new ArgumentException("Qstep option not specified");
@@ -106,7 +97,7 @@ namespace CoreJ2K.j2k.quantization
                                         // current parameter
             bool[] tileSpec = null; // Tiles concerned by the specification
             bool[] compSpec = null; // Components concerned by the specification
-            float value_Renamed; // value of the current step size
+            float value; // value of the current step size
 
             while (stk.HasMoreTokens())
             {
@@ -128,29 +119,29 @@ namespace CoreJ2K.j2k.quantization
                     default:  // Step size value
                         try
                         {
-                            value_Renamed = float.Parse(word);
+                            value = float.Parse(word);
                         }
                         catch (FormatException)
                         {
                             throw new ArgumentException($"Bad parameter for -Qstep option : {word}");
                         }
 
-                        if (value_Renamed <= 0.0f)
+                        if (value <= 0.0f)
                         {
-                            throw new ArgumentException($"Normalized base step must be positive : {value_Renamed}");
+                            throw new ArgumentException($"Normalized base step must be positive : {value}");
                         }
 
 
                         if (curSpecType == SPEC_DEF)
                         {
-                            setDefault(value_Renamed);
+                            SetDefault(value);
                         }
                         else if (curSpecType == SPEC_TILE_DEF)
                         {
                             for (var i = tileSpec.Length - 1; i >= 0; i--)
                                 if (tileSpec[i])
                                 {
-                                    setTileDef(i, value_Renamed);
+                                    SetTileDef(i, value);
                                 }
                         }
                         else if (curSpecType == SPEC_COMP_DEF)
@@ -158,7 +149,7 @@ namespace CoreJ2K.j2k.quantization
                             for (var i = compSpec.Length - 1; i >= 0; i--)
                                 if (compSpec[i])
                                 {
-                                    setCompDef(i, value_Renamed);
+                                    SetCompDef(i, value);
                                 }
                         }
                         else
@@ -169,7 +160,7 @@ namespace CoreJ2K.j2k.quantization
                                 {
                                     if (tileSpec[i] && compSpec[j])
                                     {
-                                        setTileCompVal(i, j, value_Renamed);
+                                        SetTileCompVal(i, j, value);
                                     }
                                 }
                             }
@@ -185,7 +176,7 @@ namespace CoreJ2K.j2k.quantization
             }
 
             // Check that default value has been specified
-            if (getDefault() == null)
+            if (GetDefault() == null)
             {
                 var ndefspec = 0;
                 for (var t = nt - 1; t >= 0; t--)
@@ -203,13 +194,13 @@ namespace CoreJ2K.j2k.quantization
                 // the default value defined in ParameterList
                 if (ndefspec != 0)
                 {
-                    setDefault(float.Parse(pl.DefaultParameterList.getParameter("Qstep")));
+                    SetDefault(float.Parse(pl.DefaultParameterList.GetParameter("Qstep")));
                 }
                 else
                 {
                     // All tile-component have been specified, takes the first
                     // tile-component value as default.
-                    setDefault(getTileCompVal(0, 0));
+                    SetDefault(GetTileCompVal(0, 0));
                     switch (specValType[0][0])
                     {
 

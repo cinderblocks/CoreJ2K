@@ -1,15 +1,4 @@
 /* 
-* CVS identifier:
-* 
-* $Id: CodedCBlkDataSrcDec.java,v 1.17 2001/09/14 09:26:23 grosbois Exp $
-* 
-* Class:                   CodedCBlkDataSrcDec
-* 
-* Description:             Interface that defines a source of entropy coded
-*                          data that is transferred in a code-block by
-*                          code-block basis (decoder side).
-* 
-* 
 * 
 * COPYRIGHT:
 * 
@@ -123,6 +112,6 @@ namespace CoreJ2K.j2k.entropy.decoder
         /// determined by the available data and 'nl'.
         /// 
         /// </returns>
-        DecLyrdCBlk getCodeBlock(int c, int m, int n, SubbandSyn sb, int fl, int nl, DecLyrdCBlk ccb);
+        DecLyrdCBlk GetCodeBlock(int c, int m, int n, SubbandSyn sb, int fl, int nl, DecLyrdCBlk ccb);
     }
 }

@@ -1,14 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: Subband.java,v 1.47 2001/10/18 14:27:14 grosbois Exp $
-*
-* Class:                   Subband
-*
-* Description:             Asbtract element for a tree strcuture for
-*                          a description of subbands.
-*
-*
 *
 * COPYRIGHT:
 * 
@@ -522,7 +512,7 @@ namespace CoreJ2K.j2k.wavelet
         /// <param name="sbi">The subband index, within the resolution level.
         /// 
         /// </param>
-        public virtual Subband getSubbandByIdx(int rl, int sbi)
+        public virtual Subband GetSubbandByIdx(int rl, int sbi)
         {
             var sb = this;
 
@@ -573,7 +563,7 @@ namespace CoreJ2K.j2k.wavelet
         /// <param name="y">horizontal coordinate of the specified point.
         /// 
         /// </param>
-        public virtual Subband getSubband(int x, int y)
+        public virtual Subband GetSubband(int x, int y)
         {
             Subband cur, hhs;
 
@@ -611,10 +601,10 @@ namespace CoreJ2K.j2k.wavelet
         /// </returns>
         public override string ToString()
         {
-            var string_Renamed =
+            var result =
                 $"w={w},h={h},ulx={ulx},uly={uly},ulcx={ulcx},ulcy={ulcy},idx={sbandIdx},orient={orientation},node={isNode},level={level},resLvl={resLvl},nomCBlkW={nomCBlkW},nomCBlkH={nomCBlkH},numCb={numCb}";
 
-            return string_Renamed;
+            return result;
         }
     }
 }

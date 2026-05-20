@@ -1,13 +1,4 @@
 /*
-* CVS Identifier:
-*
-* $Id: InvCompTransf.java,v 1.19 2001/10/29 20:06:35 qtxjoas Exp $
-*
-* Class:               InvCompTransf
-*
-* Description:         Inverse Component transformations applied to tiles
-*
-*
 *
 * COPYRIGHT:
 * 
@@ -204,7 +195,7 @@ namespace CoreJ2K.j2k.image.invcomptransf
             wfs = decSpec.wfs;
             src = imgSrc;
             this.utdepth = utdepth;
-            noCompTransf = !(pl.getBooleanParameter("comp_transf"));
+            noCompTransf = !(pl.GetBooleanParameter("comp_transf"));
         }
 
         /// <summary> Returns a string with a descriptive text of which inverse component
@@ -360,7 +351,7 @@ namespace CoreJ2K.j2k.image.invcomptransf
         /// <returns> The bitdepth of un-transformed component 'c'.
         /// 
         /// </returns>
-        public override int getNomRangeBits(int compIndex)
+        public override int GetNomRangeBits(int compIndex)
         {
             return utdepth[compIndex];
         }
@@ -811,9 +802,9 @@ namespace CoreJ2K.j2k.image.invcomptransf
         /// 
         /// 
         /// </param>
-        public override void setTile(int x, int y)
+        public override void SetTile(int x, int y)
         {
-            src.setTile(x, y);
+            src.SetTile(x, y);
             tIdx = TileIdx; // index of the current tile
 
             // initializations
@@ -824,7 +815,7 @@ namespace CoreJ2K.j2k.image.invcomptransf
                 var rev = 0;
                 for (var c = 0; c < nc; c++)
                 {
-                    rev += (wfs.isReversible(tIdx, c) ? 1 : 0);
+                    rev += (wfs.IsReversible(tIdx, c) ? 1 : 0);
                 }
                 if (rev == 3)
                 {
@@ -855,9 +846,9 @@ namespace CoreJ2K.j2k.image.invcomptransf
         /// 
         /// 
         /// </summary>
-        public override void nextTile()
+        public override void NextTile()
         {
-            src.nextTile();
+            src.NextTile();
             tIdx = TileIdx; // index of the current tile
 
             // initializations
@@ -868,7 +859,7 @@ namespace CoreJ2K.j2k.image.invcomptransf
                 var rev = 0;
                 for (var c = 0; c < nc; c++)
                 {
-                    rev += (wfs.isReversible(tIdx, c) ? 1 : 0);
+                    rev += (wfs.IsReversible(tIdx, c) ? 1 : 0);
                 }
                 if (rev == 3)
                 {

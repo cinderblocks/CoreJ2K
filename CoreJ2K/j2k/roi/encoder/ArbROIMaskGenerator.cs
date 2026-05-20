@@ -1,13 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: ArbROIMaskGenerator.java,v 1.4 2001/01/03 15:10:21 qtxjoas Exp $
-*
-* Class:                   ArbROIMaskGenerator
-*
-* Description:             Generates masks when only rectangular ROIs exist
-*
-*
 *
 * COPYRIGHT:
 * 
@@ -126,7 +117,7 @@ namespace CoreJ2K.j2k.roi.encoder
         /// <returns> Whether or not a mask was needed for this tile
         /// 
         /// </returns>
-        public override bool getROIMask(DataBlkInt db, Subband sb, int magbits, int c)
+        public override bool GetROIMask(DataBlkInt db, Subband sb, int magbits, int c)
         {
             var x = db.ulx;
             var y = db.uly;

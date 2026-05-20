@@ -1,6 +1,5 @@
 /// <summary> CVS identifier:
 /// 
-/// $Id: ImgReader.java,v 1.10 2002/07/25 15:07:44 grosbois Exp $
 /// 
 /// Class:                   ImgReader
 /// 
@@ -180,7 +179,7 @@ namespace CoreJ2K.j2k.image.input
         /// <param name="c">The index of the component (between 0 and C-1)</param>
         /// <returns> The horizontal subsampling factor of component 'c'</returns>
         /// <seealso cref="j2k.image.ImgData" />
-        public virtual int getCompSubsX(int c)
+        public virtual int GetCompSubsX(int c)
         {
             return 1;
         }
@@ -192,7 +191,7 @@ namespace CoreJ2K.j2k.image.input
         /// <param name="c">The index of the component (between 0 and C-1)</param>
         /// <returns> The vertical subsampling factor of component 'c'</returns>
         /// <seealso cref="j2k.image.ImgData" />
-        public virtual int getCompSubsY(int c)
+        public virtual int GetCompSubsY(int c)
         {
             return 1;
         }
@@ -204,7 +203,7 @@ namespace CoreJ2K.j2k.image.input
         /// <param name="t">Tile index</param>
         /// <param name="c">The index of the component, from 0 to C-1.</param>
         /// <returns> The width in pixels of component <tt>c</tt> in tile<tt>t</tt>.</returns>
-        public virtual int getTileCompWidth(int t, int c)
+        public virtual int GetTileCompWidth(int t, int c)
         {
             if (t != 0)
             {
@@ -221,7 +220,7 @@ namespace CoreJ2K.j2k.image.input
         /// <param name="c">The index of the component, from 0 to C-1.</param>
         /// <returns> The height in pixels of component <tt>c</tt> in tile
         /// <tt>t</tt>.</returns>
-        public virtual int getTileCompHeight(int t, int c)
+        public virtual int GetTileCompHeight(int t, int c)
         {
             if (t != 0)
             {
@@ -235,7 +234,7 @@ namespace CoreJ2K.j2k.image.input
         /// subsampling (i.e. all components have the same dimensions in pixels).</summary>
         /// <param name="c">The index of the component, from 0 to C-1.</param>
         /// <returns> The width in pixels of component <tt>c</tt> in the overall image.</returns>
-        public virtual int getCompImgWidth(int c)
+        public virtual int GetCompImgWidth(int c)
         {
             return w;
         }
@@ -245,7 +244,7 @@ namespace CoreJ2K.j2k.image.input
         /// subsampling (i.e. all components have the same dimensions in pixels).</summary>
         /// <param name="c">The index of the component, from 0 to C-1.</param>
         /// <returns> The height in pixels of component <tt>c</tt> in the overall image.</returns>
-        public virtual int getCompImgHeight(int c)
+        public virtual int GetCompImgHeight(int c)
         {
             return h;
         }
@@ -256,7 +255,7 @@ namespace CoreJ2K.j2k.image.input
         /// only valid arguments are x=0, y=0.</summary>
         /// <param name="x">The horizontal coordinate of the tile.</param>
         /// <param name="y">The vertical coordinate of the new tile.</param>
-        public virtual void setTile(int x, int y)
+        public virtual void SetTile(int x, int y)
         {
             if (x != 0 || y != 0)
             {
@@ -268,7 +267,7 @@ namespace CoreJ2K.j2k.image.input
         /// columns). A NoNextElementException is thrown if the current tile is the
         /// last one (i.e. there is no next tile). This default implementation
         /// assumes no tiling, so NoNextElementException() is always thrown.</summary>
-        public virtual void nextTile()
+        public virtual void NextTile()
         {
             throw new NoNextElementException();
         }
@@ -278,7 +277,7 @@ namespace CoreJ2K.j2k.image.input
         /// <param name="co">If not null this object is used to return the information. If
         /// null a new one is created and returned.</param>
         /// <returns> The current tile's coordinates.</returns>
-        public virtual Coord getTile(Coord co)
+        public virtual Coord GetTile(Coord co)
         {
             if (co != null)
             {
@@ -295,7 +294,7 @@ namespace CoreJ2K.j2k.image.input
         /// <summary> Returns the horizontal coordinate of the upper-left corner of the
         /// specified component in the current tile.</summary>
         /// <param name="c">The component index.</param>
-        public virtual int getCompULX(int c)
+        public virtual int GetCompULX(int c)
         {
             return 0;
         }
@@ -303,7 +302,7 @@ namespace CoreJ2K.j2k.image.input
         /// <summary> Returns the vertical coordinate of the upper-left corner of the
         /// specified component in the current tile.</summary>
         /// <param name="c">The component index.</param>
-        public virtual int getCompULY(int c)
+        public virtual int GetCompULY(int c)
         {
             return 0;
         }
@@ -315,7 +314,7 @@ namespace CoreJ2K.j2k.image.input
         /// null a new one is created and returned.</param>
         /// <returns> The number of tiles in the horizontal (Coord.x) and vertical
         /// (Coord.y) directions.</returns>
-        public virtual Coord getNumTiles(Coord co)
+        public virtual Coord GetNumTiles(Coord co)
         {
             if (co != null)
             {
@@ -332,7 +331,7 @@ namespace CoreJ2K.j2k.image.input
         /// <summary> Returns the total number of tiles in the image. This default
         /// implementation assumes no tiling, so 1 is always returned.</summary>
         /// <returns> The total number of tiles in the image.</returns>
-        public virtual int getNumTiles()
+        public virtual int GetNumTiles()
         {
             return 1;
         }
@@ -344,7 +343,7 @@ namespace CoreJ2K.j2k.image.input
         public abstract bool IsOrigSigned(int compIndex);
         public abstract int GetFixedPoint(int compIndex);
         public abstract DataBlk GetInternCompData(DataBlk blk, int compIndex);
-        public abstract int getNomRangeBits(int compIndex);
+        public abstract int GetNomRangeBits(int compIndex);
         public abstract DataBlk GetCompData(DataBlk blk, int c);
     }
 }

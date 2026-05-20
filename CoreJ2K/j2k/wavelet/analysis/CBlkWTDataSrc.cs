@@ -1,14 +1,4 @@
 /* 
-* CVS identifier:
-* 
-* $Id: CBlkWTDataSrc.java,v 1.18 2001/09/14 08:45:25 grosbois Exp $
-* 
-* Class:                   CBlkWTDataSrc
-* 
-* Description:             Interface that define methods for transfer of WT
-*                          data in a code-block basis.
-* 
-* 
 * 
 * COPYRIGHT:
 * 
@@ -46,8 +36,8 @@ namespace CoreJ2K.j2k.wavelet.analysis
 {
 
     /// <summary> This abstract class defines methods to transfer wavelet data in a
-    /// code-block by code-block basis. In each call to 'getNextCodeBlock()' or
-    /// 'getNextInternCodeBlock()' a new code-block is returned. The code-blocks
+    /// code-block by code-block basis. In each call to 'GetNextCodeBlock()' or
+    /// 'GetNextInternCodeBlock()' a new code-block is returned. The code-blocks
     /// are returned in no specific order.
     /// 
     /// This class is the source of data for the quantizer. See the 'Quantizer'
@@ -82,7 +72,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// number of fractional bits. For floating-point data 0 is returned.
         /// 
         /// </returns>
-        int getFixedPoint(int c);
+        int GetFixedPoint(int c);
 
         /// <summary> Return the data type of this CBlkWTDataSrc for the given component in
         /// the current tile. Its value should be either DataBlk.TYPE_INT or
@@ -99,7 +89,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// <returns> Current data type
         /// 
         /// </returns>
-        int getDataType(int t, int c);
+        int GetDataType(int t, int c);
 
         /// <summary> Returns the next code-block in the current tile for the specified
         /// component, as a copy (see below). The order in which code-blocks are
@@ -109,7 +99,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// the code-blocks have been returned for the current tile calls to this
         /// method will return 'null'.
         /// 
-        /// When changing the current tile (through 'setTile()' or 'nextTile()')
+        /// When changing the current tile (through 'SetTile()' or 'NextTile()')
         /// this method will always return the first code-block, as if this method
         /// was never called before for the new current tile.
         /// 
@@ -139,7 +129,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// 
         /// </returns>
         /// <seealso cref="CBlkWTData" />
-        CBlkWTData getNextCodeBlock(int c, CBlkWTData cblk);
+        CBlkWTData GetNextCodeBlock(int c, CBlkWTData cblk);
 
         /// <summary> Returns the next code-block in the current tile for the specified
         /// component. The order in which code-blocks are returned is not
@@ -149,7 +139,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// have been returned for the current tile calls to this method will
         /// return 'null'.
         /// 
-        /// When changing the current tile (through 'setTile()' or 'nextTile()')
+        /// When changing the current tile (through 'SetTile()' or 'NextTile()')
         /// this method will always return the first code-block, as if this method
         /// was never called before for the new current tile.
         /// 
@@ -178,6 +168,6 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// 
         /// </returns>
         /// <seealso cref="CBlkWTData" />
-        CBlkWTData getNextInternCodeBlock(int c, CBlkWTData cblk);
+        CBlkWTData GetNextInternCodeBlock(int c, CBlkWTData cblk);
     }
 }

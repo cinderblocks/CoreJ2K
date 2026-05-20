@@ -1,14 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: AnWTFilterInt.java,v 1.7 2000/09/05 09:25:42 grosbois Exp $
-*
-* Class:                   AnWTFilterInt
-*
-* Description:             A specialized wavelet filter interface that
-*                          works on int data.
-*
-*
 *
 * COPYRIGHT:
 * 

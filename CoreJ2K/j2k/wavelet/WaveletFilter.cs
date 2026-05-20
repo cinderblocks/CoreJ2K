@@ -1,14 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: WaveletFilter.java,v 1.13 2001/08/02 11:11:16 grosbois Exp $
-*
-* Class:                   WaveletFilter
-*
-* Description:             Defines the interface for WT filters (analysis
-*                          and synthesis)
-*
-*
 *
 * COPYRIGHT:
 * 
@@ -237,6 +227,6 @@ namespace CoreJ2K.j2k.wavelet
         /// performed, false otherwise.
         /// 
         /// </returns>
-        bool isSameAsFullWT(int tailOvrlp, int headOvrlp, int inLen);
+        bool IsSameAsFullWT(int tailOvrlp, int headOvrlp, int inLen);
     }
 }

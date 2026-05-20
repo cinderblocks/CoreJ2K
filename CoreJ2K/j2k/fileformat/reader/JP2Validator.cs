@@ -249,7 +249,7 @@ namespace CoreJ2K.j2k.fileformat.reader
         /// </summary>
         private void RunEnhancedValidationChecks(JP2Structure structure)
         {
-            FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO,
+            FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO,
                 "Running enhanced compliance validation checks...");
 
             // Validate MinorVersion
@@ -264,17 +264,17 @@ namespace CoreJ2K.j2k.fileformat.reader
             {
                 if (!structure.HasBitsPerComponentBox)
                 {
-                    FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING,
+                    FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING,
                         "Image Header has BPC=0xFF but Bits Per Component box is missing (required)");
                 }
                 else
                 {
-                    FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                    FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO,
                         "Bits Per Component box present as required (BPC varies)");
                 }
             }
 
-            FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO,
+            FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO,
                 "Enhanced validation checks complete");
         }
 
@@ -293,7 +293,7 @@ namespace CoreJ2K.j2k.fileformat.reader
 
             if (minorVersion > 0)
             {
-                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO,
                     $"File uses MinorVersion {minorVersion} (> 0). " +
                     "This may indicate extended features beyond baseline JP2. " +
                     "Some features may not be fully supported.");
@@ -311,17 +311,17 @@ namespace CoreJ2K.j2k.fileformat.reader
 
             if (brand == JP2_BRAND)
             {
-                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO,
                     "File brand: jp2 (baseline JPEG 2000 Part 1)");
             }
             else if (brand == JPX_BRAND)
             {
-                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO,
                     "File brand: jpx (JPEG 2000 Part 2 - Extensions)");
             }
             else if (brand == JPM_BRAND)
             {
-                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO,
                     "File brand: jpm (JPEG 2000 Part 6 - Compound Image)");
             }
             else if (brand != 0)
@@ -382,7 +382,7 @@ namespace CoreJ2K.j2k.fileformat.reader
 
             if (!isValidCs)
             {
-                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO,
                     $"ICC profile uses colorspace '{colorSpace}' (may be a specialized colorspace)");
             }
 
@@ -401,7 +401,7 @@ namespace CoreJ2K.j2k.fileformat.reader
             if (length == 1 && longLength > 0)
             {
                 var sizeGB = longLength / (1024.0 * 1024.0 * 1024.0);
-                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING,
+                FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING,
                     $"Box uses extended length (XLBox) format: {sizeGB:F2} GB. " +
                     "Extended length boxes (>4GB) are not fully supported in current implementation.");
                 return true;
@@ -484,7 +484,7 @@ namespace CoreJ2K.j2k.fileformat.reader
                 errors.Add("Compatibility list must include 'jp2 ' (0x6a703220) for baseline JP2 compliance");
             }
 
-            FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO,
+            FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO,
                 $"Compatibility list contains {compatibilityList.Length} profile(s)");
         }
 
@@ -514,7 +514,7 @@ namespace CoreJ2K.j2k.fileformat.reader
             // Log info messages
             foreach (var info in csValidator.Info)
             {
-                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO, $"Codestream: {info}");
+                FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO, $"Codestream: {info}");
             }
 
             return result;

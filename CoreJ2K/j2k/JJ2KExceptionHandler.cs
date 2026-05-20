@@ -1,13 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: JJ2KExceptionHandler.java,v 1.6 2000/09/05 09:22:08 grosbois Exp $
-*
-* Class:                   JJ2KExceptionHandler
-*
-* Description:             A class to handle exceptions
-*
-*
 *
 * COPYRIGHT:
 * 
@@ -82,9 +73,9 @@ namespace CoreJ2K.j2k
             // Print the Exception message and stack to standard error
             // including this method in the stack.
             //e.fillInStackTrace();
-            FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.ERROR, e.StackTrace);
+            FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.ERROR, e.StackTrace);
             // Print an explicative message
-            FacilityManager.getMsgLogger().println("The Thread is being terminated bacause an Exception (shown above)\nhas been thrown and no special action was defined for this Thread.", 0, 0);
+            FacilityManager.GetMsgLogger().println("The Thread is being terminated bacause an Exception (shown above)\nhas been thrown and no special action was defined for this Thread.", 0, 0);
             // Stop the thread (do not use stop, since it's deprecated in
             // Java 1.2)
             throw new InvalidOperationException();

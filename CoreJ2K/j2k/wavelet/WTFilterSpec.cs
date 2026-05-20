@@ -1,13 +1,4 @@
 /* 
-* CVS identifier:
-* 
-* $Id: WTFilterSpec.java,v 1.10 2000/09/05 09:26:08 grosbois Exp $
-* 
-* Class:                   WTFilterSpec
-* 
-* Description:             Generic class for storing wavelet filter specs
-* 
-* 
 * 
 * COPYRIGHT:
 * 
@@ -138,7 +129,7 @@ namespace CoreJ2K.j2k.wavelet
         /// 
         /// 
         /// </returns>
-        public virtual byte getKerSpecType(int n)
+        public virtual byte GetKerSpecType(int n)
         {
             return specValType[n];
         }

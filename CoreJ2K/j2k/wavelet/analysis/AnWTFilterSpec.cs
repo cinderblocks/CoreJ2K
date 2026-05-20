@@ -1,13 +1,4 @@
 /* 
-* CVS identifier:
-* 
-* $Id: AnWTFilterSpec.java,v 1.27 2001/05/08 16:11:37 grosbois Exp $
-* 
-* Class:                   AnWTFilterSpec
-* 
-* Description:             Analysis filters specification
-* 
-* 
 * 
 * COPYRIGHT:
 * 
@@ -88,7 +79,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
             // Check parameters
             pl.checkList(AnWTFilter.OPT_PREFIX, ParameterList.toNameArray(AnWTFilter.ParameterInfo));
 
-            var param = pl.getParameter("Ffilters");
+            var param = pl.GetParameter("Ffilters");
             var isFilterSpecified = true;
 
             // No parameter specified
@@ -98,9 +89,9 @@ namespace CoreJ2K.j2k.wavelet.analysis
 
                 // If lossless compression, uses the reversible filters in each
                 // tile-components 
-                if (pl.getBooleanParameter("lossless"))
+                if (pl.GetBooleanParameter("lossless"))
                 {
-                    setDefault(parseFilters(REV_FILTER_STR));
+                    SetDefault(parseFilters(REV_FILTER_STR));
                     return;
                 }
 
@@ -111,15 +102,15 @@ namespace CoreJ2K.j2k.wavelet.analysis
                 {
                     for (var c = nc - 1; c >= 0; c--)
                     {
-                        switch (qts.getSpecValType(t, c))
+                        switch (qts.GetSpecValType(t, c))
                         {
 
                             case SPEC_DEF:
-                                if (getDefault() == null)
+                                if (GetDefault() == null)
                                 {
-                                    if (pl.getBooleanParameter("lossless"))
-                                        setDefault(parseFilters(REV_FILTER_STR));
-                                    setDefault(((string)qts.getDefault()).Equals("reversible")
+                                    if (pl.GetBooleanParameter("lossless"))
+                                        SetDefault(parseFilters(REV_FILTER_STR));
+                                    SetDefault(((string)qts.GetDefault()).Equals("reversible")
                                         ? parseFilters(REV_FILTER_STR)
                                         : parseFilters(NON_REV_FILTER_STR));
                                 }
@@ -127,10 +118,10 @@ namespace CoreJ2K.j2k.wavelet.analysis
                                 break;
 
                             case SPEC_COMP_DEF:
-                                if (!isCompSpecified(c))
+                                if (!IsCompSpecified(c))
                                 {
-                                    setCompDef(c,
-                                        ((string)qts.getCompDef(c)).Equals("reversible")
+                                    SetCompDef(c,
+                                        ((string)qts.GetCompDef(c)).Equals("reversible")
                                             ? parseFilters(REV_FILTER_STR)
                                             : parseFilters(NON_REV_FILTER_STR));
                                 }
@@ -138,10 +129,10 @@ namespace CoreJ2K.j2k.wavelet.analysis
                                 break;
 
                             case SPEC_TILE_DEF:
-                                if (!isTileSpecified(t))
+                                if (!IsTileSpecified(t))
                                 {
-                                    setTileDef(t,
-                                        ((string)qts.getTileDef(t)).Equals("reversible")
+                                    SetTileDef(t,
+                                        ((string)qts.GetTileDef(t)).Equals("reversible")
                                             ? parseFilters(REV_FILTER_STR)
                                             : parseFilters(NON_REV_FILTER_STR));
                                 }
@@ -149,10 +140,10 @@ namespace CoreJ2K.j2k.wavelet.analysis
                                 break;
 
                             case SPEC_TILE_COMP:
-                                if (!isTileCompSpecified(t, c))
+                                if (!IsTileCompSpecified(t, c))
                                 {
-                                    setTileCompVal(t, c,
-                                        ((string)qts.getTileCompVal(t, c)).Equals("reversible")
+                                    SetTileCompVal(t, c,
+                                        ((string)qts.GetTileCompVal(t, c)).Equals("reversible")
                                             ? parseFilters(REV_FILTER_STR)
                                             : parseFilters(NON_REV_FILTER_STR));
                                 }
@@ -201,7 +192,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
                     case 'w':
                     // WT filters specification
                     case 'W':  // WT filters specification
-                        if (pl.getBooleanParameter("lossless") && string.Equals(word, "w9x7", StringComparison.OrdinalIgnoreCase))
+                        if (pl.GetBooleanParameter("lossless") && string.Equals(word, "w9x7", StringComparison.OrdinalIgnoreCase))
                         {
                             throw new ArgumentException("Cannot use non " + "reversible " + "wavelet transform with" + " '-lossless' option");
                         }
@@ -210,14 +201,14 @@ namespace CoreJ2K.j2k.wavelet.analysis
                         switch (curSpecType)
                         {
                             case SPEC_DEF:
-                                setDefault(filter);
+                                SetDefault(filter);
                                 break;
                             case SPEC_TILE_DEF:
                                 {
                                     for (var i = tileSpec.Length - 1; i >= 0; i--)
                                         if (tileSpec[i])
                                         {
-                                            setTileDef(i, filter);
+                                            SetTileDef(i, filter);
                                         }
 
                                     break;
@@ -227,7 +218,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
                                     for (var i = compSpec.Length - 1; i >= 0; i--)
                                         if (compSpec[i])
                                         {
-                                            setCompDef(i, filter);
+                                            SetCompDef(i, filter);
                                         }
 
                                     break;
@@ -240,7 +231,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
                                         {
                                             if (tileSpec[i] && compSpec[j])
                                             {
-                                                setTileCompVal(i, j, filter);
+                                                SetTileCompVal(i, j, filter);
                                             }
                                         }
                                     }
@@ -263,7 +254,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
             }
 
             // Check that default value has been specified
-            if (getDefault() == null)
+            if (GetDefault() == null)
             {
                 var ndefspec = 0;
                 for (var t = nt - 1; t >= 0; t--)
@@ -281,7 +272,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
                 // the default value defined in ParameterList
                 if (ndefspec != 0)
                 {
-                    setDefault(((string)qts.getDefault()).Equals("reversible")
+                    SetDefault(((string)qts.GetDefault()).Equals("reversible")
                         ? parseFilters(REV_FILTER_STR)
                         : parseFilters(NON_REV_FILTER_STR));
                 }
@@ -289,7 +280,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
                 {
                     // All tile-component have been specified, takes the first
                     // tile-component value as default.
-                    setDefault(getTileCompVal(0, 0));
+                    SetDefault(GetTileCompVal(0, 0));
                     switch (specValType[0][0])
                     {
 
@@ -326,16 +317,16 @@ namespace CoreJ2K.j2k.wavelet.analysis
                 for (var c = nc - 1; c >= 0; c--)
                 {
                     // Reversible quantization
-                    if (((string)qts.getTileCompVal(t, c)).Equals("reversible"))
+                    if (((string)qts.GetTileCompVal(t, c)).Equals("reversible"))
                     {
                         // If filter is reversible, it is OK
-                        if (isReversible(t, c))
+                        if (IsReversible(t, c))
                             continue;
 
                         // If no filter has been defined, use reversible filter
                         if (!isFilterSpecified)
                         {
-                            setTileCompVal(t, c, parseFilters(REV_FILTER_STR));
+                            SetTileCompVal(t, c, parseFilters(REV_FILTER_STR));
                         }
                         else
                         {
@@ -348,14 +339,14 @@ namespace CoreJ2K.j2k.wavelet.analysis
                     {
                         // No reversible quantization
                         // No reversible filter -> OK
-                        if (!isReversible(t, c))
+                        if (!IsReversible(t, c))
                             continue;
 
                         // If no filter has been specified, use non-reversible
                         // filter
                         if (!isFilterSpecified)
                         {
-                            setTileCompVal(t, c, parseFilters(NON_REV_FILTER_STR));
+                            SetTileCompVal(t, c, parseFilters(NON_REV_FILTER_STR));
                         }
                         else
                         {
@@ -416,9 +407,9 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// 
         /// </returns>
         /// <seealso cref="j2k.image.DataBlk" />
-        public int getWTDataType(int t, int c)
+        public int GetWTDataType(int t, int c)
         {
-            var an = (AnWTFilter[][])getSpec(t, c);
+            var an = (AnWTFilter[][])GetSpec(t, c);
             return an[0][0].DataType;
         }
 
@@ -443,9 +434,9 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// tile 't'.
         /// 
         /// </returns>
-        public AnWTFilter[] getHFilters(int t, int c)
+        public AnWTFilter[] GetHFilters(int t, int c)
         {
-            var an = (AnWTFilter[][])getSpec(t, c);
+            var an = (AnWTFilter[][])GetSpec(t, c);
             return an[0];
         }
 
@@ -470,9 +461,9 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// tile 't'.
         /// 
         /// </returns>
-        public AnWTFilter[] getVFilters(int t, int c)
+        public AnWTFilter[] GetVFilters(int t, int c)
         {
-            var an = (AnWTFilter[][])getSpec(t, c);
+            var an = (AnWTFilter[][])GetSpec(t, c);
             return an[1];
         }
 
@@ -488,7 +479,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
             {
                 for (var c = 0; c < nComp; c++)
                 {
-                    an = (AnWTFilter[][])getSpec(t, c);
+                    an = (AnWTFilter[][])GetSpec(t, c);
 
                     str += $"(t:{t},c:{c})\n";
 
@@ -521,11 +512,11 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// <param name="c">The index of the component
         /// 
         /// </param>
-        public bool isReversible(int t, int c)
+        public bool IsReversible(int t, int c)
         {
             // Note: no need to buffer the result since this method is
             // normally called once per tile-component.
-            AnWTFilter[] hfilter = getHFilters(t, c), vfilter = getVFilters(t, c);
+            AnWTFilter[] hfilter = GetHFilters(t, c), vfilter = GetVFilters(t, c);
 
             // As soon as a filter is not reversible, false can be returned
             for (var i = hfilter.Length - 1; i >= 0; i--)

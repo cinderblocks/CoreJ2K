@@ -1,14 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: ProgressionType.java,v 1.16 2001/07/25 16:21:06 grosbois Exp $
-*
-* Class:                   ProgressionType
-*
-* Description:             The definition of the different bit stream
-*                          profiles.
-*
-*
 *
 * COPYRIGHT:
 * 

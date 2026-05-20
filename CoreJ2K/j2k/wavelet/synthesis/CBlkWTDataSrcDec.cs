@@ -1,14 +1,4 @@
 /* 
-* CVS identifier:
-* 
-* $Id: CBlkWTDataSrcDec.java,v 1.19 2001/09/20 12:46:31 grosbois Exp $
-* 
-* Class:                   CBlkWTDataSrcDec
-* 
-* Description:             Interface that define methods for trasnfer of WT
-*                          data in a code-block basis (decoder side).
-* 
-* 
 * 
 * COPYRIGHT:
 * 
@@ -49,7 +39,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
 
     /// <summary> This abstract class defines methods to transfer wavelet data in a
     /// code-block by code-block basis, for the decoder side. In each call to
-    /// 'getCodeBlock()' or 'getInternCodeBlock()' a new code-block is
+    /// 'GetCodeBlock()' or 'GetInternCodeBlock()' a new code-block is
     /// returned. The code-blocks are returned in no specific order.
     /// 
     /// This class is the source of data, in general, for the inverse wavelet
@@ -72,7 +62,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// themselves. This is because different subbands have different gains and
         /// thus different nominal ranges. To have an idea of the nominal range in
         /// each subband the subband analysis gain value from the subband tree
-        /// structure, returned by the 'getSynSubbandTree()' method, can be
+        /// structure, returned by the 'GetSynSubbandTree()' method, can be
         /// used. See the 'Subband' class for more details.
         /// 
         /// If this number is <i>b</b> then for unsigned data the nominal range
@@ -88,7 +78,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// 
         /// </returns>
         /// <seealso cref="Subband" />
-        int getNomRangeBits(int c);
+        int GetNomRangeBits(int c);
 
         /// <summary> Returns the position of the fixed point in the specified component, or
         /// equivalently the number of fractional bits. This is the position of the
@@ -107,7 +97,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// number of fractional bits. For floating-point data 0 is returned.
         /// 
         /// </returns>
-        int getFixedPoint(int c);
+        int GetFixedPoint(int c);
 
         /// <summary> Returns the specified code-block in the current tile for the specified
         /// component, as a copy (see below).
@@ -153,7 +143,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// 
         /// </returns>
         /// <seealso cref="DataBlk" />
-        DataBlk getCodeBlock(int c, int m, int n, SubbandSyn sb, DataBlk cblk);
+        DataBlk GetCodeBlock(int c, int m, int n, SubbandSyn sb, DataBlk cblk);
 
         /// <summary> Returns the specified code-block in the current tile for the specified
         /// component (as a reference or copy).
@@ -198,6 +188,6 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// 
         /// </returns>
         /// <seealso cref="DataBlk" />
-        DataBlk getInternCodeBlock(int c, int m, int n, SubbandSyn sb, DataBlk cblk);
+        DataBlk GetInternCodeBlock(int c, int m, int n, SubbandSyn sb, DataBlk cblk);
     }
 }

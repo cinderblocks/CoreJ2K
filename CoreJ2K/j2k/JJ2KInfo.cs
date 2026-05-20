@@ -1,14 +1,4 @@
 /* 
-* CVS identifier:
-* 
-* $Id: JJ2KInfo.java,v 1.28 2002/07/30 10:12:38 grosbois Exp $
-* 
-* Class:                   JJ2KInfo
-* 
-* Description:             Holds general JJ2000 informartion (version,
-*                          copyright, etc.)
-* 
-* 
 * 
 * COPYRIGHT:
 * 

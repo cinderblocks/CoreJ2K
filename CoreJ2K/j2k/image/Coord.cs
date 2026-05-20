@@ -1,13 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: Coord.java,v 1.14 2002/04/30 13:18:24 grosbois Exp $
-*
-* Class:                   Coord
-*
-* Description:             Class for storage of 2-D coordinates
-*
-*
 *
 * COPYRIGHT:
 * 

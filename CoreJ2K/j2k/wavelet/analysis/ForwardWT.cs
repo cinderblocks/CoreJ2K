@@ -1,14 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: ForwardWT.java,v 1.60 2001/09/14 09:54:53 grosbois Exp $
-*
-* Class:                   ForwardWT
-*
-* Description:             This interface defines the specifics
-*                          of forward wavelet transforms
-*
-*
 *
 * COPYRIGHT:
 * 
@@ -142,15 +132,15 @@ namespace CoreJ2K.j2k.wavelet.analysis
             // Check parameters
             pl.checkList(OPT_PREFIX, ParameterList.toNameArray(pinfo));
 
-            deflev = ((int)encSpec.dls.getDefault());
+            deflev = ((int)encSpec.dls.GetDefault());
 
             // Code-block partition origin
             var str = "";
-            if (pl.getParameter("Wcboff") == null)
+            if (pl.GetParameter("Wcboff") == null)
             {
                 throw new InvalidOperationException("You must specify an argument to the '-Wcboff' " + "option. See usage with the '-u' option");
             }
-            var stk = new Tokenizer(pl.getParameter("Wcboff"));
+            var stk = new Tokenizer(pl.GetParameter("Wcboff"));
             if (stk.Count != 2)
             {
                 throw new ArgumentException("'-Wcboff' option needs two" + " arguments. See usage with " + "the '-u' option.");
@@ -185,21 +175,21 @@ namespace CoreJ2K.j2k.wavelet.analysis
             }
             if (cb0x != 0 || cb0y != 0)
             {
-                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING, "Code-blocks partition origin is " + "different from (0,0). This is defined in JPEG 2000" + " part 2 and may be not supported by all JPEG 2000 " + "decoders.");
+                FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING, "Code-blocks partition origin is " + "different from (0,0). This is defined in JPEG 2000" + " part 2 and may be not supported by all JPEG 2000 " + "decoders.");
             }
 
             return new ForwWTFull(src, encSpec, cb0x, cb0y);
         }
-        public abstract bool isReversible(int param1, int param2);
-        public abstract CBlkWTData getNextInternCodeBlock(int param1, CBlkWTData param2);
-        public abstract int getFixedPoint(int param1);
-        public abstract WaveletFilter[] getHorAnWaveletFilters(int param1, int param2);
-        public abstract WaveletFilter[] getVertAnWaveletFilters(int param1, int param2);
-        public abstract SubbandAn getAnSubbandTree(int param1, int param2);
-        public abstract int getDecompLevels(int param1, int param2);
-        public abstract CBlkWTData getNextCodeBlock(int param1, CBlkWTData param2);
-        public abstract int getImplementationType(int param1);
-        public abstract int getDataType(int param1, int param2);
-        public abstract int getDecomp(int param1, int param2);
+        public abstract bool IsReversible(int param1, int param2);
+        public abstract CBlkWTData GetNextInternCodeBlock(int param1, CBlkWTData param2);
+        public abstract int GetFixedPoint(int param1);
+        public abstract WaveletFilter[] GetHorAnWaveletFilters(int param1, int param2);
+        public abstract WaveletFilter[] GetVertAnWaveletFilters(int param1, int param2);
+        public abstract SubbandAn GetAnSubbandTree(int param1, int param2);
+        public abstract int GetDecompLevels(int param1, int param2);
+        public abstract CBlkWTData GetNextCodeBlock(int param1, CBlkWTData param2);
+        public abstract int GetImplementationType(int param1);
+        public abstract int GetDataType(int param1, int param2);
+        public abstract int GetDecomp(int param1, int param2);
     }
 }

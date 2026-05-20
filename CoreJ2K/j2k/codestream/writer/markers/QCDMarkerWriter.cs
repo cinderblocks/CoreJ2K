@@ -25,22 +25,22 @@ namespace CoreJ2K.j2k.codestream.writer.markers
 
         public int WriteMain(BinaryWriter writer)
         {
-            var qType = (string)encSpec.qts.getDefault();
-            var baseStep = (float)encSpec.qsss.getDefault();
-            var gb = ((int)encSpec.gbs.getDefault());
+            var qType = (string)encSpec.qts.GetDefault();
+            var baseStep = (float)encSpec.qsss.GetDefault();
+            var gb = ((int)encSpec.gbs.GetDefault());
 
-            var isDerived = qType.Equals("derived");
-            var isReversible = qType.Equals("reversible");
+            var IsDerived = qType.Equals("derived");
+            var IsReversible = qType.Equals("reversible");
 
-            int mrl = ((int)encSpec.dls.getDefault());
+            int mrl = ((int)encSpec.dls.GetDefault());
 
             // Find representative tile/component
             var tcIdx = FindRepresentativeTileComponent(mrl, qType);
-            SubbandAn sbRoot = dwt.getAnSubbandTree(tcIdx[0], tcIdx[1]);
-            int defimgn = dwt.getNomRangeBits(tcIdx[1]);
+            SubbandAn sbRoot = dwt.GetAnSubbandTree(tcIdx[0], tcIdx[1]);
+            int defimgn = dwt.GetNomRangeBits(tcIdx[1]);
 
             // Get quantization style
-            int qstyle = GetQuantizationStyle(isReversible, isDerived);
+            int qstyle = GetQuantizationStyle(IsReversible, IsDerived);
 
             // QCD marker
             writer.Write(Markers.QCD);
@@ -49,7 +49,7 @@ namespace CoreJ2K.j2k.codestream.writer.markers
             int nqcd = ComputeNumberOfSteps(qstyle, sbRoot, mrl);
 
             // Lqcd (marker segment length)
-            var markSegLen = 3 + ((isReversible) ? nqcd : 2 * nqcd);
+            var markSegLen = 3 + ((IsReversible) ? nqcd : 2 * nqcd);
             writer.Write((short)markSegLen);
 
             // Sqcd
@@ -63,19 +63,19 @@ namespace CoreJ2K.j2k.codestream.writer.markers
 
         public int WriteTile(BinaryWriter writer, int tileIdx, int deftilenr)
         {
-            var qType = (string)encSpec.qts.getTileDef(tileIdx);
-            var baseStep = (float)encSpec.qsss.getTileDef(tileIdx);
-            int mrl = ((int)encSpec.dls.getTileDef(tileIdx));
+            var qType = (string)encSpec.qts.GetTileDef(tileIdx);
+            var baseStep = (float)encSpec.qsss.GetTileDef(tileIdx);
+            int mrl = ((int)encSpec.dls.GetTileDef(tileIdx));
 
             var compIdx = FindRepresentativeComponent(tileIdx, mrl, qType);
-            SubbandAn sbRoot = dwt.getAnSubbandTree(tileIdx, compIdx);
-            deftilenr = dwt.getNomRangeBits(compIdx);
-            var gb = ((int)encSpec.gbs.getTileDef(tileIdx));
+            SubbandAn sbRoot = dwt.GetAnSubbandTree(tileIdx, compIdx);
+            deftilenr = dwt.GetNomRangeBits(compIdx);
+            var gb = ((int)encSpec.gbs.GetTileDef(tileIdx));
 
-            var isDerived = qType.Equals("derived");
-            var isReversible = qType.Equals("reversible");
+            var IsDerived = qType.Equals("derived");
+            var IsReversible = qType.Equals("reversible");
 
-            int qstyle = GetQuantizationStyle(isReversible, isDerived);
+            int qstyle = GetQuantizationStyle(IsReversible, IsDerived);
 
             // QCD marker
             writer.Write(Markers.QCD);
@@ -84,7 +84,7 @@ namespace CoreJ2K.j2k.codestream.writer.markers
             int nqcd = ComputeNumberOfSteps(qstyle, sbRoot, mrl);
 
             // Lqcd
-            var markSegLen = 3 + ((isReversible) ? nqcd : 2 * nqcd);
+            var markSegLen = 3 + ((IsReversible) ? nqcd : 2 * nqcd);
             writer.Write((short)markSegLen);
 
             // Sqcd
@@ -98,7 +98,7 @@ namespace CoreJ2K.j2k.codestream.writer.markers
 
         private int[] FindRepresentativeTileComponent(int mrl, string qType)
         {
-            var nt = dwt.getNumTiles();
+            var nt = dwt.GetNumTiles();
             var nc = dwt.NumComps;
             var tcIdx = new int[2];
 
@@ -106,8 +106,8 @@ namespace CoreJ2K.j2k.codestream.writer.markers
             {
                 for (var c = 0; c < nc; c++)
                 {
-                    int tmpI = ((int)encSpec.dls.getTileCompVal(t, c));
-                    string tmpStr = ((string)encSpec.qts.getTileCompVal(t, c));
+                    int tmpI = ((int)encSpec.dls.GetTileCompVal(t, c));
+                    string tmpStr = ((string)encSpec.qts.GetTileCompVal(t, c));
                     if (tmpI == mrl && tmpStr.Equals(qType))
                     {
                         tcIdx[0] = t; 
@@ -128,8 +128,8 @@ namespace CoreJ2K.j2k.codestream.writer.markers
 
             for (var c = 0; c < nc; c++)
             {
-                int tmpI = ((int)encSpec.dls.getTileCompVal(tileIdx, c));
-                string tmpStr = ((string)encSpec.qts.getTileCompVal(tileIdx, c));
+                int tmpI = ((int)encSpec.dls.GetTileCompVal(tileIdx, c));
+                string tmpStr = ((string)encSpec.qts.GetTileCompVal(tileIdx, c));
                 if (tmpI == mrl && tmpStr.Equals(qType))
                 {
                     return c;
@@ -141,11 +141,11 @@ namespace CoreJ2K.j2k.codestream.writer.markers
                 $"in tile QCD (t={tileIdx}) marker segment. You have found a JJ2000 bug.");
         }
 
-        private int GetQuantizationStyle(bool isReversible, bool isDerived)
+        private int GetQuantizationStyle(bool IsReversible, bool IsDerived)
         {
-            if (isReversible)
+            if (IsReversible)
                 return Markers.SQCX_NO_QUANTIZATION;
-            if (isDerived)
+            if (IsDerived)
                 return Markers.SQCX_SCALAR_DERIVED;
             return Markers.SQCX_SCALAR_EXPOUNDED;
         }
@@ -160,7 +160,7 @@ namespace CoreJ2K.j2k.codestream.writer.markers
                 case Markers.SQCX_NO_QUANTIZATION:
                 case Markers.SQCX_SCALAR_EXPOUNDED:
                     int nqcd = 0;
-                    SubbandAn sb = (SubbandAn)sbRoot.getSubbandByIdx(0, 0);
+                    SubbandAn sb = (SubbandAn)sbRoot.GetSubbandByIdx(0, 0);
 
                     for (var j = 0; j <= mrl; j++)
                     {
@@ -182,7 +182,7 @@ namespace CoreJ2K.j2k.codestream.writer.markers
         private void WriteQuantizationSteps(BinaryWriter writer, int qstyle, SubbandAn sbRoot, 
                                            int mrl, int nomRangeBits, float baseStep)
         {
-            SubbandAn sb = (SubbandAn)sbRoot.getSubbandByIdx(0, 0);
+            SubbandAn sb = (SubbandAn)sbRoot.GetSubbandByIdx(0, 0);
 
             switch (qstyle)
             {

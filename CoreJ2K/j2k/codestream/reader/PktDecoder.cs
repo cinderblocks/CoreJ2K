@@ -7,7 +7,6 @@ using CoreJ2K.j2k.util;
 using CoreJ2K.j2k.wavelet.synthesis;
 /// <summary> CVS identifier:
 /// 
-/// $Id: PktDecoder.java,v 1.46 2002/07/19 12:35:14 grosbois Exp $
 /// 
 /// Class:                   PktDecoder
 /// 
@@ -247,7 +246,7 @@ namespace CoreJ2K.j2k.codestream.reader
 
             if (usePLTFastPath)
             {
-                FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO,
                     "PLT markers available - fast packet access enabled");
             }
         }
@@ -355,10 +354,10 @@ namespace CoreJ2K.j2k.codestream.reader
                 }
 
                 // Get the tile-component coordinates on the reference grid
-                tcx0 = src.getResULX(c, mdl[c]);
-                tcy0 = src.getResULY(c, mdl[c]);
-                tcx1 = tcx0 + src.getTileCompWidth(tIdx, c, mdl[c]);
-                tcy1 = tcy0 + src.getTileCompHeight(tIdx, c, mdl[c]);
+                tcx0 = src.GetResULX(c, mdl[c]);
+                tcy0 = src.GetResULY(c, mdl[c]);
+                tcx1 = tcx0 + src.GetTileCompWidth(tIdx, c, mdl[c]);
+                tcy1 = tcy0 + src.GetTileCompHeight(tIdx, c, mdl[c]);
 
                 for (var r = 0; r <= mdl[c]; r++)
                 {
@@ -370,8 +369,8 @@ namespace CoreJ2K.j2k.codestream.reader
 
                     // Calculate the maximum number of precincts for each
                     // resolution level taking into account tile specific options.
-                    double twoppx = getPPX(tIdx, c, r);
-                    double twoppy = getPPY(tIdx, c, r);
+                    double twoppx = GetPPX(tIdx, c, r);
+                    double twoppy = GetPPY(tIdx, c, r);
                     if (!sameGeometry)
                     {
                         numPrec[c][r] = new Coord();
@@ -414,10 +413,10 @@ namespace CoreJ2K.j2k.codestream.reader
 
                     fillPrecInfo(c, r, mdl[c]);
 
-                    root = src.getSynSubbandTree(tIdx, c);
+                    root = src.GetSynSubbandTree(tIdx, c);
                     for (var s = mins; s < maxs; s++)
                     {
-                        sb = (SubbandSyn)root.getSubbandByIdx(r, s);
+                        sb = (SubbandSyn)root.GetSubbandByIdx(r, s);
                         nBlk = sb.numCb;
 
                         if (!sameGeometry)
@@ -493,8 +492,8 @@ namespace CoreJ2K.j2k.codestream.reader
             if (ppinfo[c][r].Length == 0)
                 return;
 
-            var tileI = src.getTile(null);
-            var nTiles = src.getNumTiles(null);
+            var tileI = src.GetTile(null);
+            var nTiles = src.GetNumTiles(null);
 
             int xt0siz = src.TilePartULX;
             int yt0siz = src.TilePartULY;
@@ -510,13 +509,13 @@ namespace CoreJ2K.j2k.codestream.reader
             var tx1 = (tileI.x != nTiles.x - 1) ? xt0siz + (tileI.x + 1) * xtsiz : xsiz;
             var ty1 = (tileI.y != nTiles.y - 1) ? yt0siz + (tileI.y + 1) * ytsiz : ysiz;
 
-            int xrsiz = hd.getCompSubsX(c);
-            int yrsiz = hd.getCompSubsY(c);
+            int xrsiz = hd.GetCompSubsX(c);
+            int yrsiz = hd.GetCompSubsY(c);
 
-            int tcx0 = src.getResULX(c, mdl);
-            int tcy0 = src.getResULY(c, mdl);
-            int tcx1 = tcx0 + src.getTileCompWidth(tIdx, c, mdl);
-            int tcy1 = tcy0 + src.getTileCompHeight(tIdx, c, mdl);
+            int tcx0 = src.GetResULX(c, mdl);
+            int tcy0 = src.GetResULY(c, mdl);
+            int tcx1 = tcx0 + src.GetTileCompWidth(tIdx, c, mdl);
+            int tcy1 = tcy0 + src.GetTileCompHeight(tIdx, c, mdl);
 
             int ndl  = mdl - r;
             int shift = 1 << ndl;
@@ -528,9 +527,9 @@ namespace CoreJ2K.j2k.codestream.reader
             int cb0x = src.CbULX;
             int cb0y = src.CbULY;
 
-            // getPPX/getPPY always return powers of two
-            int twoppx  = getPPX(tIdx, c, r);
-            int twoppy  = getPPY(tIdx, c, r);
+            // GetPPX/GetPPY always return powers of two
+            int twoppx  = GetPPX(tIdx, c, r);
+            int twoppy  = GetPPY(tIdx, c, r);
             int twoppx2 = twoppx >> 1;
             int twoppy2 = twoppy >> 1;
 
@@ -547,7 +546,7 @@ namespace CoreJ2K.j2k.codestream.reader
 
             int acb0x, acb0y;
             SubbandSyn sb = null;
-            var root = src.getSynSubbandTree(tIdx, c);
+            var root = src.GetSynSubbandTree(tIdx, c);
 
             int p0x, p0y, p1x, p1y;
             int s0x, s0y, s1x, s1y;
@@ -583,7 +582,7 @@ namespace CoreJ2K.j2k.codestream.reader
                         p0y = acb0y + i * twoppy;
                         p1y = p0y + twoppy;
 
-                        sb  = (SubbandSyn)root.getSubbandByIdx(0, 0);
+                        sb  = (SubbandSyn)root.GetSubbandByIdx(0, 0);
                         s0x = (p0x < sb.ulcx) ? sb.ulcx : p0x;
                         s1x = (p1x > sb.ulcx + sb.w) ? sb.ulcx + sb.w : p1x;
                         s0y = (p0y < sb.ulcy) ? sb.ulcy : p0y;
@@ -650,7 +649,7 @@ namespace CoreJ2K.j2k.codestream.reader
                         acb0x = 0; acb0y = cb0y;
                         p0x = acb0x + j * twoppx2; p1x = p0x + twoppx2;
                         p0y = acb0y + i * twoppy2; p1y = p0y + twoppy2;
-                        sb  = (SubbandSyn)root.getSubbandByIdx(r, 1);
+                        sb  = (SubbandSyn)root.GetSubbandByIdx(r, 1);
                         s0x = (p0x < sb.ulcx) ? sb.ulcx : p0x;
                         s1x = (p1x > sb.ulcx + sb.w) ? sb.ulcx + sb.w : p1x;
                         s0y = (p0y < sb.ulcy) ? sb.ulcy : p0y;
@@ -664,7 +663,7 @@ namespace CoreJ2K.j2k.codestream.reader
                         acb0x = cb0x; acb0y = 0;
                         p0x = acb0x + j * twoppx2; p1x = p0x + twoppx2;
                         p0y = acb0y + i * twoppy2; p1y = p0y + twoppy2;
-                        sb  = (SubbandSyn)root.getSubbandByIdx(r, 2);
+                        sb  = (SubbandSyn)root.GetSubbandByIdx(r, 2);
                         s0x = (p0x < sb.ulcx) ? sb.ulcx : p0x;
                         s1x = (p1x > sb.ulcx + sb.w) ? sb.ulcx + sb.w : p1x;
                         s0y = (p0y < sb.ulcy) ? sb.ulcy : p0y;
@@ -678,7 +677,7 @@ namespace CoreJ2K.j2k.codestream.reader
                         acb0x = 0; acb0y = 0;
                         p0x = acb0x + j * twoppx2; p1x = p0x + twoppx2;
                         p0y = acb0y + i * twoppy2; p1y = p0y + twoppy2;
-                        sb  = (SubbandSyn)root.getSubbandByIdx(r, 3);
+                        sb  = (SubbandSyn)root.GetSubbandByIdx(r, 3);
                         s0x = (p0x < sb.ulcx) ? sb.ulcx : p0x;
                         s1x = (p1x > sb.ulcx + sb.w) ? sb.ulcx + sb.w : p1x;
                         s0y = (p0y < sb.ulcy) ? sb.ulcy : p0y;
@@ -754,7 +753,7 @@ namespace CoreJ2K.j2k.codestream.reader
         /// <param name="r">Resolution index
         /// 
         /// </param>
-        public virtual int getNumPrecinct(int c, int r)
+        public virtual int GetNumPrecinct(int c, int r)
         {
             return numPrec[c][r].x * numPrec[c][r].y;
         }
@@ -822,7 +821,7 @@ namespace CoreJ2K.j2k.codestream.reader
                     // 2. Update code-block inclusion flags
                     // 3. Use PLT length to skip to next packet
 
-                    FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                    FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO,
                         $"Using PLT fast-path for packet {currentPacketIndex}: length={pktLength}");
 
                     currentPacketIndex++;
@@ -836,7 +835,7 @@ namespace CoreJ2K.j2k.codestream.reader
             int mend, nend;
             int b;
             SubbandSyn sb;
-            var root = src.getSynSubbandTree(tIdx, c);
+            var root = src.GetSynSubbandTree(tIdx, c);
 
             // If packed packet headers was used, use separate stream for reading
             // of packet headers
@@ -916,7 +915,7 @@ namespace CoreJ2K.j2k.codestream.reader
                 {
                     cblks[s].Clear();
                 }
-                sb = (SubbandSyn)root.getSubbandByIdx(r, s);
+                sb = (SubbandSyn)root.GetSubbandByIdx(r, s);
                 // No code-block in this precinct
                 if (prec.nblk[s] == 0)
                 {
@@ -1055,7 +1054,7 @@ namespace CoreJ2K.j2k.codestream.reader
                             // then there is one termination per bypass/MQ and
                             // MQ/bypass transition. Otherwise, the only
                             // termination is at the end of the code-block.
-                            var options = ((int)decSpec.ecopts.getTileCompVal(tIdx, c));
+                            var options = ((int)decSpec.ecopts.GetTileCompVal(tIdx, c));
 
                             if ((options & StdEntropyCoderOptions.OPT_TERM_PASS) != 0)
                             {
@@ -1429,9 +1428,9 @@ namespace CoreJ2K.j2k.codestream.reader
         /// resolution level and tile.
         /// 
         /// </returns>
-        public int getPPX(int t, int c, int r)
+        public int GetPPX(int t, int c, int r)
         {
-            return decSpec.pss.getPPX(t, c, r);
+            return decSpec.pss.GetPPX(t, c, r);
         }
 
         /// <summary> Returns the precinct partition height for the specified component,
@@ -1451,9 +1450,9 @@ namespace CoreJ2K.j2k.codestream.reader
         /// the specified resolution level, for the current tile.
         /// 
         /// </returns>
-        public int getPPY(int t, int c, int rl)
+        public int GetPPY(int t, int c, int rl)
         {
-            return decSpec.pss.getPPY(t, c, rl);
+            return decSpec.pss.GetPPY(t, c, rl);
         }
 
         /// <summary>
@@ -1589,7 +1588,7 @@ namespace CoreJ2K.j2k.codestream.reader
             }
             else
             {
-                bin.in_Renamed.readFully(ephArray, 0, Markers.EPH_LENGTH);
+                bin.bitReader.readFully(ephArray, 0, Markers.EPH_LENGTH);
             }
 
             // Check if this is the correct marker (Markers.EPH is a negative short -> cast to short)
@@ -1613,7 +1612,7 @@ namespace CoreJ2K.j2k.codestream.reader
         /// <param name="p">Precinct index.
         /// 
         /// </param>
-        public virtual PrecInfo getPrecInfo(int c, int r, int p)
+        public virtual PrecInfo GetPrecInfo(int c, int r, int p)
         {
             return ppinfo[c][r][p];
         }

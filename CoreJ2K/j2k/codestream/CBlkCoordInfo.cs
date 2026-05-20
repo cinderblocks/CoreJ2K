@@ -1,13 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: CBlkCoordInfo.java,v 1.9 2001/09/14 09:32:53 grosbois Exp $
-*
-* Class:                   CBlkCoordInfo
-*
-* Description:             Used to store the code-blocks coordinates.
-*
-*
 *
 * COPYRIGHT:
 * 

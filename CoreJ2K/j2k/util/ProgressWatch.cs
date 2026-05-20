@@ -1,11 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: ProgressWatch.java,v 1.1 2002/05/22 16:19:28 grosbois Exp $
-*
-* Class:                   ProgressWatch
-*
-* Description: Interface defining methods for ProgressWatch objects.
 *
 * COPYRIGHT:
 * 

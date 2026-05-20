@@ -1,13 +1,4 @@
 /* 
-* CVS identifier:
-* 
-* $Id: WTDecompSpec.java,v 1.9 2000/09/05 09:26:06 grosbois Exp $
-* 
-* Class:                   WTDecompSpec
-* 
-* Description:             <short description of class>
-* 
-* 
 * 
 * COPYRIGHT:
 * 
@@ -182,7 +173,7 @@ namespace CoreJ2K.j2k.wavelet
         /// 
         /// 
         /// </param>
-        public virtual void setMainCompDefDecompType(int n, int dec, int lev)
+        public virtual void SetMainCompDefDecompType(int n, int dec, int lev)
         {
             if (dec < 0 && lev < 0)
             {
@@ -221,7 +212,7 @@ namespace CoreJ2K.j2k.wavelet
         /// 
         /// 
         /// </returns>
-        public virtual byte getDecSpecType(int n)
+        public virtual byte GetDecSpecType(int n)
         {
             return specValType[n];
         }
@@ -243,7 +234,7 @@ namespace CoreJ2K.j2k.wavelet
         /// 
         /// 
         /// </returns>
-        public virtual int getDecompType(int n)
+        public virtual int GetDecompType(int n)
         {
             switch (specValType[n])
             {
@@ -283,7 +274,7 @@ namespace CoreJ2K.j2k.wavelet
         /// 
         /// 
         /// </returns>
-        public virtual int getLevels(int n)
+        public virtual int GetLevels(int n)
         {
             switch (specValType[n])
             {

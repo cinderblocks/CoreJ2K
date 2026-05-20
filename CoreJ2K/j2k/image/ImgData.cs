@@ -1,13 +1,5 @@
 /*
-* CVS Identifier:
-*
-* $Id: ImgData.java,v 1.10 2001/09/14 09:17:46 grosbois Exp $
-*
 * Interface:           ImgData
-*
-* Description:         The interface for classes that provide image
-*                      data.
-*
 *
 *
 * COPYRIGHT:
@@ -194,7 +186,7 @@ namespace CoreJ2K.j2k.image
         /// 
         /// </returns>
         /// <seealso cref="ImgData" />
-        int getCompSubsX(int c);
+        int GetCompSubsX(int c);
 
         /// <summary> Returns the component subsampling factor in the vertical direction, for
         /// the specified component. This is, approximately, the ratio of
@@ -209,7 +201,7 @@ namespace CoreJ2K.j2k.image
         /// 
         /// </returns>
         /// <seealso cref="ImgData" />
-        int getCompSubsY(int c);
+        int GetCompSubsY(int c);
 
         /// <summary> Returns the width in pixels of the specified tile-component
         /// 
@@ -223,7 +215,7 @@ namespace CoreJ2K.j2k.image
         /// <returns> The width in pixels of component <tt>c</tt> in tile<tt>t</tt>.
         /// 
         /// </returns>
-        int getTileCompWidth(int t, int c);
+        int GetTileCompWidth(int t, int c);
 
         /// <summary> Returns the height in pixels of the specified tile-component.
         /// 
@@ -238,7 +230,7 @@ namespace CoreJ2K.j2k.image
         /// <tt>t</tt>.
         /// 
         /// </returns>
-        int getTileCompHeight(int t, int c);
+        int GetTileCompHeight(int t, int c);
 
         /// <summary> Returns the width in pixels of the specified component in the overall
         /// image.
@@ -251,7 +243,7 @@ namespace CoreJ2K.j2k.image
         /// image.
         /// 
         /// </returns>
-        int getCompImgWidth(int c);
+        int GetCompImgWidth(int c);
 
         /// <summary> Returns the height in pixels of the specified component in the overall
         /// image.
@@ -264,7 +256,7 @@ namespace CoreJ2K.j2k.image
         /// image.
         /// 
         /// </returns>
-        int getCompImgHeight(int c);
+        int GetCompImgHeight(int c);
 
         /// <summary> Returns the number of bits, referred to as the "range bits",
         /// corresponding to the nominal range of the image data in the specified
@@ -282,7 +274,7 @@ namespace CoreJ2K.j2k.image
         /// image data (in the image domain).
         /// 
         /// </returns>
-        int getNomRangeBits(int compIndex);
+        int GetNomRangeBits(int compIndex);
 
         /// <summary> Changes the current tile, given the new indices. An
         /// IllegalArgumentException is thrown if the coordinates do not correspond
@@ -295,14 +287,14 @@ namespace CoreJ2K.j2k.image
         /// <param name="y">The vertical index of the new tile.
         /// 
         /// </param>
-        void setTile(int x, int y);
+        void SetTile(int x, int y);
 
         /// <summary> Advances to the next tile, in standard scan-line order (by rows then
         /// columns). An NoNextElementException is thrown if the current tile is
         /// the last one (i.e. there is no next tile).
         /// 
         /// </summary>
-        void nextTile();
+        void NextTile();
 
         /// <summary> Returns the indixes of the current tile. These are the horizontal and
         /// vertical indexes of the current tile.
@@ -315,7 +307,7 @@ namespace CoreJ2K.j2k.image
         /// <returns> The current tile's indices (vertical and horizontal indexes).
         /// 
         /// </returns>
-        Coord getTile(Coord co);
+        Coord GetTile(Coord co);
 
         /// <summary> Returns the horizontal coordinate of the upper-left corner of the
         /// specified component in the current tile.
@@ -324,7 +316,7 @@ namespace CoreJ2K.j2k.image
         /// <param name="c">The index of the component.
         /// 
         /// </param>
-        int getCompULX(int c);
+        int GetCompULX(int c);
 
         /// <summary> Returns the vertical coordinate of the upper-left corner of the
         /// specified component in the current tile.
@@ -333,7 +325,7 @@ namespace CoreJ2K.j2k.image
         /// <param name="c">The index of the component.
         /// 
         /// </param>
-        int getCompULY(int c);
+        int GetCompULY(int c);
 
         /// <summary> Returns the number of tiles in the horizontal and vertical directions.
         /// 
@@ -346,7 +338,7 @@ namespace CoreJ2K.j2k.image
         /// (Coord.y) directions.
         /// 
         /// </returns>
-        Coord getNumTiles(Coord co);
+        Coord GetNumTiles(Coord co);
 
         /// <summary> Returns the total number of tiles in the image.
         /// 
@@ -354,6 +346,6 @@ namespace CoreJ2K.j2k.image
         /// <returns> The total number of tiles in the image.
         /// 
         /// </returns>
-        int getNumTiles();
+        int GetNumTiles();
     }
 }

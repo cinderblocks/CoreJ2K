@@ -1,6 +1,5 @@
 /// <summary>**************************************************************************
 /// 
-/// $Id: ICCCurveTypeReverse.java,v 1.1 2002/07/25 14:56:36 grosbois Exp $
 /// 
 /// Copyright Eastman Kodak Company, 343 State Street, Rochester, NY 14650
 /// $Date $
@@ -71,13 +70,13 @@ namespace CoreJ2K.Icc.Tags
         /// </param>
         protected internal ICCCurveTypeReverse(int signature, byte[] data, int offset, int length) : base(signature, data, offset, offset + 2 * ICCProfile.int_size)
         {
-            type = ICCProfile.getInt(data, offset);
-            reserved = ICCProfile.getInt(data, offset + ICCProfile.int_size);
-            nEntries = ICCProfile.getInt(data, offset + 2 * ICCProfile.int_size);
+            type = ICCProfile.GetInt(data, offset);
+            reserved = ICCProfile.GetInt(data, offset + ICCProfile.int_size);
+            nEntries = ICCProfile.GetInt(data, offset + 2 * ICCProfile.int_size);
             entry_Renamed_Field = new int[nEntries];
             for (var i = 0; i < nEntries; ++i)
                 // Reverse the storage order.
-                entry_Renamed_Field[nEntries - 1 + i] = ICCProfile.getShort(data, offset + 3 * ICCProfile.int_size + i * ICCProfile.short_size) & 0xFFFF;
+                entry_Renamed_Field[nEntries - 1 + i] = ICCProfile.GetShort(data, offset + 3 * ICCProfile.int_size + i * ICCProfile.short_size) & 0xFFFF;
         }
 
         /// <summary>Accessor for curve entry at index. </summary>
@@ -85,7 +84,5 @@ namespace CoreJ2K.Icc.Tags
         {
             return entry_Renamed_Field[i];
         }
-
-        /* end class ICCCurveTypeReverse */
     }
 }

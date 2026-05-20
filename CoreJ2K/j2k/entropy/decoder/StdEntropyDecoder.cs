@@ -1,13 +1,4 @@
 /* 
-* CVS identifier:
-* 
-* $Id: StdEntropyDecoder.java,v 1.30 2001/10/25 12:12:16 qtxjoas Exp $
-* 
-* Class:                   StdEntropyDecoder
-* 
-* Description:             Entropy decoding engine of stripes in code-blocks
-* 
-* 
 * 
 * COPYRIGHT:
 * 
@@ -109,7 +100,7 @@ namespace CoreJ2K.j2k.entropy.decoder
         /// <seealso cref="StdEntropyCoderOptions" />
         private int options;
 
-        // Cache for options lookup — avoids a virtual ModuleSpec.getSpec dispatch per code-block.
+        // Cache for options lookup — avoids a virtual ModuleSpec.GetSpec dispatch per code-block.
         private int _cachedOptsTile = -1;
         private int _cachedOptsComp = -1;
         private int _cachedOptions;
@@ -468,7 +459,6 @@ namespace CoreJ2K.j2k.entropy.decoder
 			time = new long[src.NumComps];
 			// If we are timing make sure that 'finalize' gets called.
             // CONVERSION PROBLEM?
-			//System_Renamed.runFinalizersOnExit(true);
 #endif
 
             // Initialize internal variables
@@ -494,7 +484,7 @@ namespace CoreJ2K.j2k.entropy.decoder
                 sb.Append(time[c]);
                 sb.Append(" ms");
             }
-            FacilityManager.getMsgLogger().printmsg(CoreJ2K.j2k.util.MsgLogger_Fields.INFO, sb.ToString());
+            FacilityManager.GetMsgLogger().printmsg(CoreJ2K.j2k.util.MsgLogger_Fields.INFO, sb.ToString());
 
         }
 #endif
@@ -547,7 +537,7 @@ namespace CoreJ2K.j2k.entropy.decoder
         /// 
         /// </returns>
         /// <seealso cref="DataBlk" />
-        public override DataBlk getCodeBlock(int c, int m, int n, SubbandSyn sb, DataBlk cblk)
+        public override DataBlk GetCodeBlock(int c, int m, int n, SubbandSyn sb, DataBlk cblk)
         {
             //long stime = 0L; // Start time for timed sections
             int[] zc_lut; // The ZC lookup table to use
@@ -557,26 +547,26 @@ namespace CoreJ2K.j2k.entropy.decoder
             bool error; // Error indicator
             int tslen; // Length of first terminated segment
             int tsidx; // Index of current terminated segment
-            ByteInputBuffer in_Renamed = null;
+            ByteInputBuffer inputBuffer = null;
 
             bool isterm;
 
             // Get the code-block to decode
-            srcblk = src.getCodeBlock(c, m, n, sb, 1, -1, srcblk);
+            srcblk = src.GetCodeBlock(c, m, n, sb, 1, -1, srcblk);
 
 #if DO_TIMING
 			stime = (System.DateTime.Now.Ticks - 621355968000000000) / 10000;
 #endif
 
             // Retrieve options from decSpec — cached per (tIdx, c) to avoid a virtual
-            // ModuleSpec.getSpec dispatch on every code-block invocation.
+            // ModuleSpec.GetSpec dispatch on every code-block invocation.
             if (_cachedOptsTile == tIdx && _cachedOptsComp == c)
             {
                 options = _cachedOptions;
             }
             else
             {
-                options = ((int)decSpec.ecopts.getTileCompVal(tIdx, c));
+                options = ((int)decSpec.ecopts.GetTileCompVal(tIdx, c));
                 _cachedOptions = options;
                 _cachedOptsTile = tIdx;
                 _cachedOptsComp = c;
@@ -624,8 +614,8 @@ namespace CoreJ2K.j2k.entropy.decoder
             npasses = srcblk.nTrunc;
             if (mq == null)
             {
-                in_Renamed = new ByteInputBuffer(srcblk.data, 0, tslen);
-                mq = new MQDecoder(in_Renamed, NUM_CTXTS, MQ_INIT);
+                inputBuffer = new ByteInputBuffer(srcblk.data, 0, tslen);
+                mq = new MQDecoder(inputBuffer, NUM_CTXTS, MQ_INIT);
             }
             else
             {
@@ -639,9 +629,9 @@ namespace CoreJ2K.j2k.entropy.decoder
             {
                 if (bin == null)
                 {
-                    if (in_Renamed == null)
-                        in_Renamed = mq.ByteInputBuffer;
-                    bin = new ByteToBitInput(in_Renamed);
+                    if (inputBuffer == null)
+                        inputBuffer = mq.ByteInputBuffer;
+                    bin = new ByteToBitInput(inputBuffer);
                 }
             }
 
@@ -708,7 +698,7 @@ namespace CoreJ2K.j2k.entropy.decoder
                         // after the first 4 bit-planes).
 
                         // Here starts a new raw segment
-                        bin.setByteArray(null, -1, srcblk.tsLengths[++tsidx]);
+                        bin.SetByteArray(null, -1, srcblk.tsLengths[++tsidx]);
                         isterm = (options & StdEntropyCoderOptions.OPT_TERM_PASS) != 0;
                         error = rawSigProgPass(cblk, bin, curbp, state, isterm);
                         npasses--;
@@ -718,7 +708,7 @@ namespace CoreJ2K.j2k.entropy.decoder
                         if ((options & StdEntropyCoderOptions.OPT_TERM_PASS) != 0)
                         {
                             // Start a new raw segment
-                            bin.setByteArray(null, -1, srcblk.tsLengths[++tsidx]);
+                            bin.SetByteArray(null, -1, srcblk.tsLengths[++tsidx]);
                         }
                         isterm = (options & StdEntropyCoderOptions.OPT_TERM_PASS) != 0 || ((options & StdEntropyCoderOptions.OPT_BYPASS) != 0 && (31 - StdEntropyCoderOptions.NUM_NON_BYPASS_MS_BP - srcblk.skipMSBP > curbp));
                         error = rawMagRefPass(cblk, bin, curbp, state, isterm);
@@ -773,7 +763,7 @@ namespace CoreJ2K.j2k.entropy.decoder
                     // Use string.Concat with explicit ToString() conversions to avoid
                     // DefaultInterpolatedStringHandler and its ArrayPool<char> rent/return
                     // overhead on every concealed code-block (was measured at ~12% self-CPU).
-                    FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.WARNING,
+                    FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING,
                         string.Concat("Error detected at bit-plane ", curbp.ToString(),
                             " in code-block (", m.ToString(), ",", n.ToString(),
                             "), sb_idx ", sb.sbandIdx.ToString(),
@@ -837,9 +827,9 @@ namespace CoreJ2K.j2k.entropy.decoder
         /// 
         /// </returns>
         /// <seealso cref="DataBlk" />
-        public override DataBlk getInternCodeBlock(int c, int m, int n, SubbandSyn sb, DataBlk cblk)
+        public override DataBlk GetInternCodeBlock(int c, int m, int n, SubbandSyn sb, DataBlk cblk)
         {
-            return getCodeBlock(c, m, n, sb, cblk);
+            return GetCodeBlock(c, m, n, sb, cblk);
         }
 
         /// <summary> Performs the significance propagation pass on the specified data and

@@ -74,7 +74,7 @@ namespace CoreJ2K.j2k.util
             _defMsgLogger = J2kSetup.GetSinglePlatformInstance<IMsgLogger>();
             
             // If no logger was provided, we'll allow it to be null initially
-            // It will throw when getMsgLogger() is called if never set
+            // It will throw when GetMsgLogger() is called if never set
         }
 
         #endregion
@@ -115,7 +115,7 @@ namespace CoreJ2K.j2k.util
         /// The MsgLogger registered for the current thread, or the
         /// default one if there is none registered for it. Never returns null.
         /// </returns>
-        public static IMsgLogger getMsgLogger()
+        public static IMsgLogger GetMsgLogger()
         {
             lock (_loggerLock)
             {

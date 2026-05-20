@@ -1,13 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: EntropyDecoder.java,v 1.38 2001/09/20 12:48:01 grosbois Exp $
-*
-* Class:                   EntropyDecoder
-*
-* Description:             The abstract class for all entropy decoders.
-*
-*
 *
 * COPYRIGHT:
 * 
@@ -134,11 +125,11 @@ namespace CoreJ2K.j2k.entropy.decoder
         /// <returns> The root of the tree structure.
         /// 
         /// </returns>
-        public override SubbandSyn getSynSubbandTree(int t, int c)
+        public override SubbandSyn GetSynSubbandTree(int t, int c)
         {
-            return src.getSynSubbandTree(t, c);
+            return src.GetSynSubbandTree(t, c);
         }
-        public abstract DataBlk getCodeBlock(int param1, int param2, int param3, SubbandSyn param4, DataBlk param5);
-        public abstract DataBlk getInternCodeBlock(int param1, int param2, int param3, SubbandSyn param4, DataBlk param5);
+        public abstract DataBlk GetCodeBlock(int param1, int param2, int param3, SubbandSyn param4, DataBlk param5);
+        public abstract DataBlk GetInternCodeBlock(int param1, int param2, int param3, SubbandSyn param4, DataBlk param5);
     }
 }

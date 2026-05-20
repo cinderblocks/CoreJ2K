@@ -1,13 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: StdDequantizerParams.java,v 1.9 2000/09/19 14:12:09 grosbois Exp $
-*
-* Class:                   StdDequantizerParams
-*
-* Description:             Parameters for the scalar deadzone dequantizers
-*
-*
 *
 * COPYRIGHT:
 * 

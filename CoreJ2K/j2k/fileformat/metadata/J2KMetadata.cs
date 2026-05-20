@@ -962,8 +962,8 @@ namespace CoreJ2K.j2k.fileformat.metadata
         /// </summary>
         /// <param name="componentIndex">The component index (0-based).</param>
         /// <param name="bitDepth">The bit depth (1-38).</param>
-        /// <param name="isSigned">Whether the component uses signed values.</param>
-        public void SetBitDepth(int componentIndex, int bitDepth, bool isSigned)
+        /// <param name="IsSigned">Whether the component uses signed values.</param>
+        public void SetBitDepth(int componentIndex, int bitDepth, bool IsSigned)
         {
             if (ComponentBitDepths == null || componentIndex < 0 || componentIndex >= ComponentBitDepths.Length)
                 throw new ArgumentOutOfRangeException(nameof(componentIndex));
@@ -972,7 +972,7 @@ namespace CoreJ2K.j2k.fileformat.metadata
                 throw new ArgumentOutOfRangeException(nameof(bitDepth), "Bit depth must be between 1 and 38");
 
             byte value = (byte)((bitDepth - 1) & 0x7F);
-            if (isSigned)
+            if (IsSigned)
                 value |= 0x80;
 
             ComponentBitDepths[componentIndex] = value;
@@ -1010,13 +1010,13 @@ namespace CoreJ2K.j2k.fileformat.metadata
         /// Creates a BitsPerComponentData instance from an array of bit depth values.
         /// </summary>
         /// <param name="bitDepths">Array of bit depths for each component.</param>
-        /// <param name="isSigned">Array indicating if each component is signed.</param>
-        public static BitsPerComponentData FromBitDepths(int[] bitDepths, bool[] isSigned)
+        /// <param name="IsSigned">Array indicating if each component is signed.</param>
+        public static BitsPerComponentData FromBitDepths(int[] bitDepths, bool[] IsSigned)
         {
             if (bitDepths == null)
                 throw new ArgumentNullException(nameof(bitDepths));
-            if (isSigned != null && isSigned.Length != bitDepths.Length)
-                throw new ArgumentException("isSigned array must match bitDepths array length");
+            if (IsSigned != null && IsSigned.Length != bitDepths.Length)
+                throw new ArgumentException("IsSigned array must match bitDepths array length");
 
             var data = new BitsPerComponentData
             {
@@ -1025,7 +1025,7 @@ namespace CoreJ2K.j2k.fileformat.metadata
 
             for (int i = 0; i < bitDepths.Length; i++)
             {
-                data.SetBitDepth(i, bitDepths[i], isSigned?[i] ?? false);
+                data.SetBitDepth(i, bitDepths[i], IsSigned?[i] ?? false);
             }
 
             return data;

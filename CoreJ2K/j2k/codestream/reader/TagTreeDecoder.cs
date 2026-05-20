@@ -1,13 +1,4 @@
 /*
-* CVS identifier:
-*
-* $Id: TagTreeDecoder.java,v 1.7 2001/08/23 08:04:48 grosbois Exp $
-*
-* Class:                   TagTreeDecoder
-*
-* Description:             Decoder of tag trees
-*
-*
 *
 * COPYRIGHT:
 * 
@@ -246,7 +237,7 @@ namespace CoreJ2K.j2k.codestream.reader
         /// getting all the necessary data.
         /// 
         /// </exception>
-        public virtual int update(int m, int n, int t, PktHeaderBitReader in_Renamed)
+        public virtual int update(int m, int n, int t, PktHeaderBitReader bitReader)
         {
             int k, tmin;
             int idx, ts, tv;
@@ -277,7 +268,7 @@ namespace CoreJ2K.j2k.codestream.reader
                     if (tv >= ts)
                     {
                         // We are not done yet
-                        if (in_Renamed.readBit() == 0)
+                        if (bitReader.readBit() == 0)
                         {
                             // '0' bit
                             // We know that 'value' > treeS[k][idx]
@@ -331,7 +322,7 @@ namespace CoreJ2K.j2k.codestream.reader
         /// 
         /// </returns>
         /// <seealso cref="update" />
-        public virtual int getValue(int m, int n)
+        public virtual int GetValue(int m, int n)
         {
             // Check arguments
             if (m >= h || n >= w)
