@@ -941,7 +941,7 @@ namespace CoreJ2K.j2k.entropy.encoder
                 {
                     // Delay 0xFF byte
                     delFF = true;
-                    b = SupportClass.URShift(c, 20);
+                    b = (c >>> 20);
                     c &= 0xFFFFF;
                     cT = 7;
                 }
@@ -956,7 +956,7 @@ namespace CoreJ2K.j2k.entropy.encoder
                     }
                     out_Renamed.write(b);
                     nrOfWrittenBytes++;
-                    b = SupportClass.URShift(c, 19);
+                    b = (c >>> 19);
                     c &= 0x7FFFF;
                     cT = 8;
                 }
@@ -968,7 +968,7 @@ namespace CoreJ2K.j2k.entropy.encoder
                         // Delay 0xFF byte
                         delFF = true;
                         c &= 0x7FFFFFF;
-                        b = SupportClass.URShift(c, 20);
+                        b = (c >>> 20);
                         c &= 0xFFFFF;
                         cT = 7;
                     }
@@ -983,7 +983,7 @@ namespace CoreJ2K.j2k.entropy.encoder
                         }
                         out_Renamed.write(b);
                         nrOfWrittenBytes++;
-                        b = ((SupportClass.URShift(c, 19)) & 0xFF);
+                        b = (((c >>> 19)) & 0xFF);
                         c &= 0x7FFFF;
                         cT = 8;
                     }
@@ -992,7 +992,7 @@ namespace CoreJ2K.j2k.entropy.encoder
             else
             {
                 // NOTE: carry bit can never be set if the byte buffer was empty
-                b = (SupportClass.URShift(c, 19));
+                b = ((c >>> 19));
                 c &= 0x7FFFF;
                 cT = 8;
                 nrOfWrittenBytes++;
@@ -1161,8 +1161,8 @@ namespace CoreJ2K.j2k.entropy.encoder
                             // We can not propagate carry bit, do bit stuffing
                             delFF = true; // delay 0xFF
                                           // Get next byte buffer
-                            bLow = SupportClass.URShift(cLow, 20);
-                            bUp = SupportClass.URShift(cUp, 20);
+                            bLow = (cLow >>> 20);
+                            bUp = (cUp >>> 20);
                             cLow &= 0xFFFFF;
                             cUp &= 0xFFFFF;
                             // Normalize to cT = 0
@@ -1225,8 +1225,8 @@ namespace CoreJ2K.j2k.entropy.encoder
                             bUp -= bLow;
                             bUp <<= 8;
                             // Here bLow would be 0
-                            bUp |= (SupportClass.URShift(cUp, 19)) & 0xFF;
-                            bLow = (SupportClass.URShift(cLow, 19)) & 0xFF;
+                            bUp |= ((cUp >>> 19)) & 0xFF;
+                            bLow = ((cLow >>> 19)) & 0xFF;
                             // Clear upper bits (just pushed out) from cUp Clow.
                             cLow &= 0x7FFFF;
                             cUp &= 0x7FFFF;

@@ -210,7 +210,7 @@ namespace CoreJ2K.j2k.entropy.encoder
                     delFF = false;
                     // Pad to byte boundary with an alternating sequence of 0's
                     // and 1's.
-                    bbuf |= (SupportClass.URShift(PAD_SEQ, (6 - bpos)));
+                    bbuf |= ((PAD_SEQ >>> (6 - bpos)));
                     // Output the bit buffer
                     out_Renamed.write(bbuf);
                     nb++;
@@ -236,7 +236,7 @@ namespace CoreJ2K.j2k.entropy.encoder
                     // Bit buffer is not empty
                     // Pad to byte boundary with an alternating sequence of 0's and
                     // 1's.
-                    bbuf |= (SupportClass.URShift(PAD_SEQ, (6 - bpos)));
+                    bbuf |= ((PAD_SEQ >>> (6 - bpos)));
                     // Output the bit buffer (bbuf can not be 0xFF)
                     out_Renamed.write(bbuf);
                     nb++;

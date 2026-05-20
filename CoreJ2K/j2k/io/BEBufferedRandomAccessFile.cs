@@ -146,7 +146,7 @@ namespace CoreJ2K.j2k.io
         /// </exception>
         public override void writeShort(int v)
         {
-            write(SupportClass.URShift(v, 8));
+            write((v >>> 8));
             write(v);
         }
 
@@ -163,9 +163,9 @@ namespace CoreJ2K.j2k.io
         /// </exception>
         public override void writeInt(int v)
         {
-            write(SupportClass.URShift(v, 24));
-            write(SupportClass.URShift(v, 16));
-            write(SupportClass.URShift(v, 8));
+            write((v >>> 24));
+            write((v >>> 16));
+            write((v >>> 8));
             write(v);
         }
 
@@ -182,13 +182,13 @@ namespace CoreJ2K.j2k.io
         /// </exception>
         public override void writeLong(long v)
         {
-            write((int)(SupportClass.URShift(v, 56)));
-            write((int)(SupportClass.URShift(v, 48)));
-            write((int)(SupportClass.URShift(v, 40)));
-            write((int)(SupportClass.URShift(v, 32)));
-            write((int)(SupportClass.URShift(v, 24)));
-            write((int)(SupportClass.URShift(v, 16)));
-            write((int)(SupportClass.URShift(v, 8)));
+            write((int)((v >>> 56)));
+            write((int)((v >>> 48)));
+            write((int)((v >>> 40)));
+            write((int)((v >>> 32)));
+            write((int)((v >>> 24)));
+            write((int)((v >>> 16)));
+            write((int)((v >>> 8)));
             write((int)v);
         }
 
@@ -211,9 +211,9 @@ namespace CoreJ2K.j2k.io
 
             //int intV = Float.floatToIntBits(v);
             var intV = BitConverter.ToInt32(BitConverter.GetBytes(v), 0);
-            write(SupportClass.URShift(intV, 24));
-            write(SupportClass.URShift(intV, 16));
-            write(SupportClass.URShift(intV, 8));
+            write((intV >>> 24));
+            write((intV >>> 16));
+            write((intV >>> 8));
             write(intV);
         }
 
@@ -235,13 +235,13 @@ namespace CoreJ2K.j2k.io
 
             //long longV = Double.doubleToLongBits(v);
             var longV = BitConverter.ToInt64(BitConverter.GetBytes(v), 0);
-            write((int)(SupportClass.URShift(longV, 56)));
-            write((int)(SupportClass.URShift(longV, 48)));
-            write((int)(SupportClass.URShift(longV, 40)));
-            write((int)(SupportClass.URShift(longV, 32)));
-            write((int)(SupportClass.URShift(longV, 24)));
-            write((int)(SupportClass.URShift(longV, 16)));
-            write((int)(SupportClass.URShift(longV, 8)));
+            write((int)((longV >>> 56)));
+            write((int)((longV >>> 48)));
+            write((int)((longV >>> 40)));
+            write((int)((longV >>> 32)));
+            write((int)((longV >>> 24)));
+            write((int)((longV >>> 16)));
+            write((int)((longV >>> 8)));
             write((int)(longV));
 
         }

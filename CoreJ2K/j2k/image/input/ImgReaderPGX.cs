@@ -396,7 +396,7 @@ namespace CoreJ2K.j2k.image.input
                                 inRenamed.Seek(offset + i * w + blk.ulx, System.IO.SeekOrigin.Begin);
                                 var read = inRenamed.Read(buf, 0, blk.w);
                                 for (k = (i - blk.uly) * blk.w + blk.w - 1, j = blk.w - 1; j >= 0; k--)
-                                    barr[k] = (SupportClass.URShift(((buf[j--] & 0xFF) << paddingLength), paddingLength)) - levShift;
+                                    barr[k] = ((((buf[j--] & 0xFF) << paddingLength) >>> paddingLength)) - levShift;
                             }
                         }
                         break;
@@ -449,14 +449,14 @@ namespace CoreJ2K.j2k.image.input
                                     case EndianType_Fields.LITTLE_ENDIAN:
                                         for (k = (i - blk.uly) * blk.w + blk.w - 1, j = (blk.w << 1) - 1; j >= 0; k--)
                                         {
-                                            barr[k] = (SupportClass.URShift(((((buf[j--] & 0xFF) << 8) | (buf[j--] & 0xFF)) << paddingLength), paddingLength)) - levShift;
+                                            barr[k] = ((((((buf[j--] & 0xFF) << 8) | (buf[j--] & 0xFF)) << paddingLength) >>> paddingLength)) - levShift;
                                         }
                                         break;
 
                                     case EndianType_Fields.BIG_ENDIAN:
                                         for (k = (i - blk.uly) * blk.w + blk.w - 1, j = (blk.w << 1) - 1; j >= 0; k--)
                                         {
-                                            barr[k] = (SupportClass.URShift((((buf[j--] & 0xFF) | ((buf[j--] & 0xFF) << 8)) << paddingLength), paddingLength)) - levShift;
+                                            barr[k] = (((((buf[j--] & 0xFF) | ((buf[j--] & 0xFF) << 8)) << paddingLength) >>> paddingLength)) - levShift;
                                         }
                                         break;
 
@@ -515,14 +515,14 @@ namespace CoreJ2K.j2k.image.input
                                     case EndianType_Fields.LITTLE_ENDIAN:
                                         for (k = (i - blk.uly) * blk.w + blk.w - 1, j = (blk.w << 2) - 1; j >= 0; k--)
                                         {
-                                            barr[k] = (SupportClass.URShift(((((buf[j--] & 0xFF) << 24) | ((buf[j--] & 0xFF) << 16) | ((buf[j--] & 0xFF) << 8) | (buf[j--] & 0xFF)) << paddingLength), paddingLength)) - levShift;
+                                            barr[k] = ((((((buf[j--] & 0xFF) << 24) | ((buf[j--] & 0xFF) << 16) | ((buf[j--] & 0xFF) << 8) | (buf[j--] & 0xFF)) << paddingLength) >>> paddingLength)) - levShift;
                                         }
                                         break;
 
                                     case EndianType_Fields.BIG_ENDIAN:
                                         for (k = (i - blk.uly) * blk.w + blk.w - 1, j = (blk.w << 2) - 1; j >= 0; k--)
                                         {
-                                            barr[k] = (SupportClass.URShift((((buf[j--] & 0xFF) | ((buf[j--] & 0xFF) << 8) | ((buf[j--] & 0xFF) << 16) | ((buf[j--] & 0xFF) << 24)) << paddingLength), paddingLength)) - levShift;
+                                            barr[k] = (((((buf[j--] & 0xFF) | ((buf[j--] & 0xFF) << 8) | ((buf[j--] & 0xFF) << 16) | ((buf[j--] & 0xFF) << 24)) << paddingLength) >>> paddingLength)) - levShift;
                                         }
                                         break;
 

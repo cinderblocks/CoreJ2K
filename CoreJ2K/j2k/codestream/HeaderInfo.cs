@@ -255,7 +255,7 @@ namespace CoreJ2K.j2k.codestream
                     origSigned = new bool[csiz];
                     for (var cc = 0; cc < csiz; cc++)
                     {
-                        origSigned[cc] = ((SupportClass.URShift(ssiz[cc], Markers.SSIZ_DEPTH_BITS)) == 1);
+                        origSigned[cc] = (((ssiz[cc] >>> Markers.SSIZ_DEPTH_BITS)) == 1);
                     }
                 }
                 return origSigned[c];

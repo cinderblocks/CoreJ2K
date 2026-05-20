@@ -14,7 +14,7 @@ namespace CoreJ2K.j2k.codestream.writer.markers
         public void Write(BinaryWriter writer, int tileIdx, int tileLength)
         {
             // SOT marker
-            writer.Write((byte)SupportClass.URShift(Markers.SOT, 8));
+            writer.Write(unchecked((byte)(Markers.SOT >>> 8)));
             writer.Write((byte)(Markers.SOT & 0x00FF));
 
             // Lsot (10 bytes)

@@ -1285,13 +1285,13 @@ namespace CoreJ2K.j2k.entropy.encoder
                         {
                             // Apply zero coding
                             ctxtbuf[nsym] = zc_lut[csj & ZC_MASK];
-                            if ((symbuf[nsym++] = SupportClass.URShift((data[k] & mask), bp)) != 0)
+                            if ((symbuf[nsym++] = ((data[k] & mask) >>> bp)) != 0)
                             {
                                 // Became significant
                                 // Apply sign coding
-                                sym = SupportClass.URShift(data[k], 31);
-                                ctxt = SC_LUT[(SupportClass.URShift(csj, SC_SHIFT_R1)) & SC_MASK];
-                                symbuf[nsym] = sym ^ (SupportClass.URShift(ctxt, SC_SPRED_SHIFT));
+                                sym = (data[k] >>> 31);
+                                ctxt = SC_LUT[((csj >>> SC_SHIFT_R1)) & SC_MASK];
+                                symbuf[nsym] = sym ^ ((ctxt >>> SC_SPRED_SHIFT));
                                 ctxtbuf[nsym++] = ctxt & SC_LUT_MASK;
                                 // Update state information (significant bit,
                                 // visited bit, neighbor significant bit of
@@ -1348,14 +1348,14 @@ namespace CoreJ2K.j2k.entropy.encoder
                         {
                             k += dscanw;
                             // Apply zero coding
-                            ctxtbuf[nsym] = zc_lut[(SupportClass.URShift(csj, STATE_SEP)) & ZC_MASK];
-                            if ((symbuf[nsym++] = SupportClass.URShift((data[k] & mask), bp)) != 0)
+                            ctxtbuf[nsym] = zc_lut[((csj >>> STATE_SEP)) & ZC_MASK];
+                            if ((symbuf[nsym++] = ((data[k] & mask) >>> bp)) != 0)
                             {
                                 // Became significant
                                 // Apply sign coding
-                                sym = SupportClass.URShift(data[k], 31);
-                                ctxt = SC_LUT[(SupportClass.URShift(csj, SC_SHIFT_R2)) & SC_MASK];
-                                symbuf[nsym] = sym ^ (SupportClass.URShift(ctxt, SC_SPRED_SHIFT));
+                                sym = (data[k] >>> 31);
+                                ctxt = SC_LUT[((csj >>> SC_SHIFT_R2)) & SC_MASK];
+                                symbuf[nsym] = sym ^ ((ctxt >>> SC_SPRED_SHIFT));
                                 ctxtbuf[nsym++] = ctxt & SC_LUT_MASK;
                                 // Update state information (significant bit,
                                 // visited bit, neighbor significant bit of
@@ -1405,13 +1405,13 @@ namespace CoreJ2K.j2k.entropy.encoder
                         {
                             // Apply zero coding
                             ctxtbuf[nsym] = zc_lut[csj & ZC_MASK];
-                            if ((symbuf[nsym++] = SupportClass.URShift((data[k] & mask), bp)) != 0)
+                            if ((symbuf[nsym++] = ((data[k] & mask) >>> bp)) != 0)
                             {
                                 // Became significant
                                 // Apply sign coding
-                                sym = SupportClass.URShift(data[k], 31);
-                                ctxt = SC_LUT[(SupportClass.URShift(csj, SC_SHIFT_R1)) & SC_MASK];
-                                symbuf[nsym] = sym ^ (SupportClass.URShift(ctxt, SC_SPRED_SHIFT));
+                                sym = (data[k] >>> 31);
+                                ctxt = SC_LUT[((csj >>> SC_SHIFT_R1)) & SC_MASK];
+                                symbuf[nsym] = sym ^ ((ctxt >>> SC_SPRED_SHIFT));
                                 ctxtbuf[nsym++] = ctxt & SC_LUT_MASK;
                                 // Update state information (significant bit,
                                 // visited bit, neighbor significant bit of
@@ -1453,14 +1453,14 @@ namespace CoreJ2K.j2k.entropy.encoder
                         {
                             k += dscanw;
                             // Apply zero coding
-                            ctxtbuf[nsym] = zc_lut[(SupportClass.URShift(csj, STATE_SEP)) & ZC_MASK];
-                            if ((symbuf[nsym++] = SupportClass.URShift((data[k] & mask), bp)) != 0)
+                            ctxtbuf[nsym] = zc_lut[((csj >>> STATE_SEP)) & ZC_MASK];
+                            if ((symbuf[nsym++] = ((data[k] & mask) >>> bp)) != 0)
                             {
                                 // Became significant
                                 // Apply sign coding
-                                sym = SupportClass.URShift(data[k], 31);
-                                ctxt = SC_LUT[(SupportClass.URShift(csj, SC_SHIFT_R2)) & SC_MASK];
-                                symbuf[nsym] = sym ^ (SupportClass.URShift(ctxt, SC_SPRED_SHIFT));
+                                sym = (data[k] >>> 31);
+                                ctxt = SC_LUT[((csj >>> SC_SHIFT_R2)) & SC_MASK];
+                                symbuf[nsym] = sym ^ ((ctxt >>> SC_SPRED_SHIFT));
                                 ctxtbuf[nsym++] = ctxt & SC_LUT_MASK;
                                 // Update state information (significant bit,
                                 // visited bit, neighbor significant bit of
@@ -1651,14 +1651,14 @@ namespace CoreJ2K.j2k.entropy.encoder
                         if ((csj & (STATE_SIG_R1 | STATE_NZ_CTXT_R1)) == STATE_NZ_CTXT_R1)
                         {
                             // Apply zero coding
-                            sym = SupportClass.URShift((data[k] & mask), bp);
+                            sym = ((data[k] & mask) >>> bp);
                             bout.writeBit(sym);
                             nsym++;
                             if (sym != 0)
                             {
                                 // Became significant
                                 // Apply sign coding
-                                sym = SupportClass.URShift(data[k], 31);
+                                sym = (data[k] >>> 31);
                                 bout.writeBit(sym);
                                 nsym++;
                                 // Update state information (significant bit,
@@ -1716,14 +1716,14 @@ namespace CoreJ2K.j2k.entropy.encoder
                         {
                             k += dscanw;
                             // Apply zero coding
-                            sym = SupportClass.URShift((data[k] & mask), bp);
+                            sym = ((data[k] & mask) >>> bp);
                             bout.writeBit(sym);
                             nsym++;
                             if (sym != 0)
                             {
                                 // Became significant
                                 // Apply sign coding
-                                sym = SupportClass.URShift(data[k], 31);
+                                sym = (data[k] >>> 31);
                                 bout.writeBit(sym);
                                 nsym++;
                                 // Update state information (significant bit,
@@ -1772,14 +1772,14 @@ namespace CoreJ2K.j2k.entropy.encoder
                         // Scan first row
                         if ((csj & (STATE_SIG_R1 | STATE_NZ_CTXT_R1)) == STATE_NZ_CTXT_R1)
                         {
-                            sym = SupportClass.URShift((data[k] & mask), bp);
+                            sym = ((data[k] & mask) >>> bp);
                             bout.writeBit(sym);
                             nsym++;
                             if (sym != 0)
                             {
                                 // Became significant
                                 // Apply sign coding
-                                sym = SupportClass.URShift(data[k], 31);
+                                sym = (data[k] >>> 31);
                                 bout.writeBit(sym);
                                 nsym++;
                                 // Update state information (significant bit,
@@ -1821,14 +1821,14 @@ namespace CoreJ2K.j2k.entropy.encoder
                         {
                             k += dscanw;
                             // Apply zero coding
-                            sym = SupportClass.URShift((data[k] & mask), bp);
+                            sym = ((data[k] & mask) >>> bp);
                             bout.writeBit(sym);
                             nsym++;
                             if (sym != 0)
                             {
                                 // Became significant
                                 // Apply sign coding
-                                sym = SupportClass.URShift(data[k], 31);
+                                sym = (data[k] >>> 31);
                                 bout.writeBit(sym);
                                 nsym++;
                                 // Update state information (significant bit,
@@ -1989,14 +1989,14 @@ namespace CoreJ2K.j2k.entropy.encoder
                     csj = state[j];
                     // If any of the two samples is significant and not yet
                     // visited in the current bit-plane we can not skip them
-                    if ((((SupportClass.URShift(csj, 1)) & (~csj)) & VSTD_MASK_R1R2) != 0)
+                    if (((((csj >>> 1)) & (~csj)) & VSTD_MASK_R1R2) != 0)
                     {
                         k = sk;
                         // Scan first row
                         if ((csj & (STATE_SIG_R1 | STATE_VISITED_R1)) == STATE_SIG_R1)
                         {
                             // Apply MR primitive
-                            symbuf[nsym] = SupportClass.URShift((data[k] & mask), bp);
+                            symbuf[nsym] = ((data[k] & mask) >>> bp);
                             ctxtbuf[nsym++] = MR_LUT[csj & MR_MASK];
                             // Update the STATE_PREV_MR bit
                             csj |= STATE_PREV_MR_R1;
@@ -2014,8 +2014,8 @@ namespace CoreJ2K.j2k.entropy.encoder
                         {
                             k += dscanw;
                             // Apply MR primitive
-                            symbuf[nsym] = SupportClass.URShift((data[k] & mask), bp);
-                            ctxtbuf[nsym++] = MR_LUT[(SupportClass.URShift(csj, STATE_SEP)) & MR_MASK];
+                            symbuf[nsym] = ((data[k] & mask) >>> bp);
+                            ctxtbuf[nsym++] = MR_LUT[((csj >>> STATE_SEP)) & MR_MASK];
                             // Update the STATE_PREV_MR bit
                             csj |= STATE_PREV_MR_R2;
                             // Update distortion
@@ -2031,14 +2031,14 @@ namespace CoreJ2K.j2k.entropy.encoder
                     csj = state[j];
                     // If any of the two samples is significant and not yet
                     // visited in the current bit-plane we can not skip them
-                    if ((((SupportClass.URShift(csj, 1)) & (~csj)) & VSTD_MASK_R1R2) != 0)
+                    if (((((csj >>> 1)) & (~csj)) & VSTD_MASK_R1R2) != 0)
                     {
                         k = sk + (dscanw << 1);
                         // Scan first row
                         if ((csj & (STATE_SIG_R1 | STATE_VISITED_R1)) == STATE_SIG_R1)
                         {
                             // Apply MR primitive
-                            symbuf[nsym] = SupportClass.URShift((data[k] & mask), bp);
+                            symbuf[nsym] = ((data[k] & mask) >>> bp);
                             ctxtbuf[nsym++] = MR_LUT[csj & MR_MASK];
                             // Update the STATE_PREV_MR bit
                             csj |= STATE_PREV_MR_R1;
@@ -2056,8 +2056,8 @@ namespace CoreJ2K.j2k.entropy.encoder
                         {
                             k += dscanw;
                             // Apply MR primitive
-                            symbuf[nsym] = SupportClass.URShift((data[k] & mask), bp);
-                            ctxtbuf[nsym++] = MR_LUT[(SupportClass.URShift(csj, STATE_SEP)) & MR_MASK];
+                            symbuf[nsym] = ((data[k] & mask) >>> bp);
+                            ctxtbuf[nsym++] = MR_LUT[((csj >>> STATE_SEP)) & MR_MASK];
                             // Update the STATE_PREV_MR bit
                             csj |= STATE_PREV_MR_R2;
                             // Update distortion
@@ -2208,14 +2208,14 @@ namespace CoreJ2K.j2k.entropy.encoder
                     csj = state[j];
                     // If any of the two samples is significant and not yet
                     // visited in the current bit-plane we can not skip them
-                    if ((((SupportClass.URShift(csj, 1)) & (~csj)) & VSTD_MASK_R1R2) != 0)
+                    if (((((csj >>> 1)) & (~csj)) & VSTD_MASK_R1R2) != 0)
                     {
                         k = sk;
                         // Scan first row
                         if ((csj & (STATE_SIG_R1 | STATE_VISITED_R1)) == STATE_SIG_R1)
                         {
                             // Code bit "raw"
-                            bout.writeBit(SupportClass.URShift((data[k] & mask), bp));
+                            bout.writeBit(((data[k] & mask) >>> bp));
                             nsym++;
                             // No need to set STATE_PREV_MR_R1 since all magnitude 
                             // refinement passes to follow are "raw"
@@ -2230,7 +2230,7 @@ namespace CoreJ2K.j2k.entropy.encoder
                         {
                             k += dscanw;
                             // Code bit "raw"
-                            bout.writeBit(SupportClass.URShift((data[k] & mask), bp));
+                            bout.writeBit(((data[k] & mask) >>> bp));
                             nsym++;
                             // No need to set STATE_PREV_MR_R2 since all magnitude 
                             // refinement passes to follow are "raw"
@@ -2246,14 +2246,14 @@ namespace CoreJ2K.j2k.entropy.encoder
                     csj = state[j];
                     // If any of the two samples is significant and not yet
                     // visited in the current bit-plane we can not skip them
-                    if ((((SupportClass.URShift(csj, 1)) & (~csj)) & VSTD_MASK_R1R2) != 0)
+                    if (((((csj >>> 1)) & (~csj)) & VSTD_MASK_R1R2) != 0)
                     {
                         k = sk + (dscanw << 1);
                         // Scan first row
                         if ((csj & (STATE_SIG_R1 | STATE_VISITED_R1)) == STATE_SIG_R1)
                         {
                             // Code bit "raw"
-                            bout.writeBit(SupportClass.URShift((data[k] & mask), bp));
+                            bout.writeBit(((data[k] & mask) >>> bp));
                             nsym++;
                             // No need to set STATE_PREV_MR_R1 since all magnitude 
                             // refinement passes to follow are "raw"
@@ -2268,7 +2268,7 @@ namespace CoreJ2K.j2k.entropy.encoder
                         {
                             k += dscanw;
                             // Code bit "raw"
-                            bout.writeBit(SupportClass.URShift((data[k] & mask), bp));
+                            bout.writeBit(((data[k] & mask) >>> bp));
                             nsym++;
                             // No need to set STATE_PREV_MR_R2 since all magnitude 
                             // refinement passes to follow are "raw"
@@ -2472,13 +2472,13 @@ namespace CoreJ2K.j2k.entropy.encoder
                             normval = (data[k] >> downshift) << upshift;
                             dist += fs[normval & ((1 << (MSE_LKP_BITS - 1)) - 1)];
                             // Apply sign coding
-                            sym = SupportClass.URShift(data[k], 31);
+                            sym = (data[k] >>> 31);
                             if ((rlclen & 0x01) == 0)
                             {
                                 // Sample that became significant is first row of
                                 // its column half
-                                ctxt = SC_LUT[(SupportClass.URShift(csj, SC_SHIFT_R1)) & SC_MASK];
-                                symbuf[nsym] = sym ^ (SupportClass.URShift(ctxt, SC_SPRED_SHIFT));
+                                ctxt = SC_LUT[((csj >>> SC_SHIFT_R1)) & SC_MASK];
+                                symbuf[nsym] = sym ^ ((ctxt >>> SC_SPRED_SHIFT));
                                 ctxtbuf[nsym++] = ctxt & SC_LUT_MASK;
                                 // Update state information (significant bit,
                                 // visited bit, neighbor significant bit of
@@ -2530,8 +2530,8 @@ namespace CoreJ2K.j2k.entropy.encoder
                             {
                                 // Sample that became significant is second row of
                                 // its column half
-                                ctxt = SC_LUT[(SupportClass.URShift(csj, SC_SHIFT_R2)) & SC_MASK];
-                                symbuf[nsym] = sym ^ (SupportClass.URShift(ctxt, SC_SPRED_SHIFT));
+                                ctxt = SC_LUT[((csj >>> SC_SHIFT_R2)) & SC_MASK];
+                                symbuf[nsym] = sym ^ ((ctxt >>> SC_SPRED_SHIFT));
                                 ctxtbuf[nsym++] = ctxt & SC_LUT_MASK;
                                 // Update state information (significant bit,
                                 // neighbor significant bit of neighbors, non zero
@@ -2582,13 +2582,13 @@ namespace CoreJ2K.j2k.entropy.encoder
                             {
                                 // Apply zero coding
                                 ctxtbuf[nsym] = zc_lut[csj & ZC_MASK];
-                                if ((symbuf[nsym++] = SupportClass.URShift((data[k] & mask), bp)) != 0)
+                                if ((symbuf[nsym++] = ((data[k] & mask) >>> bp)) != 0)
                                 {
                                     // Became significant
                                     // Apply sign coding
-                                    sym = SupportClass.URShift(data[k], 31);
-                                    ctxt = SC_LUT[(SupportClass.URShift(csj, SC_SHIFT_R1)) & SC_MASK];
-                                    symbuf[nsym] = sym ^ (SupportClass.URShift(ctxt, SC_SPRED_SHIFT));
+                                    sym = (data[k] >>> 31);
+                                    ctxt = SC_LUT[((csj >>> SC_SHIFT_R1)) & SC_MASK];
+                                    symbuf[nsym] = sym ^ ((ctxt >>> SC_SPRED_SHIFT));
                                     ctxtbuf[nsym++] = ctxt & SC_LUT_MASK;
                                     // Update state information (significant bit,
                                     // visited bit, neighbor significant bit of
@@ -2642,14 +2642,14 @@ namespace CoreJ2K.j2k.entropy.encoder
                             {
                                 k += dscanw;
                                 // Apply zero coding
-                                ctxtbuf[nsym] = zc_lut[(SupportClass.URShift(csj, STATE_SEP)) & ZC_MASK];
-                                if ((symbuf[nsym++] = SupportClass.URShift((data[k] & mask), bp)) != 0)
+                                ctxtbuf[nsym] = zc_lut[((csj >>> STATE_SEP)) & ZC_MASK];
+                                if ((symbuf[nsym++] = ((data[k] & mask) >>> bp)) != 0)
                                 {
                                     // Became significant
                                     // Apply sign coding
-                                    sym = SupportClass.URShift(data[k], 31);
-                                    ctxt = SC_LUT[(SupportClass.URShift(csj, SC_SHIFT_R2)) & SC_MASK];
-                                    symbuf[nsym] = sym ^ (SupportClass.URShift(ctxt, SC_SPRED_SHIFT));
+                                    sym = (data[k] >>> 31);
+                                    ctxt = SC_LUT[((csj >>> SC_SHIFT_R2)) & SC_MASK];
+                                    symbuf[nsym] = sym ^ ((ctxt >>> SC_SPRED_SHIFT));
                                     ctxtbuf[nsym++] = ctxt & SC_LUT_MASK;
                                     // Update state information (significant bit,
                                     // visited bit, neighbor significant bit of
@@ -2700,13 +2700,13 @@ namespace CoreJ2K.j2k.entropy.encoder
                         {
                             // Apply zero coding
                             ctxtbuf[nsym] = zc_lut[csj & ZC_MASK];
-                            if ((symbuf[nsym++] = SupportClass.URShift((data[k] & mask), bp)) != 0)
+                            if ((symbuf[nsym++] = ((data[k] & mask) >>> bp)) != 0)
                             {
                                 // Became significant
                                 // Apply sign coding
-                                sym = SupportClass.URShift(data[k], 31);
-                                ctxt = SC_LUT[(SupportClass.URShift(csj, SC_SHIFT_R1)) & SC_MASK];
-                                symbuf[nsym] = sym ^ (SupportClass.URShift(ctxt, SC_SPRED_SHIFT));
+                                sym = (data[k] >>> 31);
+                                ctxt = SC_LUT[((csj >>> SC_SHIFT_R1)) & SC_MASK];
+                                symbuf[nsym] = sym ^ ((ctxt >>> SC_SPRED_SHIFT));
                                 ctxtbuf[nsym++] = ctxt & SC_LUT_MASK;
                                 // Update state information (significant bit,
                                 // visited bit, neighbor significant bit of
@@ -2745,14 +2745,14 @@ namespace CoreJ2K.j2k.entropy.encoder
                         {
                             k += dscanw;
                             // Apply zero coding
-                            ctxtbuf[nsym] = zc_lut[(SupportClass.URShift(csj, STATE_SEP)) & ZC_MASK];
-                            if ((symbuf[nsym++] = SupportClass.URShift((data[k] & mask), bp)) != 0)
+                            ctxtbuf[nsym] = zc_lut[((csj >>> STATE_SEP)) & ZC_MASK];
+                            if ((symbuf[nsym++] = ((data[k] & mask) >>> bp)) != 0)
                             {
                                 // Became significant
                                 // Apply sign coding
-                                sym = SupportClass.URShift(data[k], 31);
-                                ctxt = SC_LUT[(SupportClass.URShift(csj, SC_SHIFT_R2)) & SC_MASK];
-                                symbuf[nsym] = sym ^ (SupportClass.URShift(ctxt, SC_SPRED_SHIFT));
+                                sym = (data[k] >>> 31);
+                                ctxt = SC_LUT[((csj >>> SC_SHIFT_R2)) & SC_MASK];
+                                symbuf[nsym] = sym ^ ((ctxt >>> SC_SPRED_SHIFT));
                                 ctxtbuf[nsym++] = ctxt & SC_LUT_MASK;
                                 // Update state information (significant bit,
                                 // visited bit, neighbor significant bit of

@@ -481,9 +481,9 @@ namespace CoreJ2K.j2k.util
                             if (pptLength + phLength > codestream.Markers.MAX_LPPT)
                             {
 
-                                temp.WriteByte((byte)SupportClass.URShift(codestream.Markers.PPT, 8));
+                                temp.WriteByte(unchecked((byte)(codestream.Markers.PPT >>> 8)));
                                 temp.WriteByte(codestream.Markers.PPT & 0x00FF);
-                                temp.WriteByte((byte)SupportClass.URShift(pptLength, 8));
+                                temp.WriteByte((byte)(pptLength >>> 8));
                                 temp.WriteByte((byte)pptLength);
                                 temp.WriteByte((byte)pptIndex++);
                                 for (i = pIndex; i < p; i++)
@@ -498,9 +498,9 @@ namespace CoreJ2K.j2k.util
                             np--;
                         }
                         // Write last PPT marker
-                        temp.WriteByte((byte)SupportClass.URShift(codestream.Markers.PPT, 8));
+                        temp.WriteByte(unchecked((byte)(codestream.Markers.PPT >>> 8)));
                         temp.WriteByte(codestream.Markers.PPT & 0x00FF);
-                        temp.WriteByte((byte)SupportClass.URShift(pptLength, 8));
+                        temp.WriteByte((byte)(pptLength >>> 8));
                         temp.WriteByte((byte)pptLength);
                         temp.WriteByte((byte)pptIndex);
                         for (i = pIndex; i < p; i++)
@@ -513,7 +513,7 @@ namespace CoreJ2K.j2k.util
                     np = nomnp;
 
                     // Write SOD marker
-                    temp.WriteByte((byte)SupportClass.URShift(codestream.Markers.SOD, 8));
+                    temp.WriteByte(unchecked((byte)(codestream.Markers.SOD >>> 8)));
                     temp.WriteByte(codestream.Markers.SOD & 0x00FF);
 
                     // Write packet data and packet headers if PPT and PPM not used
@@ -541,9 +541,9 @@ namespace CoreJ2K.j2k.util
                     if (tilePart == 0)
                     {
                         // Edit first tile part header
-                        tempByteArr[6] = (byte)(SupportClass.URShift(length, 24)); // Psot
-                        tempByteArr[7] = (byte)(SupportClass.URShift(length, 16));
-                        tempByteArr[8] = (byte)(SupportClass.URShift(length, 8));
+                        tempByteArr[6] = (byte)((length >>> 24)); // Psot
+                        tempByteArr[7] = (byte)((length >>> 16));
+                        tempByteArr[8] = (byte)((length >>> 8));
                         tempByteArr[9] = (byte)(length);
                         tempByteArr[10] = 0; // TPsot
                         tempByteArr[11] = (byte)(numTileParts); // TNsot
@@ -551,15 +551,15 @@ namespace CoreJ2K.j2k.util
                     else
                     {
                         // Edit tile part header
-                        tempByteArr[0] = (byte)(SupportClass.URShift(codestream.Markers.SOT, 8)); // SOT
+                        tempByteArr[0] = unchecked((byte)((codestream.Markers.SOT >>> 8))); // SOT
                         tempByteArr[1] = codestream.Markers.SOT & 0x00FF;
                         tempByteArr[2] = 0; // Lsot
                         tempByteArr[3] = 10;
-                        tempByteArr[4] = (byte)(SupportClass.URShift(t, 8)); // Isot
+                        tempByteArr[4] = (byte)((t >>> 8)); // Isot
                         tempByteArr[5] = (byte)(t); // 
-                        tempByteArr[6] = (byte)(SupportClass.URShift(length, 24)); // Psot
-                        tempByteArr[7] = (byte)(SupportClass.URShift(length, 16));
-                        tempByteArr[8] = (byte)(SupportClass.URShift(length, 8));
+                        tempByteArr[6] = (byte)((length >>> 24)); // Psot
+                        tempByteArr[7] = (byte)((length >>> 16));
+                        tempByteArr[8] = (byte)((length >>> 8));
                         tempByteArr[9] = (byte)(length);
                         tempByteArr[10] = (byte)(tilePart); //TPsot
                         tempByteArr[11] = (byte)(numTileParts); // TNsot
@@ -638,7 +638,7 @@ namespace CoreJ2K.j2k.util
                 }
 
                 // Write first PPM marker
-                ppmMarkerSegment.WriteByte((byte)SupportClass.URShift(codestream.Markers.PPM, 8));
+                ppmMarkerSegment.WriteByte(unchecked((byte)(codestream.Markers.PPM >>> 8)));
                 ppmMarkerSegment.WriteByte(codestream.Markers.PPM & 0x00FF);
                 ppmMarkerSegment.WriteByte(0); // Temporary Lppm value
                 ppmMarkerSegment.WriteByte(0); // Temporary Lppm value
@@ -673,14 +673,14 @@ namespace CoreJ2K.j2k.util
                                 // Write current PPM marker
                                 temp = ppmMarkerSegment.ToArray();
                                 length = temp.Length - 2;
-                                temp[2] = (byte)(SupportClass.URShift(length, 8));
+                                temp[2] = (byte)((length >>> 8));
                                 temp[3] = (byte)length;
                                 fi.write(temp, 0, length + 2);
 
                                 // Start new PPM marker segment
                                 //ppmMarkerSegment.reset();
                                 ppmMarkerSegment.SetLength(0);
-                                ppmMarkerSegment.WriteByte((byte)SupportClass.URShift(codestream.Markers.PPM, 8));
+                                ppmMarkerSegment.WriteByte(unchecked((byte)(codestream.Markers.PPM >>> 8)));
                                 ppmMarkerSegment.WriteByte(codestream.Markers.PPM & 0x00FF);
                                 ppmMarkerSegment.WriteByte(0); // Temporary Lppm value
                                 ppmMarkerSegment.WriteByte(0); // Temporary Lppm value
@@ -690,9 +690,9 @@ namespace CoreJ2K.j2k.util
 
                             // Write Nppm value
                             length = packetHeaderLengths[t][tp];
-                            ppmMarkerSegment.WriteByte((byte)SupportClass.URShift(length, 24));
-                            ppmMarkerSegment.WriteByte((byte)SupportClass.URShift(length, 16));
-                            ppmMarkerSegment.WriteByte((byte)SupportClass.URShift(length, 8));
+                            ppmMarkerSegment.WriteByte((byte)(length >>> 24));
+                            ppmMarkerSegment.WriteByte((byte)(length >>> 16));
+                            ppmMarkerSegment.WriteByte((byte)(length >>> 8));
                             ppmMarkerSegment.WriteByte((byte)length);
                             ppmLength += 4;
 
@@ -709,14 +709,14 @@ namespace CoreJ2K.j2k.util
                                     // Write current PPM marker
                                     temp = ppmMarkerSegment.ToArray();
                                     length = temp.Length - 2;
-                                    temp[2] = (byte)(SupportClass.URShift(length, 8));
+                                    temp[2] = (byte)((length >>> 8));
                                     temp[3] = (byte)length;
                                     fi.write(temp, 0, length + 2);
 
                                     // Start new PPM marker segment
                                     //ppmMarkerSegment.reset();
                                     ppmMarkerSegment.SetLength(0);
-                                    ppmMarkerSegment.WriteByte((byte)SupportClass.URShift(codestream.Markers.PPM, 8));
+                                    ppmMarkerSegment.WriteByte(unchecked((byte)(codestream.Markers.PPM >>> 8)));
                                     ppmMarkerSegment.WriteByte(codestream.Markers.PPM & 0x00FF);
                                     ppmMarkerSegment.WriteByte(0); // Temp Lppm value
                                     ppmMarkerSegment.WriteByte(0); // Temp Lppm value
@@ -735,7 +735,7 @@ namespace CoreJ2K.j2k.util
                 // Write last PPM marker segment
                 temp = ppmMarkerSegment.ToArray();
                 length = temp.Length - 2;
-                temp[2] = (byte)(SupportClass.URShift(length, 8));
+                temp[2] = (byte)((length >>> 8));
                 temp[3] = (byte)length;
                 fi.write(temp, 0, length + 2);
             }

@@ -320,7 +320,7 @@ namespace CoreJ2K.j2k.codestream.writer
         {
 
             // Write the EOC marker and close the codestream.
-            out_Renamed.WriteByte((byte)SupportClass.URShift(Markers.EOC, 8));
+            out_Renamed.WriteByte(unchecked((byte)(Markers.EOC >>> 8)));
             out_Renamed.WriteByte(Markers.EOC & 0x00FF);
 
             ndata += 2; // Add two to length of codestream for EOC marker

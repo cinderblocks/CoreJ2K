@@ -952,8 +952,8 @@ namespace CoreJ2K.j2k.entropy.decoder
                             {
                                 // Became significant
                                 // Use sign coding
-                                ctxt = sc_lut[(SupportClass.URShift(csj, SC_SHIFT_R1)) & SC_MASK];
-                                sym = mq.decodeSymbol(ctxt & SC_LUT_MASK) ^ (SupportClass.URShift(ctxt, SC_SPRED_SHIFT));
+                                ctxt = sc_lut[((csj >>> SC_SHIFT_R1)) & SC_MASK];
+                                sym = mq.decodeSymbol(ctxt & SC_LUT_MASK) ^ ((ctxt >>> SC_SPRED_SHIFT));
                                 // Update data
                                 data[k] = (sym << 31) | setmask;
                                 // Update state information (significant bit,
@@ -994,12 +994,12 @@ namespace CoreJ2K.j2k.entropy.decoder
                         {
                             k += dscanw;
                             // Use zero coding
-                            if (mq.decodeSymbol(zc_lut[(SupportClass.URShift(csj, STATE_SEP)) & ZC_MASK]) != 0)
+                            if (mq.decodeSymbol(zc_lut[((csj >>> STATE_SEP)) & ZC_MASK]) != 0)
                             {
                                 // Became significant
                                 // Use sign coding
-                                ctxt = sc_lut[(SupportClass.URShift(csj, SC_SHIFT_R2)) & SC_MASK];
-                                sym = mq.decodeSymbol(ctxt & SC_LUT_MASK) ^ (SupportClass.URShift(ctxt, SC_SPRED_SHIFT));
+                                ctxt = sc_lut[((csj >>> SC_SHIFT_R2)) & SC_MASK];
+                                sym = mq.decodeSymbol(ctxt & SC_LUT_MASK) ^ ((ctxt >>> SC_SPRED_SHIFT));
                                 // Update data
                                 data[k] = (sym << 31) | setmask;
                                 // Update state information (significant bit,
@@ -1043,8 +1043,8 @@ namespace CoreJ2K.j2k.entropy.decoder
                             {
                                 // Became significant
                                 // Use sign coding
-                                ctxt = sc_lut[(SupportClass.URShift(csj, SC_SHIFT_R1)) & SC_MASK];
-                                sym = mq.decodeSymbol(ctxt & SC_LUT_MASK) ^ (SupportClass.URShift(ctxt, SC_SPRED_SHIFT));
+                                ctxt = sc_lut[((csj >>> SC_SHIFT_R1)) & SC_MASK];
+                                sym = mq.decodeSymbol(ctxt & SC_LUT_MASK) ^ ((ctxt >>> SC_SPRED_SHIFT));
                                 // Update data
                                 data[k] = (sym << 31) | setmask;
                                 // Update state information (significant bit,
@@ -1075,12 +1075,12 @@ namespace CoreJ2K.j2k.entropy.decoder
                         {
                             k += dscanw;
                             // Use zero coding
-                            if (mq.decodeSymbol(zc_lut[(SupportClass.URShift(csj, STATE_SEP)) & ZC_MASK]) != 0)
+                            if (mq.decodeSymbol(zc_lut[((csj >>> STATE_SEP)) & ZC_MASK]) != 0)
                             {
                                 // Became significant
                                 // Use sign coding
-                                ctxt = sc_lut[(SupportClass.URShift(csj, SC_SHIFT_R2)) & SC_MASK];
-                                sym = mq.decodeSymbol(ctxt & SC_LUT_MASK) ^ (SupportClass.URShift(ctxt, SC_SPRED_SHIFT));
+                                ctxt = sc_lut[((csj >>> SC_SHIFT_R2)) & SC_MASK];
+                                sym = mq.decodeSymbol(ctxt & SC_LUT_MASK) ^ ((ctxt >>> SC_SPRED_SHIFT));
                                 // Update data
                                 data[k] = (sym << 31) | setmask;
                                 // Update state information (significant bit,
@@ -1484,7 +1484,7 @@ namespace CoreJ2K.j2k.entropy.decoder
                     csj = state[j];
                     // If any of the two samples is significant and not yet
                     // visited in the current bit-plane we can not skip them
-                    if ((((SupportClass.URShift(csj, 1)) & (~csj)) & VSTD_MASK_R1R2) != 0)
+                    if (((((csj >>> 1)) & (~csj)) & VSTD_MASK_R1R2) != 0)
                     {
                         k = sk;
                         // Scan first row
@@ -1508,7 +1508,7 @@ namespace CoreJ2K.j2k.entropy.decoder
                         {
                             k += dscanw;
                             // Use MR primitive
-                            sym = mq.decodeSymbol(mr_lut[(SupportClass.URShift(csj, STATE_SEP)) & MR_MASK]);
+                            sym = mq.decodeSymbol(mr_lut[((csj >>> STATE_SEP)) & MR_MASK]);
                             // Update the data
                             data[k] &= resetmask;
                             data[k] |= (sym << bp) | setmask;
@@ -1524,7 +1524,7 @@ namespace CoreJ2K.j2k.entropy.decoder
                     csj = state[j];
                     // If any of the two samples is significant and not yet
                     // visited in the current bit-plane we can not skip them
-                    if ((((SupportClass.URShift(csj, 1)) & (~csj)) & VSTD_MASK_R1R2) != 0)
+                    if (((((csj >>> 1)) & (~csj)) & VSTD_MASK_R1R2) != 0)
                     {
                         k = sk + (dscanw << 1);
                         // Scan first row
@@ -1548,7 +1548,7 @@ namespace CoreJ2K.j2k.entropy.decoder
                         {
                             k += dscanw;
                             // Use MR primitive
-                            sym = mq.decodeSymbol(mr_lut[(SupportClass.URShift(csj, STATE_SEP)) & MR_MASK]);
+                            sym = mq.decodeSymbol(mr_lut[((csj >>> STATE_SEP)) & MR_MASK]);
                             // Update the data
                             data[k] &= resetmask;
                             data[k] |= (sym << bp) | setmask;
@@ -1664,7 +1664,7 @@ namespace CoreJ2K.j2k.entropy.decoder
                     csj = state[j];
                     // If any of the two samples is significant and not yet
                     // visited in the current bit-plane we can not skip them
-                    if ((((SupportClass.URShift(csj, 1)) & (~csj)) & VSTD_MASK_R1R2) != 0)
+                    if (((((csj >>> 1)) & (~csj)) & VSTD_MASK_R1R2) != 0)
                     {
                         k = sk;
                         // Scan first row
@@ -1700,7 +1700,7 @@ namespace CoreJ2K.j2k.entropy.decoder
                     csj = state[j];
                     // If any of the two samples is significant and not yet
                     // visited in the current bit-plane we can not skip them
-                    if ((((SupportClass.URShift(csj, 1)) & (~csj)) & VSTD_MASK_R1R2) != 0)
+                    if (((((csj >>> 1)) & (~csj)) & VSTD_MASK_R1R2) != 0)
                     {
                         k = sk + (dscanw << 1);
                         // Scan first row
@@ -1874,7 +1874,7 @@ namespace CoreJ2K.j2k.entropy.decoder
                                 // Sample that became significant is first row of
                                 // its column half
                                 ctxt = sc_lut[(csj >> SC_SHIFT_R1) & SC_MASK];
-                                sym = mq.decodeSymbol(ctxt & SC_LUT_MASK) ^ (SupportClass.URShift(ctxt, SC_SPRED_SHIFT));
+                                sym = mq.decodeSymbol(ctxt & SC_LUT_MASK) ^ ((ctxt >>> SC_SPRED_SHIFT));
                                 // Update the data
                                 data[k] = (sym << 31) | setmask;
                                 // Update state information (significant bit,
@@ -1915,7 +1915,7 @@ namespace CoreJ2K.j2k.entropy.decoder
                                 // Sample that became significant is second row of
                                 // its column half
                                 ctxt = sc_lut[(csj >> SC_SHIFT_R2) & SC_MASK];
-                                sym = mq.decodeSymbol(ctxt & SC_LUT_MASK) ^ (SupportClass.URShift(ctxt, SC_SPRED_SHIFT));
+                                sym = mq.decodeSymbol(ctxt & SC_LUT_MASK) ^ ((ctxt >>> SC_SPRED_SHIFT));
                                 // Update the data
                                 data[k] = (sym << 31) | setmask;
                                 // Update state information (significant bit,
@@ -1961,8 +1961,8 @@ namespace CoreJ2K.j2k.entropy.decoder
                                 {
                                     // Became significant
                                     // Use sign coding
-                                    ctxt = sc_lut[(SupportClass.URShift(csj, SC_SHIFT_R1)) & SC_MASK];
-                                    sym = mq.decodeSymbol(ctxt & SC_LUT_MASK) ^ (SupportClass.URShift(ctxt, SC_SPRED_SHIFT));
+                                    ctxt = sc_lut[((csj >>> SC_SHIFT_R1)) & SC_MASK];
+                                    sym = mq.decodeSymbol(ctxt & SC_LUT_MASK) ^ ((ctxt >>> SC_SPRED_SHIFT));
                                     // Update the data
                                     data[k] = (sym << 31) | setmask;
                                     // Update state information (significant bit,
@@ -2000,12 +2000,12 @@ namespace CoreJ2K.j2k.entropy.decoder
                             {
                                 k += dscanw;
                                 // Use zero coding
-                                if (mq.decodeSymbol(zc_lut[(SupportClass.URShift(csj, STATE_SEP)) & ZC_MASK]) != 0)
+                                if (mq.decodeSymbol(zc_lut[((csj >>> STATE_SEP)) & ZC_MASK]) != 0)
                                 {
                                     // Became significant
                                     // Use sign coding
-                                    ctxt = sc_lut[(SupportClass.URShift(csj, SC_SHIFT_R2)) & SC_MASK];
-                                    sym = mq.decodeSymbol(ctxt & SC_LUT_MASK) ^ (SupportClass.URShift(ctxt, SC_SPRED_SHIFT));
+                                    ctxt = sc_lut[((csj >>> SC_SHIFT_R2)) & SC_MASK];
+                                    sym = mq.decodeSymbol(ctxt & SC_LUT_MASK) ^ ((ctxt >>> SC_SPRED_SHIFT));
                                     // Update the data
                                     data[k] = (sym << 31) | setmask;
                                     // Update state information (significant bit,
@@ -2049,7 +2049,7 @@ namespace CoreJ2K.j2k.entropy.decoder
                                 // Became significant
                                 // Use sign coding
                                 ctxt = sc_lut[(csj >> SC_SHIFT_R1) & SC_MASK];
-                                sym = mq.decodeSymbol(ctxt & SC_LUT_MASK) ^ (SupportClass.URShift(ctxt, SC_SPRED_SHIFT));
+                                sym = mq.decodeSymbol(ctxt & SC_LUT_MASK) ^ ((ctxt >>> SC_SPRED_SHIFT));
                                 // Update the data
                                 data[k] = (sym << 31) | setmask;
                                 // Update state information (significant bit,
@@ -2077,12 +2077,12 @@ namespace CoreJ2K.j2k.entropy.decoder
                         {
                             k += dscanw;
                             // Use zero coding
-                            if (mq.decodeSymbol(zc_lut[(SupportClass.URShift(csj, STATE_SEP)) & ZC_MASK]) != 0)
+                            if (mq.decodeSymbol(zc_lut[((csj >>> STATE_SEP)) & ZC_MASK]) != 0)
                             {
                                 // Became significant
                                 // Use sign coding
-                                ctxt = sc_lut[(SupportClass.URShift(csj, SC_SHIFT_R2)) & SC_MASK];
-                                sym = mq.decodeSymbol(ctxt & SC_LUT_MASK) ^ (SupportClass.URShift(ctxt, SC_SPRED_SHIFT));
+                                ctxt = sc_lut[((csj >>> SC_SHIFT_R2)) & SC_MASK];
+                                sym = mq.decodeSymbol(ctxt & SC_LUT_MASK) ^ ((ctxt >>> SC_SPRED_SHIFT));
                                 // Update the data
                                 data[k] = (sym << 31) | setmask;
                                 // Update state information (significant bit,

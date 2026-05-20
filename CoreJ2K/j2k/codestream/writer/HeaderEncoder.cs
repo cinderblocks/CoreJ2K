@@ -694,7 +694,7 @@ namespace CoreJ2K.j2k.codestream.writer
             // +--------------------------+
             // |         SOD marker        |
             // +--------------------------+
-            hbuf.Write((byte)SupportClass.URShift(Markers.SOD, 8));
+            hbuf.Write(unchecked((byte)(Markers.SOD >>> 8)));
             hbuf.Write((byte)(Markers.SOD & 0x00FF));
         }
     }

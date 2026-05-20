@@ -335,7 +335,7 @@ namespace CoreJ2K.j2k.image.output
                     {
                         for (k = db.offset + w - 1, j = 3 * w - 1 + c - 2; j >= 0; k--)
                         {
-                            tmp = (SupportClass.URShift(db.data_array[k], fracbits)) + shift;
+                            tmp = ((db.data_array[k] >>> fracbits)) + shift;
                             buf[j] = (byte)((tmp < 0) ? 0 : ((tmp > maxVal) ? maxVal : tmp));
                             j -= 3;
                         }

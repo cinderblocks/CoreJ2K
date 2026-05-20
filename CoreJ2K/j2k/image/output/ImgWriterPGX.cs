@@ -379,7 +379,7 @@ namespace CoreJ2K.j2k.image.output
                         {
                             for (k = db.offset + i * db.scanw + w - 1, j = w - 1; j >= 0; k--)
                             {
-                                tmp = (SupportClass.URShift(db.data_array[k], fracbits)) + levShift;
+                                tmp = ((db.data_array[k] >>> fracbits)) + levShift;
                                 buf[j--] = (byte)((tmp < minVal) ? minVal : ((tmp > maxVal) ? maxVal : tmp));
                             }
                         }
@@ -404,18 +404,18 @@ namespace CoreJ2K.j2k.image.output
                                 tmp = (tmp < minVal) ? minVal : ((tmp > maxVal) ? maxVal : tmp);
                                 buf[j--] = (byte)tmp; // no need for 0xFF mask since
                                                       // truncation will do it already
-                                buf[j--] = (byte)(SupportClass.URShift(tmp, 8));
+                                buf[j--] = (byte)((tmp >>> 8));
                             }
                         }
                         else
                         {
                             for (k = db.offset + i * db.scanw + w - 1, j = (w << 1) - 1; j >= 0; k--)
                             {
-                                tmp = (SupportClass.URShift(db.data_array[k], fracbits)) + levShift;
+                                tmp = ((db.data_array[k] >>> fracbits)) + levShift;
                                 tmp = (tmp < minVal) ? minVal : ((tmp > maxVal) ? maxVal : tmp);
                                 buf[j--] = (byte)tmp; // no need for 0xFF mask since
                                                       // truncation will do it already
-                                buf[j--] = (byte)(SupportClass.URShift(tmp, 8));
+                                buf[j--] = (byte)((tmp >>> 8));
                             }
                         }
                         out_Renamed.Write(buf, 0, w << 1);
@@ -437,21 +437,21 @@ namespace CoreJ2K.j2k.image.output
                                 tmp = db.data_array[k] + levShift;
                                 tmp = (tmp < minVal) ? minVal : ((tmp > maxVal) ? maxVal : tmp);
                                 buf[j--] = (byte)tmp; // No need to use 0xFF
-                                buf[j--] = (byte)(SupportClass.URShift(tmp, 8)); // masks since truncation
-                                buf[j--] = (byte)(SupportClass.URShift(tmp, 16)); // will have already the
-                                buf[j--] = (byte)(SupportClass.URShift(tmp, 24)); // same effect
+                                buf[j--] = (byte)((tmp >>> 8)); // masks since truncation
+                                buf[j--] = (byte)((tmp >>> 16)); // will have already the
+                                buf[j--] = (byte)((tmp >>> 24)); // same effect
                             }
                         }
                         else
                         {
                             for (k = db.offset + i * db.scanw + w - 1, j = (w << 2) - 1; j >= 0; k--)
                             {
-                                tmp = (SupportClass.URShift(db.data_array[k], fracbits)) + levShift;
+                                tmp = ((db.data_array[k] >>> fracbits)) + levShift;
                                 tmp = (tmp < minVal) ? minVal : ((tmp > maxVal) ? maxVal : tmp);
                                 buf[j--] = (byte)tmp; // No need to use 0xFF
-                                buf[j--] = (byte)(SupportClass.URShift(tmp, 8)); // masks since truncation
-                                buf[j--] = (byte)(SupportClass.URShift(tmp, 16)); // will have already the
-                                buf[j--] = (byte)(SupportClass.URShift(tmp, 24)); // same effect
+                                buf[j--] = (byte)((tmp >>> 8)); // masks since truncation
+                                buf[j--] = (byte)((tmp >>> 16)); // will have already the
+                                buf[j--] = (byte)((tmp >>> 24)); // same effect
                             }
                         }
                         out_Renamed.Write(buf, 0, w << 2);
