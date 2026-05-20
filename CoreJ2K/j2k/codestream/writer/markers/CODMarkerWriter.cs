@@ -6,6 +6,7 @@ using CoreJ2K.j2k.entropy;
 using CoreJ2K.j2k.entropy.encoder;
 using CoreJ2K.j2k.util;
 using CoreJ2K.j2k.wavelet.analysis;
+using System;
 using System.IO;
 
 namespace CoreJ2K.j2k.codestream.writer.markers
@@ -75,14 +76,14 @@ namespace CoreJ2K.j2k.codestream.writer.markers
             // SOP markers
             if (isMainHeader)
             {
-                if (encSpec.sops.getDefault().ToString().ToUpper().Equals("ON"))
+                if (string.Equals(encSpec.sops.getDefault().ToString(), "ON", StringComparison.OrdinalIgnoreCase))
                 {
                     tmp |= Markers.SCOX_USE_SOP;
                 }
             }
             else
             {
-                if (encSpec.sops.getTileDef(tileIdx).ToString().ToUpper().Equals("ON"))
+                if (string.Equals(encSpec.sops.getTileDef(tileIdx).ToString(), "ON", StringComparison.OrdinalIgnoreCase))
                 {
                     tmp |= Markers.SCOX_USE_SOP;
                 }
@@ -91,14 +92,14 @@ namespace CoreJ2K.j2k.codestream.writer.markers
             // EPH markers
             if (isMainHeader)
             {
-                if (encSpec.ephs.getDefault().ToString().ToUpper().Equals("ON"))
+                if (string.Equals(encSpec.ephs.getDefault().ToString(), "ON", StringComparison.OrdinalIgnoreCase))
                 {
                     tmp |= Markers.SCOX_USE_EPH;
                 }
             }
             else
             {
-                if (encSpec.ephs.getTileDef(tileIdx).ToString().ToUpper().Equals("ON"))
+                if (string.Equals(encSpec.ephs.getTileDef(tileIdx).ToString(), "ON", StringComparison.OrdinalIgnoreCase))
                 {
                     tmp |= Markers.SCOX_USE_EPH;
                 }

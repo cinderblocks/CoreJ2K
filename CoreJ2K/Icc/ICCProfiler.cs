@@ -362,7 +362,7 @@ namespace CoreJ2K.Icc
                     $"matrix transform problem:\n{e.Message}");
                 if (pl.getParameter("debug").Equals("on"))
                 {
-                    SupportClass.WriteStackTrace(e);
+                    FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.ERROR, e.StackTrace);
                 }
                 else
                 {
@@ -376,7 +376,7 @@ namespace CoreJ2K.Icc
                     $"monochrome transform problem:\n{e.Message}");
                 if (pl.getParameter("debug").Equals("on"))
                 {
-                    SupportClass.WriteStackTrace(e);
+                    FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.ERROR, e.StackTrace);
                 }
                 else
                 {

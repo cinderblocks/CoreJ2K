@@ -187,12 +187,12 @@ namespace CoreJ2K.j2k.quantization
                     case 'd':
                     // derived quantization step size specification
                     case 'e':  // expounded quantization step size specification
-                        if (!word.ToUpper().Equals("reversible".ToUpper()) && !word.ToUpper().Equals("derived".ToUpper()) && !word.ToUpper().Equals("expounded".ToUpper()))
+                        if (!string.Equals(word, "reversible", StringComparison.OrdinalIgnoreCase) && !string.Equals(word, "derived", StringComparison.OrdinalIgnoreCase) && !string.Equals(word, "expounded", StringComparison.OrdinalIgnoreCase))
                         {
                             throw new ArgumentException($"Unknown parameter for '-Qtype' option: {word}");
                         }
 
-                        if (pl.getBooleanParameter("lossless") && (word.ToUpper().Equals("derived".ToUpper()) || word.ToUpper().Equals("expounded".ToUpper())))
+                        if (pl.getBooleanParameter("lossless") && (string.Equals(word, "derived", StringComparison.OrdinalIgnoreCase) || string.Equals(word, "expounded", StringComparison.OrdinalIgnoreCase)))
                         {
                             throw new ArgumentException("Cannot use non reversible quantization with '-lossless' option");
                         }

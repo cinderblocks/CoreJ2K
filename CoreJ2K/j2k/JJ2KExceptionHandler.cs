@@ -82,7 +82,7 @@ namespace CoreJ2K.j2k
             // Print the Exception message and stack to standard error
             // including this method in the stack.
             //e.fillInStackTrace();
-            SupportClass.WriteStackTrace(e);
+            FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.ERROR, e.StackTrace);
             // Print an explicative message
             FacilityManager.getMsgLogger().println("The Thread is being terminated bacause an Exception (shown above)\nhas been thrown and no special action was defined for this Thread.", 0, 0);
             // Stop the thread (do not use stop, since it's deprecated in

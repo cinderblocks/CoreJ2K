@@ -112,7 +112,7 @@ namespace CoreJ2K.j2k
             {
                 param = pl.DefaultParameterList.getParameter(optName);
                 for (var i = list.Length - 1; i >= 0; i--)
-                    if (param.ToUpper().Equals(list[i].ToUpper()))
+                    if (string.Equals(param, list[i], StringComparison.OrdinalIgnoreCase))
                         recognized = true;
                 if (!recognized)
                     throw new ArgumentException($"Default parameter of option -{optName} not recognized: {param}");
@@ -151,7 +151,7 @@ namespace CoreJ2K.j2k
                         recognized = false;
 
                         for (var i = list.Length - 1; i >= 0; i--)
-                            if (word.ToUpper().Equals(list[i].ToUpper()))
+                            if (string.Equals(word, list[i], StringComparison.OrdinalIgnoreCase))
                                 recognized = true;
                         if (!recognized)
                             throw new ArgumentException(
@@ -229,7 +229,7 @@ namespace CoreJ2K.j2k
                 {
                     param = pl.DefaultParameterList.getParameter(optName);
                     for (var i = list.Length - 1; i >= 0; i--)
-                        if (param.ToUpper().Equals(list[i].ToUpper()))
+                        if (string.Equals(param, list[i], StringComparison.OrdinalIgnoreCase))
                             recognized = true;
                     if (!recognized)
                         throw new ArgumentException($"Default parameter of option -{optName} not recognized: {param}");

@@ -2534,7 +2534,7 @@ namespace CoreJ2K.j2k.codestream.reader
                         }
                         catch (System.IO.IOException e)
                         {
-                            SupportClass.WriteStackTrace(e);
+                            FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.ERROR, e.StackTrace);
                             throw new InvalidOperationException($"IO Error when reading tile {x} x {y}");
                         }
 
@@ -2614,7 +2614,7 @@ namespace CoreJ2K.j2k.codestream.reader
                 }
                 catch (System.IO.IOException e)
                 {
-                    SupportClass.WriteStackTrace(e);
+                    FacilityManager.getMsgLogger().printmsg(MsgLogger_Fields.ERROR, e.StackTrace);
                     throw new InvalidOperationException($"IO Error when reading tile {x} x {y}");
                 }
             }

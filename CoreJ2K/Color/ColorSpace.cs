@@ -283,7 +283,7 @@ namespace CoreJ2K.Color
         /// </returns>
         public virtual bool debugging()
         {
-            return pl.TryGetValue("colorspace_debug", out var tmp) && tmp.ToUpper().Equals("ON");
+            return pl.TryGetValue("colorspace_debug", out var tmp) && string.Equals(tmp, "ON", StringComparison.OrdinalIgnoreCase);
         }
 
 

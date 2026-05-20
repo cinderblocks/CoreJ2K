@@ -200,7 +200,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
                     case 'w':
                     // WT filters specification
                     case 'W':  // WT filters specification
-                        if (pl.getBooleanParameter("lossless") && word.ToUpper().Equals("w9x7".ToUpper()))
+                        if (pl.getBooleanParameter("lossless") && string.Equals(word, "w9x7", StringComparison.OrdinalIgnoreCase))
                         {
                             throw new ArgumentException("Cannot use non " + "reversible " + "wavelet transform with" + " '-lossless' option");
                         }
@@ -383,13 +383,13 @@ namespace CoreJ2K.j2k.wavelet.analysis
             {
                 filt[i] = new AnWTFilter[1];
             }
-            if (word.ToUpper().Equals("w5x3".ToUpper()))
+            if (string.Equals(word, "w5x3", StringComparison.OrdinalIgnoreCase))
             {
                 filt[0][0] = new AnWTFilterIntLift5x3();
                 filt[1][0] = new AnWTFilterIntLift5x3();
                 return filt;
             }
-            else if (word.ToUpper().Equals("w9x7".ToUpper()))
+            else if (string.Equals(word, "w9x7", StringComparison.OrdinalIgnoreCase))
             {
                 filt[0][0] = new AnWTFilterFloatLift9x7();
                 filt[1][0] = new AnWTFilterFloatLift9x7();

@@ -43,6 +43,7 @@
 
 //#define DO_TIMING
 
+using System;
 using CoreJ2K.j2k.image;
 using CoreJ2K.j2k.quantization.quantizer;
 using CoreJ2K.j2k.util;
@@ -2933,27 +2934,27 @@ namespace CoreJ2K.j2k.entropy.encoder
                     opts[t][c] = 0;
 
                     // Bypass coding mode ?
-                    if (((string)bms.getTileCompVal(t, c)).ToUpper().Equals("on".ToUpper()))
+                    if (string.Equals((string)bms.getTileCompVal(t, c), "on", StringComparison.OrdinalIgnoreCase))
                     {
                         opts[t][c] |= StdEntropyCoderOptions.OPT_BYPASS;
                     }
                     // MQ reset after each coding pass ?
-                    if (((string)mqrs.getTileCompVal(t, c)).ToUpper().Equals("on".ToUpper()))
+                    if (string.Equals((string)mqrs.getTileCompVal(t, c), "on", StringComparison.OrdinalIgnoreCase))
                     {
                         opts[t][c] |= StdEntropyCoderOptions.OPT_RESET_MQ;
                     }
                     // MQ termination after each arithmetically coded coding pass ?
-                    if (((string)rts.getTileCompVal(t, c)).ToUpper().Equals("on".ToUpper()))
+                    if (string.Equals((string)rts.getTileCompVal(t, c), "on", StringComparison.OrdinalIgnoreCase))
                     {
                         opts[t][c] |= StdEntropyCoderOptions.OPT_TERM_PASS;
                     }
                     // Vertically stripe-causal context mode ?
-                    if (((string)css.getTileCompVal(t, c)).ToUpper().Equals("on".ToUpper()))
+                    if (string.Equals((string)css.getTileCompVal(t, c), "on", StringComparison.OrdinalIgnoreCase))
                     {
                         opts[t][c] |= StdEntropyCoderOptions.OPT_VERT_STR_CAUSAL;
                     }
                     // Error resilience segmentation symbol insertion ?
-                    if (((string)sss.getTileCompVal(t, c)).ToUpper().Equals("on".ToUpper()))
+                    if (string.Equals((string)sss.getTileCompVal(t, c), "on", StringComparison.OrdinalIgnoreCase))
                     {
                         opts[t][c] |= StdEntropyCoderOptions.OPT_SEG_SYMBOLS;
                     }
@@ -2979,19 +2980,19 @@ namespace CoreJ2K.j2k.entropy.encoder
 
                     // Set termination type of MQ coder
                     var termType = (string)tts.getTileCompVal(t, c);
-                    if (termType.ToUpper().Equals("easy".ToUpper()))
+                    if (string.Equals(termType, "easy", StringComparison.OrdinalIgnoreCase))
                     {
                         tType[t][c] = MQCoder.TERM_EASY;
                     }
-                    else if (termType.ToUpper().Equals("full".ToUpper()))
+                    else if (string.Equals(termType, "full", StringComparison.OrdinalIgnoreCase))
                     {
                         tType[t][c] = MQCoder.TERM_FULL;
                     }
-                    else if (termType.ToUpper().Equals("near_opt".ToUpper()))
+                    else if (string.Equals(termType, "near_opt", StringComparison.OrdinalIgnoreCase))
                     {
                         tType[t][c] = MQCoder.TERM_NEAR_OPT;
                     }
-                    else if (termType.ToUpper().Equals("predict".ToUpper()))
+                    else if (string.Equals(termType, "predict", StringComparison.OrdinalIgnoreCase))
                     {
                         tType[t][c] = MQCoder.TERM_PRED_ER;
                         opts[t][c] |= StdEntropyCoderOptions.OPT_PRED_TERM;

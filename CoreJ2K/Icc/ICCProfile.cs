@@ -309,7 +309,7 @@ namespace CoreJ2K.Icc
         /// </returns>
         public static int getIntFromString(string fourChar)
         {
-            var bytes = SupportClass.ToByteArray(fourChar);
+            var bytes = System.Text.Encoding.UTF8.GetBytes(fourChar);
             return getInt(bytes, 0);
         }
 
@@ -389,7 +389,7 @@ namespace CoreJ2K.Icc
                 result[i] = bfr[j];
                 j += incr;
             }
-            return new string(SupportClass.ToCharArray(result));
+            return System.Text.Encoding.UTF8.GetString(result);
         }
 
         /// <summary> Create a short from a two byte [], with optional byte swapping.</summary>
@@ -754,7 +754,7 @@ namespace CoreJ2K.Icc
                 var tbytes = Encoding.UTF8.GetBytes(Convert.ToString(row * 16, 16));
                 for (int t = 0, l = lbytes.Length - tbytes.Length; t < tbytes.Length; ++l, ++t) lbytes[l] = tbytes[t];
 
-                rep0 = new StringBuilder(new string(SupportClass.ToCharArray(lbytes)));
+                rep0 = new StringBuilder(System.Text.Encoding.UTF8.GetString(lbytes));
 
                 for (col = 0; col < cols; ++col)
                 {

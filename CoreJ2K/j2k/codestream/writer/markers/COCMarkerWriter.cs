@@ -5,6 +5,7 @@ using CoreJ2K.j2k.encoder;
 using CoreJ2K.j2k.entropy;
 using CoreJ2K.j2k.util;
 using CoreJ2K.j2k.wavelet.analysis;
+using System;
 using System.IO;
 
 namespace CoreJ2K.j2k.codestream.writer.markers
@@ -129,7 +130,7 @@ namespace CoreJ2K.j2k.codestream.writer.markers
             {
                 if (((string)encSpec.bms.getCompDef(compIdx)).Equals("on"))
                     tmp |= StdEntropyCoderOptions.OPT_BYPASS;
-                if (((string)encSpec.mqrs.getCompDef(compIdx)).ToUpper().Equals("ON"))
+                if (string.Equals((string)encSpec.mqrs.getCompDef(compIdx), "ON", StringComparison.OrdinalIgnoreCase))
                     tmp |= StdEntropyCoderOptions.OPT_RESET_MQ;
                 if (((string)encSpec.rts.getCompDef(compIdx)).Equals("on"))
                     tmp |= StdEntropyCoderOptions.OPT_TERM_PASS;

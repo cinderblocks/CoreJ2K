@@ -481,12 +481,12 @@ namespace CoreJ2K.j2k.entropy.encoder
             {
                 avgPktLen = 2;
                 // Add SOP length if set
-                if (((string)encSpec.sops.getTileDef(t)).ToUpper().Equals("on".ToUpper()))
+                if (string.Equals((string)encSpec.sops.getTileDef(t), "on", StringComparison.OrdinalIgnoreCase))
                 {
                     avgPktLen += Markers.SOP_LENGTH;
                 }
                 // Add EPH length if set
-                if (((string)encSpec.ephs.getTileDef(t)).ToUpper().Equals("on".ToUpper()))
+                if (string.Equals((string)encSpec.ephs.getTileDef(t), "on", StringComparison.OrdinalIgnoreCase))
                 {
                     avgPktLen += Markers.EPH_LENGTH;
                 }
@@ -879,9 +879,9 @@ namespace CoreJ2K.j2k.entropy.encoder
                         //loop on components
 
                         // set boolean sopUsed here (SOP markers)
-                        sopUsed = ((string)encSpec.sops.getTileDef(t)).ToUpper().Equals("on".ToUpper());
+                        sopUsed = string.Equals((string)encSpec.sops.getTileDef(t), "on", StringComparison.OrdinalIgnoreCase);
                         // set boolean ephUsed here (EPH markers)
-                        ephUsed = ((string)encSpec.ephs.getTileDef(t)).ToUpper().Equals("on".ToUpper());
+                        ephUsed = string.Equals((string)encSpec.ephs.getTileDef(t), "on", StringComparison.OrdinalIgnoreCase);
 
                         // Go to LL band
                         sb = src.getAnSubbandTree(t, c);
@@ -2008,9 +2008,9 @@ namespace CoreJ2K.j2k.entropy.encoder
                     for (var c = 0; c < nc; c++)
                     {
                         // set boolean sopUsed here (SOP markers)
-                        sopUsed = ((string)encSpec.sops.getTileDef(t)).ToUpper().Equals("on".ToUpper());
+                        sopUsed = string.Equals((string)encSpec.sops.getTileDef(t), "on", StringComparison.OrdinalIgnoreCase);
                         // set boolean ephUsed here (EPH markers)
-                        ephUsed = ((string)encSpec.ephs.getTileDef(t)).ToUpper().Equals("on".ToUpper());
+                        ephUsed = string.Equals((string)encSpec.ephs.getTileDef(t), "on", StringComparison.OrdinalIgnoreCase);
 
                         // Get LL subband
                         sb = src.getAnSubbandTree(t, c);
