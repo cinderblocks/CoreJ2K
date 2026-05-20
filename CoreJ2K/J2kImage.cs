@@ -1,6 +1,7 @@
 // Copyright (c) 2007-2016 CSJ2K contributors.
 // Licensed under the BSD 3-Clause License.
 
+using CoreJ2K.Util;
 using System.Linq;
 
 namespace CoreJ2K
@@ -906,18 +907,18 @@ namespace CoreJ2K
             // **** Tiler ****
             // get nominal tile dimensions
             var stok =
-                new SupportClass.StreamTokenizerSupport(new StringReader(pl.getParameter("tiles")));
+                new StreamTokenizerSupport(new StringReader(pl.getParameter("tiles")));
             stok.EOLIsSignificant(false);
 
             stok.NextToken();
-            if (stok.ttype != SupportClass.StreamTokenizerSupport.TT_NUMBER)
+            if (stok.ttype != StreamTokenizerSupport.TT_NUMBER)
             {
                 error($"An error occurred while parsing the tiles option: {pl.getParameter("tiles")}", 2);
                 return null;
             }
             var tw = (int)stok.nval;
             stok.NextToken();
-            if (stok.ttype != SupportClass.StreamTokenizerSupport.TT_NUMBER)
+            if (stok.ttype != StreamTokenizerSupport.TT_NUMBER)
             {
                 error($"An error occurred while parsing the tiles option: {pl.getParameter("tiles")}", 2);
                 return null;

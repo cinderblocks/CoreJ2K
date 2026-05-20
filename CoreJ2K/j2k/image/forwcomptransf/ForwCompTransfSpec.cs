@@ -40,6 +40,7 @@
 * 
 * Copyright (c) 1999/2000 JJ2000 Partners.
 * */
+using CoreJ2K.Util;
 using CoreJ2K.j2k.util;
 using CoreJ2K.j2k.wavelet;
 using CoreJ2K.j2k.wavelet.analysis;
@@ -167,7 +168,7 @@ namespace CoreJ2K.j2k.image.forwcomptransf
             }
 
             // Parse argument
-            var stk = new SupportClass.Tokenizer(param);
+            var stk = new Tokenizer(param);
             string word; // current word
             var curSpecType = SPEC_DEF; // Specification type of the
                                         // current parameter

@@ -40,6 +40,7 @@
 * 
 * Copyright (c) 1999/2000 JJ2000 Partners.
 * */
+using CoreJ2K.Util;
 using CoreJ2K.j2k.codestream;
 using CoreJ2K.j2k.image;
 using CoreJ2K.j2k.util;
@@ -150,7 +151,7 @@ namespace CoreJ2K.j2k.entropy
             }
 
             // Precinct partition is used : parse arguments
-            var stk = new SupportClass.Tokenizer(param);
+            var stk = new Tokenizer(param);
             var curSpecType = SPEC_DEF; // Specification type of the
                                         // current parameter
             bool[] tileSpec = null; // Tiles concerned by the specification

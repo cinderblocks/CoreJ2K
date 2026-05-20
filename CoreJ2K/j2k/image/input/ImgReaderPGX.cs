@@ -158,7 +158,7 @@ namespace CoreJ2K.j2k.image.input
             offset = (header.Length + 1);
 
             //Get information from header
-            var st = new SupportClass.Tokenizer(header);
+            var st = new Tokenizer(header);
             try
             {
                 var nTokens = st.Count;
@@ -232,7 +232,7 @@ namespace CoreJ2K.j2k.image.input
         /// 
         /// </exception>
         public ImgReaderPGX(IFileInfo inRenamed)
-            : this(SupportClass.RandomAccessFileSupport.CreateRandomAccessFile(inRenamed, "r"))
+            : this(FileStreamFactory.New(inRenamed.FullName, "r"))
         {
         }
 

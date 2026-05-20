@@ -41,6 +41,7 @@
 * 
 * Copyright (c) 1999/2000 JJ2000 Partners.
 * */
+using CoreJ2K.Util;
 using CoreJ2K.j2k.encoder;
 using CoreJ2K.j2k.image;
 using CoreJ2K.j2k.image.input;
@@ -327,14 +328,14 @@ namespace CoreJ2K.j2k.roi.encoder
         {
             //ROI[] ROIs;
             ROI roi;
-            SupportClass.Tokenizer stok;
+            Tokenizer stok;
             //char tok;
             var nrOfROIs = 0;
             //char c;
             int ulx, uly, w, h, x, y, rad; // comp removed
             bool[] roiInComp = null;
 
-            stok = new SupportClass.Tokenizer(roiopt);
+            stok = new Tokenizer(roiopt);
 
             string word;
             while (stok.HasMoreTokens())

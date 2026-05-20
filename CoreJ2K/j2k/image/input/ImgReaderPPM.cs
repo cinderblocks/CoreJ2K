@@ -90,7 +90,7 @@ namespace CoreJ2K.j2k.image.input
         /// <param name="file">The input file.</param>
         /// <param name="IOException">If an error occurs while opening the file.</param>
         public ImgReaderPPM(IFileInfo file)
-            : this(SupportClass.RandomAccessFileSupport.CreateRandomAccessFile(file, "r"))
+            : this(FileStreamFactory.New(file.FullName, "r"))
         {
         }
 
@@ -98,7 +98,7 @@ namespace CoreJ2K.j2k.image.input
         /// <param name="fname">The input file name.</param>
         /// <param name="IOException">If an error occurs while opening the file.</param>
         public ImgReaderPPM(string fname)
-            : this(SupportClass.RandomAccessFileSupport.CreateRandomAccessFile(fname, "r"))
+            : this(FileStreamFactory.New(fname, "r"))
         {
         }
 

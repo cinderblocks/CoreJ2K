@@ -41,6 +41,7 @@
 * 
 * 
 */
+using CoreJ2K.Util;
 using CoreJ2K.j2k.util;
 using System;
 
@@ -100,7 +101,7 @@ namespace CoreJ2K.j2k.quantization
             }
 
             // Parse argument
-            var stk = new SupportClass.Tokenizer(param);
+            var stk = new Tokenizer(param);
             string word; // current word
             var curSpecType = SPEC_DEF; // Specification type of the
                                         // current parameter

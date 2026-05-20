@@ -152,7 +152,7 @@ namespace CoreJ2K.j2k.image.output
             {
                 throw new System.IO.IOException("Could not reset file");
             }
-            this.out_Renamed = SupportClass.RandomAccessFileSupport.CreateRandomAccessFile(out_Renamed, "rw");
+            this.out_Renamed = FileStreamFactory.New(out_Renamed.FullName, "rw");
             src = imgSrc;
             cps[0] = n1;
             cps[1] = n2;

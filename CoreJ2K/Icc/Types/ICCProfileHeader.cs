@@ -194,7 +194,7 @@ namespace CoreJ2K.Icc.Types
             raf.Seek(offCreatorSig, System.IO.SeekOrigin.Begin); raf.WriteByte((byte)dwCreatorSig);
             raf.Seek(offReserved, System.IO.SeekOrigin.Begin);
             raf.Write(reserved, 0, reserved.Length);
-            //SupportClass.RandomAccessFileSupport.WriteRandomFile(reserved, raf);
+            //WriteRandomFile(reserved, raf);
         }
 
 

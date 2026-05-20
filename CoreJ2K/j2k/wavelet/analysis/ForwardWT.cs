@@ -41,6 +41,7 @@
 * 
 * Copyright (c) 1999/2000 JJ2000 Partners.
 * */
+using CoreJ2K.Util;
 using CoreJ2K.j2k.encoder;
 using CoreJ2K.j2k.image;
 using CoreJ2K.j2k.util;
@@ -134,8 +135,8 @@ namespace CoreJ2K.j2k.wavelet.analysis
                         //System.String decompstr;
                         //System.String wtstr;
                         //System.String pstr;
-                        //SupportClass.StreamTokenizerSupport stok;
-                        //SupportClass.Tokenizer strtok;
+                        //StreamTokenizerSupport stok;
+                        //Tokenizer strtok;
                         //int prefx, prefy; // Partitioning reference point coordinates
 
             // Check parameters
@@ -149,7 +150,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
             {
                 throw new InvalidOperationException("You must specify an argument to the '-Wcboff' " + "option. See usage with the '-u' option");
             }
-            var stk = new SupportClass.Tokenizer(pl.getParameter("Wcboff"));
+            var stk = new Tokenizer(pl.getParameter("Wcboff"));
             if (stk.Count != 2)
             {
                 throw new ArgumentException("'-Wcboff' option needs two" + " arguments. See usage with " + "the '-u' option.");

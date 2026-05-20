@@ -40,6 +40,7 @@
 * 
 * Copyright (c) 1999/2000 JJ2000 Partners.
 * */
+using CoreJ2K.Util;
 using CoreJ2K.j2k.util;
 using System;
 
@@ -156,7 +157,7 @@ namespace CoreJ2K.j2k.quantization
             }
 
             // Parse argument
-            var stk = new SupportClass.Tokenizer(param);
+            var stk = new Tokenizer(param);
             string word; // current word
             var curSpecValType = SPEC_DEF; // Specification type of the
                                            // current parameter

@@ -1,6 +1,7 @@
 // Copyright (c) 2025 Sjofn LLC.
 // Licensed under the BSD 3-Clause License.
 
+using CoreJ2K.Util;
 using System.IO;
 using System.Text;
 
@@ -31,7 +32,7 @@ namespace CoreJ2K.j2k.codestream.writer.markers
             // Other COM marker segments
             if (otherCOMMarkSeg != null)
             {
-                var stk = new SupportClass.Tokenizer(otherCOMMarkSeg, "#");
+                var stk = new Tokenizer(otherCOMMarkSeg, "#");
                 while (stk.HasMoreTokens())
                 {
                     var str = stk.NextToken();

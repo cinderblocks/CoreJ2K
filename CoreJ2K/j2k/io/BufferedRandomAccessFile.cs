@@ -44,6 +44,7 @@ namespace CoreJ2K.j2k.io
 {
     using System;
     using System.IO;
+    using CoreJ2K.Util;
 
     using Util;
 
@@ -209,7 +210,7 @@ namespace CoreJ2K.j2k.io
                 }
                 mode = "rw";
             }
-            theFile = SupportClass.RandomAccessFileSupport.CreateRandomAccessFile(file, mode);
+            theFile = FileStreamFactory.New(file.FullName, mode);
             byteBuffer = new byte[bufferSize];
             readNewBuffer(0);
         }

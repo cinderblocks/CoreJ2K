@@ -90,7 +90,7 @@ namespace CoreJ2K.j2k.image.input
         /// 
         /// </exception>
         public ImgReaderPGM(IFileInfo file)
-            : this(SupportClass.RandomAccessFileSupport.CreateRandomAccessFile(file, "r"))
+            : this(FileStreamFactory.New(file.FullName, "r"))
         {
         }
 
@@ -104,7 +104,7 @@ namespace CoreJ2K.j2k.image.input
         /// 
         /// </exception>
         public ImgReaderPGM(string fname)
-            : this(SupportClass.RandomAccessFileSupport.CreateRandomAccessFile(fname, "r"))
+            : this(FileStreamFactory.New(fname, "r"))
         {
         }
 

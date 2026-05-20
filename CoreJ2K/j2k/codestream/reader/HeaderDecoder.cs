@@ -3140,7 +3140,7 @@ namespace CoreJ2K.j2k.codestream.reader
 
                         temp = new byte[nppm];
                         // get ippm field
-                        pph.Read(temp, 0, temp.Length); //SupportClass.ReadInput(pph, temp, 0, temp.Length);
+                        pph.Read(temp, 0, temp.Length);
                         var temp_byteArray2 = temp;
                         pkdPktHeaders[t].Write(temp_byteArray2, 0, temp_byteArray2.Length);
                     }

@@ -41,6 +41,7 @@
 * 
 * Copyright (c) 1999/2000 JJ2000 Partners.
 * */
+using CoreJ2K.Util;
 using CoreJ2K.j2k.codestream;
 using CoreJ2K.j2k.codestream.writer;
 using CoreJ2K.j2k.encoder;
@@ -180,7 +181,7 @@ namespace CoreJ2K.j2k.entropy.encoder
         private static LayersInfo parseAlayers(string params_Renamed, float rate)
         {
             var lyrs = new LayersInfo(rate);
-            var stok = new SupportClass.StreamTokenizerSupport(new System.IO.StringReader(params_Renamed));
+            var stok = new StreamTokenizerSupport(new System.IO.StringReader(params_Renamed));
             stok.EOLIsSignificant(false);
 
             try
@@ -194,12 +195,12 @@ namespace CoreJ2K.j2k.entropy.encoder
             var ratepending = false;
             var islayer = false;
             float r = 0; // to keep compiler happy
-            while (stok.ttype != SupportClass.StreamTokenizerSupport.TT_EOF)
+            while (stok.ttype != StreamTokenizerSupport.TT_EOF)
             {
                 switch (stok.ttype)
                 {
 
-                    case SupportClass.StreamTokenizerSupport.TT_NUMBER:
+                    case StreamTokenizerSupport.TT_NUMBER:
                         if (islayer)
                         {
                             // layer parameter
@@ -243,7 +244,7 @@ namespace CoreJ2K.j2k.entropy.encoder
                         islayer = true; // Next number is layer parameter
                         break;
 
-                    case SupportClass.StreamTokenizerSupport.TT_WORD:
+                    case StreamTokenizerSupport.TT_WORD:
                         try
                         {
                             stok.NextToken();
@@ -252,7 +253,7 @@ namespace CoreJ2K.j2k.entropy.encoder
                         {
                             throw new InvalidOperationException("An IOException has occurred where it should never occur");
                         }
-                        if (stok.ttype != SupportClass.StreamTokenizerSupport.TT_EOF)
+                        if (stok.ttype != StreamTokenizerSupport.TT_EOF)
                         {
                             throw new ArgumentException("'sl' argument of '-Alayers' option must be used alone.");
                         }
