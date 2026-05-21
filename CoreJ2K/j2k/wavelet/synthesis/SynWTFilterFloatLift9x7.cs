@@ -377,8 +377,11 @@ namespace CoreJ2K.j2k.wavelet.synthesis
             hk = highOff;
             ik = outOff + 1; // first odd output index
 
-            int oddEnd = outOff + 2 * highLen - 1; // last odd output index (before possible boundary)
-            while (ik < oddEnd)
+            int oddEnd = outOff + 2 * highLen - 1; // last odd output index
+            // For odd outLen: last odd sample (oddEnd) has both even neighbours — include in inner loop.
+            // For even outLen: last odd sample has no right even neighbour — handle as boundary below.
+            int oddLoopEnd = (outLen % 2 == 1) ? oddEnd + 2 : oddEnd;
+            while (ik < oddLoopEnd)
             {
                 outSig[ik] = highSig[hk] * INV_KH - GAMMA * (outSig[ik - 1] + outSig[ik + 1]);
                 hk++; ik += 2;
