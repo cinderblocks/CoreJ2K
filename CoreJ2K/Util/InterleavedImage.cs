@@ -3,6 +3,7 @@
 // Licensed under the BSD 3-Clause License.
 
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -13,13 +14,22 @@ namespace CoreJ2K.Util
     /// Represents an in-memory image with interleaved integer samples.
     /// Provides conversion to other image backends via <see cref="ImageFactory"/>.
     /// </summary>
+    /// <remarks>
+    /// The underlying sample buffer is rented from <see cref="ArrayPool{T}.Shared"/> to
+    /// avoid Large Object Heap allocations on every decode. Callers should
+    /// <see cref="Dispose"/> the instance when finished so the buffer is returned to the
+    /// pool. A finalizer is provided as a safety net for callers that forget.
+    /// </remarks>
     [DebuggerDisplay("InterleavedImage {Width}x{Height}x{NumberOfComponents}")]
-    public sealed class InterleavedImage : IImage, ICloneable, IEquatable<InterleavedImage>
+    public sealed class InterleavedImage : IImage, ICloneable, IEquatable<InterleavedImage>, IDisposable
     {
         #region FIELDS
 
         private readonly double[] byteScaling;
         private readonly int[] bitDepths;
+        private readonly int dataLength;
+        private int[] data;
+        private int disposed;
 
         #endregion
 
@@ -67,20 +77,24 @@ namespace CoreJ2K.Util
                 byteScaling[i] = 255.0 / maxVal;
             }
 
-            Data = new int[(int)totalSamples];
+            dataLength = (int)totalSamples;
+            data = ArrayPool<int>.Shared.Rent(dataLength);
+            // Pool buffers are not guaranteed to be zeroed; clear the logical region.
+            Array.Clear(data, 0, dataLength);
         }
 
         // Internal constructor used for cloning to allow assigning readonly fields
-        internal InterleavedImage(int width, int height, int numberOfComponents, double[] byteScaling, int[] data)
+        internal InterleavedImage(int width, int height, int numberOfComponents, double[] byteScaling, int[] sourceData, int sourceLength)
         {
             if (byteScaling == null) throw new ArgumentNullException(nameof(byteScaling));
-            if (data == null) throw new ArgumentNullException(nameof(data));
+            if (sourceData == null) throw new ArgumentNullException(nameof(sourceData));
             if (width <= 0) throw new ArgumentOutOfRangeException(nameof(width));
             if (height <= 0) throw new ArgumentOutOfRangeException(nameof(height));
             if (numberOfComponents <= 0) throw new ArgumentOutOfRangeException(nameof(numberOfComponents));
 
             var expected = (long)width * height * numberOfComponents;
-            if (expected > int.MaxValue || expected != data.Length) throw new ArgumentException("data length does not match dimensions", nameof(data));
+            if (expected > int.MaxValue || expected != sourceLength) throw new ArgumentException("data length does not match dimensions", nameof(sourceData));
+            if (sourceLength > sourceData.Length) throw new ArgumentException("sourceLength exceeds sourceData", nameof(sourceLength));
 
             Width = width;
             Height = height;
@@ -88,8 +102,10 @@ namespace CoreJ2K.Util
 
             // Make defensive copies so the clone is independent
             this.byteScaling = (double[])byteScaling.Clone();
-            Data = (int[])data.Clone();
-            
+            dataLength = sourceLength;
+            data = ArrayPool<int>.Shared.Rent(dataLength);
+            Array.Copy(sourceData, 0, data, 0, dataLength);
+
             // Reconstruct bit depths from byte scaling (approximate)
             bitDepths = new int[numberOfComponents];
             for (var i = 0; i < numberOfComponents; i++)
@@ -99,6 +115,14 @@ namespace CoreJ2K.Util
                 var maxVal = Math.Round(255.0 / byteScaling[i]);
                 bitDepths[i] = (int)Math.Ceiling(Math.Log(maxVal + 1, 2));
             }
+        }
+
+        /// <summary>
+        /// Finalizer returns the rented buffer to the pool if <see cref="Dispose"/> was not called.
+        /// </summary>
+        ~InterleavedImage()
+        {
+            ReturnBuffer();
         }
 
         #endregion
@@ -125,7 +149,14 @@ namespace CoreJ2K.Util
         /// </summary>
         public IReadOnlyList<int> BitDepths => bitDepths;
 
-        internal int[] Data { get; }
+        internal int[] Data => data;
+
+        /// <summary>
+        /// Gets the logical number of samples held in the buffer
+        /// (Width * Height * NumberOfComponents). The backing array returned by the pool
+        /// may be larger than this value; only indices &lt; <see cref="DataLength"/> are valid.
+        /// </summary>
+        internal int DataLength => dataLength;
 
         #endregion
 
@@ -327,7 +358,9 @@ namespace CoreJ2K.Util
         /// <returns>A defensive copy of the interleaved sample buffer.</returns>
         public int[] GetDataCopy()
         {
-            return (int[])Data.Clone();
+            var copy = new int[dataLength];
+            Array.Copy(data, 0, copy, 0, dataLength);
+            return copy;
         }
 
         /// <summary>
@@ -406,10 +439,10 @@ namespace CoreJ2K.Util
             var dstOffset = NumberOfComponents * (dstX + lineIndex * Width);
 
             // Bounds-check destination region to avoid ArgumentException from Array.Copy
-            if (dstOffset < 0 || dstOffset + copyLength > Data.Length)
+            if (dstOffset < 0 || dstOffset + copyLength > dataLength)
                 throw new ArgumentException("Destination region does not fit within image buffer", nameof(rowValues));
 
-            Array.Copy(rowValues, srcOffset, Data, dstOffset, copyLength);
+            Array.Copy(rowValues, srcOffset, data, dstOffset, copyLength);
         }
 
         /// <summary>
@@ -428,7 +461,7 @@ namespace CoreJ2K.Util
         public InterleavedImage CloneInterleavedImage()
         {
             // Create a new instance with deep-copied arrays so the clone is independent
-            return new InterleavedImage(Width, Height, NumberOfComponents, byteScaling, Data);
+            return new InterleavedImage(Width, Height, NumberOfComponents, byteScaling, data, dataLength);
         }
 
         private static void ToBytes(int width, int height, int numberOfComponents,
@@ -621,10 +654,32 @@ namespace CoreJ2K.Util
             if (Width != other.Width || Height != other.Height || NumberOfComponents != other.NumberOfComponents)
                 return false;
 
-            // Compare data arrays
-            var dataSpan = Data.AsSpan();
-            var otherDataSpan = other.Data.AsSpan();
+            // Compare data arrays (only logical region; pool buffers may be larger)
+            var dataSpan = data.AsSpan(0, dataLength);
+            var otherDataSpan = other.data.AsSpan(0, other.dataLength);
             return dataSpan.SequenceEqual(otherDataSpan);
+        }
+
+        /// <summary>
+        /// Returns the rented sample buffer to <see cref="ArrayPool{T}.Shared"/>.
+        /// After disposal the image must not be used.
+        /// </summary>
+        public void Dispose()
+        {
+            ReturnBuffer();
+            GC.SuppressFinalize(this);
+        }
+
+        private void ReturnBuffer()
+        {
+            // Ensure the buffer is returned only once even under racing finalizer/Dispose.
+            if (System.Threading.Interlocked.Exchange(ref disposed, 1) != 0) return;
+            var buffer = data;
+            data = Array.Empty<int>();
+            if (buffer != null && buffer.Length > 0)
+            {
+                ArrayPool<int>.Shared.Return(buffer, clearArray: false);
+            }
         }
 
         /// <summary>
