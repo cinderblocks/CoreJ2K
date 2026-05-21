@@ -80,8 +80,8 @@ CoreJ2K is a **pure C# implementation** of the JPEG 2000 image compression stand
 | Feature | Description |
 |---------|-------------|
 | **🏆 Standards Compliant** | 100% JPEG 2000 Part 1 (ISO/IEC 15444-1) • 27 codestream markers • 22 JP2 boxes |
-| **⚡ Modern .NET** | .NET Standard 2.0/2.1 • .NET 8/9 • .NET Framework 4.8.1 • All platforms |
-| **🎯 Production Ready** | Lossless/Lossy • ROI • Files >4GB • Error resilience • 369+ tests |
+| **⚡ Modern .NET** | .NET Standard 2.0/2.1 • .NET 8/9/10 • .NET Framework 4.8.1 (via netstandard2.0) • All platforms |
+| **🎯 Production Ready** | Lossless/Lossy • ROI • Files >4GB • Error resilience • 2500+ tests |
 | **📦 Easy Integration** | NuGet packages • Simple API • SkiaSharp/ImageSharp/System.Drawing support |
 | **🆓 Open Source** | BSD-3-Clause • No fees • Active development • Community driven |
 
@@ -160,14 +160,14 @@ if (decoder.SupportsFastTileAccess())
     bool usedFast = decoder.SeekToTile(500); // Instant!
     
     // Or access by coordinates
-    decoder.setTile(x, y); // Also uses TLM fast path internally
+    decoder.SetTile(x, y); // Also uses TLM fast path internally
 }
 else
 {
     Console.WriteLine("⚠ No TLM - sequential access only");
-    
+
     // Falls back to O(n) sequential parsing
-    decoder.setTile(x, y); // Must parse all previous tiles
+    decoder.SetTile(x, y); // Must parse all previous tiles
 }
 
 // Performance improvements with TLM:
@@ -417,7 +417,7 @@ if (decoder.SupportsFastTileAccess())
 else
 {
     // O(n) sequential fallback
-    decoder.setTile(x, y);    // Parse all previous tiles
+    decoder.SetTile(x, y);    // Parse all previous tiles
 }
 ```
 
@@ -475,7 +475,7 @@ Quick comparison with major JPEG 2000 libraries:
 | **Memory Safety** | ✅ Managed | ⚠️ Manual | ⚠️ Manual | ✅ Managed | ⚠️ Manual |
 | **Pointer Markers** | ✅ Full R/W | ✅ Full R/W | ⚠️ Read only | ⚠️ Read only | ✅ Full R/W |
 | **Files >4GB** | ✅ Yes | ✅ Yes | ⚠️ Limited | ❌ No | ✅ Yes |
-| **Active Dev** | ✅ 2026 | ✅ 2024 | ✅ 2024 | ❌ 2010 | ✅ 2024 |
+| **Active Dev** | ✅ 2026 | ✅ 2025 | ✅ 2025 | ❌ 2010 | ✅ 2025 |
 
 **CoreJ2K Unique Advantages:**
 - Only open-source .NET library with full Part 1 compliance
@@ -560,7 +560,7 @@ Contributions welcome! Ways to help:
 Copyright (c) 1999-2000 JJ2000 Partners
 Copyright (c) 2007-2012 Jason S. Clary
 Copyright (c) 2013-2016 Anders Gustafsson, Cureos AB
-Copyright (c) 2024-2025 Sjofn LLC
+Copyright (c) 2024-2026 Sjofn LLC
 ```
 
 Free to use in commercial and open-source projects. No licensing fees.
@@ -618,12 +618,12 @@ Free to use in commercial and open-source projects. No licensing fees.
 | **License** | BSD (Open) | Commercial | BSD (Open) | JJ2000 (Open) | MIT (Open) | PIL (Open) | Commercial |
 | **Cost** | ✅ Free | ❌ $$$$ | ✅ Free | ✅ Free | ✅ Free | ✅ Free | ❌ $$$$ |
 | **Active Development** | ✅ Active | ✅ Active | ✅ Active | ❌ Abandoned | ⚠️ Minimal | ✅ Active | ✅ Active |
-| **Last Update** | 2025 | 2024 | 2024 | 2010 | 2022 | 2025 | 2024 |
+| **Last Update** | 2026 | 2025 | 2025 | 2010 | 2022 | 2025 | 2025 |
 | **Platform Support** | .NET all | All | All | JVM | All | All | Windows mainly |
 | **Cross-platform** | ✅ Full | ✅ Full | ✅ Full | ✅ Full | ✅ Full | ✅ Full | ⚠️ Limited |
 | **Memory Safety** | ✅ Managed | ⚠️ Manual | ⚠️ Manual | ✅ Managed | ⚠️ Manual | ✅ Managed | ⚠️ Manual |
 | **Multi-threading** | ✅ Safe | ✅ Yes | ✅ Yes | ⚠️ Limited | ⚠️ Limited | ✅ Yes | ✅ Yes |
-| **SIMD Optimization** | ⚠️ Planned | ✅ Full | ✅ Full | ❌ No | ❌ No | ⚠️ Limited | ✅ Full |
+| **SIMD Optimization** | ✅ Yes (AVX/auto-vec) | ✅ Full | ✅ Full | ❌ No | ❌ No | ⚠️ Limited | ✅ Full |
 
 ### Performance and Quality
 
