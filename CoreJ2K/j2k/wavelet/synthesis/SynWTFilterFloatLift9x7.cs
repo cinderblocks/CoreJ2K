@@ -356,7 +356,12 @@ namespace CoreJ2K.j2k.wavelet.synthesis
             lk++; hk++; ik += 2;
 
             int evenEnd = outOff + 2 * (lowLen - 1); // last even output index
-            while (ik < evenEnd)
+            // For even outLen: lowLen==highLen, so the last even sample has BOTH high neighbours;
+            // include it in the inner loop (ik <= evenEnd).
+            // For odd outLen: the last even sample (extra low) has no right high neighbour;
+            // write it separately below with symmetric extension (ik < evenEnd, then boundary).
+            int evenLoopEnd = (outLen % 2 == 0) ? evenEnd + 1 : evenEnd;
+            while (ik < evenLoopEnd)
             {
                 outSig[ik] = lowSig[lk] * INV_KL - DELTA_OVER_KH * (highSig[hk - 1] + highSig[hk]);
                 lk++; hk++; ik += 2;
@@ -364,6 +369,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
             // head boundary (only when lowLen > highLen, i.e. odd outLen > 2)
             if (outLen % 2 == 1 && outLen > 2)
             {
+                // odd outLen: one extra low sample with only a left high neighbour
                 outSig[ik] = lowSig[lk] * INV_KL - TWO_DELTA_OVER_KH * highSig[hk - 1];
             }
 
@@ -415,7 +421,10 @@ namespace CoreJ2K.j2k.wavelet.synthesis
             ik += 2;
 
             int evenBetaEnd = outOff + 2 * (lowLen - 1);
-            ik = LiftStride2(outSig, ik, evenBetaEnd, BETA);
+            // For even outLen: last even sample (evenBetaEnd) has both odd neighbours — include in inner loop.
+            // For odd outLen: last even sample has only a left odd neighbour — handle as boundary below.
+            int evenBetaLoopEnd = (outLen % 2 == 0) ? evenBetaEnd + 2 : evenBetaEnd;
+            ik = LiftStride2(outSig, ik, evenBetaLoopEnd, BETA);
             if (outLen % 2 == 1 && outLen > 2)
             {
                 // After the SIMD/scalar inner loop, ik should equal evenBetaEnd.
@@ -425,7 +434,10 @@ namespace CoreJ2K.j2k.wavelet.synthesis
             // ---- Phase 4: ALPHA (odd positions) ----
             ik = outOff + 1;
             int oddAlphaEnd = outOff + 2 * highLen - 1;
-            ik = LiftStride2(outSig, ik, oddAlphaEnd, ALPHA);
+            // For odd outLen: last odd sample (oddAlphaEnd) has both even neighbours — include in inner loop.
+            // For even outLen: last odd sample has only a left even neighbour — handle as boundary below.
+            int oddAlphaLoopEnd = (outLen % 2 == 1) ? oddAlphaEnd + 2 : oddAlphaEnd;
+            ik = LiftStride2(outSig, ik, oddAlphaLoopEnd, ALPHA);
             if (outLen % 2 == 0)
             {
                 outSig[oddAlphaEnd] -= TWO_ALPHA * outSig[oddAlphaEnd - 1];
@@ -451,7 +463,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
             int ik = start;
 
 #if NET6_0_OR_GREATER
-            if (System.Runtime.Intrinsics.X86.Avx.IsSupported && (endExclusive - start) >= 32)
+            if (System.Runtime.Intrinsics.X86.Avx.IsSupported && (endExclusive - start) >= 8)
             {
                 ik = LiftStride2_Avx(outSig, start, endExclusive, coeff);
             }
@@ -467,41 +479,27 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         [MethodImpl(MethodImplOptions.AggressiveOptimization)]
         private static int LiftStride2_Avx(float[] outSig, int start, int endExclusive, float coeff)
         {
-            // Process 8 stride-2 lifting positions per iteration (ik, ik+2, ..., ik+14).
-            // We need samples at positions [ik-1 .. ik+15] = 17 contiguous floats, which we
-            // load as two overlapping 256-bit vectors:
-            //   vL = outSig[ik-1 .. ik+6]    (8 floats starting at ik-1)
-            //   vR = outSig[ik+1 .. ik+8]    (8 floats starting at ik+1, == vL shifted left by 2)
-            // followed by another pair for the second half. To stay simple and correctness-
-            // critical, we use Vector256.LoadUnsafe at three offsets per block:
-            //   centres  : ik
-            //   lefts    : ik - 1
-            //   rights   : ik + 1
-            // each 8 lanes wide but containing both even and odd parity samples. The trick
-            // is that we only WRITE back to even (or odd, depending on start) positions —
-            // every other lane is a "don't care" that will be overwritten with its original
-            // value via a masked store.
+            // Process 4 stride-2 lifting positions per iteration (ik, ik+2, ik+4, ik+6).
+            // Load 8 floats at ik, ik-1, and ik+1.  The stride-2 mask selects lanes 0,2,4,6
+            // as the 4 active (same-parity) positions; lanes 1,3,5,7 are pass-through.
             //
-            // We use a stride-2 mask: lanes 0,2,4,6 are active (one parity), 1,3,5,7 are
-            // pass-through. The shifted load lefts/rights happen to align so that the
-            // contribution at every active lane is exactly outSig[ik-1] + outSig[ik+1].
+            //   For each active lane 2j (j=0..3):
+            //     centre = outSig[ik + 2j]
+            //     left   = outSig[ik + 2j - 1]   (lane 2j of the ik-1 load)
+            //     right  = outSig[ik + 2j + 1]   (lane 2j of the ik+1 load)
             //
-            // 8 active lanes * stride 2 = 16 output positions advanced per block.
+            //   4 active updates span 8 array elements, so ik advances by 8 per iteration.
 
             var vCoeff = System.Runtime.Intrinsics.Vector256.Create(coeff);
-            // Mask: keep lanes where (lane & 1) == 0 (even lanes of the stride-2 view).
-            // We'll use this as a blend selector. blendv selects from arg2 when mask sign-bit set.
+            // Mask: lanes 0,2,4,6 active (sign-bit set = -1); lanes 1,3,5,7 pass-through (0).
+            // BlendVariable selects vUpdated where sign-bit set, vC otherwise.
             var keepMaskInt = System.Runtime.Intrinsics.Vector256.Create(-1, 0, -1, 0, -1, 0, -1, 0);
             var keepMask = System.Runtime.Intrinsics.Vector256.AsSingle(keepMaskInt);
 
             int ik = start;
-            // We need to read up to outSig[ik + 8] (= rights at lane 7). For safe loads at
-            // both ends, require: ik - 1 >= 0 (caller ensures start >= outOff + 1 typically)
-            // and ik + 8 < outSig.Length. Bound the loop to satisfy both.
-            int last = endExclusive - 16; // last block-start such that ik+16 <= endExclusive
-            // Also ensure right-edge load (ik+1 .. ik+8) is in bounds. outSig length is
-            // outOff + outLen, and endExclusive <= outOff + outLen - 1, so ik+8 < length
-            // is satisfied automatically when ik <= last and last+8 < endExclusive.
+            // Require ik-1 >= 0 (caller ensures start >= 1) and ik+8 <= outSig.Length.
+            // With ik <= last = endExclusive - 8, the right-edge load at ik+1..ik+8 is safe.
+            int last = endExclusive - 8;
 
             while (ik <= last)
             {
@@ -518,12 +516,10 @@ namespace CoreJ2K.j2k.wavelet.synthesis
                     ref System.Runtime.InteropServices.MemoryMarshal.GetArrayDataReference(outSig),
                     (nuint)(ik + 1));
 
-                // Compute updated values for ALL 8 lanes (we'll blend later to keep only
-                // the active stride-2 parity).
+                // Update all 8 lanes; the blend then keeps only the 4 active (even) ones.
                 var vUpdated = vC - vCoeff * (vL + vR);
 
-                // Blend: keep vUpdated where mask sign bit is set (lanes 0,2,4,6), keep
-                // original vC where mask sign bit is clear (lanes 1,3,5,7).
+                // Blend: write vUpdated to lanes 0,2,4,6; restore original vC to lanes 1,3,5,7.
                 var vOut = System.Runtime.Intrinsics.X86.Avx.BlendVariable(vC, vUpdated, keepMask);
 
                 System.Runtime.Intrinsics.Vector256.StoreUnsafe(
@@ -531,7 +527,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
                     ref System.Runtime.InteropServices.MemoryMarshal.GetArrayDataReference(outSig),
                     (nuint)ik);
 
-                ik += 16; // advanced 8 active (parity) positions, each at stride 2
+                ik += 8; // 4 active stride-2 positions span 8 array elements
             }
 
             return ik;
