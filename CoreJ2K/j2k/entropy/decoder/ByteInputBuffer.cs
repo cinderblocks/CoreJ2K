@@ -56,7 +56,7 @@ namespace CoreJ2K.j2k.entropy.decoder
     {
 
         /// <summary>The byte array containing the data </summary>
-        private byte[] buf;
+        private byte[]? buf;
 
         /// <summary>The index one greater than the last valid character in the input
         /// stream buffer 
@@ -124,7 +124,7 @@ namespace CoreJ2K.j2k.entropy.decoder
         /// <param name="length">the maximum number of bytes to read frmo the buffer.
         /// 
         /// </param>
-        public virtual void SetByteArray(byte[] buf, int offset, int length)
+        public virtual void SetByteArray(byte[]? buf, int offset, int length)
         {
             // In same buffer?
             if (buf == null)

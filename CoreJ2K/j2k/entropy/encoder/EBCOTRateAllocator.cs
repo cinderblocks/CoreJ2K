@@ -119,7 +119,7 @@ namespace CoreJ2K.j2k.entropy.encoder
         private readonly Coord[][][] numPrec;
 
         /// <summary>Array containing the layers information. </summary>
-        private EBCOTLayer[] layers;
+        private EBCOTLayer[] layers = null!;
 
         /// <summary>The log of 2, natural base </summary>
         private static readonly double LOG2 = Math.Log(2);
@@ -194,8 +194,8 @@ namespace CoreJ2K.j2k.entropy.encoder
 
             int minsbi, maxsbi;
             int i;
-            SubbandAn sb, sb2;
-            Coord ncblks = null;
+            SubbandAn? sb, sb2;
+            Coord? ncblks = null;
 
             // If we do timing create necessary structures
 #if DO_TIMING
@@ -249,8 +249,8 @@ namespace CoreJ2K.j2k.entropy.encoder
             int trx0, try0, trx1, try1; // Current tile position in the reduced
                                         // resolution image domain
             int xrsiz, yrsiz; // Component sub-sampling factors
-            Coord tileI = null;
-            Coord nTiles = null;
+            Coord? tileI = null;
+            Coord? nTiles = null;
             int xsiz, ysiz, x0siz, y0siz;
             int xt0siz, yt0siz;
             int xtsiz, ytsiz;
@@ -511,7 +511,7 @@ namespace CoreJ2K.j2k.entropy.encoder
             // bitrate. Thus, 'totenclength' can not limit the total amount of
             // encoded data, as intended.
 
-            ho = headEnc.Length;
+            ho = headEnc!.Length;
             np = src.ImgWidth * src.ImgHeight / 8f;
 
             // SOT marker must be taken into account
@@ -676,9 +676,9 @@ namespace CoreJ2K.j2k.entropy.encoder
             int numComps, numTiles; // numBytes removed
             int c, r, t, s, sidx, k;
             //int slope;
-            SubbandAn subb;
-            CBlkRateDistStats ccb = null;
-            Coord ncblks = null;
+            SubbandAn? subb;
+            CBlkRateDistStats? ccb = null;
+            Coord? ncblks = null;
             int last_sidx;
             float fslope;
 #if DO_TIMING
@@ -740,7 +740,7 @@ namespace CoreJ2K.j2k.entropy.encoder
                         subb = ccb.sb;
 
                         //Get the coded code-block resolution level index
-                        r = subb.resLvl;
+                        r = subb!.resLvl;
 
                         //Get the coded code-block subband index
                         s = subb.sbandIdx;
@@ -753,7 +753,7 @@ namespace CoreJ2K.j2k.entropy.encoder
                         last_sidx = -1;
                         for (k = ccb.nVldTrunc - 1; k >= 0; k--)
                         {
-                            fslope = ccb.truncSlopes[k];
+                            fslope = ccb.truncSlopes![k];
                             if (fslope > maxSlope)
                                 maxSlope = fslope;
                             if (fslope < minSlope)
@@ -761,13 +761,13 @@ namespace CoreJ2K.j2k.entropy.encoder
                             sidx = GetLimitedSIndexFromSlope(fslope);
                             for (; sidx > last_sidx; sidx--)
                             {
-                                RDSlopesRates[sidx] += ccb.truncRates[ccb.truncIdxs[k]];
+                                RDSlopesRates[sidx] += ccb.truncRates![ccb.truncIdxs![k]];
                             }
                             last_sidx = GetLimitedSIndexFromSlope(fslope);
                         }
 
                         //Fills code-blocks array
-                        cblks[t][c][r][s][(ccb.m * ncblks.x) + ccb.n] = ccb;
+                        cblks[t][c][r][s][(ccb.m * ncblks!.x) + ccb.n] = ccb;
                         ccb = null;
 
 #if DO_TIMING
@@ -794,10 +794,10 @@ namespace CoreJ2K.j2k.entropy.encoder
             var nPrec = 0;
             int maxBytes, actualBytes;
             float rdThreshold;
-            SubbandAn sb;
+            SubbandAn? sb;
             //float threshold;
-            BitOutputBuffer hBuff = null;
-            byte[] bBuff = null;
+            BitOutputBuffer? hBuff = null;
+            byte[]? bBuff = null;
             int[] tileLengths; // Length of each tile
             int tmp;
             bool sopUsed; // Should SOP markers be used ?
@@ -814,15 +814,15 @@ namespace CoreJ2K.j2k.entropy.encoder
             rdThreshold = maxSlope;
 
             // TLM SUPPORT: Initialize TLM data collection if enabled
-            codestream.metadata.TilePartLengthsData tlmData = null;
-            if (headEnc.IsTLMEnabled)
+            codestream.metadata.TilePartLengthsData? tlmData = null;
+            if (headEnc!.IsTLMEnabled)
             {
                 tlmData = new codestream.metadata.TilePartLengthsData();
             }
 
             // PLT SUPPORT: Initialize PLT data collection if enabled
-            codestream.metadata.PacketLengthsData pltData = null;
-            if (headEnc.IsPLTEnabled)
+            codestream.metadata.PacketLengthsData? pltData = null;
+            if (headEnc!.IsPLTEnabled)
             {
                 pltData = new codestream.metadata.PacketLengthsData();
             }
@@ -878,7 +878,7 @@ namespace CoreJ2K.j2k.entropy.encoder
 
                         while (sb.subb_LL != null)
                         {
-                            sb = sb.subb_LL;
+                            sb = sb!.subb_LL;
                         }
 
                         for (var r = 0; r < mrl; r++)
@@ -895,7 +895,7 @@ namespace CoreJ2K.j2k.entropy.encoder
                                 hBuff = pktEnc.encodePacket(l + 1, c, r, t, cblks[t][c][r], truncIdxs[t][l][c][r], hBuff, bBuff, p);
                                 if (pktEnc.PacketWritable)
                                 {
-                                    tmp = bsWriter.writePacketHead(hBuff.Buffer, hBuff.Length, true, sopUsed, ephUsed);
+                                    tmp = bsWriter.writePacketHead(hBuff!.Buffer, hBuff!.Length, true, sopUsed, ephUsed);
                                     tmp += bsWriter.writePacketBody(pktEnc.LastBodyBuf, pktEnc.LastBodyLen, true, pktEnc.ROIinPkt, pktEnc.ROILen);
                                     actualBytes += tmp;
                                     tileLengths[t] += tmp;
@@ -904,7 +904,7 @@ namespace CoreJ2K.j2k.entropy.encoder
                                     pltData?.AddPacket(t, tmp);
                                 }
                             } // End loop on precincts
-                            sb = sb.parentband;
+                            sb = sb!.parentband;
                         } // End loop on resolution levels
                     } // End loop on components
                 } // end loop on tiles
@@ -1049,10 +1049,10 @@ namespace CoreJ2K.j2k.entropy.encoder
             bool ephUsed; // Should EPH markers be used ?
             var nc = src.NumComps;
             var mrl = new int[nc];
-            SubbandAn sb;
+            SubbandAn? sb;
             float threshold;
-            BitOutputBuffer hBuff = null;
-            byte[] bBuff = null;
+            BitOutputBuffer? hBuff = null;
+            byte[]? bBuff = null;
             var nPrec = 0;
 
             // Max number of resolution levels in the tile
@@ -1109,7 +1109,7 @@ namespace CoreJ2K.j2k.entropy.encoder
                             sb = src.GetAnSubbandTree(t, c);
                             for (var i = mrl[c]; i > r; i--)
                             {
-                                sb = sb.subb_LL;
+                                sb = sb!.subb_LL;
                             }
 
                             threshold = layers[l].rdThreshold;
@@ -1119,7 +1119,7 @@ namespace CoreJ2K.j2k.entropy.encoder
 
                             if (pktEnc.PacketWritable)
                             {
-                                bsWriter.writePacketHead(hBuff.Buffer, hBuff.Length, false, sopUsed, ephUsed);
+                                bsWriter.writePacketHead(hBuff!.Buffer, hBuff!.Length, false, sopUsed, ephUsed);
                                 bsWriter.writePacketBody(pktEnc.LastBodyBuf, pktEnc.LastBodyLen, false, pktEnc.ROIinPkt, pktEnc.ROILen);
                             }
                         } // End loop on precincts
@@ -1160,10 +1160,10 @@ namespace CoreJ2K.j2k.entropy.encoder
             bool ephUsed; // Should EPH markers be used ?
             var nc = src.NumComps;
             int mrl;
-            SubbandAn sb;
+            SubbandAn? sb;
             float threshold;
-            BitOutputBuffer hBuff = null;
-            byte[] bBuff = null;
+            BitOutputBuffer? hBuff = null;
+            byte[]? bBuff = null;
             var nPrec = 0;
 
             var minlys = 100000; // minimum layer start index of each component
@@ -1208,7 +1208,7 @@ namespace CoreJ2K.j2k.entropy.encoder
                             sb = src.GetAnSubbandTree(t, c);
                             for (var i = mrl; i > r; i--)
                             {
-                                sb = sb.subb_LL;
+                                sb = sb!.subb_LL;
                             }
 
                             threshold = layers[l].rdThreshold;
@@ -1218,7 +1218,7 @@ namespace CoreJ2K.j2k.entropy.encoder
 
                             if (pktEnc.PacketWritable)
                             {
-                                bsWriter.writePacketHead(hBuff.Buffer, hBuff.Length, false, sopUsed, ephUsed);
+                                bsWriter.writePacketHead(hBuff!.Buffer, hBuff!.Length, false, sopUsed, ephUsed);
                                 bsWriter.writePacketBody(pktEnc.LastBodyBuf, pktEnc.LastBodyLen, false, pktEnc.ROIinPkt, pktEnc.ROILen);
                             }
                         } // end loop on precincts
@@ -1259,10 +1259,10 @@ namespace CoreJ2K.j2k.entropy.encoder
             bool ephUsed; // Should EPH markers be used ?
             var nc = src.NumComps;
             int mrl;
-            SubbandAn sb;
+            SubbandAn? sb;
             float threshold;
-            BitOutputBuffer hBuff = null;
-            byte[] bBuff = null;
+            BitOutputBuffer? hBuff = null;
+            byte[]? bBuff = null;
 
             // Computes current tile offset in the reference grid
             var nTiles = src.GetNumTiles(null);
@@ -1392,7 +1392,7 @@ namespace CoreJ2K.j2k.entropy.encoder
                                 sb = src.GetAnSubbandTree(t, c);
                                 for (var i = mrl; i > r; i--)
                                 {
-                                    sb = sb.subb_LL;
+                                    sb = sb!.subb_LL;
                                 }
 
                                 threshold = layers[l].rdThreshold;
@@ -1402,7 +1402,7 @@ namespace CoreJ2K.j2k.entropy.encoder
 
                                 if (pktEnc.PacketWritable)
                                 {
-                                    bsWriter.writePacketHead(hBuff.Buffer, hBuff.Length, false, sopUsed, ephUsed);
+                                    bsWriter.writePacketHead(hBuff!.Buffer, hBuff!.Length, false, sopUsed, ephUsed);
                                     bsWriter.writePacketBody(pktEnc.LastBodyBuf, pktEnc.LastBodyLen, false, pktEnc.ROIinPkt, pktEnc.ROILen);
                                 }
                             } // layers
@@ -1477,10 +1477,10 @@ namespace CoreJ2K.j2k.entropy.encoder
             bool ephUsed; // Should EPH markers be used ?
             var nc = src.NumComps;
             int mrl;
-            SubbandAn sb;
+            SubbandAn? sb;
             float threshold;
-            BitOutputBuffer hBuff = null;
-            byte[] bBuff = null;
+            BitOutputBuffer? hBuff = null;
+            byte[]? bBuff = null;
 
             // Computes current tile offset in the reference grid
             var nTiles = src.GetNumTiles(null);
@@ -1613,7 +1613,7 @@ namespace CoreJ2K.j2k.entropy.encoder
                                 sb = src.GetAnSubbandTree(t, c);
                                 for (var i = mrl; i > r; i--)
                                 {
-                                    sb = sb.subb_LL;
+                                    sb = sb!.subb_LL;
                                 }
 
                                 threshold = layers[l].rdThreshold;
@@ -1623,7 +1623,7 @@ namespace CoreJ2K.j2k.entropy.encoder
 
                                 if (pktEnc.PacketWritable)
                                 {
-                                    bsWriter.writePacketHead(hBuff.Buffer, hBuff.Length, false, sopUsed, ephUsed);
+                                    bsWriter.writePacketHead(hBuff!.Buffer, hBuff!.Length, false, sopUsed, ephUsed);
                                     bsWriter.writePacketBody(pktEnc.LastBodyBuf, pktEnc.LastBodyLen, false, pktEnc.ROIinPkt, pktEnc.ROILen);
                                 }
                             } // Layers
@@ -1698,10 +1698,10 @@ namespace CoreJ2K.j2k.entropy.encoder
             bool ephUsed; // Should EPH markers be used ?
             var nc = src.NumComps;
             int mrl;
-            SubbandAn sb;
+            SubbandAn? sb;
             float threshold;
-            BitOutputBuffer hBuff = null;
-            byte[] bBuff = null;
+            BitOutputBuffer? hBuff = null;
+            byte[]? bBuff = null;
 
             // Computes current tile offset in the reference grid
             var nTiles = src.GetNumTiles(null);
@@ -1831,7 +1831,7 @@ namespace CoreJ2K.j2k.entropy.encoder
                                 sb = src.GetAnSubbandTree(t, c);
                                 for (var i = mrl; i > r; i--)
                                 {
-                                    sb = sb.subb_LL;
+                                    sb = sb!.subb_LL;
                                 }
 
                                 threshold = layers[l].rdThreshold;
@@ -1841,7 +1841,7 @@ namespace CoreJ2K.j2k.entropy.encoder
 
                                 if (pktEnc.PacketWritable)
                                 {
-                                    bsWriter.writePacketHead(hBuff.Buffer, hBuff.Length, false, sopUsed, ephUsed);
+                                    bsWriter.writePacketHead(hBuff!.Buffer, hBuff!.Length, false, sopUsed, ephUsed);
                                     bsWriter.writePacketBody(pktEnc.LastBodyBuf, pktEnc.LastBodyLen, false, pktEnc.ROIinPkt, pktEnc.ROILen);
                                 }
                             } // layers
@@ -1920,9 +1920,9 @@ namespace CoreJ2K.j2k.entropy.encoder
             int actualBytes; // Actual number of bytes for a layer
             float fmint; // Minimum of the current threshold interval
             float ft; // Current threshold
-            SubbandAn sb; // Current subband
-            BitOutputBuffer hBuff; // The packet head buffer
-            byte[] bBuff; // The packet body buffer
+            SubbandAn? sb; // Current subband
+            BitOutputBuffer? hBuff; // The packet head buffer
+            byte[]? bBuff; // The packet body buffer
             int sidx; // The index in the summary table
             bool sopUsed; // Should SOP markers be used ?
             bool ephUsed; // Should EPH markers be used ?
@@ -2019,11 +2019,11 @@ namespace CoreJ2K.j2k.entropy.encoder
                                 if (pktEnc.PacketWritable)
                                 {
                                     bBuff = pktEnc.LastBodyBuf;
-                                    actualBytes += bsWriter.writePacketHead(hBuff.Buffer, hBuff.Length, true, sopUsed, ephUsed);
+                                    actualBytes += bsWriter.writePacketHead(hBuff!.Buffer, hBuff!.Length, true, sopUsed, ephUsed);
                                     actualBytes += bsWriter.writePacketBody(bBuff, pktEnc.LastBodyLen, true, pktEnc.ROIinPkt, pktEnc.ROILen);
                                 }
                             } // end loop on precincts
-                            sb = sb.parentband;
+                            sb = sb!.parentband;
                         } // End loop on resolution levels
                     } // End loop on components
                 } // End loop on tiles
@@ -2253,26 +2253,26 @@ namespace CoreJ2K.j2k.entropy.encoder
         /// <param name="fthresh">The value of the rate-distortion threshold
         /// 
         /// </param>
-        private void findTruncIndices(int layerIdx, int compIdx, int lvlIdx, int tileIdx, SubbandAn subb, float fthresh, int precinctIdx)
+        private void findTruncIndices(int layerIdx, int compIdx, int lvlIdx, int tileIdx, SubbandAn? subb, float fthresh, int precinctIdx)
         {
             int minsbi, maxsbi, b, n; // bIdx removed
                                       //Coord ncblks = null;
-            SubbandAn sb;
+            SubbandAn? sb;
             CBlkRateDistStats cur_cblk;
             var prec = pktEnc.GetPrecInfo(tileIdx, compIdx, lvlIdx, precinctIdx);
             Coord cbCoord;
 
             sb = subb;
-            while (sb.subb_HH != null)
+            while (sb!.subb_HH != null)
             {
-                sb = sb.subb_HH;
+                sb = sb!.subb_HH;
             }
             minsbi = (lvlIdx == 0) ? 0 : 1;
             maxsbi = (lvlIdx == 0) ? 1 : 4;
 
             int yend, xend;
 
-            sb = (SubbandAn)subb.GetSubbandByIdx(lvlIdx, minsbi);
+            sb = (SubbandAn)subb!.GetSubbandByIdx(lvlIdx, minsbi);
             for (var s = minsbi; s < maxsbi; s++)
             {
                 //loop on subbands

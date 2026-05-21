@@ -65,7 +65,8 @@ namespace CoreJ2K.j2k.image
                 {
                     for (var t = nTiles - 1; t >= 0; t--)
                     {
-                        if (tileDef[t] != null && (((int)tileDef[t]) != InvCompTransf.NONE))
+                        var td = tileDef[t];
+                        if (td != null && (((int)td) != InvCompTransf.NONE))
                         {
                             return true;
                         }

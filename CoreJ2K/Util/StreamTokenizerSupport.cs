@@ -172,10 +172,10 @@ namespace CoreJ2K.Util
         private bool pushedback = false;
         private int lineno = 1;
 
-        private readonly BackReader inReader;
-        private readonly BackStringReader inStringReader;
-        private readonly BackInputStream inStream;
-        private System.Text.StringBuilder buf;
+        private readonly BackReader? inReader;
+        private readonly BackStringReader? inStringReader;
+        private readonly BackInputStream? inStream;
+        private System.Text.StringBuilder buf = null!;
 
 
         /// <summary>
@@ -207,7 +207,7 @@ namespace CoreJ2K.Util
         /// If the current token is a word token, this field contains a string giving the characters of the word 
         /// token.
         /// </summary>
-        public string sval;
+        public string? sval;
 
         /// <summary>
         /// After a call to the nextToken method, this field contains the type of the token just read.

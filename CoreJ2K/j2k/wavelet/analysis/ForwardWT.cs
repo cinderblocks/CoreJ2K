@@ -181,13 +181,13 @@ namespace CoreJ2K.j2k.wavelet.analysis
             return new ForwWTFull(src, encSpec, cb0x, cb0y);
         }
         public abstract bool IsReversible(int param1, int param2);
-        public abstract CBlkWTData GetNextInternCodeBlock(int param1, CBlkWTData param2);
+        public abstract CBlkWTData? GetNextInternCodeBlock(int param1, CBlkWTData? param2);
         public abstract int GetFixedPoint(int param1);
         public abstract WaveletFilter[] GetHorAnWaveletFilters(int param1, int param2);
         public abstract WaveletFilter[] GetVertAnWaveletFilters(int param1, int param2);
         public abstract SubbandAn GetAnSubbandTree(int param1, int param2);
         public abstract int GetDecompLevels(int param1, int param2);
-        public abstract CBlkWTData GetNextCodeBlock(int param1, CBlkWTData param2);
+        public abstract CBlkWTData? GetNextCodeBlock(int param1, CBlkWTData? param2);
         public abstract int GetImplementationType(int param1);
         public abstract int GetDataType(int param1, int param2);
         public abstract int GetDecomp(int param1, int param2);

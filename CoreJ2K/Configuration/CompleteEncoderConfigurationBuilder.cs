@@ -14,10 +14,10 @@ namespace CoreJ2K.Configuration
     public class CompleteEncoderConfigurationBuilder
     {
         private readonly J2KEncoderConfiguration _encoderConfig = new J2KEncoderConfiguration();
-        private QuantizationConfigurationBuilder _quantization = null;
-        private WaveletConfigurationBuilder _wavelet = null;
-        private ProgressionConfigurationBuilder _progression = null;
-        private MetadataConfigurationBuilder _metadata = null;
+        private QuantizationConfigurationBuilder? _quantization = null;
+        private WaveletConfigurationBuilder? _wavelet = null;
+        private ProgressionConfigurationBuilder? _progression = null;
+        private MetadataConfigurationBuilder? _metadata = null;
         
         /// <summary>
         /// Gets the underlying encoder configuration.
@@ -27,22 +27,22 @@ namespace CoreJ2K.Configuration
         /// <summary>
         /// Gets the quantization configuration.
         /// </summary>
-        public QuantizationConfigurationBuilder Quantization => _quantization;
+        public QuantizationConfigurationBuilder? Quantization => _quantization;
         
         /// <summary>
         /// Gets the wavelet configuration.
         /// </summary>
-        public WaveletConfigurationBuilder Wavelet => _wavelet;
+        public WaveletConfigurationBuilder? Wavelet => _wavelet;
         
         /// <summary>
         /// Gets the progression configuration.
         /// </summary>
-        public ProgressionConfigurationBuilder Progression => _progression;
+        public ProgressionConfigurationBuilder? Progression => _progression;
         
         /// <summary>
         /// Gets the metadata configuration.
         /// </summary>
-        public MetadataConfigurationBuilder Metadata => _metadata;
+        public MetadataConfigurationBuilder? Metadata => _metadata;
         
         #region Quality Presets
         

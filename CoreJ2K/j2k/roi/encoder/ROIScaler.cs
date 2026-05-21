@@ -504,7 +504,7 @@ namespace CoreJ2K.j2k.roi.encoder
         /// 
         /// </returns>
         /// <seealso cref="CBlkWTData" />
-        public virtual CBlkWTData GetNextCodeBlock(int c, CBlkWTData cblk)
+        public virtual CBlkWTData? GetNextCodeBlock(int c, CBlkWTData? cblk)
         {
             return GetNextInternCodeBlock(c, cblk);
         }
@@ -531,7 +531,7 @@ namespace CoreJ2K.j2k.roi.encoder
         /// 
         /// </returns>
         /// <seealso cref="CBlkWTData" />
-        public virtual CBlkWTData GetNextInternCodeBlock(int c, CBlkWTData cblk)
+        public virtual CBlkWTData? GetNextInternCodeBlock(int c, CBlkWTData? cblk)
         {
             int mi, i, j, k, wrap;
             int ulx, uly, w, h;

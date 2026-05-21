@@ -81,12 +81,12 @@ namespace CoreJ2K.j2k.entropy.decoder
         //private long[] time;
 
         /// <summary>The bit based input for arithmetic coding bypass (i.e. raw) coding </summary>
-        private ByteToBitInput bin;
+        private ByteToBitInput? bin;
 
         /// <summary>The MQ decoder to use. It has in as the underlying source of coded
         /// data. 
         /// </summary>
-        private MQDecoder mq;
+        private MQDecoder? mq;
 
         /// <summary>The decoder spec </summary>
         private readonly DecoderSpecs decSpec;
@@ -417,7 +417,7 @@ namespace CoreJ2K.j2k.entropy.decoder
         /// <summary>The source code-block to entropy code (avoids reallocation for each
         /// code-block). 
         /// </summary>
-        private DecLyrdCBlk srcblk;
+        private DecLyrdCBlk srcblk = new DecLyrdCBlk();
 
         /// <summary>The maximum number of bit planes to decode for any code-block </summary>
         private readonly int mQuit;

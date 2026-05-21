@@ -351,7 +351,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// <seealso cref="getSynLowNegSupport">
         /// </seealso>
         /// <seealso cref="getSynLowPosSupport" />
-        public virtual float[] GetLPSynWaveForm(float[] input, float[] output)
+        public virtual float[] GetLPSynWaveForm(float[]? input, float[]? output)
         {
             return upsampleAndConvolve(input, GetLPSynthesisFilter(), output);
         }
@@ -378,7 +378,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// <seealso cref="getSynHighNegSupport">
         /// </seealso>
         /// <seealso cref="getSynHighPosSupport" />
-        public virtual float[] GetHPSynWaveForm(float[] input, float[] output)
+        public virtual float[] GetHPSynWaveForm(float[]? input, float[]? output)
         {
             return upsampleAndConvolve(input, GetHPSynthesisFilter(), output);
         }
@@ -408,7 +408,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// <returns> The resulting signal, of length in.length*2+wf.length-2
         /// 
         /// </returns>
-        private static float[] upsampleAndConvolve(float[] input, float[] wf, float[] output)
+        private static float[] upsampleAndConvolve(float[]? input, float[] wf, float[]? output)
         {
             // NOTE: the effective length of the signal 'in' upsampled by
             // 2 is 2*in.length-1 (not 2*in.length), so the resulting signal

@@ -64,35 +64,35 @@ namespace CoreJ2K.j2k.wavelet
         /// <returns> The parent subband, or null for the root one.
         /// 
         /// </returns>
-        public abstract Subband Parent { get; }
+        public abstract Subband? Parent { get; }
         /// <summary> Returns the LL child subband of this subband.
         /// 
         /// </summary>
         /// <returns> The LL child subband, or null if there are no childs.
         /// 
         /// </returns>
-        public abstract Subband LL { get; }
+        public abstract Subband? LL { get; }
         /// <summary> Returns the HL (horizontal high-pass) child subband of this subband.
         /// 
         /// </summary>
         /// <returns> The HL child subband, or null if there are no childs.
         /// 
         /// </returns>
-        public abstract Subband HL { get; }
+        public abstract Subband? HL { get; }
         /// <summary> Returns the LH (vertical high-pass) child subband of this subband.
         /// 
         /// </summary>
         /// <returns> The LH child subband, or null if there are no childs.
         /// 
         /// </returns>
-        public abstract Subband LH { get; }
+        public abstract Subband? LH { get; }
         /// <summary> Returns the HH child subband of this subband.
         /// 
         /// </summary>
         /// <returns> The HH child subband, or null if there are no childs.
         /// 
         /// </returns>
-        public abstract Subband HH { get; }
+        public abstract Subband? HH { get; }
         /// <summary> Returns the first leaf subband element in the next higher resolution
         /// level.
         /// 
@@ -101,7 +101,7 @@ namespace CoreJ2K.j2k.wavelet
         /// null if there is no higher resolution level.
         /// 
         /// </returns>
-        public virtual Subband NextResLevel
+        public virtual Subband? NextResLevel
         {
             get
             {
@@ -116,7 +116,7 @@ namespace CoreJ2K.j2k.wavelet
                 sb = this;
                 do
                 {
-                    sb = sb.Parent;
+                    sb = sb.Parent!;
                     if (sb == null)
                     {
                         // No higher resolution level
@@ -125,11 +125,11 @@ namespace CoreJ2K.j2k.wavelet
                 }
                 while (sb.resLvl == resLvl);
                 // Now go down to HL, which is in next higher resolution level
-                sb = sb.HL;
+                sb = sb.HL!;
                 // Now go down LL until get to a leaf
                 while (sb.isNode)
                 {
-                    sb = sb.LL;
+                    sb = sb.LL!;
                 }
                 return sb;
             }
@@ -142,7 +142,7 @@ namespace CoreJ2K.j2k.wavelet
         /// <returns> The horizontal wavelet filter
         /// 
         /// </returns>
-        public abstract WaveletFilter HorWFilter { get; }
+        public abstract WaveletFilter? HorWFilter { get; }
         /// <summary> This function returns the vertical wavelet filter relevant to this
         /// subband
         /// 
@@ -150,7 +150,7 @@ namespace CoreJ2K.j2k.wavelet
         /// <returns> The vertical wavelet filter
         /// 
         /// </returns>
-        public abstract WaveletFilter VerWFilter { get; }
+        public abstract WaveletFilter? VerWFilter { get; }
 
         /// <summary>The ID for the LL orientation </summary>
         public const int WT_ORIENT_LL = 0;
@@ -285,10 +285,10 @@ namespace CoreJ2K.j2k.wavelet
         /// </summary>
         protected internal virtual void initChilds()
         {
-            var subb_LL = LL;
-            var subb_HL = HL;
-            var subb_LH = LH;
-            var subb_HH = HH;
+            var subb_LL = LL!;
+            var subb_HL = HL!;
+            var subb_LH = LH!;
+            var subb_HH = HH!;
 
             // LL subband
             subb_LL.level = level + 1;
@@ -437,7 +437,7 @@ namespace CoreJ2K.j2k.wavelet
             {
 
                 case WT_ORIENT_LL:
-                    sb = Parent;
+                    sb = Parent!;
                     if (sb == null || sb.resLvl != resLvl)
                     {
                         // Already at top-level or last subband in res. level
@@ -450,23 +450,23 @@ namespace CoreJ2K.j2k.wavelet
                 //goto case WT_ORIENT_HL;
 
                 case WT_ORIENT_HL:
-                    return Parent.LH;
+                    return Parent!.LH;
 
                 case WT_ORIENT_LH:
-                    return Parent.HH;
+                    return Parent!.HH;
 
                 case WT_ORIENT_HH:
                     // This is the complicated one
                     sb = this;
                     while (sb.orientation == WT_ORIENT_HH)
                     {
-                        sb = sb.Parent;
+                        sb = sb.Parent!;
                     }
                     switch (sb.orientation)
                     {
 
                         case WT_ORIENT_LL:
-                            sb = sb.Parent;
+                            sb = sb.Parent!;
                             if (sb == null || sb.resLvl != resLvl)
                             {
                                 // Already at top-level or last subband in res. level
@@ -474,16 +474,16 @@ namespace CoreJ2K.j2k.wavelet
                             }
                             else
                             {
-                                sb = sb.HL;
+                                sb = sb.HL!;
                             }
                             break;
 
                         case WT_ORIENT_HL:
-                            sb = sb.Parent.LH;
+                            sb = sb.Parent!.LH!;
                             break;
 
                         case WT_ORIENT_LH:
-                            sb = sb.Parent.HH;
+                            sb = sb.Parent!.HH!;
                             break;
 
                         default:
@@ -492,7 +492,7 @@ namespace CoreJ2K.j2k.wavelet
                     }
                     while (sb.isNode)
                     {
-                        sb = sb.LL;
+                        sb = sb.LL!;
                     }
                     return sb;
 
@@ -527,12 +527,12 @@ namespace CoreJ2K.j2k.wavelet
                 return sb;
 
             if (sb.sbandIdx != 0)
-                sb = sb.Parent;
+                sb = sb.Parent!;
 
             while (sb.resLvl > rl)
-                sb = sb.LL;
+                sb = sb.LL!;
             while (sb.resLvl < rl)
-                sb = sb.Parent;
+                sb = sb.Parent!;
 
             switch (sbi)
             {
@@ -542,13 +542,13 @@ namespace CoreJ2K.j2k.wavelet
                     return sb;
 
                 case 1:
-                    return sb.HL;
+                    return sb.HL!;
 
                 case 2:
-                    return sb.LH;
+                    return sb.LH!;
 
                 case 3:
-                    return sb.HH;
+                    return sb.HH!;
             }
         }
 
@@ -576,17 +576,17 @@ namespace CoreJ2K.j2k.wavelet
             cur = this;
             while (cur.isNode)
             {
-                hhs = cur.HH;
+                hhs = cur.HH!;
                 // While we are still at a node -> continue
                 if (x < hhs.ulx)
                 {
                     // Is the result of horizontal low-pass
-                    cur = y < hhs.uly ? cur.LL : cur.LH;
+                    cur = y < hhs.uly ? cur.LL! : cur.LH!;
                 }
                 else
                 {
                     // Is the result of horizontal high-pass
-                    cur = y < hhs.uly ? cur.HL : cur.HH;
+                    cur = y < hhs.uly ? cur.HL! : cur.HH!;
                 }
             }
 

@@ -235,7 +235,7 @@ namespace CoreJ2K.j2k.entropy.encoder
             pl.checkList(OPT_PREFIX, ParameterList.toNameArray(pinfo));
             return new StdEntropyCoder(src, cblks, pss, bms, mqrs, rts, css, sss, lcs, tts);
         }
-        public abstract CBlkRateDistStats GetNextCodeBlock(int param1, CBlkRateDistStats param2);
+        public abstract CBlkRateDistStats GetNextCodeBlock(int param1, CBlkRateDistStats? param2);
         public abstract bool precinctPartitionUsed(int param1, int param2);
         public abstract int GetPPX(int param1, int param2, int param3);
         public abstract int GetPPY(int param1, int param2, int param3);

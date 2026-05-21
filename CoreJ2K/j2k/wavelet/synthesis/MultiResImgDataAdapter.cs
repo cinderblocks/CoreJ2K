@@ -353,7 +353,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// <returns> The current tile's indexes (vertical and horizontal indexes).
         /// 
         /// </returns>
-        public virtual Coord GetTile(Coord co)
+        public virtual Coord GetTile(Coord? co)
         {
             return mressrc.GetTile(co);
         }
@@ -443,7 +443,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// (Coord.y) directions.
         /// 
         /// </returns>
-        public virtual Coord GetNumTiles(Coord co)
+        public virtual Coord GetNumTiles(Coord? co)
         {
             return mressrc.GetNumTiles(co);
         }

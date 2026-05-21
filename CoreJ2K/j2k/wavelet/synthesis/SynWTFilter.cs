@@ -164,7 +164,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// samples in the outSig array. See above.
         /// 
         /// </param>
-        public abstract void synthetize_lpf(object lowSig, int lowOff, int lowLen, int lowStep, object highSig, int highOff, int highLen, int highStep, object outSig, int outOff, int outStep);
+        public abstract void synthetize_lpf(object? lowSig, int lowOff, int lowLen, int lowStep, object? highSig, int highOff, int highLen, int highStep, object? outSig, int outOff, int outStep);
 
         /// <summary> Reconstructs the output signal by the synthesis filter, recomposing the
         /// low-pass and high-pass input signals in one output signal. This method
@@ -244,7 +244,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// samples in the outSig array. See above.
         /// 
         /// </param>
-        public abstract void synthetize_hpf(object lowSig, int lowOff, int lowLen, int lowStep, object highSig, int highOff, int highLen, int highStep, object outSig, int outOff, int outStep);
+        public abstract void synthetize_hpf(object? lowSig, int lowOff, int lowLen, int lowStep, object? highSig, int highOff, int highLen, int highStep, object? outSig, int outOff, int outStep);
         public abstract bool IsSameAsFullWT(int param1, int param2, int param3);
     }
 }

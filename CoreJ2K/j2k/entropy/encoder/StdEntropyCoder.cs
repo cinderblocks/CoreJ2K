@@ -763,7 +763,7 @@ namespace CoreJ2K.j2k.entropy.encoder
         /// 
         /// </returns>
         /// <seealso cref="CBlkRateDistStats" />
-        public override CBlkRateDistStats GetNextCodeBlock(int c, CBlkRateDistStats ccb)
+        public override CBlkRateDistStats GetNextCodeBlock(int c, CBlkRateDistStats? ccb)
         {
 #if DO_TIMING
 			var stime = 0L; // Start time for timed sections

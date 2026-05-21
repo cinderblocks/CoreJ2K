@@ -90,34 +90,34 @@ namespace CoreJ2K.Color
         public const char OPT_PREFIX = 'I';
 
         // Temporary data buffers needed during profiling.
-        protected internal DataBlkInt[] inInt; // Integer input data.
+        protected internal DataBlkInt[] inInt = null!; // Integer input data.
 
-        protected internal DataBlkFloat[] inFloat; // Floating point input data.
+        protected internal DataBlkFloat[] inFloat = null!; // Floating point input data.
 
-        protected internal DataBlkInt[] workInt; // Input data shifted to zero-offset
+        protected internal DataBlkInt[] workInt = null!; // Input data shifted to zero-offset
 
-        protected internal DataBlkFloat[] workFloat; // Input data shifted to zero-offset.
+        protected internal DataBlkFloat[] workFloat = null!; // Input data shifted to zero-offset.
 
-        protected internal int[][] dataInt; // Points to input data.
+        protected internal int[][] dataInt = null!; // Points to input data.
 
-        protected internal float[][] dataFloat; // Points to input data.
+        protected internal float[][] dataFloat = null!; // Points to input data.
 
-        protected internal float[][] workDataFloat; // References working data pixels.
+        protected internal float[][] workDataFloat = null!; // References working data pixels.
 
-        protected internal int[][] workDataInt; // References working data pixels.
+        protected internal int[][] workDataInt = null!; // References working data pixels.
 
 
         /* input data parameters by component */
 
-        protected internal int[] shiftValueArray = null;
+        protected internal int[] shiftValueArray = null!;
 
-        protected internal int[] maxValueArray = null;
+        protected internal int[] maxValueArray = null!;
 
-        protected internal int[] fixedPtBitsArray = null;
+        protected internal int[] fixedPtBitsArray = null!;
 
         /// <summary>The list of parameters that are accepted for ICC profiling.</summary>
-        private static readonly string[][] pinfo = {
-                                                                  new string[]
+        private static readonly string?[][] pinfo = {
+                                                                  new string?[]
                                                                       {
                                                                           "IcolorSpacedebug", null,
                                                                           "Print debugging messages during colorspace mapping.",
@@ -126,16 +126,16 @@ namespace CoreJ2K.Color
                                                               };
 
         /// <summary>Parameter Specs </summary>
-        protected internal ParameterList pl = null;
+        protected internal ParameterList? pl = null;
 
         /// <summary>ColorSpace info </summary>
-        protected internal ColorSpace csMap = null;
+        protected internal ColorSpace csMap = null!;
 
         /// <summary>Number of image components </summary>
         protected internal int ncomps = 0;
 
         /// <summary>The image source. </summary>
-        protected internal BlkImgDataSrc src = null;
+        protected internal BlkImgDataSrc src = null!;
 
 
         protected internal sealed class ComputedComponents
@@ -145,7 +145,7 @@ namespace CoreJ2K.Color
                 this.Enclosing_Instance = enclosingInstance;
             }
 
-            public ColorSpaceMapper Enclosing_Instance { get; private set; }
+            public ColorSpaceMapper Enclosing_Instance { get; private set; } = null!;
 
             //private int tIdx = - 1;
             private int h = -1;
@@ -194,7 +194,7 @@ namespace CoreJ2K.Color
             }
         }
 
-        protected internal ComputedComponents computed;
+        protected internal ComputedComponents computed = null!;
 
         /// <summary> Copy the DataBlk geometry from source to target
         /// DataBlk and assure that the target has an appropriate
@@ -228,11 +228,11 @@ namespace CoreJ2K.Color
         /// </returns>
         /// <exception cref="IOException">profile access exception
         /// </exception>
-        public static BlkImgDataSrc createInstance(BlkImgDataSrc src, ColorSpace csMap)
+        public static BlkImgDataSrc? createInstance(BlkImgDataSrc src, ColorSpace csMap)
         {
 
             // Check parameters
-            csMap.pl.checkList(OPT_PREFIX, ParameterList.toNameArray(pinfo));
+            csMap.pl.checkList(OPT_PREFIX, ParameterList.toNameArray(pinfo!));
 
             // Perform ICCProfiling or ColorSpace tranfsormation.
             if (csMap.Method == ColorSpace.MethodEnum.ICC_PROFILED)

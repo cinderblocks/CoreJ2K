@@ -310,7 +310,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// <returns> The current tile's indexes (vertical and horizontal indexes).
         /// 
         /// </returns>
-        Coord GetTile(Coord co);
+        Coord GetTile(Coord? co);
 
         /// <summary> Returns the horizontal coordinate of the upper-left corner of the
         /// specified resolution in the given component of the current tile.
@@ -377,7 +377,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// (Coord.y) directions.
         /// 
         /// </returns>
-        Coord GetNumTiles(Coord co);
+        Coord GetNumTiles(Coord? co);
 
         /// <summary> Returns the total number of tiles in the image.
         /// 

@@ -164,8 +164,8 @@ namespace CoreJ2K.j2k.wavelet.analysis
             string word; // current word
             var curSpecType = SPEC_DEF; // Specification type of the
                                         // current parameter
-            bool[] tileSpec = null; // Tiles concerned by the specification
-            bool[] compSpec = null; // Components concerned by the specification
+            bool[]? tileSpec = null; // Tiles concerned by the specification
+            bool[]? compSpec = null; // Components concerned by the specification
             AnWTFilter[][] filter;
 
             while (stk.HasMoreTokens())
@@ -205,7 +205,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
                                 break;
                             case SPEC_TILE_DEF:
                                 {
-                                    for (var i = tileSpec.Length - 1; i >= 0; i--)
+                                    for (var i = tileSpec!.Length - 1; i >= 0; i--)
                                         if (tileSpec[i])
                                         {
                                             SetTileDef(i, filter);
@@ -215,7 +215,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
                                 }
                             case SPEC_COMP_DEF:
                                 {
-                                    for (var i = compSpec.Length - 1; i >= 0; i--)
+                                    for (var i = compSpec!.Length - 1; i >= 0; i--)
                                         if (compSpec[i])
                                         {
                                             SetCompDef(i, filter);
@@ -225,9 +225,9 @@ namespace CoreJ2K.j2k.wavelet.analysis
                                 }
                             default:
                                 {
-                                    for (var i = tileSpec.Length - 1; i >= 0; i--)
+                                    for (var i = tileSpec!.Length - 1; i >= 0; i--)
                                     {
-                                        for (var j = compSpec.Length - 1; j >= 0; j--)
+                                        for (var j = compSpec!.Length - 1; j >= 0; j--)
                                         {
                                             if (tileSpec[i] && compSpec[j])
                                             {

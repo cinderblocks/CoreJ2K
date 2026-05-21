@@ -115,40 +115,40 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// <summary>The reference to the parent of this subband. It is null for the root
         /// element. It is null by default.  
         /// </summary>
-        private SubbandSyn parent;
+        private SubbandSyn? parent;
 
         /// <summary>The reference to the LL subband resulting from the decomposition of
         /// this subband. It is null by default.  
         /// </summary>
-        private SubbandSyn subb_LL;
+        private SubbandSyn? subb_LL;
 
         /// <summary>The reference to the HL subband (horizontal high-pass) resulting from
         /// the decomposition of this subband. It is null by default.  
         /// </summary>
-        private SubbandSyn subb_HL;
+        private SubbandSyn? subb_HL;
 
         /// <summary>The reference to the LH subband (vertical high-pass) resulting from
         /// the decomposition of this subband. It is null by default.
         /// 
         /// </summary>
-        private SubbandSyn subb_LH;
+        private SubbandSyn? subb_LH;
 
         /// <summary>The reference to the HH subband resulting from the decomposition of
         /// this subband. It is null by default.  
         /// </summary>
-        private SubbandSyn subb_HH;
+        private SubbandSyn? subb_HH;
 
         /// <summary>The horizontal analysis filter used to recompose this subband, from
         /// its childs. This is applicable to "node" elements only. The default
         /// value is null. 
         /// </summary>
-        public SynWTFilter hFilter;
+        public SynWTFilter? hFilter;
 
         /// <summary>The vertical analysis filter used to decompose this subband, from its
         /// childs. This is applicable to "node" elements only. The default value
         /// is null. 
         /// </summary>
-        public SynWTFilter vFilter;
+        public SynWTFilter? vFilter;
 
         /// <summary>The number of magnitude bits </summary>
         public int magbits = 0;

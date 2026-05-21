@@ -19,7 +19,7 @@ namespace CoreJ2K.Color.ICC
         /// <summary>
         /// Gets the ICC profile version (major.minor).
         /// </summary>
-        public Version ProfileVersion { get; }
+        public Version? ProfileVersion { get; }
 
         /// <summary>
         /// Gets the ICC profile size in bytes.
@@ -29,12 +29,12 @@ namespace CoreJ2K.Color.ICC
         /// <summary>
         /// Gets the color space type from the profile header.
         /// </summary>
-        public string ColorSpaceType { get; }
+        public string? ColorSpaceType { get; }
 
         /// <summary>
         /// Gets the profile/device class from the profile header.
         /// </summary>
-        public string ProfileClass { get; }
+        public string? ProfileClass { get; }
 
         /// <summary>
         /// Gets whether this is a valid ICC profile.

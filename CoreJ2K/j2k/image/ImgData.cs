@@ -307,7 +307,7 @@ namespace CoreJ2K.j2k.image
         /// <returns> The current tile's indices (vertical and horizontal indexes).
         /// 
         /// </returns>
-        Coord GetTile(Coord co);
+        Coord GetTile(Coord? co);
 
         /// <summary> Returns the horizontal coordinate of the upper-left corner of the
         /// specified component in the current tile.
@@ -338,7 +338,7 @@ namespace CoreJ2K.j2k.image
         /// (Coord.y) directions.
         /// 
         /// </returns>
-        Coord GetNumTiles(Coord co);
+        Coord GetNumTiles(Coord? co);
 
         /// <summary> Returns the total number of tiles in the image.
         /// 

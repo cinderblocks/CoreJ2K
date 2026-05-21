@@ -57,7 +57,7 @@ namespace CoreJ2K.j2k.entropy
         public int skipMSBP;
 
         /// <summary>The compressed data </summary>
-        public byte[] data;
+        public byte[]? data;
 
         /// <summary> Creates a new CodedCBlk object wit the default values and without
         /// allocating any space for its members.

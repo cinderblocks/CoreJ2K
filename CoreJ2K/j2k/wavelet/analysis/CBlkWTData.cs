@@ -112,7 +112,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// 
         /// </param>
         /// <seealso cref="GetDataType" />
-        public abstract object Data { get; set; }
+        public abstract object? Data { get; set; }
 
         /// <summary>The horizontal coordinate of the upper-left corner of the code-block </summary>
         public int ulx;
@@ -127,7 +127,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
         public int m;
 
         /// <summary>The subband in which this code-block is found </summary>
-        public SubbandAn sb;
+        public SubbandAn? sb;
 
         /// <summary>The width of the code-block </summary>
         public int w;

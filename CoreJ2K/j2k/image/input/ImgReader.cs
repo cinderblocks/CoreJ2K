@@ -277,7 +277,7 @@ namespace CoreJ2K.j2k.image.input
         /// <param name="co">If not null this object is used to return the information. If
         /// null a new one is created and returned.</param>
         /// <returns> The current tile's coordinates.</returns>
-        public virtual Coord GetTile(Coord co)
+        public virtual Coord GetTile(Coord? co)
         {
             if (co != null)
             {
@@ -314,7 +314,7 @@ namespace CoreJ2K.j2k.image.input
         /// null a new one is created and returned.</param>
         /// <returns> The number of tiles in the horizontal (Coord.x) and vertical
         /// (Coord.y) directions.</returns>
-        public virtual Coord GetNumTiles(Coord co)
+        public virtual Coord GetNumTiles(Coord? co)
         {
             if (co != null)
             {

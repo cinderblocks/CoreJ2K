@@ -49,117 +49,117 @@ namespace CoreJ2K.Icc
     {
         private int ProfileSize
         {
-            get => header.dwProfileSize;
+            get => header!.dwProfileSize;
 
-            set => header.dwProfileSize = value;
+            set => header!.dwProfileSize = value;
         }
 
         private int CMMTypeSignature
         {
-            get => header.dwCMMTypeSignature;
+            get => header!.dwCMMTypeSignature;
 
-            set => header.dwCMMTypeSignature = value;
+            set => header!.dwCMMTypeSignature = value;
         }
 
         private int ProfileClass
         {
-            get => header.dwProfileClass;
+            get => header!.dwProfileClass;
 
-            set => header.dwProfileClass = value;
+            set => header!.dwProfileClass = value;
         }
 
         private int ColorSpaceType
         {
-            get => header.dwColorSpaceType;
+            get => header!.dwColorSpaceType;
 
-            set => header.dwColorSpaceType = value;
+            set => header!.dwColorSpaceType = value;
         }
 
         private int PCSType
         {
-            get => header.dwPCSType;
+            get => header!.dwPCSType;
 
-            set => header.dwPCSType = value;
+            set => header!.dwPCSType = value;
         }
 
         private int ProfileSignature
         {
-            get => header.dwProfileSignature;
+            get => header!.dwProfileSignature;
 
-            set => header.dwProfileSignature = value;
+            set => header!.dwProfileSignature = value;
         }
 
         private int PlatformSignature
         {
-            get => header.dwPlatformSignature;
+            get => header!.dwPlatformSignature;
 
-            set => header.dwPlatformSignature = value;
+            set => header!.dwPlatformSignature = value;
         }
 
         private int CMMFlags
         {
-            get => header.dwCMMFlags;
+            get => header!.dwCMMFlags;
 
-            set => header.dwCMMFlags = value;
+            set => header!.dwCMMFlags = value;
         }
 
         private int DeviceManufacturer
         {
-            get => header.dwDeviceManufacturer;
+            get => header!.dwDeviceManufacturer;
 
-            set => header.dwDeviceManufacturer = value;
+            set => header!.dwDeviceManufacturer = value;
         }
 
         private int DeviceModel
         {
-            get => header.dwDeviceModel;
+            get => header!.dwDeviceModel;
 
-            set => header.dwDeviceModel = value;
+            set => header!.dwDeviceModel = value;
         }
 
         private int DeviceAttributes1
         {
-            get => header.dwDeviceAttributes1;
+            get => header!.dwDeviceAttributes1;
 
-            set => header.dwDeviceAttributes1 = value;
+            set => header!.dwDeviceAttributes1 = value;
         }
 
         private int DeviceAttributesReserved
         {
-            get => header.dwDeviceAttributesReserved;
+            get => header!.dwDeviceAttributesReserved;
 
-            set => header.dwDeviceAttributesReserved = value;
+            set => header!.dwDeviceAttributesReserved = value;
         }
 
         private int RenderingIntent
         {
-            get => header.dwRenderingIntent;
+            get => header!.dwRenderingIntent;
 
-            set => header.dwRenderingIntent = value;
+            set => header!.dwRenderingIntent = value;
         }
 
         private int CreatorSig
         {
-            get => header.dwCreatorSig;
+            get => header!.dwCreatorSig;
 
-            set => header.dwCreatorSig = value;
+            set => header!.dwCreatorSig = value;
         }
 
         private ICCProfileVersion ProfileVersion
         {
-            get => header.profileVersion;
+            get => header!.profileVersion;
 
-            set => header.profileVersion = value;
+            set => header!.profileVersion = value;
         }
 
         private XYZNumber PCSIlluminant
         {
-            set => header.PCSIlluminant = value;
+            set => header!.PCSIlluminant = value;
         }
 
         private ICCDateTime DateTime
         {
-            set => header.dateTime = value;
+            set => header!.dateTime = value;
         }
 
         /// <summary> Access the profile header</summary>
@@ -599,14 +599,14 @@ namespace CoreJ2K.Icc
         public static readonly int kdwProfileDescTag;
 
 
-        private ICCProfileHeader header = null;
+        private ICCProfileHeader? header = null;
 
-        private ICCTagTable tags = null;
+        private ICCTagTable? tags = null;
 
-        private readonly byte[] profile = null;
+        private readonly byte[]? profile = null;
 
         //private byte[] data = null;
-        private ParameterList pl = null;
+        private ParameterList? pl = null;
 
         private ICCProfile()
         {
@@ -735,9 +735,9 @@ namespace CoreJ2K.Icc
             int i, row, col, rem, rows, cols;
 
             var rep = new StringBuilder();
-            StringBuilder rep0 = null;
-            StringBuilder rep1 = null;
-            StringBuilder rep2 = null;
+            StringBuilder? rep0 = null;
+            StringBuilder? rep1 = null;
+            StringBuilder? rep2 = null;
 
             cols = 16;
             rows = data.Length / cols;

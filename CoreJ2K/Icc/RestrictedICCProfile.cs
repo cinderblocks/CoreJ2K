@@ -76,7 +76,7 @@ namespace CoreJ2K.Icc
         /// <summary>Curve data    </summary>
         public ICCCurveType[] trc;
         /// <summary>Colorant data </summary>
-        public ICCXYZType[] colorant;
+        public ICCXYZType[]? colorant;
 
         /// <summary> Construct the common state of all gray RestrictedICCProfiles</summary>
         /// <param name="gcurve">curve data

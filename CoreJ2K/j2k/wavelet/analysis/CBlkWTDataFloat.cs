@@ -72,11 +72,11 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// <param name="arr">The data array to use. Must be a float array.
         /// 
         /// </param>
-        public override object Data
+        public override object? Data
         {
             get => data;
 
-            set => data = (float[])value;
+            set => data = (float[]?)value;
         }
         /// <summary> Returns the array containing the data, or null if there is no data
         /// array.
@@ -93,7 +93,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// <param name="arr">The data array to use.
         /// 
         /// </param>
-        public virtual float[] DataFloat
+        public virtual float[]? DataFloat
         {
             get => data;
 
@@ -101,6 +101,6 @@ namespace CoreJ2K.j2k.wavelet.analysis
         }
 
         /// <summary>The array where the data is stored </summary>
-        private float[] data;
+        private float[]? data;
     }
 }

@@ -20,14 +20,14 @@ namespace CoreJ2K.j2k.fileformat.metadata
         /// Values are in units of 1/65536 of the horizontal separation of sample points.
         /// Array length must equal the number of components.
         /// </summary>
-        public int[] HorizontalOffsets { get; set; }
+        public int[]? HorizontalOffsets { get; set; }
 
         /// <summary>
         /// Gets or sets the vertical offsets for each component (Ycrg values).
         /// Values are in units of 1/65536 of the vertical separation of sample points.
         /// Array length must equal the number of components.
         /// </summary>
-        public int[] VerticalOffsets { get; set; }
+        public int[]? VerticalOffsets { get; set; }
 
         /// <summary>
         /// Gets the number of registered components.
@@ -102,7 +102,7 @@ namespace CoreJ2K.j2k.fileformat.metadata
         /// <param name="numComponents">Number of components.</param>
         /// <param name="horizontalOffsets">Horizontal offsets for each component (optional, defaults to 0).</param>
         /// <param name="verticalOffsets">Vertical offsets for each component (optional, defaults to 0).</param>
-        public static ComponentRegistrationData Create(int numComponents, int[] horizontalOffsets = null, int[] verticalOffsets = null)
+        public static ComponentRegistrationData Create(int numComponents, int[]? horizontalOffsets = null, int[]? verticalOffsets = null)
         {
             var data = new ComponentRegistrationData
             {
@@ -138,8 +138,8 @@ namespace CoreJ2K.j2k.fileformat.metadata
                 int offset = FromFractionalPixels(0.5);
                 for (int i = 1; i < numComponents; i++)
                 {
-                    data.HorizontalOffsets[i] = offset;
-                    data.VerticalOffsets[i] = offset;
+                    data.HorizontalOffsets![i] = offset;
+                    data.VerticalOffsets![i] = offset;
                 }
             }
 

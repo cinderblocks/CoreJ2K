@@ -828,7 +828,7 @@ namespace CoreJ2K.j2k.codestream.reader
         /// <returns> The current tile's indexes (vertical and horizontal indexes).
         /// 
         /// </returns>
-        public Coord GetTile(Coord co)
+        public Coord GetTile(Coord? co)
         {
             if (co != null)
             {
@@ -899,7 +899,7 @@ namespace CoreJ2K.j2k.codestream.reader
         /// (Coord.y) directions.
         /// 
         /// </returns>
-        public Coord GetNumTiles(Coord co)
+        public Coord GetNumTiles(Coord? co)
         {
             if (co != null)
             {

@@ -176,7 +176,7 @@ namespace CoreJ2K.j2k.entropy.decoder
         /// bytes are taken to be 0xFF.
         /// 
         /// </param>
-        internal void SetByteArray(byte[] buf, int off, int len)
+        internal void SetByteArray(byte[]? buf, int off, int len)
         {
             inputBuffer.SetByteArray(buf, off, len);
             bbuf = 0; // reset any bit stuffing state

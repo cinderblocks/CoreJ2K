@@ -101,9 +101,9 @@ namespace CoreJ2K.j2k.wavelet.analysis
         private readonly PrecinctSizeSpec pss;
 
         /// <summary>Block storing the full band decomposition for each component. </summary>
-        private readonly DataBlk[] decomposedComps;
+        private readonly DataBlk?[] decomposedComps;
         // Track rented backing buffers for decomposedComps to return to pool
-        private object[] decomposedBuffers;
+        private object?[] decomposedBuffers;
 
         /// <summary>The horizontal index of the last "sent" code-block in the current
         /// subband in each component. It should be -1 if none have been sent yet.
@@ -118,12 +118,12 @@ namespace CoreJ2K.j2k.wavelet.analysis
         private readonly int[] lastm;
 
         /// <summary>The subband being dealt with in each component </summary>
-        internal SubbandAn[] currentSubband;
+        internal SubbandAn?[] currentSubband;
 
         /// <summary>Cache  object   to  avoid  excessive  allocation/desallocation.  This
         /// variable makes the class inheritently thread unsafe. 
         /// </summary>
-        internal Coord ncblks;
+        internal Coord? ncblks;
 
         /// <summary> Initializes this object with the given source of image data and with
         /// all the decompositon parameters
@@ -357,11 +357,11 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// 
         /// </returns>
         /// <seealso cref="CBlkWTData" />
-        public override CBlkWTData GetNextInternCodeBlock(int c, CBlkWTData cblk)
+        public override CBlkWTData? GetNextInternCodeBlock(int c, CBlkWTData? cblk)
         {
             int cbm, cbn, cn, cm;
             int acb0x, acb0y;
-            SubbandAn sb;
+            SubbandAn? sb;
             intData = (filters.GetWTDataType(tIdx, c) == DataBlk.TYPE_INT);
 
             //If the source image has not been decomposed 
@@ -369,7 +369,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
             {
                 int k, w, h;
                 DataBlk bufblk;
-                object dst_data;
+                object? dst_data;
 
                 w = GetTileCompWidth(tIdx, c);
                 h = GetTileCompHeight(tIdx, c);
@@ -420,7 +420,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
 
                 // Get data from source line by line (this diminishes the memory
                 // requirements on the data source)
-                dst_data = decomposedComps[c].Data;
+                dst_data = decomposedComps[c]!.Data;
                 var lstart = GetCompULX(c);
                 bufblk.ulx = lstart;
                 bufblk.w = w;
@@ -431,7 +431,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
                     bufblk.uly = kk;
                     bufblk.ulx = lstart;
                     bufblk = src.GetInternCompData(bufblk, c);
-                    Array.Copy((Array)bufblk.Data, bufblk.offset, (Array)dst_data, k * w, w);
+                    Array.Copy((Array)bufblk.Data!, bufblk.offset, (Array)dst_data!, k * w, w);
                 }
 
                 //Decompose source image
@@ -448,7 +448,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
             do
             {
                 // Calculate number of code-blocks in current subband
-                ncblks = currentSubband[c].numCb;
+                ncblks = currentSubband[c]!.numCb;
                 // Goto next code-block
                 lastn[c]++;
                 if (lastn[c] == ncblks.x)
@@ -496,7 +496,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
             // (through the floor operator) as 0, always.
             acb0x = cb0x;
             acb0y = cb0y;
-            switch (currentSubband[c].sbandIdx)
+            switch (currentSubband[c]!.sbandIdx)
             {
 
                 case Subband.WT_ORIENT_LL:
@@ -539,13 +539,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
             cblk.n = cbn;
             cblk.m = cbm;
             cblk.sb = sb;
-            // Calculate the indexes of first code-block in subband with respect
-            // to the partitioning origin, to then calculate the position and size
-            // NOTE: when calculating "floor()" by integer division the dividend
-            // and divisor must be positive, we ensure that by adding the divisor
-            // to the dividend and then substracting 1 to the result of the
-            // division
-            cn = (sb.ulcx - acb0x + sb.nomCBlkW) / sb.nomCBlkW - 1;
+            cn = (sb!.ulcx - acb0x + sb.nomCBlkW) / sb.nomCBlkW - 1;
             cm = (sb.ulcy - acb0y + sb.nomCBlkH) / sb.nomCBlkH - 1;
             if (cbn == 0)
             {
@@ -591,11 +585,11 @@ namespace CoreJ2K.j2k.wavelet.analysis
             // Since we are in GetNextInternCodeBlock() we can return a
             // reference to the internal buffer, no need to copy. Just initialize
             // the 'offset' and 'scanw'
-            cblk.offset = cblk.uly * decomposedComps[c].w + cblk.ulx;
-            cblk.scanw = decomposedComps[c].w;
+            cblk.offset = cblk.uly * decomposedComps[c]!.w + cblk.ulx;
+            cblk.scanw = decomposedComps[c]!.w;
 
             // For the data just put a reference to our buffer
-            cblk.Data = decomposedComps[c].Data;
+            cblk.Data = decomposedComps[c]!.Data;
             // Return code-block
             return cblk;
         }
@@ -638,17 +632,17 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// 
         /// </returns>
         /// <seealso cref="CBlkWTData" />
-        public override CBlkWTData GetNextCodeBlock(int c, CBlkWTData cblk)
+        public override CBlkWTData? GetNextCodeBlock(int c, CBlkWTData? cblk)
         {
             // We can not directly use GetNextInternCodeBlock() since that returns
             // a reference to the internal buffer, we have to copy that data
 
             int j, k;
             int w;
-            object dst_data; // a int[] or float[] object
-            int[] dst_data_int;
-            float[] dst_data_float;
-            object src_data; // a int[] or float[] object
+            object? dst_data; // a int[] or float[] object
+            int[]? dst_data_int;
+            float[]? dst_data_float;
+            object? src_data; // a int[] or float[] object
 
             intData = (filters.GetWTDataType(tIdx, c) == DataBlk.TYPE_INT);
 
@@ -673,7 +667,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
             if (intData)
             {
                 // int data
-                dst_data_int = (int[])dst_data;
+                dst_data_int = (int[]?)dst_data;
                 if (dst_data_int == null || dst_data_int.Length < cblk.w * cblk.h)
                 {
                     dst_data = new int[cblk.w * cblk.h];
@@ -682,7 +676,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
             else
             {
                 // float data
-                dst_data_float = (float[])dst_data;
+                dst_data_float = (float[]?)dst_data;
                 if (dst_data_float == null || dst_data_float.Length < cblk.w * cblk.h)
                 {
                     dst_data = new float[cblk.w * cblk.h];
@@ -694,7 +688,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
             w = cblk.w;
             for (j = w * (cblk.h - 1), k = cblk.offset + (cblk.h - 1) * cblk.scanw; j >= 0; j -= w, k -= cblk.scanw)
             {
-                Array.Copy((Array)src_data, k, (Array)dst_data, j, w);
+                Array.Copy((Array)src_data!, k, (Array)dst_data!, j, w);
             }
             cblk.Data = dst_data;
             cblk.offset = 0;
@@ -733,12 +727,12 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// code-block to return by the getNext[Intern]CodeBlock method.
         /// 
         /// </returns>
-        private SubbandAn GetNextSubband(int c)
+        private SubbandAn? GetNextSubband(int c)
         {
             const int down = 1;
             const int up = 0;
             var direction = down;
-            SubbandAn nextsb;
+            SubbandAn? nextsb;
 
             nextsb = currentSubband[c];
             //If it is the first call to this method
@@ -762,22 +756,22 @@ namespace CoreJ2K.j2k.wavelet.analysis
                     {
 
                         case Subband.WT_ORIENT_HH:
-                            nextsb = (SubbandAn)nextsb.Parent.LH;
+                            nextsb = (SubbandAn)nextsb.Parent!.LH!;
                             direction = down;
                             break;
 
                         case Subband.WT_ORIENT_LH:
-                            nextsb = (SubbandAn)nextsb.Parent.HL;
+                            nextsb = (SubbandAn)nextsb.Parent!.HL!;
                             direction = down;
                             break;
 
                         case Subband.WT_ORIENT_HL:
-                            nextsb = (SubbandAn)nextsb.Parent.LL;
+                            nextsb = (SubbandAn)nextsb.Parent!.LL!;
                             direction = down;
                             break;
 
                         case Subband.WT_ORIENT_LL:
-                            nextsb = (SubbandAn)nextsb.Parent;
+                            nextsb = (SubbandAn)nextsb.Parent!;
                             direction = up;
                             break;
                     }
@@ -789,7 +783,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
                     //current node.
                     if (direction == down)
                     {
-                        nextsb = (SubbandAn)nextsb.HH;
+                        nextsb = (SubbandAn)nextsb.HH!;
                     }
                     //Else the direction is up the select the next node to cover
                     //or still go up in the decomposition tree if the node is a LL
@@ -800,22 +794,22 @@ namespace CoreJ2K.j2k.wavelet.analysis
                         {
 
                             case Subband.WT_ORIENT_HH:
-                                nextsb = (SubbandAn)nextsb.Parent.LH;
+                                nextsb = (SubbandAn)nextsb.Parent!.LH!;
                                 direction = down;
                                 break;
 
                             case Subband.WT_ORIENT_LH:
-                                nextsb = (SubbandAn)nextsb.Parent.HL;
+                                nextsb = (SubbandAn)nextsb.Parent!.HL!;
                                 direction = down;
                                 break;
 
                             case Subband.WT_ORIENT_HL:
-                                nextsb = (SubbandAn)nextsb.Parent.LL;
+                                nextsb = (SubbandAn)nextsb.Parent!.LL!;
                                 direction = down;
                                 break;
 
                             case Subband.WT_ORIENT_LL:
-                                nextsb = (SubbandAn)nextsb.Parent;
+                                nextsb = (SubbandAn)nextsb.Parent!;
                                 direction = up;
                                 break;
                         }
@@ -845,7 +839,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// <param name="c">The index of the current component to decompose
         /// 
         /// </param>
-        private void waveletTreeDecomposition(DataBlk band, SubbandAn subband, int c)
+        private void waveletTreeDecomposition(DataBlk? band, SubbandAn subband, int c)
         {
 
             //If the current subband is a leaf then nothing to be done (a leaf is
@@ -860,10 +854,10 @@ namespace CoreJ2K.j2k.wavelet.analysis
                 wavelet2DDecomposition(band, subband, c);
 
                 //Perform the decomposition of the four resulting subbands
-                waveletTreeDecomposition(band, (SubbandAn)subband.HH, c);
-                waveletTreeDecomposition(band, (SubbandAn)subband.LH, c);
-                waveletTreeDecomposition(band, (SubbandAn)subband.HL, c);
-                waveletTreeDecomposition(band, (SubbandAn)subband.LL, c);
+                waveletTreeDecomposition(band, (SubbandAn)subband.HH!, c);
+                waveletTreeDecomposition(band, (SubbandAn)subband.LH!, c);
+                waveletTreeDecomposition(band, (SubbandAn)subband.HL!, c);
+                waveletTreeDecomposition(band, (SubbandAn)subband.LL!, c);
             }
         }
 
@@ -883,7 +877,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// <param name="c">The index of the current component to decompose
         /// 
         /// </param>
-        private void wavelet2DDecomposition(DataBlk band, SubbandAn subband, int c)
+        private void wavelet2DDecomposition(DataBlk? band, SubbandAn subband, int c)
         {
 
             int ulx, uly, w, h;
@@ -911,7 +905,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
                 var tmpVector = ArrayPool<int>.Shared.Rent(Math.Max(w, h));
                 try
                 {
-                    var data = ((DataBlkInt)band).DataInt;
+                    var data = ((DataBlkInt)band!).DataInt!;
 
                     //Perform the vertical decomposition
                     if (subband.ulcy % 2 == 0)
@@ -922,7 +916,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
                             offset = uly * band_w + ulx + j;
                             for (i = 0; i < h; i++)
                                 tmpVector[i] = data[offset + (i * band_w)];
-                            subband.vFilter.analyze_lpf(tmpVector, 0, h, 1, data, offset, band_w, data, offset + ((h + 1) / 2) * band_w, band_w);
+                            subband.vFilter!.analyze_lpf(tmpVector, 0, h, 1, data, offset, band_w, data, offset + ((h + 1) / 2) * band_w, band_w);
                         }
                     }
                     else
@@ -933,7 +927,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
                             offset = uly * band_w + ulx + j;
                             for (i = 0; i < h; i++)
                                 tmpVector[i] = data[offset + (i * band_w)];
-                            subband.vFilter.analyze_hpf(tmpVector, 0, h, 1, data, offset, band_w, data, offset + (h / 2) * band_w, band_w);
+                            subband.vFilter!.analyze_hpf(tmpVector, 0, h, 1, data, offset, band_w, data, offset + (h / 2) * band_w, band_w);
                         }
                     }
 
@@ -946,7 +940,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
                             offset = (uly + i) * band_w + ulx;
                             for (j = 0; j < w; j++)
                                 tmpVector[j] = data[offset + j];
-                            subband.hFilter.analyze_lpf(tmpVector, 0, w, 1, data, offset, 1, data, offset + (w + 1) / 2, 1);
+                            subband.hFilter!.analyze_lpf(tmpVector, 0, w, 1, data, offset, 1, data, offset + (w + 1) / 2, 1);
                         }
                     }
                     else
@@ -957,7 +951,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
                             offset = (uly + i) * band_w + ulx;
                             for (j = 0; j < w; j++)
                                 tmpVector[j] = data[offset + j];
-                            subband.hFilter.analyze_hpf(tmpVector, 0, w, 1, data, offset, 1, data, offset + w / 2, 1);
+                            subband.hFilter!.analyze_hpf(tmpVector, 0, w, 1, data, offset, 1, data, offset + w / 2, 1);
                         }
                     }
                 }
@@ -975,7 +969,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
                 var tmpVector = ArrayPool<float>.Shared.Rent(Math.Max(w, h));
                 try
                 {
-                    var data = ((DataBlkFloat)band).DataFloat;
+                    var data = ((DataBlkFloat)band!).DataFloat!;
 
                     //Perform the vertical decomposition.
                     if (subband.ulcy % 2 == 0)
@@ -986,7 +980,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
                             offset = uly * band_w + ulx + j;
                             for (i = 0; i < h; i++)
                                 tmpVector[i] = data[offset + (i * band_w)];
-                            subband.vFilter.analyze_lpf(tmpVector, 0, h, 1, data, offset, band_w, data, offset + ((h + 1) / 2) * band_w, band_w);
+                            subband.vFilter!.analyze_lpf(tmpVector, 0, h, 1, data, offset, band_w, data, offset + ((h + 1) / 2) * band_w, band_w);
                         }
                     }
                     else
@@ -997,7 +991,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
                             offset = uly * band_w + ulx + j;
                             for (i = 0; i < h; i++)
                                 tmpVector[i] = data[offset + (i * band_w)];
-                            subband.vFilter.analyze_hpf(tmpVector, 0, h, 1, data, offset, band_w, data, offset + (h / 2) * band_w, band_w);
+                            subband.vFilter!.analyze_hpf(tmpVector, 0, h, 1, data, offset, band_w, data, offset + (h / 2) * band_w, band_w);
                         }
                     }
                     //Perform the horizontal decomposition.
@@ -1009,7 +1003,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
                             offset = (uly + i) * band_w + ulx;
                             for (j = 0; j < w; j++)
                                 tmpVector[j] = data[offset + j];
-                            subband.hFilter.analyze_lpf(tmpVector, 0, w, 1, data, offset, 1, data, offset + (w + 1) / 2, 1);
+                            subband.hFilter!.analyze_lpf(tmpVector, 0, w, 1, data, offset, 1, data, offset + (w + 1) / 2, 1);
                         }
                     }
                     else
@@ -1020,7 +1014,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
                             offset = (uly + i) * band_w + ulx;
                             for (j = 0; j < w; j++)
                                 tmpVector[j] = data[offset + j];
-                            subband.hFilter.analyze_hpf(tmpVector, 0, w, 1, data, offset, 1, data, offset + w / 2, 1);
+                            subband.hFilter!.analyze_hpf(tmpVector, 0, w, 1, data, offset, 1, data, offset + w / 2, 1);
                         }
                     }
                 }
@@ -1244,10 +1238,10 @@ namespace CoreJ2K.j2k.wavelet.analysis
             }
             else
             {
-                initSubbandsFields(t, c, sb.LL);
-                initSubbandsFields(t, c, sb.HL);
-                initSubbandsFields(t, c, sb.LH);
-                initSubbandsFields(t, c, sb.HH);
+                initSubbandsFields(t, c, sb.LL!);
+                initSubbandsFields(t, c, sb.HL!);
+                initSubbandsFields(t, c, sb.LH!);
+                initSubbandsFields(t, c, sb.HH!);
             }
         }
     }

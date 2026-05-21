@@ -124,7 +124,7 @@ namespace CoreJ2K.Util
             throw new NoNextElementException();
         }
 
-        public Coord GetTile(Coord co)
+        public Coord GetTile(Coord? co)
         {
             if (co != null)
             {
@@ -146,7 +146,7 @@ namespace CoreJ2K.Util
             return 0;
         }
 
-        public Coord GetNumTiles(Coord co)
+        public Coord GetNumTiles(Coord? co)
         {
             if (co != null)
             {

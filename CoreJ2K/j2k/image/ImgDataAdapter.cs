@@ -357,7 +357,7 @@ namespace CoreJ2K.j2k.image
         /// <returns> The current tile's indexes (vertical and horizontal indexes).
         /// 
         /// </returns>
-        public virtual Coord GetTile(Coord co)
+        public virtual Coord GetTile(Coord? co)
         {
             return imgdatasrc.GetTile(co);
         }
@@ -403,7 +403,7 @@ namespace CoreJ2K.j2k.image
         /// (Coord.y) directions.
         /// 
         /// </returns>
-        public virtual Coord GetNumTiles(Coord co)
+        public virtual Coord GetNumTiles(Coord? co)
         {
             return imgdatasrc.GetNumTiles(co);
         }

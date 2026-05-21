@@ -554,7 +554,7 @@ namespace CoreJ2K.j2k.image
         /// <param name="co">If not null this object is used to return the
         /// information. If null a new one is created and returned.</param>
         /// <returns> The current tile's horizontal and vertical indexes.</returns>
-        public override Coord GetTile(Coord co)
+        public override Coord GetTile(Coord? co)
         {
             if (co != null)
             {
@@ -593,7 +593,7 @@ namespace CoreJ2K.j2k.image
         /// null a new one is created and returned.</param>
         /// <returns> The number of tiles in the horizontal (Coord.x) and vertical
         /// (Coord.y) directions.</returns>
-        public override Coord GetNumTiles(Coord co)
+        public override Coord GetNumTiles(Coord? co)
         {
             if (co != null)
             {

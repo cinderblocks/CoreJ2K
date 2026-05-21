@@ -106,18 +106,18 @@ namespace CoreJ2K.j2k
         /// <summary>The default value for each component. Null if no component
         /// specific value is defined 
         /// </summary>
-        protected internal object[] compDef = null;
+        protected internal object?[] compDef = null!;
 
         /// <summary>The default value for each tile. Null if no tile specific value is
         /// defined 
         /// </summary>
-        protected internal object[] tileDef = null;
+        protected internal object?[] tileDef = null!;
 
         /// <summary>The specific value for each tile-component, stored as a flat array
         /// indexed by <c>t * nComp + c</c>. Null if no tile-component specific value
         /// has been defined.
         /// </summary>
-        protected internal object[] tileCompVal;
+        protected internal object?[] tileCompVal = null!;
 
         public virtual object Clone()
         {

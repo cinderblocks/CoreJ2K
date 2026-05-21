@@ -129,7 +129,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// 
         /// </returns>
         /// <seealso cref="CBlkWTData" />
-        CBlkWTData GetNextCodeBlock(int c, CBlkWTData cblk);
+        CBlkWTData? GetNextCodeBlock(int c, CBlkWTData? cblk);
 
         /// <summary> Returns the next code-block in the current tile for the specified
         /// component. The order in which code-blocks are returned is not
@@ -168,6 +168,6 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// 
         /// </returns>
         /// <seealso cref="CBlkWTData" />
-        CBlkWTData GetNextInternCodeBlock(int c, CBlkWTData cblk);
+        CBlkWTData? GetNextInternCodeBlock(int c, CBlkWTData? cblk);
     }
 }

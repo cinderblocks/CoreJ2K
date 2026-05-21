@@ -244,8 +244,8 @@ namespace CoreJ2K.j2k.quantization.quantizer
         /// 
         /// </returns>
         public abstract int GetMaxMagBits(int c);
-        public abstract CBlkWTData GetNextInternCodeBlock(int param1, CBlkWTData param2);
-        public abstract CBlkWTData GetNextCodeBlock(int param1, CBlkWTData param2);
+        public abstract CBlkWTData? GetNextInternCodeBlock(int param1, CBlkWTData? param2);
+        public abstract CBlkWTData? GetNextCodeBlock(int param1, CBlkWTData? param2);
         public abstract bool IsReversible(int param1, int param2);
     }
 }

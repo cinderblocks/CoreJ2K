@@ -104,7 +104,7 @@ namespace CoreJ2K.j2k.entropy.encoder
         internal CodestreamWriter bsWriter;
 
         /// <summary>The header encoder</summary>
-        internal HeaderEncoder headEnc;
+        internal HeaderEncoder? headEnc;
 
         /// <summary>Initializes the source of entropy coded data.</summary>
         /// <param name="src">The source of entropy coded data.</param>

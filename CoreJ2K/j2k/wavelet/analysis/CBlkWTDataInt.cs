@@ -70,11 +70,11 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// <param name="arr">The data array to use. Must be an int array.
         /// 
         /// </param>
-        public override object Data
+        public override object? Data
         {
             get => data_array;
 
-            set => data_array = (int[])value;
+            set => data_array = (int[]?)value;
         }
         /// <summary> Returns the array containing the data, or null if there is no data
         /// array.
@@ -91,7 +91,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// <param name="arr">The data array to use.
         /// 
         /// </param>
-        public virtual int[] DataInt
+        public virtual int[]? DataInt
         {
             get => data_array;
 
@@ -99,6 +99,6 @@ namespace CoreJ2K.j2k.wavelet.analysis
         }
 
         /// <summary>The array where the data is stored </summary>
-        public int[] data_array;
+        public int[]? data_array;
     }
 }

@@ -50,55 +50,55 @@ namespace CoreJ2K.j2k.fileformat.metadata
         /// <summary>
         /// Gets or sets the UUID Info box data (contains UUID list and URL boxes).
         /// </summary>
-        public UuidInfoBox UuidInfo { get; set; }
+        public UuidInfoBox? UuidInfo { get; set; }
 
         /// <summary>
         /// Gets or sets the Reader Requirements box data (defines required decoder capabilities).
         /// </summary>
-        public ReaderRequirementsBox ReaderRequirements { get; set; }
+        public ReaderRequirementsBox? ReaderRequirements { get; set; }
 
         /// <summary>
         /// Gets or sets the ICC color profile data.
         /// </summary>
-        public ICCProfileData IccProfile { get; set; }
+        public ICCProfileData? IccProfile { get; set; }
 
         /// <summary>
         /// Gets or sets the resolution metadata (DPI/PPI information).
         /// </summary>
-        public ResolutionData Resolution { get; set; }
+        public ResolutionData? Resolution { get; set; }
 
         /// <summary>
         /// Gets or sets the channel definition metadata (alpha channel, component types).
         /// </summary>
-        public ChannelDefinitionData ChannelDefinitions { get; set; }
+        public ChannelDefinitionData? ChannelDefinitions { get; set; }
 
         /// <summary>
         /// Gets or sets the tile-part lengths data (TLM marker information) for fast tile access.
         /// </summary>
-        public TilePartLengthsData TilePartLengths { get; set; }
+        public TilePartLengthsData? TilePartLengths { get; set; }
 
         /// <summary>
         /// Gets or sets the palette box data (for palettized/indexed color images).
         /// </summary>
-        public PaletteData Palette { get; set; }
+        public PaletteData? Palette { get; set; }
 
         /// <summary>
         /// Gets or sets the component mapping box data (maps codestream components to image channels).
         /// </summary>
-        public ComponentMappingData ComponentMapping { get; set; }
+        public ComponentMappingData? ComponentMapping { get; set; }
 
         /// <summary>
         /// Gets or sets the bits per component box data (varying bit depths per component).
         /// Required when Image Header Box BPC field is 0xFF (components have different bit depths).
         /// </summary>
-        public BitsPerComponentData BitsPerComponent { get; set; }
+        public BitsPerComponentData? BitsPerComponent { get; set; }
 
         /// <summary>
         /// Gets or sets the component registration data (CRG marker from codestream).
         /// Specifies sub-pixel offsets for precise component spatial registration.
         /// Per ISO/IEC 15444-1 Annex A.11.3.
         /// </summary>
-        public ComponentRegistrationData ComponentRegistration { get; set; }
+        public ComponentRegistrationData? ComponentRegistration { get; set; }
 
         /// <summary>
         /// Adds a simple text comment to the metadata.
@@ -279,7 +279,7 @@ namespace CoreJ2K.j2k.fileformat.metadata
         /// <param name="numComponents">Number of components.</param>
         /// <param name="horizontalOffsets">Horizontal offsets in units of 1/65536 of sample separation.</param>
         /// <param name="verticalOffsets">Vertical offsets in units of 1/65536 of sample separation.</param>
-        public void SetComponentRegistration(int numComponents, int[] horizontalOffsets = null, int[] verticalOffsets = null)
+        public void SetComponentRegistration(int numComponents, int[]? horizontalOffsets = null, int[]? verticalOffsets = null)
         {
             ComponentRegistration = ComponentRegistrationData.Create(numComponents, horizontalOffsets, verticalOffsets);
         }
@@ -297,7 +297,7 @@ namespace CoreJ2K.j2k.fileformat.metadata
         /// <summary>
         /// Gets the first XMP metadata box, if present.
         /// </summary>
-        public XmlBox GetXmp()
+        public XmlBox? GetXmp()
         {
             return XmlBoxes.Find(x => x.IsXMP);
         }
@@ -305,7 +305,7 @@ namespace CoreJ2K.j2k.fileformat.metadata
         /// <summary>
         /// Gets the first IPTC metadata box, if present.
         /// </summary>
-        public XmlBox GetIptc()
+        public XmlBox? GetIptc()
         {
             return XmlBoxes.Find(x => x.IsIPTC);
         }
@@ -317,7 +317,7 @@ namespace CoreJ2K.j2k.fileformat.metadata
         /// <param name="url">Optional URL where more information about the UUIDs can be found.</param>
         /// <param name="urlVersion">URL version (default 0).</param>
         /// <param name="urlFlags">URL flags: 0=relative, 1=absolute (default 0).</param>
-        public void SetUuidInfo(List<Guid> uuids, string url = null, byte urlVersion = 0, byte urlFlags = 0)
+        public void SetUuidInfo(List<Guid> uuids, string? url = null, byte urlVersion = 0, byte urlFlags = 0)
         {
             if (UuidInfo == null)
                 UuidInfo = new UuidInfoBox();
@@ -377,7 +377,7 @@ namespace CoreJ2K.j2k.fileformat.metadata
         /// <summary>
         /// Gets or sets the comment text.
         /// </summary>
-        public string Text { get; set; }
+        public string? Text { get; set; }
 
         /// <summary>
         /// Gets or sets the ISO 639 language code (e.g., "en", "fr", "de").
@@ -403,7 +403,7 @@ namespace CoreJ2K.j2k.fileformat.metadata
         /// <summary>
         /// Gets or sets the XML content as a string.
         /// </summary>
-        public string XmlContent { get; set; }
+        public string? XmlContent { get; set; }
 
         /// <summary>
         /// Returns true if this appears to be an XMP box.
@@ -438,7 +438,7 @@ namespace CoreJ2K.j2k.fileformat.metadata
         /// <summary>
         /// Gets or sets the binary payload data.
         /// </summary>
-        public byte[] Data { get; set; }
+        public byte[]? Data { get; set; }
 
         /// <summary>
         /// Well-known UUID for XMP metadata stored in UUID box.
@@ -463,11 +463,11 @@ namespace CoreJ2K.j2k.fileformat.metadata
         /// <summary>
         /// Gets the data as UTF-8 text if appropriate (e.g., for XMP in UUID).
         /// </summary>
-        public string GetTextData()
+        public string? GetTextData()
         {
             try
             {
-                return Encoding.UTF8.GetString(Data);
+                return Data != null ? Encoding.UTF8.GetString(Data) : null;
             }
             catch
             {
@@ -493,13 +493,13 @@ namespace CoreJ2K.j2k.fileformat.metadata
         /// Gets or sets the intellectual property rights statement (e.g., copyright notice).
         /// This is stored as UTF-8 text.
         /// </summary>
-        public string Text { get; set; }
+        public string? Text { get; set; }
 
         /// <summary>
         /// Gets or sets the raw binary data. 
         /// When set, this takes precedence over Text property.
         /// </summary>
-        public byte[] RawData { get; set; }
+        public byte[]? RawData { get; set; }
 
         /// <summary>
         /// Returns true if this box contains binary data rather than text.
@@ -509,7 +509,7 @@ namespace CoreJ2K.j2k.fileformat.metadata
         /// <summary>
         /// Gets the text content, converting from RawData if necessary.
         /// </summary>
-        public string GetText()
+        public string? GetText()
         {
             if (!string.IsNullOrEmpty(Text))
                 return Text;
@@ -548,13 +548,13 @@ namespace CoreJ2K.j2k.fileformat.metadata
         /// Gets or sets the label text.
         /// Labels are stored as UTF-8 text without null termination.
         /// </summary>
-        public string Label { get; set; }
+        public string? Label { get; set; }
 
         /// <summary>
         /// Gets or sets the raw binary data.
         /// When set, this takes precedence over Label property.
         /// </summary>
-        public byte[] RawData { get; set; }
+        public byte[]? RawData { get; set; }
 
         /// <summary>
         /// Returns true if this box contains binary data rather than text.
@@ -564,7 +564,7 @@ namespace CoreJ2K.j2k.fileformat.metadata
         /// <summary>
         /// Gets the label text, converting from RawData if necessary.
         /// </summary>
-        public string GetLabel()
+        public string? GetLabel()
         {
             if (!string.IsNullOrEmpty(Label))
                 return Label;
@@ -607,7 +607,7 @@ namespace CoreJ2K.j2k.fileformat.metadata
         /// <summary>
         /// Gets or sets the URL where more information about the UUIDs can be found.
         /// </summary>
-        public string Url { get; set; }
+        public string? Url { get; set; }
 
         /// <summary>
         /// Gets or sets the version number of the URL.
@@ -771,21 +771,21 @@ namespace CoreJ2K.j2k.fileformat.metadata
         /// Format: bits 0-6 = bit depth minus 1, bit 7 = sign bit (1=signed, 0=unsigned).
         /// Array length must equal NumColumns.
         /// </summary>
-        public short[] BitDepths { get; set; }
+        public short[]? BitDepths { get; set; }
 
         /// <summary>
         /// Gets or sets the palette entries.
         /// Format: entries[entryIndex][columnIndex]
         /// Each entry maps an index to color component values.
         /// </summary>
-        public int[][] Entries { get; set; }
+        public int[][]? Entries { get; set; }
 
         /// <summary>
         /// Returns true if the specified column uses signed values.
         /// </summary>
         public bool IsSigned(int column)
         {
-            return (BitDepths[column] & 0x80) != 0;
+            return (BitDepths![column] & 0x80) != 0;
         }
 
         /// <summary>
@@ -793,7 +793,7 @@ namespace CoreJ2K.j2k.fileformat.metadata
         /// </summary>
         public int GetBitDepth(int column)
         {
-            return (BitDepths[column] & 0x7F) + 1;
+            return (BitDepths![column] & 0x7F) + 1;
         }
 
         /// <summary>
@@ -801,7 +801,7 @@ namespace CoreJ2K.j2k.fileformat.metadata
         /// </summary>
         public int GetEntry(int entryIndex, int columnIndex)
         {
-            return Entries[entryIndex][columnIndex];
+            return Entries![entryIndex][columnIndex];
         }
 
         public override string ToString()
@@ -928,7 +928,7 @@ namespace CoreJ2K.j2k.fileformat.metadata
         /// Gets or sets the bit depth specification for each component.
         /// Format: bits 0-6 = bit depth minus 1, bit 7 = sign bit (1=signed, 0=unsigned).
         /// </summary>
-        public byte[] ComponentBitDepths { get; set; }
+        public byte[]? ComponentBitDepths { get; set; }
 
         /// <summary>
         /// Gets the number of components.

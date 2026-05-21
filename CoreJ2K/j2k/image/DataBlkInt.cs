@@ -72,11 +72,11 @@ namespace CoreJ2K.j2k.image
         /// <param name="arr">The data array to use. Must be a int array.
         /// 
         /// </param>
-        public override object Data
+        public override object? Data
         {
             get => data_array;
 
-            set => data_array = (int[])value;
+            set => data_array = (int[]?)value;
         }
         /// <summary> Returns the array containing the data, or null if there is no data
         /// array.

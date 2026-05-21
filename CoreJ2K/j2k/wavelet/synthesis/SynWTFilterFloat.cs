@@ -185,10 +185,10 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// 
         /// 
         /// </seealso>
-        public override void synthetize_lpf(object lowSig, int lowOff, int lowLen, int lowStep, object highSig, int highOff, int highLen, int highStep, object outSig, int outOff, int outStep)
+        public override void synthetize_lpf(object? lowSig, int lowOff, int lowLen, int lowStep, object? highSig, int highOff, int highLen, int highStep, object? outSig, int outOff, int outStep)
         {
 
-            synthetize_lpf((float[])lowSig, lowOff, lowLen, lowStep, (float[])highSig, highOff, highLen, highStep, (float[])outSig, outOff, outStep);
+            synthetize_lpf((float[])lowSig!, lowOff, lowLen, lowStep, (float[])highSig!, highOff, highLen, highStep, (float[])outSig!, outOff, outStep);
         }
 
         /// <summary> A specific version of the synthetize_hpf() method that works on float
@@ -306,10 +306,10 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// 
         /// 
         /// </seealso>
-        public override void synthetize_hpf(object lowSig, int lowOff, int lowLen, int lowStep, object highSig, int highOff, int highLen, int highStep, object outSig, int outOff, int outStep)
+        public override void synthetize_hpf(object? lowSig, int lowOff, int lowLen, int lowStep, object? highSig, int highOff, int highLen, int highStep, object? outSig, int outOff, int outStep)
         {
 
-            synthetize_hpf((float[])lowSig, lowOff, lowLen, lowStep, (float[])highSig, highOff, highLen, highStep, (float[])outSig, outOff, outStep);
+            synthetize_hpf((float[])lowSig!, lowOff, lowLen, lowStep, (float[])highSig!, highOff, highLen, highStep, (float[])outSig!, outOff, outStep);
         }
     }
 }

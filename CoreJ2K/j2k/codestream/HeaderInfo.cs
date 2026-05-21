@@ -165,7 +165,7 @@ namespace CoreJ2K.j2k.codestream
             {
                 get
                 {
-                    SIZ ms = null;
+                    SIZ? ms = null;
                     try
                     {
                         ms = (SIZ)Clone();
@@ -174,11 +174,11 @@ namespace CoreJ2K.j2k.codestream
                     {
                         throw new InvalidOperationException("Cannot clone SIZ marker segment");
                     }
-                    return ms;
+                    return ms!;
                 }
 
             }
-            public HeaderInfo Enclosing_Instance { get; private set; }
+            public HeaderInfo Enclosing_Instance { get; private set; } = null!;
 
             public int lsiz;
             public int rsiz;
@@ -191,16 +191,16 @@ namespace CoreJ2K.j2k.codestream
             public int xt0siz;
             public int yt0siz;
             public int csiz;
-            public int[] ssiz;
-            public int[] xrsiz;
-            public int[] yrsiz;
+            public int[] ssiz = null!;
+            public int[] xrsiz = null!;
+            public int[] yrsiz = null!;
 
             /// <summary>Component widths </summary>
-            private int[] compWidth = null;
+            private int[]? compWidth = null;
             /// <summary>Maximum width among all components </summary>
             private int maxCompWidth = -1;
             /// <summary>Component heights </summary>
-            private int[] compHeight = null;
+            private int[]? compHeight = null;
             /// <summary>Maximum height among all components </summary>
             private int maxCompHeight = -1;
             /// <summary> Width of the specified tile-component
@@ -237,7 +237,7 @@ namespace CoreJ2K.j2k.codestream
                 return compHeight[c];
             }
             private int numTiles = -1;
-            private bool[] origSigned = null;
+            private bool[]? origSigned = null;
             public virtual bool IsOrigSigned(int c)
             {
                 if (origSigned == null)
@@ -250,7 +250,7 @@ namespace CoreJ2K.j2k.codestream
                 }
                 return origSigned[c];
             }
-            private int[] origBitDepth = null;
+            private int[]? origBitDepth = null;
             public virtual int GetOrigBitDepth(int c)
             {
                 if (origBitDepth == null)
@@ -294,7 +294,7 @@ namespace CoreJ2K.j2k.codestream
             }
             public virtual object Clone()
             {
-                return null;
+                return null!;
             }
         }
 
@@ -310,7 +310,7 @@ namespace CoreJ2K.j2k.codestream
                 this.Enclosing_Instance = enclosingInstance;
             }
 
-            public HeaderInfo Enclosing_Instance { get; private set; }
+            public HeaderInfo Enclosing_Instance { get; private set; } = null!;
 
             public int lsot;
             public int isot;
@@ -347,7 +347,7 @@ namespace CoreJ2K.j2k.codestream
             {
                 get
                 {
-                    COD ms = null;
+                    COD? ms = null;
                     try
                     {
                         ms = (COD)Clone();
@@ -356,11 +356,11 @@ namespace CoreJ2K.j2k.codestream
                     {
                         throw new InvalidOperationException("Cannot clone SIZ marker segment");
                     }
-                    return ms;
+                    return ms!;
                 }
 
             }
-            public HeaderInfo Enclosing_Instance { get; private set; }
+            public HeaderInfo Enclosing_Instance { get; private set; } = null!;
 
             public int lcod;
             public int scod;
@@ -372,7 +372,7 @@ namespace CoreJ2K.j2k.codestream
             public int spcod_ch; // Code-blocks height
             public int spcod_cs; // Code-blocks style
             public int[] spcod_t = new int[1]; // Transformation
-            public int[] spcod_ps; // Precinct size
+            public int[]? spcod_ps; // Precinct size
             /// <summary>Display information found in this COD marker segment </summary>
             public override string ToString()
             {
@@ -469,7 +469,7 @@ namespace CoreJ2K.j2k.codestream
             }
             public virtual object Clone()
             {
-                return null;
+                return null!;
             }
         }
 
@@ -485,7 +485,7 @@ namespace CoreJ2K.j2k.codestream
                 this.Enclosing_Instance = enclosingInstance;
             }
 
-            public HeaderInfo Enclosing_Instance { get; private set; }
+            public HeaderInfo Enclosing_Instance { get; private set; } = null!;
 
             public int lcoc;
             public int ccoc;
@@ -495,7 +495,7 @@ namespace CoreJ2K.j2k.codestream
             public int spcoc_ch;
             public int spcoc_cs;
             public int[] spcoc_t = new int[1];
-            public int[] spcoc_ps;
+            public int[]? spcoc_ps;
             /// <summary>Display information found in this COC marker segment </summary>
             public override string ToString()
             {
@@ -573,7 +573,7 @@ namespace CoreJ2K.j2k.codestream
                 this.Enclosing_Instance = enclosingInstance;
             }
 
-            public HeaderInfo Enclosing_Instance { get; private set; }
+            public HeaderInfo Enclosing_Instance { get; private set; } = null!;
 
             public int lrgn;
             public int crgn;
@@ -634,11 +634,11 @@ namespace CoreJ2K.j2k.codestream
                 }
 
             }
-            public HeaderInfo Enclosing_Instance { get; private set; }
+            public HeaderInfo Enclosing_Instance { get; private set; } = null!;
 
             public int lqcd;
             public int sqcd;
-            public int[][] spqcd;
+            public int[][] spqcd = null!;
 
             private int qType = -1;
             private int gb = -1;
@@ -742,12 +742,12 @@ namespace CoreJ2K.j2k.codestream
                 }
 
             }
-            public HeaderInfo Enclosing_Instance { get; private set; }
+            public HeaderInfo Enclosing_Instance { get; private set; } = null!;
 
             public int lqcc;
             public int cqcc;
             public int sqcc;
-            public int[][] spqcc;
+            public int[][] spqcc = null!;
 
             private int qType = -1;
             private int gb = -1;
@@ -828,15 +828,15 @@ namespace CoreJ2K.j2k.codestream
                 this.Enclosing_Instance = enclosingInstance;
             }
 
-            public HeaderInfo Enclosing_Instance { get; private set; }
+            public HeaderInfo Enclosing_Instance { get; private set; } = null!;
 
             public int lpoc;
-            public int[] rspoc;
-            public int[] cspoc;
-            public int[] lyepoc;
-            public int[] repoc;
-            public int[] cepoc;
-            public int[] ppoc;
+            public int[] rspoc = null!;
+            public int[] cspoc = null!;
+            public int[] lyepoc = null!;
+            public int[] repoc = null!;
+            public int[] cepoc = null!;
+            public int[] ppoc = null!;
             /// <summary>Display information found in this POC marker segment </summary>
             public override string ToString()
             {
@@ -886,11 +886,11 @@ namespace CoreJ2K.j2k.codestream
                 this.Enclosing_Instance = enclosingInstance;
             }
 
-            public HeaderInfo Enclosing_Instance { get; private set; }
+            public HeaderInfo Enclosing_Instance { get; private set; } = null!;
 
             public int lcrg;
-            public int[] xcrg;
-            public int[] ycrg;
+            public int[] xcrg = null!;
+            public int[] ycrg = null!;
             /// <summary>Display information found in the CRG marker segment </summary>
             public override string ToString()
             {
@@ -916,11 +916,11 @@ namespace CoreJ2K.j2k.codestream
                 this.Enclosing_Instance = enclosingInstance;
             }
 
-            public HeaderInfo Enclosing_Instance { get; private set; }
+            public HeaderInfo Enclosing_Instance { get; private set; } = null!;
 
             public int lcom;
             public int rcom;
-            public byte[] ccom;
+            public byte[] ccom = null!;
             /// <summary>Display information found in the COM marker segment </summary>
             public override string ToString()
             {
@@ -944,7 +944,7 @@ namespace CoreJ2K.j2k.codestream
         }
 
         /// <summary>Reference to the SIZ marker segment found in main header </summary>
-        public SIZ sizValue;
+        public SIZ sizValue = null!;
 
         /// <summary>Reference to the SOT marker segments found in tile-part headers. The
         /// kwy is given by "t"+tileIdx"_tp"+tilepartIndex. 
@@ -985,7 +985,7 @@ namespace CoreJ2K.j2k.codestream
         public Dictionary<string, POC> pocValue = new Dictionary<string, POC>();
 
         /// <summary>Reference to the CRG marker segment found in main header </summary>
-        public CRG crgValue;
+        public CRG? crgValue;
 
         /// <summary>Reference to the COM marker segments found in main and tile-part
         /// headers. The key is either "main_"+comIdx or "t"+tileIdx+"_"+comIdx. 
@@ -998,7 +998,7 @@ namespace CoreJ2K.j2k.codestream
         /// <summary>Reference to the TLM (Tile-part Lengths, Main header) marker segment data.
         /// Contains tile-part length information for fast random tile access.
         /// </summary>
-        public codestream.metadata.TilePartLengthsData tlmValue;
+        public codestream.metadata.TilePartLengthsData? tlmValue;
 
         /// <summary>Display information found in the different marker segments of the main
         /// header 
@@ -1183,7 +1183,7 @@ namespace CoreJ2K.j2k.codestream
         /// <summary>Returns a copy of this object </summary>
         public virtual HeaderInfo GetCopy(int nt)
         {
-            HeaderInfo nhi = null;
+            HeaderInfo? nhi = null;
             // SIZ
             try
             {
@@ -1193,7 +1193,7 @@ namespace CoreJ2K.j2k.codestream
             {
                 throw new InvalidOperationException("Cannot clone HeaderInfo instance");
             }
-            nhi.sizValue = sizValue.Copy;
+            nhi!.sizValue = sizValue.Copy;
             // COD
             if (codValue["main"] != null)
             {
@@ -1212,7 +1212,7 @@ namespace CoreJ2K.j2k.codestream
         }
         public virtual object Clone()
         {
-            return null;
+            return null!;
         }
     }
 }

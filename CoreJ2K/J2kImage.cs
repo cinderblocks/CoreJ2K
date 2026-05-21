@@ -38,7 +38,7 @@ namespace CoreJ2K
 
         #region Static Decoder Methods
 
-        public static InterleavedImage FromFile(string filename, ParameterList parameters = null)
+        public static InterleavedImage FromFile(string filename, ParameterList? parameters = null)
         {
             using (var stream = FileStreamFactory.New(filename, "r"))
             {
@@ -66,7 +66,7 @@ namespace CoreJ2K
             }
         }
 
-        public static InterleavedImage FromBytes(byte[] j2kdata, ParameterList parameters = null)
+        public static InterleavedImage FromBytes(byte[] j2kdata, ParameterList? parameters = null)
         {
             using (var stream = new MemoryStream(j2kdata))
             {
@@ -94,10 +94,10 @@ namespace CoreJ2K
             }
         }
 
-        public static InterleavedImage FromStream(Stream stream, ParameterList parameters = null)
+        public static InterleavedImage FromStream(Stream stream, ParameterList? parameters = null)
         {
-            RandomAccessIO in_stream = null;
-            InverseWT invWT = null;
+            RandomAccessIO? in_stream = null;
+            InverseWT? invWT = null;
 
             try
             {
@@ -379,10 +379,10 @@ namespace CoreJ2K
         /// <param name="metadata">Output parameter that receives the metadata (comments, XML, UUIDs).</param>
         /// <param name="parameters">Optional decoder parameters.</param>
         /// <returns>The decoded image.</returns>
-        public static InterleavedImage FromStream(Stream stream, out j2k.fileformat.metadata.J2KMetadata metadata, ParameterList parameters = null)
+        public static InterleavedImage FromStream(Stream stream, out j2k.fileformat.metadata.J2KMetadata metadata, ParameterList? parameters = null)
         {
-            RandomAccessIO in_stream = null;
-            InverseWT invWT = null;
+            RandomAccessIO? in_stream = null;
+            InverseWT? invWT = null;
 
             try
             {
@@ -698,12 +698,12 @@ namespace CoreJ2K
 
         #region Static Encoder Methods
 
-        public static BlkImgDataSrc CreateEncodableSource(Stream stream)
+        public static BlkImgDataSrc? CreateEncodableSource(Stream stream)
         {
             return CreateEncodableSource(new[] { stream });
         }
 
-        public static BlkImgDataSrc CreateEncodableSource(IEnumerable<Stream> streams)
+        public static BlkImgDataSrc? CreateEncodableSource(IEnumerable<Stream> streams)
         {
             if (streams == null)
             {
@@ -764,13 +764,13 @@ namespace CoreJ2K
             return imgsrc;
         }
 
-        public static byte[] ToBytes(object imageObject, ParameterList parameters = null)
+        public static byte[]? ToBytes(object imageObject, ParameterList? parameters = null)
         {
             var imgsrc = ImageFactory.ToPortableImageSource(imageObject);
             return ToBytes(imgsrc, parameters);
         }
 
-        public static byte[] ToBytes(BlkImgDataSrc imgsrc, ParameterList parameters = null)
+        public static byte[]? ToBytes(BlkImgDataSrc imgsrc, ParameterList? parameters = null)
         {
             return ToBytes(imgsrc, null, parameters);
         }
@@ -782,7 +782,7 @@ namespace CoreJ2K
         /// <param name="metadata">Optional metadata (comments, XML, UUIDs) to include.</param>
         /// <param name="parameters">Optional encoder parameters.</param>
         /// <returns>The encoded JPEG2000 data.</returns>
-        public static byte[] ToBytes(BlkImgDataSrc imgsrc, j2k.fileformat.metadata.J2KMetadata metadata, ParameterList parameters = null)
+        public static byte[]? ToBytes(BlkImgDataSrc imgsrc, j2k.fileformat.metadata.J2KMetadata? metadata, ParameterList? parameters = null)
         {
             if (imgsrc == null)
             {
@@ -1292,7 +1292,7 @@ namespace CoreJ2K
         /// <param name="imageObject">The image to encode (SKBitmap, Bitmap, etc.).</param>
         /// <param name="configuration">Modern encoder configuration.</param>
         /// <returns>The encoded JPEG 2000 data.</returns>
-        public static byte[] ToBytes(object imageObject, Configuration.J2KEncoderConfiguration configuration)
+        public static byte[]? ToBytes(object imageObject, Configuration.J2KEncoderConfiguration configuration)
         {
             if (configuration == null)
                 throw new ArgumentNullException(nameof(configuration));
@@ -1310,7 +1310,7 @@ namespace CoreJ2K
         /// <param name="imgsrc">The image source to encode.</param>
         /// <param name="configuration">Modern encoder configuration.</param>
         /// <returns>The encoded JPEG 2000 data.</returns>
-        public static byte[] ToBytes(BlkImgDataSrc imgsrc, Configuration.J2KEncoderConfiguration configuration)
+        public static byte[]? ToBytes(BlkImgDataSrc imgsrc, Configuration.J2KEncoderConfiguration configuration)
         {
             if (configuration == null)
                 throw new ArgumentNullException(nameof(configuration));
@@ -1322,7 +1322,7 @@ namespace CoreJ2K
             var pl = configuration.ToParameterList();
             
             // Handle ROI if configured
-            j2k.fileformat.metadata.J2KMetadata metadata = null;
+            j2k.fileformat.metadata.J2KMetadata? metadata = null;
             // Note: ROI is handled through ParameterList in the existing encoding pipeline
             
             return ToBytes(imgsrc, metadata, pl);
@@ -1335,7 +1335,7 @@ namespace CoreJ2K
         /// <param name="metadata">Optional metadata to include in the JP2 file.</param>
         /// <param name="configuration">Modern encoder configuration.</param>
         /// <returns>The encoded JPEG 2000 data.</returns>
-        public static byte[] ToBytes(BlkImgDataSrc imgsrc, j2k.fileformat.metadata.J2KMetadata metadata, Configuration.J2KEncoderConfiguration configuration)
+        public static byte[]? ToBytes(BlkImgDataSrc imgsrc, j2k.fileformat.metadata.J2KMetadata? metadata, Configuration.J2KEncoderConfiguration configuration)
         {
             if (configuration == null)
                 throw new ArgumentNullException(nameof(configuration));
@@ -1353,34 +1353,34 @@ namespace CoreJ2K
 
         #region Default Parameter Loaders
 
-        public static ParameterList GetDefaultDecoderParameterList(string[][] pinfo)
+        public static ParameterList GetDefaultDecoderParameterList(string?[][] pinfo)
         {
             var pl = new ParameterList();
-            string[][] str;
+            string?[][] str;
 
             str = BitstreamReaderAgent.ParameterInfo;
-            if (str != null) for (var i = str.Length - 1; i >= 0; i--) pl[str[i][0]] = str[i][3];
+            if (str != null) for (var i = str.Length - 1; i >= 0; i--) pl[str[i][0]!] = str[i][3]!;
 
             str = EntropyDecoder.ParameterInfo;
-            if (str != null) for (var i = str.Length - 1; i >= 0; i--) pl[str[i][0]] = str[i][3];
+            if (str != null) for (var i = str.Length - 1; i >= 0; i--) pl[str[i][0]!] = str[i][3]!;
 
             str = ROIDeScaler.ParameterInfo;
-            if (str != null) for (var i = str.Length - 1; i >= 0; i--) pl[str[i][0]] = str[i][3];
+            if (str != null) for (var i = str.Length - 1; i >= 0; i--) pl[str[i][0]!] = str[i][3]!;
 
             str = Dequantizer.ParameterInfo;
-            if (str != null) for (var i = str.Length - 1; i >= 0; i--) pl[str[i][0]] = str[i][3];
+            if (str != null) for (var i = str.Length - 1; i >= 0; i--) pl[str[i][0]!] = str[i][3]!;
 
             str = InvCompTransf.ParameterInfo;
-            if (str != null) for (var i = str.Length - 1; i >= 0; i--) pl[str[i][0]] = str[i][3];
+            if (str != null) for (var i = str.Length - 1; i >= 0; i--) pl[str[i][0]!] = str[i][3]!;
 
             str = HeaderDecoder.ParameterInfo;
-            if (str != null) for (var i = str.Length - 1; i >= 0; i--) pl[str[i][0]] = str[i][3];
+            if (str != null) for (var i = str.Length - 1; i >= 0; i--) pl[str[i][0]!] = str[i][3]!;
 
             str = ColorSpaceMapper.ParameterInfo;
-            if (str != null) for (var i = str.Length - 1; i >= 0; i--) pl[str[i][0]] = str[i][3];
+            if (str != null) for (var i = str.Length - 1; i >= 0; i--) pl[str[i][0]!] = str[i][3]!;
 
             str = pinfo ?? decoder_pinfo;
-            if (str != null) for (var i = str.Length - 1; i >= 0; i--) pl[str[i][0]] = str[i][3];
+            if (str != null) for (var i = str.Length - 1; i >= 0; i--) pl[str[i][0]!] = str[i][3]!;
 
             return pl;
         }
@@ -1390,40 +1390,40 @@ namespace CoreJ2K
             return GetDefaultDecoderParameterList(decoder_pinfo);
         }
 
-        public static ParameterList GetDefaultEncoderParameterList(string[][] pinfo)
+        public static ParameterList GetDefaultEncoderParameterList(string?[][] pinfo)
         {
             var pl = new ParameterList();
-            string[][] str;
+            string?[][] str;
 
             str = pinfo ?? encoder_pinfo;
-            if (str != null) for (var i = str.Length - 1; i >= 0; i--) pl[str[i][0]] = str[i][3];
+            if (str != null) for (var i = str.Length - 1; i >= 0; i--) pl[str[i][0]!] = str[i][3]!;
 
             str = ForwCompTransf.ParameterInfo;
-            if (str != null) for (var i = str.Length - 1; i >= 0; i--) pl[str[i][0]] = str[i][3];
+            if (str != null) for (var i = str.Length - 1; i >= 0; i--) pl[str[i][0]!] = str[i][3]!;
 
             str = AnWTFilter.ParameterInfo;
-            if (str != null) for (var i = str.Length - 1; i >= 0; i--) pl[str[i][0]] = str[i][3];
+            if (str != null) for (var i = str.Length - 1; i >= 0; i--) pl[str[i][0]!] = str[i][3]!;
 
             str = ForwardWT.ParameterInfo;
-            if (str != null) for (var i = str.Length - 1; i >= 0; i--) pl[str[i][0]] = str[i][3];
+            if (str != null) for (var i = str.Length - 1; i >= 0; i--) pl[str[i][0]!] = str[i][3]!;
 
             str = Quantizer.ParameterInfo;
-            if (str != null) for (var i = str.Length - 1; i >= 0; i--) pl[str[i][0]] = str[i][3];
+            if (str != null) for (var i = str.Length - 1; i >= 0; i--) pl[str[i][0]!] = str[i][3]!;
 
             str = ROIScaler.ParameterInfo;
-            if (str != null) for (var i = str.Length - 1; i >= 0; i--) pl[str[i][0]] = str[i][3];
+            if (str != null) for (var i = str.Length - 1; i >= 0; i--) pl[str[i][0]!] = str[i][3]!;
 
             str = EntropyCoder.ParameterInfo;
-            if (str != null) for (var i = str.Length - 1; i >= 0; i--) pl[str[i][0]] = str[i][3];
+            if (str != null) for (var i = str.Length - 1; i >= 0; i--) pl[str[i][0]!] = str[i][3]!;
 
             str = HeaderEncoder.ParameterInfo;
-            if (str != null) for (var i = str.Length - 1; i >= 0; i--) pl[str[i][0]] = str[i][3];
+            if (str != null) for (var i = str.Length - 1; i >= 0; i--) pl[str[i][0]!] = str[i][3]!;
 
             str = PostCompRateAllocator.ParameterInfo;
-            if (str != null) for (var i = str.Length - 1; i >= 0; i--) pl[str[i][0]] = str[i][3];
+            if (str != null) for (var i = str.Length - 1; i >= 0; i--) pl[str[i][0]!] = str[i][3]!;
 
             str = PktEncoder.ParameterInfo;
-            if (str != null) for (var i = str.Length - 1; i >= 0; i--) pl[str[i][0]] = str[i][3];
+            if (str != null) for (var i = str.Length - 1; i >= 0; i--) pl[str[i][0]!] = str[i][3]!;
 
             return pl;
         }
@@ -1437,26 +1437,26 @@ namespace CoreJ2K
 
         #region Decoder Parameters
 
-        private static readonly string[][] decoder_pinfo =
+        private static readonly string?[][] decoder_pinfo =
             {
-                new string[]
+                new string?[]
                     {
                         "u", "[on|off]",
                         "Prints usage information. "
                         + "If specified all other arguments (except 'v') are ignored",
                         "off"
                     },
-                new string[]
+                new string?[]
                     {
                         "v", "[on|off]", "Prints version and copyright information",
                         "off"
                     },
-                new string[]
+                new string?[]
                     {
                         "verbose", "[on|off]",
                         "Prints information about the decoded codestream", "on"
                     },
-                new string[]
+                new string?[]
                     {
                         "pfile", "<filename>",
                         "Loads the arguments from the specified file. Arguments that are "
@@ -1473,7 +1473,7 @@ namespace CoreJ2K
                         + "argument appearing in the file is ignored",
                         null
                     },
-                new string[]
+                new string?[]
                     {
                         "res", "<resolution level index>",
                         "The resolution level at which to reconstruct the image "
@@ -1488,7 +1488,7 @@ namespace CoreJ2K
                         + "depends only on options '-nbytes' or '-rate'.",
                         null
                     },
-                new string[]
+                new string?[]
                     {
                         "i", "<filename or url>",
                         "The file containing the JPEG 2000 compressed data. This can be "
@@ -1501,7 +1501,7 @@ namespace CoreJ2K
                         + "efficient way of decoding network served data.",
                         null
                     },
-                new string[]
+                new string?[]
                     {
                         "o", "<filename>",
                         "This is the name of the file to which the decompressed image "
@@ -1518,7 +1518,7 @@ namespace CoreJ2K
                         + "components are written to the same file.",
                         null
                     },
-                new string[]
+                new string?[]
                     {
                         "rate", "<decoding rate in bpp>",
                         "Specifies the decoding rate in bits per pixel (bpp) where the "
@@ -1530,7 +1530,7 @@ namespace CoreJ2K
                         + "rate in bytes, use '-nbytes' options instead.",
                         "-1"
                     },
-                new string[]
+                new string?[]
                     {
                         "nbytes", "<decoding rate in bytes>",
                         "Specifies the decoding rate in bytes. "
@@ -1539,7 +1539,7 @@ namespace CoreJ2K
                         + "rate in bits per pixel, use '-rate' options instead.",
                         "-1"
                     },
-                new string[]
+                new string?[]
                     {
                         "parsing", null,
                         "Enable or not the parsing mode when decoding rate is specified "
@@ -1550,7 +1550,7 @@ namespace CoreJ2K
                         + "code-block.",
                         "on"
                     },
-                new string[]
+                new string?[]
                     {
                         "ncb_quit", "<max number of code blocks>",
                         "Use the ncb and lbody quit conditions. If state information is "
@@ -1562,48 +1562,48 @@ namespace CoreJ2K
                         + "packet body bytes the decoder will decode.",
                         "-1"
                     },
-                new string[]
+                new string?[]
                     {
                         "l_quit", "<max number of layers>",
                         "Specifies the maximum number of layers to decode for any code-"
                         + "block",
                         "-1"
                     },
-                new string[]
+                new string?[]
                     {
                         "m_quit", "<max number of bit planes>",
                         "Specifies the maximum number of bit planes to decode for any code"
                         + "-block",
                         "-1"
                     },
-                new string[]
+                new string?[]
                     {
                         "poc_quit", null,
                         "Specifies the whether the decoder should only decode code-blocks "
                         + "included in the first progression order.",
                         "off"
                     },
-                new string[]
+                new string?[]
                     {
                         "one_tp", null,
                         "Specifies whether the decoder should only decode the first "
                         + "tile part of each tile.",
                         "off"
                     },
-                new string[]
+                new string?[]
                     {
                         "comp_transf", null,
                         "Specifies whether the component transform indicated in the "
                         + "codestream should be used.",
                         "on"
                     },
-                new string[]
+                new string?[]
                     {
                         "debug", null,
                         "Print debugging messages when an error is encountered.",
                         "off"
                     },
-                new string[]
+                new string?[]
                     {
                         "cdstr_info", null,
                         "Display information about the codestream. This information is: "
@@ -1611,12 +1611,12 @@ namespace CoreJ2K
                         + "\n- Tile-part length and position within the code-stream.",
                         "off"
                     },
-                new string[]
+                new string?[]
                     {
                         "nocolorspace", null,
                         "Ignore any colorspace information in the image.", "off"
                     },
-                new string[]
+                new string?[]
                     {
                         "colorspace_debug", null,
                         "Print debugging messages when an error is encountered in the"
@@ -1629,38 +1629,38 @@ namespace CoreJ2K
 
         #region Encoder Parameters
 
-        private static readonly string[][] encoder_pinfo =
+        private static readonly string?[][] encoder_pinfo =
             {
-                new string[]
+                new string?[]
                     {
                         "debug", null,
                         "Print debugging messages when an error is encountered.",
                         "off"
                     },
-                new string[]
+                new string?[]
                     {
                         "disable_jp2_extension", "[on|off]",
                         "JJ2000 automatically adds .jp2 extension when using 'file_format'"
                         + "option. This option disables it when on.",
                         "off"
                     },
-                new string[]
+                new string?[]
                     {
                         "file_format", "[on|off]",
                         "Puts the JPEG 2000 codestream in a JP2 file format wrapper.",
                         "on"
                     },
-                new string[]
+                new string?[]
                     {
                         "pph_tile", "[on|off]",
                         "Packs the packet headers in the tile headers.", "off"
                     },
-                new string[]
+                new string?[]
                     {
                         "pph_main", "[on|off]",
                         "Packs the packet headers in the main header.", "off"
                     },
-                new string[]
+                new string?[]
                     {
                         "pfile", "<filename of arguments file>",
                         "Loads the arguments from the specified file. Arguments that are "
@@ -1677,7 +1677,7 @@ namespace CoreJ2K
                         + "argument appearing in the file is ignored.",
                         null
                     },
-                new string[]
+                new string?[]
                     {
                         "tile_parts", "<packets per tile-part>",
                         "This option specifies the maximum number of packets to have in "
@@ -1685,14 +1685,14 @@ namespace CoreJ2K
                         + "of each tile",
                         "0"
                     },
-                new string[]
+                new string?[]
                     {
                         "tiles", "<nominal tile width> <nominal tile height>",
                         "This option specifies the maximum tile dimensions to use. "
                         + "If both dimensions are 0 then no tiling is used.",
                         "0 0"
                     },
-                new string[]
+                new string?[]
                     {
                         "ref", "<x> <y>",
                         "Sets the origin of the image in the canvas system. It sets the "
@@ -1700,7 +1700,7 @@ namespace CoreJ2K
                         + "with respect to the canvas origin",
                         "0 0"
                     },
-                new string[]
+                new string?[]
                     {
                         "tref", "<x> <y>",
                         "Sets the origin of the tile partitioning on the reference grid, "
@@ -1709,7 +1709,7 @@ namespace CoreJ2K
                         + "option.",
                         "0 0"
                     },
-                new string[]
+                new string?[]
                     {
                         "rate", "<output bitrate in bpp>",
                         "This is the output bitrate of the codestream in bits per pixel."
@@ -1719,7 +1719,7 @@ namespace CoreJ2K
                         + "resulting file may have a larger bitrate.",
                         "-1"
                     },
-                new string[]
+                new string?[]
                     {
                         "lossless", "[on|off]",
                         "Specifies a lossless compression for the encoder. This options"
@@ -1731,7 +1731,7 @@ namespace CoreJ2K
                         + "'-Qtype' and '-Ffilters' respectively.",
                         "off"
                     },
-                new string[]
+                new string?[]
                     {
                         "i", "<image file> [,<image file> [,<image file> ... ]]",
                         "Mandatory argument. This option specifies the name of the input "
@@ -1748,24 +1748,24 @@ namespace CoreJ2K
                         + "PPM file.",
                         null
                     },
-                new string[]
+                new string?[]
                     {
                         "o", "<file name>",
                         "Mandatory argument. This option specifies the name of the output "
                         + "file to which the codestream will be written.",
                         null
                     },
-                new string[]
+                new string?[]
                     {
                         "verbose", null,
                         "Prints information about the obtained bit stream.", "on"
                     },
-                new string[]
+                new string?[]
                     {
                         "v", "[on|off]", "Prints version and copyright information.",
                         "off"
                     },
-                new string[]
+                new string?[]
                     {
                         "u", "[on|off]",
                         "Prints usage information. "
@@ -1794,7 +1794,7 @@ namespace CoreJ2K
             FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING, msg);
         }
 
-        private static string GetImageType(Stream inStream)
+        private static string? GetImageType(Stream inStream)
         {
             try
             {

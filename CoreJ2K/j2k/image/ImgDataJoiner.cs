@@ -575,7 +575,7 @@ namespace CoreJ2K.j2k.image
         /// <returns> The current tile's coordinates.
         /// 
         /// </returns>
-        public virtual Coord GetTile(Coord co)
+        public virtual Coord GetTile(Coord? co)
         {
             if (co != null)
             {
@@ -626,7 +626,7 @@ namespace CoreJ2K.j2k.image
         /// (Coord.y) directions.
         /// 
         /// </returns>
-        public virtual Coord GetNumTiles(Coord co)
+        public virtual Coord GetNumTiles(Coord? co)
         {
             if (co != null)
             {

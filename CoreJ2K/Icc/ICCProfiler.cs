@@ -41,8 +41,8 @@ namespace CoreJ2K.Icc
         internal ICCProfile icc = null;
 
         // Temporary variables needed during profiling.
-        private DataBlkInt[] tempInt; // Holds the results of the transform.
-        private DataBlkFloat[] tempFloat; // Holds the results of the transform.
+        private DataBlkInt[]? tempInt; // Holds the results of the transform.
+        private DataBlkFloat[]? tempFloat; // Holds the results of the transform.
 
         private readonly object xform = null;
 
@@ -359,7 +359,7 @@ namespace CoreJ2K.Icc
                     $"matrix transform problem:\n{e.Message}");
                 if (pl.GetParameter("debug").Equals("on"))
                 {
-                    FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.ERROR, e.StackTrace);
+                    FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.ERROR, e.StackTrace!);
                 }
                 else
                 {
@@ -373,7 +373,7 @@ namespace CoreJ2K.Icc
                     $"monochrome transform problem:\n{e.Message}");
                 if (pl.GetParameter("debug").Equals("on"))
                 {
-                    FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.ERROR, e.StackTrace);
+                    FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.ERROR, e.StackTrace!);
                 }
                 else
                 {

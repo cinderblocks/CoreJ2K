@@ -32,7 +32,7 @@ namespace CoreJ2K.Color
         /// </returns>
         public override int NumComps => pbox?.NumColumns ?? src.NumComps;
 
-        internal int[] outShiftValueArray;
+        internal int[] outShiftValueArray = null!;
         internal int srcChannel = 0;
 
         /// <summary>Access to the palette box information. </summary>

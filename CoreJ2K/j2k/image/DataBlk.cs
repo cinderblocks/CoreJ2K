@@ -94,7 +94,7 @@ namespace CoreJ2K.j2k.image
         /// an array of the correct type explicitly and not through an
         /// <tt>Object</tt>.</summary>
         /// <seealso cref="GetDataType" />
-        public abstract object Data { get; set; }
+        public abstract object? Data { get; set; }
 
         /// <summary>The identifier for the <tt>byte</tt> data type, as signed 8 bits. </summary>
         public const int TYPE_BYTE = 0;

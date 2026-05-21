@@ -225,7 +225,7 @@ namespace CoreJ2K.j2k.codestream.writer
         /// </ul>
         /// 
         /// </summary>
-        private int[][][][][] bak_lblock;
+        private int[][][][][] bak_lblock = null!;
 
         /// <summary> The saved last encoded truncation point for each code-block. It is used
         /// for restoring previous saved state by restore(). A negative value means
@@ -244,10 +244,10 @@ namespace CoreJ2K.j2k.codestream.writer
         /// </ul>
         /// 
         /// </summary>
-        private int[][][][][] bak_prevtIdxs;
+        private int[][][][][] bak_prevtIdxs = null!;
 
         /// <summary>The body buffer of the last encoded packet </summary>
-        private byte[] lbbuf;
+        private byte[]? lbbuf;
 
         /// <summary>The body length of the last encoded packet </summary>
         private int lblen;
@@ -294,7 +294,7 @@ namespace CoreJ2K.j2k.codestream.writer
         /// <param name="pl">ParameterList instance that holds command line options
         /// 
         /// </param>
-        public PktEncoder(CodedCBlkDataSrcEnc infoSrc, EncoderSpecs encSpec, Coord[][][] numPrec, ParameterList pl)
+        public PktEncoder(CodedCBlkDataSrcEnc infoSrc, EncoderSpecs encSpec, Coord[][][]? numPrec, ParameterList pl)
         {
             this.infoSrc = infoSrc;
             this.encSpec = encSpec;
@@ -363,7 +363,7 @@ namespace CoreJ2K.j2k.codestream.writer
                         mins = (r == 0) ? 0 : 1;
                         maxs = (r == 0) ? 1 : 4;
 
-                        var maxPrec = numPrec[t][c][r].x * numPrec[t][c][r].y;
+                        var maxPrec = numPrec![t][c][r].x * numPrec![t][c][r].y;
 
                         ttIncl[t][c][r] = new TagTreeEncoder[maxPrec][];
                         for (var i6 = 0; i6 < maxPrec; i6++)
@@ -474,7 +474,7 @@ namespace CoreJ2K.j2k.codestream.writer
             int acb0x, acb0y;
 
             var root = infoSrc.GetAnSubbandTree(t, c);
-            SubbandAn sb = null;
+            SubbandAn? sb = null;
 
             int p0x, p0y, p1x, p1y; // Precinct projection in subband
             int s0x, s0y, s1x, s1y; // Active subband portion
@@ -797,7 +797,7 @@ namespace CoreJ2K.j2k.codestream.writer
         /// <returns> The buffer containing the packet header.
         /// 
         /// </returns>
-        public virtual BitOutputBuffer encodePacket(int ly, int c, int r, int t, CBlkRateDistStats[][] cbs, int[][] tIndx, BitOutputBuffer hbuf, byte[] bbuf, int pIdx)
+        public virtual BitOutputBuffer encodePacket(int ly, int c, int r, int t, CBlkRateDistStats[][] cbs, int[][] tIndx, BitOutputBuffer? hbuf, byte[]? bbuf, int pIdx)
         {
             int b, i, maxi;
             int ncb;
@@ -812,7 +812,7 @@ namespace CoreJ2K.j2k.codestream.writer
             int[] cur_tIndx; // truncation points to encode
             var minsb = (r == 0) ? 0 : 1;
             var maxsb = (r == 0) ? 1 : 4;
-            Coord cbCoord = null;
+            Coord? cbCoord = null;
             var root = infoSrc.GetAnSubbandTree(t, c);
             SubbandAn sb;
             roiInPkt = false;
@@ -858,13 +858,13 @@ namespace CoreJ2K.j2k.codestream.writer
                 }
                 else
                 {
-                    hbuf.reset();
+                    hbuf!.reset();
                 }
                 if (bbuf == null)
                 {
                     lbbuf = bbuf = Array.Empty<byte>();
                 }
-                hbuf.writeBit(0);
+                hbuf!.writeBit(0);
                 lblen = 0;
 
                 return hbuf;
@@ -876,7 +876,7 @@ namespace CoreJ2K.j2k.codestream.writer
             }
             else
             {
-                hbuf.reset();
+                hbuf!.reset();
             }
 
             // Invalidate last body buffer
@@ -884,7 +884,7 @@ namespace CoreJ2K.j2k.codestream.writer
             lblen = 0;
 
             // Signal that packet is present
-            hbuf.writeBit(1);
+            hbuf!.writeBit(1);
 
             for (var s = minsb; s < maxsb; s++)
             {
@@ -955,25 +955,25 @@ namespace CoreJ2K.j2k.codestream.writer
                                 }
 
                                 // Count body size for packet
-                                lblen += cur_cbs[b].truncRates[cur_cbs[b].truncIdxs[cur_tIndx[b]]];
+                                lblen += cur_cbs[b].truncRates![cur_cbs[b].truncIdxs![cur_tIndx[b]]];
                             }
                             else
                             {
                                 // Already in previous layer
                                 // Send "1" bit
-                                hbuf.writeBit(1);
+                                hbuf!.writeBit(1);
                                 // Count body size for packet
-                                lblen += cur_cbs[b].truncRates[cur_cbs[b].truncIdxs[cur_tIndx[b]]] - cur_cbs[b].truncRates[cur_cbs[b].truncIdxs[cur_prevtIdxs[b]]];
+                                lblen += cur_cbs[b].truncRates![cur_cbs[b].truncIdxs![cur_tIndx[b]]] - cur_cbs[b].truncRates![cur_cbs[b].truncIdxs![cur_prevtIdxs[b]]];
                             }
 
                             // 3) Truncation point information
                             if (cur_prevtIdxs[b] < 0)
                             {
-                                newtp = cur_cbs[b].truncIdxs[cur_tIndx[b]];
+                                newtp = cur_cbs[b].truncIdxs![cur_tIndx[b]];
                             }
                             else
                             {
-                                newtp = cur_cbs[b].truncIdxs[cur_tIndx[b]] - cur_cbs[b].truncIdxs[cur_prevtIdxs[b]] - 1;
+                                newtp = cur_cbs[b].truncIdxs![cur_tIndx[b]] - cur_cbs[b].truncIdxs![cur_prevtIdxs[b]] - 1;
                             }
 
                             // Mix of switch and if is faster
@@ -981,11 +981,11 @@ namespace CoreJ2K.j2k.codestream.writer
                             {
 
                                 case 0:
-                                    hbuf.writeBit(0); // Send one "0" bit
+                                    hbuf!.writeBit(0); // Send one "0" bit
                                     break;
 
                                 case 1:
-                                    hbuf.writeBits(2, 2); // Send one "1" and one "0"
+                                    hbuf!.writeBits(2, 2); // Send one "1" and one "0"
                                     break;
 
                                 case 2:
@@ -993,7 +993,7 @@ namespace CoreJ2K.j2k.codestream.writer
                                 case 4:
                                     // Send two "1" bits followed by 2 bits
                                     // representation of newtp-2
-                                    hbuf.writeBits((3 << 2) | (newtp - 2), 4);
+                                    hbuf!.writeBits((3 << 2) | (newtp - 2), 4);
                                     break;
 
                                 default:
@@ -1001,13 +1001,13 @@ namespace CoreJ2K.j2k.codestream.writer
                                     {
                                         // Send four "1" bits followed by a five bits
                                         // representation of newtp-5
-                                        hbuf.writeBits((15 << 5) | (newtp - 5), 9);
+                                        hbuf!.writeBits((15 << 5) | (newtp - 5), 9);
                                     }
                                     else if (newtp <= 163)
                                     {
                                         // Send nine "1" bits followed by a seven bits
                                         // representation of newtp-36
-                                        hbuf.writeBits((511 << 7) | (newtp - 36), 16);
+                                        hbuf!.writeBits((511 << 7) | (newtp - 36), 16);
                                     }
                                     else
                                     {
@@ -1023,7 +1023,7 @@ namespace CoreJ2K.j2k.codestream.writer
                             if (cur_prevtIdxs[b] >= 0)
                             {
                                 // Already in previous layer. Send "0" bit
-                                hbuf.writeBit(0);
+                                hbuf!.writeBit(0);
                             }
                             else
                             {
@@ -1040,20 +1040,20 @@ namespace CoreJ2K.j2k.codestream.writer
                         // signal the length of each terminated segment and the
                         // final truncation point.
                         newtp = 1;
-                        maxi = cur_cbs[b].truncIdxs[cur_tIndx[b]];
-                        cblen = (cur_prevtIdxs[b] < 0) ? 0 : cur_cbs[b].truncRates[cur_cbs[b].truncIdxs[cur_prevtIdxs[b]]];
+                        maxi = cur_cbs[b].truncIdxs![cur_tIndx[b]];
+                        cblen = (cur_prevtIdxs[b] < 0) ? 0 : cur_cbs[b].truncRates![cur_cbs[b].truncIdxs![cur_prevtIdxs[b]]];
 
                         // Loop on truncation points
-                        i = (cur_prevtIdxs[b] < 0) ? 0 : cur_cbs[b].truncIdxs[cur_prevtIdxs[b]] + 1;
+                        i = (cur_prevtIdxs[b] < 0) ? 0 : cur_cbs[b].truncIdxs![cur_prevtIdxs[b]] + 1;
                         var minbits = 0;
                         for (; i < maxi; i++, newtp++)
                         {
                             // If terminated truncation point calculate length
-                            if (cur_cbs[b].isTermPass != null && cur_cbs[b].isTermPass[i])
+                            if (cur_cbs[b].isTermPass != null && cur_cbs[b].isTermPass![i])
                             {
 
                                 // Calculate length
-                                cblen = cur_cbs[b].truncRates[i] - cblen;
+                                cblen = cur_cbs[b].truncRates![i] - cblen;
 
                                 // Calculate number of needed bits
                                 prednbits = lblock[t][c][r][s][b] + MathUtil.log2(newtp);
@@ -1063,18 +1063,18 @@ namespace CoreJ2K.j2k.codestream.writer
                                 for (var j = prednbits; j < minbits; j++)
                                 {
                                     lblock[t][c][r][s][b]++;
-                                    hbuf.writeBit(1);
+                                    hbuf!.writeBit(1);
                                 }
                                 // Initialize for next length
                                 newtp = 0;
-                                cblen = cur_cbs[b].truncRates[i];
+                                cblen = cur_cbs[b].truncRates![i];
                             }
                         }
 
                         // Last truncation point length always sent
 
                         // Calculate length
-                        cblen = cur_cbs[b].truncRates[i] - cblen;
+                        cblen = cur_cbs[b].truncRates![i] - cblen;
 
                         // Calculate number of bits
                         prednbits = lblock[t][c][r][s][b] + MathUtil.log2(newtp);
@@ -1083,41 +1083,41 @@ namespace CoreJ2K.j2k.codestream.writer
                         for (var j = prednbits; j < minbits; j++)
                         {
                             lblock[t][c][r][s][b]++;
-                            hbuf.writeBit(1);
+                            hbuf!.writeBit(1);
                         }
 
                         // End of comma-code increment
-                        hbuf.writeBit(0);
+                        hbuf!.writeBit(0);
 
                         // There can be terminated several segments, send length
                         // info for all terminated truncation points in addition
                         // to final one
                         newtp = 1;
-                        maxi = cur_cbs[b].truncIdxs[cur_tIndx[b]];
-                        cblen = (cur_prevtIdxs[b] < 0) ? 0 : cur_cbs[b].truncRates[cur_cbs[b].truncIdxs[cur_prevtIdxs[b]]];
+                        maxi = cur_cbs[b].truncIdxs![cur_tIndx[b]];
+                        cblen = (cur_prevtIdxs[b] < 0) ? 0 : cur_cbs[b].truncRates![cur_cbs[b].truncIdxs![cur_prevtIdxs[b]]];
                         // Loop on truncation points and count the groups
-                        i = (cur_prevtIdxs[b] < 0) ? 0 : cur_cbs[b].truncIdxs[cur_prevtIdxs[b]] + 1;
+                        i = (cur_prevtIdxs[b] < 0) ? 0 : cur_cbs[b].truncIdxs![cur_prevtIdxs[b]] + 1;
                         for (; i < maxi; i++, newtp++)
                         {
                             // If terminated truncation point, send length
-                            if (cur_cbs[b].isTermPass != null && cur_cbs[b].isTermPass[i])
+                            if (cur_cbs[b].isTermPass != null && cur_cbs[b].isTermPass![i])
                             {
 
-                                cblen = cur_cbs[b].truncRates[i] - cblen;
+                                cblen = cur_cbs[b].truncRates![i] - cblen;
                                 nbits = MathUtil.log2(newtp) + lblock[t][c][r][s][b];
-                                hbuf.writeBits(cblen, nbits);
+                                hbuf!.writeBits(cblen, nbits);
 
                                 // Initialize for next length
                                 newtp = 0;
-                                cblen = cur_cbs[b].truncRates[i];
+                                cblen = cur_cbs[b].truncRates![i];
                             }
                         }
                         // Last truncation point length is always signalled
                         // First calculate number of bits needed to signal
                         // Calculate length
-                        cblen = cur_cbs[b].truncRates[i] - cblen;
+                        cblen = cur_cbs[b].truncRates![i] - cblen;
                         nbits = MathUtil.log2(newtp) + lblock[t][c][r][s][b];
-                        hbuf.writeBits(cblen, nbits);
+                        hbuf!.writeBits(cblen, nbits);
                     } // End loop on horizontal code-blocks
                 } // End loop on vertical code-blocks
             } // End loop on subband
@@ -1167,19 +1167,19 @@ namespace CoreJ2K.j2k.codestream.writer
                             // body buffer and get code-size
                             if (cur_prevtIdxs[b] < 0)
                             {
-                                cblen = cur_cbs[b].truncRates[cur_cbs[b].truncIdxs[cur_tIndx[b]]];
-                                Array.Copy(cur_cbs[b].data, 0, lbbuf, lblen, cblen);
+                                cblen = cur_cbs[b].truncRates![cur_cbs[b].truncIdxs![cur_tIndx[b]]];
+                                Array.Copy(cur_cbs[b].data!, 0, lbbuf, lblen, cblen);
                             }
                             else
                             {
-                                cblen = cur_cbs[b].truncRates[cur_cbs[b].truncIdxs[cur_tIndx[b]]] - cur_cbs[b].truncRates[cur_cbs[b].truncIdxs[cur_prevtIdxs[b]]];
-                                Array.Copy(cur_cbs[b].data, cur_cbs[b].truncRates[cur_cbs[b].truncIdxs[cur_prevtIdxs[b]]], lbbuf, lblen, cblen);
+                                cblen = cur_cbs[b].truncRates![cur_cbs[b].truncIdxs![cur_tIndx[b]]] - cur_cbs[b].truncRates![cur_cbs[b].truncIdxs![cur_prevtIdxs[b]]];
+                                Array.Copy(cur_cbs[b].data!, cur_cbs[b].truncRates![cur_cbs[b].truncIdxs![cur_prevtIdxs[b]]], lbbuf, lblen, cblen);
                             }
                             lblen += cblen;
 
                             // Verifies if this code-block contains new ROI
                             // information
-                            if (cur_cbs[b].nROIcoeff != 0 && (cur_prevtIdxs[b] == -1 || cur_cbs[b].truncIdxs[cur_prevtIdxs[b]] <= cur_cbs[b].nROIcp - 1))
+                            if (cur_cbs[b].nROIcoeff != 0 && (cur_prevtIdxs[b] == -1 || cur_cbs[b].truncIdxs![cur_prevtIdxs[b]] <= cur_cbs[b].nROIcp - 1))
                             {
                                 roiInPkt = true;
                                 roiLen = lblen;

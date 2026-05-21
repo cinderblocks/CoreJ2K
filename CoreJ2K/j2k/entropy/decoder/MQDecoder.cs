@@ -753,7 +753,7 @@ namespace CoreJ2K.j2k.entropy.decoder
         /// bytes are taken to be 0xFF.
         /// 
         /// </param>
-        public void nextSegment(byte[] buf, int off, int len)
+        public void nextSegment(byte[]? buf, int off, int len)
         {
             // Set the new input
             inputBuffer.SetByteArray(buf, off, len);

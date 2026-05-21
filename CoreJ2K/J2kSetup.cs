@@ -29,7 +29,7 @@ namespace CoreJ2K
         /// <returns>The single instance from the platform assembly implementing the <typeparamref name="T"/> type, 
         /// or null if no or more than one implementation is available.</returns>
         /// <remarks>It is implicitly assumed that implementation class has a public, parameter-less constructor.</remarks>
-        internal static T GetSinglePlatformInstance<T>()
+        internal static T? GetSinglePlatformInstance<T>()
         {
             try
             {
@@ -53,7 +53,7 @@ namespace CoreJ2K
                     return default(T);
                 }
 
-                var instance = (T)Activator.CreateInstance(type);
+                var instance = (T?)Activator.CreateInstance(type);
 
                 return instance;
             }
@@ -80,7 +80,7 @@ namespace CoreJ2K
         /// <returns>The single instance from the platform assembly implementing the <typeparamref name="T"/> type that is classified as default, 
         /// or null if no or more than one default classified implementations are available.</returns>
         /// <remarks>It is implicitly assumed that all implementation classes has a public, parameter-less constructor.</remarks>
-        internal static T GetDefaultPlatformInstance<T>() where T : IDefaultable
+        internal static T? GetDefaultPlatformInstance<T>() where T : IDefaultable
         {
             try
             {
@@ -130,7 +130,7 @@ namespace CoreJ2K
 
                 foreach (var dll in dlls)
                 {
-                    Assembly asm = null;
+                    Assembly? asm = null;
                     try
                     {
                         asm = Assembly.LoadFile(dll);
@@ -148,14 +148,14 @@ namespace CoreJ2K
                         continue;
                     }
 
-                    Type[] types;
+                    Type?[] types;
                     try
                     {
                         types = asm.GetTypes();
                     }
                     catch (ReflectionTypeLoadException rtle)
                     {
-                        types = rtle.Types.Where(t => t != null).ToArray();
+                        types = rtle.Types.Where(t => t != null).ToArray()!;
                     }
                     catch (Exception ex)
                     {
@@ -227,7 +227,7 @@ namespace CoreJ2K
                 // Ensure public parameterless ctor exists
                 if (t.GetConstructor(Type.EmptyTypes) == null) continue;
 
-                object obj = null;
+                object? obj = null;
                 try
                 {
                     obj = Activator.CreateInstance(t);
@@ -273,14 +273,14 @@ namespace CoreJ2K
                     }).Select(t => t.AsType());
         }
 
-        private static T GetDefaultOrSingleInstance<T>(IEnumerable<Type> types) where T : IDefaultable
+        private static T? GetDefaultOrSingleInstance<T>(IEnumerable<Type> types) where T : IDefaultable
         {
             var instances = types.Select(
                 t =>
                     {
                         try
                         {
-                            return (T)Activator.CreateInstance(t);
+                            return (T?)Activator.CreateInstance(t);
                         }
                         catch
                         {

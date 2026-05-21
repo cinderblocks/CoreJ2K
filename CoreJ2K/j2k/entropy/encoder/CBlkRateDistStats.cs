@@ -79,7 +79,7 @@ namespace CoreJ2K.j2k.entropy.encoder
     {
 
         /// <summary>The subband to which the code-block belongs </summary>
-        public SubbandAn sb;
+        public SubbandAn? sb;
 
         /// <summary>The total number of truncation points </summary>
         public int nTotTrunc;
@@ -90,23 +90,23 @@ namespace CoreJ2K.j2k.entropy.encoder
         /// <summary>The rate (in bytes) for each truncation point (valid and non-valid
         /// ones) 
         /// </summary>
-        public int[] truncRates;
+        public int[]? truncRates;
 
         /// <summary>The distortion for each truncation point (valid and non-valid ones) </summary>
-        public double[] truncDists;
+        public double[]? truncDists;
 
         /// <summary>The negative of the rate-distortion slope for each valid truncation
         /// point 
         /// </summary>
-        public float[] truncSlopes;
+        public float[]? truncSlopes;
 
         /// <summary>The indices of the valid truncation points, in increasing order.</summary>
-        public int[] truncIdxs;
+        public int[]? truncIdxs;
 
         /// <summary>Array of flags indicating terminated passes (valid or non-valid
         /// truncation points). 
         /// </summary>
-        public bool[] isTermPass;
+        public bool[]? isTermPass;
 
         /// <summary>The number of ROI coefficients in the code-block </summary>
         public int nROIcoeff = 0;
@@ -216,7 +216,7 @@ namespace CoreJ2K.j2k.entropy.encoder
         /// point is always included).
         /// 
         /// </param>
-        public void selectConvexHull(int[] rates, double[] dists, bool[] termp, int n, bool inclast)
+        public void selectConvexHull(int[] rates, double[] dists, bool[]? termp, int n, bool inclast)
         {
             int first_pnt; // The first point containing some coded data
             int p; // last selected point

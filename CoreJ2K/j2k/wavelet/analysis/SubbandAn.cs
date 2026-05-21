@@ -68,7 +68,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// <returns> The LL child subband, or null if there are no childs.
         /// 
         /// </returns>
-        public override Subband LL => subb_LL;
+        public override Subband LL => subb_LL!;
 
         /// <summary> Returns the HL (horizontal high-pass) child subband of this subband.
         /// 
@@ -76,7 +76,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// <returns> The HL child subband, or null if there are no childs.
         /// 
         /// </returns>
-        public override Subband HL => subb_HL;
+        public override Subband HL => subb_HL!;
 
         /// <summary> Returns the LH (vertical high-pass) child subband of this subband.
         /// 
@@ -84,7 +84,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// <returns> The LH child subband, or null if there are no childs.
         /// 
         /// </returns>
-        public override Subband LH => subb_LH;
+        public override Subband LH => subb_LH!;
 
         /// <summary> Returns the HH child subband of this subband.
         /// 
@@ -92,7 +92,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// <returns> The HH child subband, or null if there are no childs.
         /// 
         /// </returns>
-        public override Subband HH => subb_HH;
+        public override Subband HH => subb_HH!;
 
         /// <summary> This function returns the horizontal wavelet filter relevant to this
         /// subband
@@ -101,7 +101,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// <returns> The horizontal wavelet filter
         /// 
         /// </returns>
-        public override WaveletFilter HorWFilter => hFilter;
+        public override WaveletFilter HorWFilter => hFilter!;
 
         /// <summary> This function returns the vertical wavelet filter relevant to this
         /// subband
@@ -110,43 +110,43 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// <returns> The vertical wavelet filter
         /// 
         /// </returns>
-        public override WaveletFilter VerWFilter => hFilter;
+        public override WaveletFilter VerWFilter => vFilter!;
 
         /// <summary>The reference to the parent of this subband. It is null for the root
         /// element. It is null by default.  
         /// </summary>
-        public SubbandAn parentband = null;
+        public SubbandAn? parentband = null;
 
         /// <summary>The reference to the LL subband resulting from the decomposition of
         /// this subband. It is null by default.  
         /// </summary>
-        public SubbandAn subb_LL;
+        public SubbandAn? subb_LL;
 
         /// <summary>The reference to the HL subband (horizontal high-pass) resulting from
         /// the decomposition of this subband. It is null by default.  
         /// </summary>
-        public SubbandAn subb_HL;
+        public SubbandAn? subb_HL;
 
         /// <summary>The reference to the LH subband (vertical high-pass) resulting from
         /// the decomposition of this subband. It is null by default.
         /// 
         /// </summary>
-        public SubbandAn subb_LH;
+        public SubbandAn? subb_LH;
 
         /// <summary>The reference to the HH subband resulting from the decomposition of
         /// this subband. It is null by default.  
         /// </summary>
-        public SubbandAn subb_HH;
+        public SubbandAn? subb_HH;
 
         /// <summary>The horizontal analysis filter used to decompose this subband. This is
         /// applicable to "node" elements only. The default value is null. 
         /// </summary>
-        public AnWTFilter hFilter;
+        public AnWTFilter? hFilter;
 
         /// <summary>The vertical analysis filter used to decompose this subband. This is
         /// applicable to "node" elements only. The default value is null. 
         /// </summary>
-        public AnWTFilter vFilter;
+        public AnWTFilter? vFilter;
 
         /// <summary>The L2-norm of the synthesis basis waveform of this subband,
         /// applicable to "leafs" only. By default it is -1 (i.e. not calculated
@@ -291,7 +291,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// returned.
         /// 
         /// </param>
-        private void calcBasisWaveForms(float[][] wfs)
+        private void calcBasisWaveForms(float[]?[] wfs)
         {
             if (l2Norm < 0)
             {
@@ -299,29 +299,29 @@ namespace CoreJ2K.j2k.wavelet.analysis
                 if (isNode)
                 {
                     // We are on a node => search on childs
-                    if (subb_LL.l2Norm < 0f)
+                    if (subb_LL!.l2Norm < 0f)
                     {
                         subb_LL.calcBasisWaveForms(wfs);
-                        wfs[0] = hFilter.GetLPSynWaveForm(wfs[0], null);
-                        wfs[1] = vFilter.GetLPSynWaveForm(wfs[1], null);
+                        wfs[0] = hFilter!.GetLPSynWaveForm(wfs[0], null);
+                        wfs[1] = vFilter!.GetLPSynWaveForm(wfs[1], null);
                     }
-                    else if (subb_HL.l2Norm < 0f)
+                    else if (subb_HL!.l2Norm < 0f)
                     {
                         subb_HL.calcBasisWaveForms(wfs);
-                        wfs[0] = hFilter.GetHPSynWaveForm(wfs[0], null);
-                        wfs[1] = vFilter.GetLPSynWaveForm(wfs[1], null);
+                        wfs[0] = hFilter!.GetHPSynWaveForm(wfs[0], null);
+                        wfs[1] = vFilter!.GetLPSynWaveForm(wfs[1], null);
                     }
-                    else if (subb_LH.l2Norm < 0f)
+                    else if (subb_LH!.l2Norm < 0f)
                     {
                         subb_LH.calcBasisWaveForms(wfs);
-                        wfs[0] = hFilter.GetLPSynWaveForm(wfs[0], null);
-                        wfs[1] = vFilter.GetHPSynWaveForm(wfs[1], null);
+                        wfs[0] = hFilter!.GetLPSynWaveForm(wfs[0], null);
+                        wfs[1] = vFilter!.GetHPSynWaveForm(wfs[1], null);
                     }
-                    else if (subb_HH.l2Norm < 0f)
+                    else if (subb_HH!.l2Norm < 0f)
                     {
                         subb_HH.calcBasisWaveForms(wfs);
-                        wfs[0] = hFilter.GetHPSynWaveForm(wfs[0], null);
-                        wfs[1] = vFilter.GetHPSynWaveForm(wfs[1], null);
+                        wfs[0] = hFilter!.GetHPSynWaveForm(wfs[0], null);
+                        wfs[1] = vFilter!.GetHPSynWaveForm(wfs[1], null);
                     }
                     else
                     {
@@ -334,10 +334,8 @@ namespace CoreJ2K.j2k.wavelet.analysis
                 {
                     // This is a leaf, just use diracs (null is equivalent to
                     // dirac)
-                    wfs[0] = new float[1];
-                    wfs[0][0] = 1.0f;
-                    wfs[1] = new float[1];
-                    wfs[1][0] = 1.0f;
+                    wfs[0] = new float[] { 1.0f };
+                    wfs[1] = new float[] { 1.0f };
                 }
             }
             else
@@ -369,19 +367,19 @@ namespace CoreJ2K.j2k.wavelet.analysis
                 if (isNode)
                 {
                     // We are on a node => search on childs
-                    if (subb_LL.l2Norm < 0f)
+                    if (subb_LL!.l2Norm < 0f)
                     {
                         subb_LL.assignL2Norm(l2n);
                     }
-                    else if (subb_HL.l2Norm < 0f)
+                    else if (subb_HL!.l2Norm < 0f)
                     {
                         subb_HL.assignL2Norm(l2n);
                     }
-                    else if (subb_LH.l2Norm < 0f)
+                    else if (subb_LH!.l2Norm < 0f)
                     {
                         subb_LH.assignL2Norm(l2n);
                     }
-                    else if (subb_HH.l2Norm < 0f)
+                    else if (subb_HH!.l2Norm < 0f)
                     {
                         subb_HH.assignL2Norm(l2n);
                         // If child now is done, we are done
@@ -419,7 +417,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
         private void calcL2Norms()
         {
             int i;
-            var wfs = new float[2][];
+            var wfs = new float[]?[2];
             double acc;
             float l2n;
 
@@ -431,16 +429,16 @@ namespace CoreJ2K.j2k.wavelet.analysis
                 // Compute line L2-norm, which is the product of the line
                 // and column L2-norms
                 acc = 0.0;
-                for (i = wfs[0].Length - 1; i >= 0; i--)
+                for (i = wfs[0]!.Length - 1; i >= 0; i--)
                 {
-                    acc += wfs[0][i] * wfs[0][i];
+                    acc += wfs[0]![i] * wfs[0]![i];
                 }
                 l2n = (float)Math.Sqrt(acc);
                 // Compute column L2-norm
                 acc = 0.0;
-                for (i = wfs[1].Length - 1; i >= 0; i--)
+                for (i = wfs[1]!.Length - 1; i >= 0; i--)
                 {
-                    acc += wfs[1][i] * wfs[1][i];
+                    acc += wfs[1]![i] * wfs[1]![i];
                 }
                 l2n *= (float)Math.Sqrt(acc);
                 // Release waveforms

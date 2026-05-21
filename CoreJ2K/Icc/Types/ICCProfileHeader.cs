@@ -124,13 +124,13 @@ namespace CoreJ2K.Icc.Types
 
         /// <summary>Header field </summary>
         /* Header fields mapped to ggregate types. */
-        public ICCProfileVersion profileVersion;
+        public ICCProfileVersion? profileVersion;
         /// <summary>Header field </summary>
         // Version of the profile format on which
-        public ICCDateTime dateTime;
+        public ICCDateTime? dateTime;
         /// <summary>Header field </summary>
         // Date and time of profile creation// this profile is based
-        public XYZNumber PCSIlluminant; // Illuminant used for this profile
+        public XYZNumber? PCSIlluminant; // Illuminant used for this profile
 
 
         /// <summary>Construct and empty header </summary>

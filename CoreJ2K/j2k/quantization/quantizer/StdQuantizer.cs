@@ -233,7 +233,7 @@ namespace CoreJ2K.j2k.quantization.quantizer
         /// 
         /// </returns>
         /// <seealso cref="CBlkWTData" />
-        public override CBlkWTData GetNextCodeBlock(int c, CBlkWTData cblk)
+        public override CBlkWTData? GetNextCodeBlock(int c, CBlkWTData? cblk)
         {
             return GetNextInternCodeBlock(c, cblk);
         }
@@ -274,7 +274,7 @@ namespace CoreJ2K.j2k.quantization.quantizer
         /// 
         /// </returns>
         /// <seealso cref="CBlkWTData" />
-        public override CBlkWTData GetNextInternCodeBlock(int c, CBlkWTData cblk)
+        public override CBlkWTData? GetNextInternCodeBlock(int c, CBlkWTData? cblk)
         {
             // NOTE: this method is declared final since GetNextCodeBlock() relies
             // on this particular implementation
