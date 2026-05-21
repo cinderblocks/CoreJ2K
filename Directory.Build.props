@@ -14,8 +14,29 @@
 		<PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
 		<PackageTags>jpeg2000 j2k jpm jp2 codec skia image-processing wavelet-compression .NETStandard</PackageTags>
 		<RepositoryUrl>https://github.com/cinderblocks/CoreJ2K</RepositoryUrl>
-    <PackageIcon>CoreJ2K.png</PackageIcon>
+		<PackageIcon>CoreJ2K.png</PackageIcon>
 		<RepositoryType>git</RepositoryType>
 		<RepositoryBranch>master</RepositoryBranch>
 	</PropertyGroup>
+	<!-- Shared build settings for all projects -->
+	<PropertyGroup>
+		<LangVersion>latest</LangVersion>
+		<GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+		<Nullable>enable</Nullable>
+		<TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+		<!-- Nullable warnings are surfaced but not errors; fix incrementally -->
+		<WarningsNotAsErrors>CS8600;CS8601;CS8602;CS8603;CS8604;CS8618;CS8619;CS8620;CS8621;CS8625;CS8629</WarningsNotAsErrors>
+	</PropertyGroup>
+	<!-- Shared settings for all packable projects -->
+	<PropertyGroup Condition="'$(IsPackable)' != 'false'">
+		<IncludeSymbols>true</IncludeSymbols>
+		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
+		<DefineConstants>$(DefineConstants);NETSTANDARD</DefineConstants>
+	</PropertyGroup>
+	<!-- Common pack content for all packable projects -->
+	<ItemGroup Condition="'$(IsPackable)' != 'false'">
+		<None Include="$(MSBuildThisFileDirectory)README.md" Pack="true" PackagePath="\" />
+		<None Include="$(MSBuildThisFileDirectory)LICENSE" Pack="true" PackagePath="\" />
+		<None Include="$(MSBuildThisFileDirectory)CoreJ2K.png" Pack="true" PackagePath="\" />
+	</ItemGroup>
 </Project>

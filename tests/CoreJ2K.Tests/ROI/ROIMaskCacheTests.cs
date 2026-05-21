@@ -252,7 +252,7 @@ namespace CoreJ2K.Tests.ROI
         }
         
         [Fact]
-        public void ConcurrentAccess_ThreadSafe()
+        public async System.Threading.Tasks.Task ConcurrentAccess_ThreadSafe()
         {
             var cache = new ROIMaskCache(100);
             var mask = new int[64];
@@ -277,7 +277,7 @@ namespace CoreJ2K.Tests.ROI
                 })
             ).ToArray();
             
-            System.Threading.Tasks.Task.WaitAll(tasks);
+            await System.Threading.Tasks.Task.WhenAll(tasks);
             
             Assert.Empty(exceptions);
             Assert.True(cache.Count <= 100);

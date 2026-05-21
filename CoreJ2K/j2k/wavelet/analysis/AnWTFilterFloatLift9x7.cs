@@ -692,9 +692,9 @@ namespace CoreJ2K.j2k.wavelet.analysis
         /// <param name="The">object against which to test inequality.
         /// 
         /// </param>
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
-            // To spped up test, first test for reference equality
+            // To speed up test, first test for reference equality
             return obj == this || obj is AnWTFilterFloatLift9x7;
         }
 

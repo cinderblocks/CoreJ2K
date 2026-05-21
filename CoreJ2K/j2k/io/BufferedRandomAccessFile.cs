@@ -39,8 +39,6 @@ namespace CoreJ2K.j2k.io
     using System.IO;
     using CoreJ2K.Util;
 
-    using Util;
-
     /// <summary> This class defines a Buffered Random Access File.  It implements the
     /// <tt>BinaryDataInput</tt> and <tt>BinaryDataOutput</tt> interfaces so that
     /// binary data input/output can be performed. This class is abstract since no

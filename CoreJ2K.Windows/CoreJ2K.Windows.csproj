@@ -4,20 +4,11 @@
     <PackageId>CoreJ2K.Windows</PackageId>
     <Description>.NETStandard JPEG-2000 codec library with System.Drawing support</Description>
     <TargetFrameworks>netstandard2.0;netstandard2.1;net8.0-windows;net9.0-windows;net10.0-windows</TargetFrameworks>
-    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
-    <DefineConstants>$(DefineConstants);NETSTANDARD</DefineConstants>
-    <IncludeSymbols>true</IncludeSymbols>
-    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
-    <None Include="..\README.md" Pack="true" PackagePath="\" />
-    <None Include="..\LICENSE" Pack="true" PackagePath="\" />
-    <None Include="..\CoreJ2K.png" Pack="true" PackagePath="\" />
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="JetBrains.Annotations" Version="2025.2.2" PrivateAssets="all" />
-    <PackageReference Include="System.Drawing.Common" Version="10.0.8" />
+    <PackageReference Include="JetBrains.Annotations" PrivateAssets="all" />
+    <PackageReference Include="System.Drawing.Common" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\CoreJ2K\CoreJ2K.csproj" />

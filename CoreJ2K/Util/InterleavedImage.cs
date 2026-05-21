@@ -613,7 +613,7 @@ namespace CoreJ2K.Util
         /// </summary>
         /// <param name="other">The image to compare with.</param>
         /// <returns>true if the images have the same dimensions, components, and data; otherwise, false.</returns>
-        public bool Equals(InterleavedImage other)
+        public bool Equals(InterleavedImage? other)
         {
             if (other is null) return false;
             if (ReferenceEquals(this, other)) return true;
@@ -632,7 +632,7 @@ namespace CoreJ2K.Util
         /// </summary>
         /// <param name="obj">The object to compare with.</param>
         /// <returns>true if obj is an InterleavedImage equal to this instance; otherwise, false.</returns>
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             return Equals(obj as InterleavedImage);
         }

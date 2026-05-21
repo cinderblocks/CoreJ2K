@@ -1,26 +1,17 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-    <PropertyGroup>
-        <AssemblyName>CoreJ2K.Skia</AssemblyName>
-        <PackageId>CoreJ2K.Skia</PackageId>
-        <Description>.NETStandard JPEG-2000 codec library with SkiaSharp support</Description>
-        <TargetFrameworks>netstandard2.0;netstandard2.1;net8.0;net9.0;net10.0</TargetFrameworks>
-        <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
-        <DefineConstants>$(DefineConstants);NETSTANDARD</DefineConstants>
-        <IncludeSymbols>true</IncludeSymbols>
-        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    </PropertyGroup>
-    <ItemGroup>
-      <None Include="..\README.md" Pack="true" PackagePath="\" />
-      <None Include="..\LICENSE" Pack="true" PackagePath="\" />
-      <None Include="..\CoreJ2K.png" Pack="true" PackagePath="\" />
-    </ItemGroup>
-    <ItemGroup>
-      <PackageReference Include="JetBrains.Annotations" Version="2025.2.2" PrivateAssets="all" />
-      <PackageReference Include="SkiaSharp" Version="3.119.2" />
-      <PackageReference Include="System.Buffers" Version="4.6.1" />
-    </ItemGroup>
-    <ItemGroup>
-      <ProjectReference Include="..\CoreJ2K\CoreJ2K.csproj" />
-    </ItemGroup>
+  <PropertyGroup>
+    <AssemblyName>CoreJ2K.Skia</AssemblyName>
+    <PackageId>CoreJ2K.Skia</PackageId>
+    <Description>.NETStandard JPEG-2000 codec library with SkiaSharp support</Description>
+    <TargetFrameworks>netstandard2.0;netstandard2.1;net8.0;net9.0;net10.0</TargetFrameworks>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="JetBrains.Annotations" PrivateAssets="all" />
+    <PackageReference Include="SkiaSharp" />
+    <PackageReference Include="System.Buffers" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\CoreJ2K\CoreJ2K.csproj" />
+  </ItemGroup>
 </Project>

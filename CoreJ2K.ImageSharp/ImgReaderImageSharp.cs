@@ -25,8 +25,6 @@ namespace CoreJ2K.j2k.image.input
         private DataBlkInt intBlk;          // reusable int block wrapper
 
         private Image image;                // reference to base Image
-        private object pixelSpanAccessor;   // typed pixel accessor cached for performance
-        private int bytesPerPixel;
         private int bitsPerComponent;
         private int componentCount;
         private Func<int,int,int,int,int,int[]> blockLoader; // loader delegate (x,y,w,h,comps) -> interleaved comps
@@ -71,47 +69,47 @@ namespace CoreJ2K.j2k.image.input
                 var arg = pfType.GetGenericArguments()[0];
                 if (arg == typeof(L8))
                 {
-                    componentCount = 1; bitsPerComponent = 8; bytesPerPixel = 1;
+                    componentCount = 1; bitsPerComponent = 8;
                     blockLoader = (x,y,w,h,comps) => LoadBlockL8(x,y,w,h,comps);
                 }
                 else if (arg == typeof(L16))
                 {
-                    componentCount = 1; bitsPerComponent = 16; bytesPerPixel = 2;
+                    componentCount = 1; bitsPerComponent = 16;
                     blockLoader = (x,y,w,h,comps) => LoadBlockL16(x,y,w,h,comps);
                 }
                 else if (arg == typeof(Rgb24))
                 {
-                    componentCount = 3; bitsPerComponent = 8; bytesPerPixel = 3;
+                    componentCount = 3; bitsPerComponent = 8;
                     blockLoader = (x,y,w,h,comps) => LoadBlockRgb24(x,y,w,h,comps);
                 }
                 else if (arg == typeof(Bgr24))
                 {
-                    componentCount = 3; bitsPerComponent = 8; bytesPerPixel = 3;
+                    componentCount = 3; bitsPerComponent = 8;
                     blockLoader = (x,y,w,h,comps) => LoadBlockBgr24(x,y,w,h,comps);
                 }
                 else if (arg == typeof(Rgba32))
                 {
-                    componentCount = 4; bitsPerComponent = 8; bytesPerPixel = 4;
+                    componentCount = 4; bitsPerComponent = 8;
                     blockLoader = (x,y,w,h,comps) => LoadBlockRgba32(x,y,w,h,comps);
                 }
                 else if (arg == typeof(Bgra32))
                 {
-                    componentCount = 4; bitsPerComponent = 8; bytesPerPixel = 4;
+                    componentCount = 4; bitsPerComponent = 8;
                     blockLoader = (x,y,w,h,comps) => LoadBlockBgra32(x,y,w,h,comps);
                 }
                 else if (arg == typeof(Argb32))
                 {
-                    componentCount = 4; bitsPerComponent = 8; bytesPerPixel = 4;
+                    componentCount = 4; bitsPerComponent = 8;
                     blockLoader = (x,y,w,h,comps) => LoadBlockArgb32(x,y,w,h,comps);
                 }
                 else if (arg == typeof(Rgb48))
                 {
-                    componentCount = 3; bitsPerComponent = 16; bytesPerPixel = 6;
+                    componentCount = 3; bitsPerComponent = 16;
                     blockLoader = (x,y,w,h,comps) => LoadBlockRgb48(x,y,w,h,comps);
                 }
                 else if (arg == typeof(Rgba64))
                 {
-                    componentCount = 4; bitsPerComponent = 16; bytesPerPixel = 8;
+                    componentCount = 4; bitsPerComponent = 16;
                     blockLoader = (x,y,w,h,comps) => LoadBlockRgba64(x,y,w,h,comps);
                 }
                 else
@@ -119,7 +117,7 @@ namespace CoreJ2K.j2k.image.input
                     // Fallback to dynamic clone-based loader
                     componentCount = 4;
                     bitsPerComponent = 8;
-                    bytesPerPixel = 4;
+                   
                     blockLoader = (x,y,w,h,comps) => LoadBlockDynamic(x,y,w,h,comps);
                 }
             }
@@ -128,7 +126,7 @@ namespace CoreJ2K.j2k.image.input
                 // Fallback: use dynamic loader (clone to Rgba32 at read time)
                 componentCount = 4;
                 bitsPerComponent = 8;
-                bytesPerPixel = 4;
+               
                 blockLoader = LoadBlockDynamic;
             }
         }
@@ -138,7 +136,6 @@ namespace CoreJ2K.j2k.image.input
             image?.Dispose();
             image = null;
             barr = null;
-            pixelSpanAccessor = null;
         }
 
         public override int GetNomRangeBits(int compIndex)

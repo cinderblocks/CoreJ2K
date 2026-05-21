@@ -413,7 +413,7 @@ namespace CoreJ2K.Tests
             var img = new InterleavedImage(3, 2, 1, new[] { 8 });
             
             Assert.True(img.Equals(img));
-            Assert.True(img == img);
+            Assert.True(ReferenceEquals(img, img));
         }
 
         [Fact]
