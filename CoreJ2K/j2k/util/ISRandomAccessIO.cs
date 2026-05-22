@@ -155,9 +155,11 @@ namespace CoreJ2K.j2k.util
         /// <summary> Creates a new RandomAccessIO wrapper for the given InputStream
         /// 'is'. The internal cache buffer size and increment is to to 256 kB. The
         /// maximum buffer size is set to Integer.MAX_VALUE (2 GB).
-        /// If 'is' is a <see cref="System.IO.MemoryStream"/> whose length is known,
-        /// the entire content is read eagerly in one shot so that all subsequent
-        /// reads hit the in-memory fast path and never call back into the stream.
+        /// If 'is' is a <see cref="System.IO.MemoryStream"/> with an exposed backing
+        /// array the buffer is borrowed directly (zero copy). Otherwise, if the full
+        /// length is known upfront the entire content is read eagerly in one shot so
+        /// that all subsequent reads hit the in-memory fast path and never call back
+        /// into the stream.
         /// 
         /// </summary>
         /// <param name="is">The input from where to get the data.
@@ -168,7 +170,22 @@ namespace CoreJ2K.j2k.util
             if (inputStream == null)
                 throw new ArgumentException();
 
-            // When the full length is known upfront (e.g. MemoryStream) bulk-load
+            // Fast-path: MemoryStream with an accessible backing array at offset 0 —
+            // borrow it directly so no copy is needed at all.
+            if (inputStream is System.IO.MemoryStream ms && ms.TryGetBuffer(out var segment)
+                && segment.Offset == 0)
+            {
+                buf = segment.Array!;
+                pos = (int)ms.Position; // logical stream position, equals buf index when offset==0
+                len = segment.Count;
+                complete = true;
+                this.inputStream = null;
+                inc = 1 << 18;
+                maxsize = int.MaxValue;
+                return;
+            }
+
+            // When the full length is known upfront (e.g. a seekable stream) bulk-load
             // everything now so that readInput() is never called during decode.
             if (inputStream.CanSeek && inputStream.CanRead && inputStream.Length <= int.MaxValue - 1)
             {

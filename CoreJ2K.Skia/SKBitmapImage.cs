@@ -4,6 +4,7 @@
 
 using SkiaSharp;
 using System;
+using System.Buffers;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -36,44 +37,50 @@ namespace CoreJ2K.Util
             GCHandle gcHandle;
             var info = new SKImageInfo(Width, Height, colorType, SKAlphaType.Unpremul);
 
-
             switch (NumComponents)
             {
                 // SkiaSharp doesn't play well with 24-bit images, upgrade to 32-bit.
                 case 3:
                     {
-                        var pix = ConvertRGB888toRGB888x(Width, Height, Bytes);
+                        var totalPixels = Width * Height;
+                        var pix = ArrayPool<byte>.Shared.Rent(totalPixels * 4);
+                        ConvertRGB888toRGB888x(Width, Height, Bytes, pix);
                         gcHandle = GCHandle.Alloc(pix, GCHandleType.Pinned);
+                        bitmap.InstallPixels(info, gcHandle.AddrOfPinnedObject(), info.RowBytes,
+                            delegate { gcHandle.Free(); ArrayPool<byte>.Shared.Return(pix); }, null);
                     }
                     break;
                 // Attribute layers aren't available in SkiaSharp,
                 // so we will only handle the first four components.
                 case 5:
                     {
-                        var pix = ConvertRGBHM88888toRGBA8888(Width, Height, Bytes);
+                        var totalPixels = Width * Height;
+                        var pix = ArrayPool<byte>.Shared.Rent(totalPixels * 4);
+                        ConvertRGBHM88888toRGBA8888(Width, Height, Bytes, pix);
                         gcHandle = GCHandle.Alloc(pix, GCHandleType.Pinned);
+                        bitmap.InstallPixels(info, gcHandle.AddrOfPinnedObject(), info.RowBytes,
+                            delegate { gcHandle.Free(); ArrayPool<byte>.Shared.Return(pix); }, null);
                     }
                     break;
                 default:
                     {
                         gcHandle = GCHandle.Alloc(Bytes, GCHandleType.Pinned);
+                        bitmap.InstallPixels(info, gcHandle.AddrOfPinnedObject(), info.RowBytes,
+                            delegate { gcHandle.Free(); }, null);
                     }
                     break;
             }
-            bitmap.InstallPixels(info, gcHandle.AddrOfPinnedObject(), info.RowBytes,
-                delegate { gcHandle.Free(); }, null);
 
             return bitmap;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static unsafe byte[] ConvertRGB888toRGB888x(int width, int height, byte[] input)
+        private static unsafe void ConvertRGB888toRGB888x(int width, int height, byte[] input, byte[] output)
         {
             var totalPixels = width * height;
-            var ret = new byte[totalPixels * 4];
 
             fixed (byte* srcPtr = input)
-            fixed (byte* dstPtr = ret)
+            fixed (byte* dstPtr = output)
             {
                 var s = srcPtr;
                 var d = dstPtr;
@@ -89,18 +96,15 @@ namespace CoreJ2K.Util
                     d += 4;
                 }
             }
-
-            return ret;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static unsafe byte[] ConvertRGBHM88888toRGBA8888(int width, int height, byte[] input)
+        private static unsafe void ConvertRGBHM88888toRGBA8888(int width, int height, byte[] input, byte[] output)
         {
             var totalPixels = width * height;
-            var ret = new byte[totalPixels * 4];
 
             fixed (byte* srcPtr = input)
-            fixed (byte* dstPtr = ret)
+            fixed (byte* dstPtr = output)
             {
                 var s = srcPtr;
                 var d = dstPtr;
@@ -116,8 +120,6 @@ namespace CoreJ2K.Util
                     d += 4;
                 }
             }
-
-            return ret;
         }
     }
 }

@@ -21,7 +21,8 @@ namespace CoreJ2K.Skia.Tests
             var type = typeof(SKBitmapImage);
             var mi = type.GetMethod("ConvertRGB888toRGB888x", BindingFlags.NonPublic | BindingFlags.Static);
             Assert.NotNull(mi);
-            var result = (byte[])mi.Invoke(null, new object[] { width, height, input });
+            var result = new byte[totalPixels * 4];
+            mi.Invoke(null, new object[] { width, height, input, result });
 
             Assert.Equal(totalPixels * 4, result.Length);
             // Check first pixel: R,G,B,Alpha
@@ -50,7 +51,8 @@ namespace CoreJ2K.Skia.Tests
             var type = typeof(SKBitmapImage);
             var mi = type.GetMethod("ConvertRGBHM88888toRGBA8888", BindingFlags.NonPublic | BindingFlags.Static);
             Assert.NotNull(mi);
-            var result = (byte[])mi.Invoke(null, new object[] { width, height, input });
+            var result = new byte[totalPixels * 4];
+            mi.Invoke(null, new object[] { width, height, input, result });
 
             Assert.Equal(totalPixels * 4, result.Length);
             // First pixel => R,G,B,H
