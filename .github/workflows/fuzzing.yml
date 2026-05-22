@@ -63,6 +63,9 @@ jobs:
           Invoke-WebRequest -Uri "https://github.com/uclouvain/openjpeg-data/raw/master/input/conformance/p0_01.j2k" -OutFile "CoreJ2K.Fuzz\Testcases\p0_01.j2k" -ErrorAction SilentlyContinue
           Invoke-WebRequest -Uri "https://github.com/uclouvain/openjpeg-data/raw/master/input/conformance/p0_02.j2k" -OutFile "CoreJ2K.Fuzz\Testcases\p0_02.j2k" -ErrorAction SilentlyContinue
 
+      - name: Create findings directory
+        run: New-Item -ItemType Directory -Force -Path CoreJ2K.Fuzz\Findings | Out-Null
+
       - name: Run fuzzing
         run: |
           cd CoreJ2K.Fuzz
