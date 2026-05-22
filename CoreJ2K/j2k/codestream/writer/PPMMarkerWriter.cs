@@ -58,7 +58,7 @@ namespace CoreJ2K.j2k.codestream.writer
                                 // Write current PPM marker and start a new one
                                 if (ppmData.Length > 0)
                                 {
-                                    WritePPMMarker(writer, ppmData.ToArray(), zppm++);
+                                    WritePPMMarker(writer, ppmData, zppm++);
                                     ppmData.SetLength(0);
                                 }
 
@@ -82,7 +82,7 @@ namespace CoreJ2K.j2k.codestream.writer
                     // Write final PPM marker if there's any remaining data
                     if (ppmData.Length > 0)
                     {
-                        WritePPMMarker(writer, ppmData.ToArray(), zppm);
+                        WritePPMMarker(writer, ppmData, zppm);
                     }
                 }
             }
@@ -96,25 +96,28 @@ namespace CoreJ2K.j2k.codestream.writer
         /// Writes a single PPM marker segment.
         /// </summary>
         /// <param name="writer">The writer to write to</param>
-        /// <param name="data">The PPM data (Nppm + Ippm fields)</param>
+        /// <param name="data">The PPM data stream (Nppm + Ippm fields)</param>
         /// <param name="zppm">The PPM marker index (0-255)</param>
-        private static void WritePPMMarker(BinaryWriter writer, byte[] data, int zppm)
+        private static void WritePPMMarker(BinaryWriter writer, MemoryStream data, int zppm)
         {
             if (zppm > 255)
                 throw new ArgumentOutOfRangeException(nameof(zppm), "PPM index must be 0-255");
+
+            var dataLen = (int)data.Length;
+            data.TryGetBuffer(out var segment);
 
             // Write PPM marker
             writer.Write(Markers.PPM);
 
             // Write Lppm (marker segment length = data length + 3 for Lppm itself (2 bytes) + Zppm (1 byte))
-            var lppm = (ushort)(data.Length + 3);
+            var lppm = (ushort)(dataLen + 3);
             writer.Write(lppm);
 
             // Write Zppm (PPM marker index)
             writer.Write((byte)zppm);
 
             // Write PPM data (Nppm + Ippm fields)
-            writer.Write(data, 0, data.Length);
+            writer.Write(segment.Array!, segment.Offset, dataLen);
         }
 
         /// <summary>

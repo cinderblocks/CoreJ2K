@@ -662,8 +662,9 @@ namespace CoreJ2K.j2k.util
                             if (ppmLength + 4 > codestream.Markers.MAX_LPPM)
                             {
                                 // Write current PPM marker
-                                temp = ppmMarkerSegment.ToArray();
-                                length = temp.Length - 2;
+                                ppmMarkerSegment.TryGetBuffer(out var ppmSeg1);
+                                temp = ppmSeg1.Array!;
+                                length = (int)ppmMarkerSegment.Length - 2;
                                 temp[2] = (byte)((length >>> 8));
                                 temp[3] = (byte)length;
                                 fi.write(temp, 0, length + 2);
@@ -698,8 +699,9 @@ namespace CoreJ2K.j2k.util
                                 if (ppmLength + length > codestream.Markers.MAX_LPPM)
                                 {
                                     // Write current PPM marker
-                                    temp = ppmMarkerSegment.ToArray();
-                                    length = temp.Length - 2;
+                                    ppmMarkerSegment.TryGetBuffer(out var ppmSeg2);
+                                    temp = ppmSeg2.Array!;
+                                    length = (int)ppmMarkerSegment.Length - 2;
                                     temp[2] = (byte)((length >>> 8));
                                     temp[3] = (byte)length;
                                     fi.write(temp, 0, length + 2);
@@ -724,8 +726,9 @@ namespace CoreJ2K.j2k.util
                     }
                 }
                 // Write last PPM marker segment
-                temp = ppmMarkerSegment.ToArray();
-                length = temp.Length - 2;
+                ppmMarkerSegment.TryGetBuffer(out var ppmSegFinal);
+                temp = ppmSegFinal.Array!;
+                length = (int)ppmMarkerSegment.Length - 2;
                 temp[2] = (byte)((length >>> 8));
                 temp[3] = (byte)length;
                 fi.write(temp, 0, length + 2);

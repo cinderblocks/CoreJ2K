@@ -111,17 +111,18 @@ namespace CoreJ2K.j2k.codestream.writer
                     // Write this PLM marker if it has data
                     if (hasData)
                     {
-                        var plmBytes = plmData.ToArray();
-                        int lplm = 2 + plmBytes.Length; // Lplm includes length field itself
-                        
+                        plmData.TryGetBuffer(out var plmSegment);
+                        var plmDataLen = (int)plmData.Length;
+                        int lplm = 2 + plmDataLen; // Lplm includes length field itself
+
                         // Write PLM marker
                         writer.Write(Markers.PLM);
-                        
+
                         // Write Lplm (marker length)
                         writer.Write((short)lplm);
-                        
+
                         // Write PLM data (Zplm + Nplm + packet lengths)
-                        writer.Write(plmBytes, 0, plmBytes.Length);
+                        writer.Write(plmSegment.Array!, plmSegment.Offset, plmDataLen);
                     }
                 }
                 
@@ -163,19 +164,19 @@ namespace CoreJ2K.j2k.codestream.writer
                 // Only write if we wrote some packets
                 if (packetsWritten > 0)
                 {
-                    var nplmBytes = nplmData.ToArray();
-                    int nplmLength = nplmBytes.Length;
-                    
+                    nplmData.TryGetBuffer(out var nplmSegment);
+                    int nplmLength = (int)nplmData.Length;
+
                     // Write Nplm (number of bytes for this tile's packets)
                     long startPos = writer.BaseStream.Position;
                     WriteVariableLengthInt(writer, nplmLength);
                     long nplmHeaderSize = writer.BaseStream.Position - startPos;
-                    
+
                     // Write the packet length data
-                    writer.Write(nplmBytes, 0, nplmBytes.Length);
+                    writer.Write(nplmSegment.Array!, nplmSegment.Offset, nplmLength);
                     
                     startIndex = currentIndex;
-                    return ((int)(nplmHeaderSize + nplmBytes.Length), packetsWritten);
+                    return ((int)(nplmHeaderSize + nplmLength), packetsWritten);
                 }
                 
                 return (0, 0);

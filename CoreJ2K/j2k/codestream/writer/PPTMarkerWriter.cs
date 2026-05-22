@@ -50,7 +50,7 @@ namespace CoreJ2K.j2k.codestream.writer
                             // Write current PPT marker and start a new one
                             if (pptData.Length > 0)
                             {
-                                WritePPTMarker(writer, pptData.ToArray(), zppt++);
+                                WritePPTMarker(writer, pptData, zppt++);
                                 pptData.SetLength(0);
                             }
 
@@ -66,7 +66,7 @@ namespace CoreJ2K.j2k.codestream.writer
                     // Write final PPT marker if there's any remaining data
                     if (pptData.Length > 0)
                     {
-                        WritePPTMarker(writer, pptData.ToArray(), zppt);
+                        WritePPTMarker(writer, pptData, zppt);
                     }
                 }
             }
@@ -80,25 +80,28 @@ namespace CoreJ2K.j2k.codestream.writer
         /// Writes a single PPT marker segment.
         /// </summary>
         /// <param name="writer">The writer to write to</param>
-        /// <param name="data">The PPT data (Ippt field)</param>
+        /// <param name="data">The PPT data stream (Ippt field)</param>
         /// <param name="zppt">The PPT marker index (0-255)</param>
-        private static void WritePPTMarker(BinaryWriter writer, byte[] data, int zppt)
+        private static void WritePPTMarker(BinaryWriter writer, MemoryStream data, int zppt)
         {
             if (zppt > 255)
                 throw new ArgumentOutOfRangeException(nameof(zppt), "PPT index must be 0-255");
+
+            var dataLen = (int)data.Length;
+            data.TryGetBuffer(out var segment);
 
             // Write PPT marker
             writer.Write(Markers.PPT);
 
             // Write Lppt (marker segment length = data length + 3 for Lppt itself (2 bytes) + Zppt (1 byte))
-            var lppt = (ushort)(data.Length + 3);
+            var lppt = (ushort)(dataLen + 3);
             writer.Write(lppt);
 
             // Write Zppt (PPT marker index)
             writer.Write((byte)zppt);
 
             // Write PPT data (Ippt field - concatenated packet headers)
-            writer.Write(data, 0, data.Length);
+            writer.Write(segment.Array!, segment.Offset, dataLen);
         }
 
         /// <summary>

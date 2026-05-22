@@ -89,15 +89,45 @@ namespace CoreJ2K.j2k.codestream.writer
             out_stream.WriteByte(zplt);
             bytesWritten++;
 
-            // Write Iplt (packet lengths in variable-length format)
+            // Write Iplt (packet lengths in variable-length format) directly — no per-packet allocation.
+            var scratch = new byte[5]; // max 5 bytes for a 32-bit VLI
             foreach (var entry in packets)
             {
-                var encoded = EncodeVariableLengthInt(entry.PacketLength);
-                out_stream.Write(encoded, 0, encoded.Length);
-                bytesWritten += encoded.Length;
+                int n = WriteVariableLengthIntToBuffer(entry.PacketLength, scratch);
+                out_stream.Write(scratch, 0, n);
+                bytesWritten += n;
             }
 
             return bytesWritten;
+        }
+
+        /// <summary>
+        /// Encodes a non-negative integer as a variable-length value into <paramref name="buf"/> and
+        /// returns the number of bytes written. The buffer must be at least 5 bytes.
+        /// </summary>
+        private static int WriteVariableLengthIntToBuffer(int value, byte[] buf)
+        {
+            // Build 7-bit chunks from LSB to MSB.
+            int pos = 0;
+            do
+            {
+                buf[pos++] = (byte)(value & 0x7F);
+                value >>= 7;
+            } while (value > 0);
+
+            // Reverse so the most-significant chunk is first (big-endian output).
+            for (int lo = 0, hi = pos - 1; lo < hi; lo++, hi--)
+            {
+                byte tmp = buf[lo];
+                buf[lo] = buf[hi];
+                buf[hi] = tmp;
+            }
+
+            // Set the continuation bit (MSB) on every byte except the last.
+            for (int i = 0; i < pos - 1; i++)
+                buf[i] |= 0x80;
+
+            return pos;
         }
 
         /// <summary>
@@ -111,25 +141,11 @@ namespace CoreJ2K.j2k.codestream.writer
             if (value < 0)
                 throw new ArgumentOutOfRangeException(nameof(value), "Value must be non-negative");
 
-            var bytes = new List<byte>();
-
-            // Extract 7-bit chunks from LSB to MSB
-            do
-            {
-                var b = (byte)(value & 0x7F);
-                value >>= 7;
-
-                if (bytes.Count > 0)
-                {
-                    // Set continuation bit on all bytes except the first (which will be last when reversed)
-                    b |= 0x80;
-                }
-
-                bytes.Insert(0, b); // Insert at beginning to maintain correct order
-
-            } while (value > 0);
-
-            return bytes.ToArray();
+            var buf = new byte[5];
+            int len = WriteVariableLengthIntToBuffer(value, buf);
+            var result = new byte[len];
+            Array.Copy(buf, result, len);
+            return result;
         }
 
         /// <summary>

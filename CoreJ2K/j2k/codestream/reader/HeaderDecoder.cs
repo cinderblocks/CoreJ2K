@@ -3110,7 +3110,6 @@ namespace CoreJ2K.j2k.codestream.reader
                     // create packed packet headers from Nppm and Ippm fields
                     int nppm;
                     var nTileParts = tileOfTileParts.Count;
-                    byte[] temp;
                     var allNppmIppm = new System.IO.MemoryStream();
 
                     // Concatenate all Nppm and Ippm fields
@@ -3119,22 +3118,26 @@ namespace CoreJ2K.j2k.codestream.reader
                         var temp_byteArray = pPMMarkerData[i];
                         allNppmIppm.Write(temp_byteArray, 0, temp_byteArray.Length);
                     }
-                    var pph = new System.IO.MemoryStream(allNppmIppm.ToArray());
 
-                    // Read all packed packet headers and concatenate for each
-                    // tile part
+                    // Read back through the buffer without copying
+                    allNppmIppm.TryGetBuffer(out var pphSegment);
+                    int pphPos = 0;
+                    var pphData = pphSegment.Array!;
+                    int pphBase = pphSegment.Offset;
+
+                    // Read all packed packet headers and concatenate for each tile part
                     for (i = 0; i < nTileParts; i++)
                     {
                         t = tileOfTileParts[i];
                         // get Nppm value
-                        nppm = (pph.ReadByte() << 24) | (pph.ReadByte() << 16) | (pph.ReadByte() << 8) | (pph.ReadByte());
-
-                        temp = new byte[nppm];
+                        int absPos = pphBase + pphPos;
+                        nppm = (pphData[absPos] << 24) | (pphData[absPos + 1] << 16) | (pphData[absPos + 2] << 8) | pphData[absPos + 3];
+                        pphPos += 4;
                         // get ippm field
-                        pph.Read(temp, 0, temp.Length);
-                        var temp_byteArray2 = temp;
-                        pkdPktHeaders[t].Write(temp_byteArray2, 0, temp_byteArray2.Length);
+                        pkdPktHeaders[t].Write(pphData, pphBase + pphPos, nppm);
+                        pphPos += nppm;
                     }
+                    allNppmIppm.Dispose();
                 }
                 else
                 {
@@ -3154,7 +3157,9 @@ namespace CoreJ2K.j2k.codestream.reader
                 }
             }
 
-            return new System.IO.MemoryStream(pkdPktHeaders[tile].ToArray());
+            // Return the cached stream seeked back to position 0 — no copy needed.
+            pkdPktHeaders[tile].Position = 0;
+            return pkdPktHeaders[tile];
         }
 
         /// <summary> Returns the PLT (Packet Length, tile-part header) data if available.

@@ -57,12 +57,13 @@ namespace CoreJ2K.j2k.codestream.writer
         public static string[][] ParameterInfo => pinfo;
 
         /// <summary> Returns the byte-buffer used to store the codestream header.
-        /// 
+        /// The returned array may be larger than the valid data; use
+        /// <see cref="BufferLength"/> to know how many bytes are valid.
         /// </summary>
-        /// <returns> A byte array countaining codestream header
+        /// <returns> The underlying byte array of the header buffer (no copy).
         /// 
         /// </returns>
-        protected internal virtual byte[] Buffer => baos.ToArray();
+        protected internal virtual byte[] Buffer => baos.GetBuffer();
 
         /// <summary> Returns the length of the header.
         /// 
