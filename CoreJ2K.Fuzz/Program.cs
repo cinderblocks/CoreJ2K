@@ -142,13 +142,14 @@ namespace CoreJ2K.Fuzz
                 
                 // Skip empty or too small inputs
                 if (data.Length < 10) return;
-                
-                // Use input bytes to generate a small test image
-                int width = Math.Min(100, Math.Abs(BitConverter.ToInt32(data, 0) % 1000));
-                int height = Math.Min(100, Math.Abs(BitConverter.ToInt32(data, 4) % 1000));
-                
-                if (width <= 0) width = 16;
-                if (height <= 0) height = 16;
+
+                // Use input bytes to derive small, safe image dimensions.
+                // Mask to positive range first to avoid Math.Abs(int.MinValue) overflow,
+                // then clamp to [1, 100] so allocations stay bounded.
+                int rawW = BitConverter.ToInt32(data, 0) & 0x7FFFFFFF;
+                int rawH = BitConverter.ToInt32(data, 4) & 0x7FFFFFFF;
+                int width = Math.Max(1, Math.Min(100, rawW % 100 + 1));
+                int height = Math.Max(1, Math.Min(100, rawH % 100 + 1));
                 
                 // Create a simple test image using ImageFactory
                 // Use grayscale (1 component) to keep it simple
@@ -177,6 +178,7 @@ namespace CoreJ2K.Fuzz
             }
             catch (ArgumentException) { /* Expected */ }
             catch (InvalidOperationException) { /* Expected */ }
+            catch (OverflowException) { /* Expected for extreme input values */ }
             catch (OutOfMemoryException) { /* Expected for malicious sizes */ }
             catch (Exception ex)
             {
@@ -187,7 +189,7 @@ namespace CoreJ2K.Fuzz
         }
 
         /// <summary>
-        /// Creates a simple PGM (Portable Gray Map) format bytes for testing.
+        /// Creates a simple PGM
         /// </summary>
         private static byte[] CreatePGMBytes(int width, int height, byte[] pixels)
         {
