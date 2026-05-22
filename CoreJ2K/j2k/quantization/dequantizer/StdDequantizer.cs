@@ -35,6 +35,7 @@ using CoreJ2K.j2k.decoder;
 using CoreJ2K.j2k.image;
 using CoreJ2K.j2k.wavelet.synthesis;
 using System;
+using System.Buffers;
 
 namespace CoreJ2K.j2k.quantization.dequantizer
 {
@@ -111,6 +112,10 @@ namespace CoreJ2K.j2k.quantization.dequantizer
         private int _cachedMrlTile = -1;
         private int _cachedMrlComp = -1;
         private int _cachedMrl;
+
+        // Grow-only scratch buffer for float dequantization output.
+        // Avoids allocating a new float[] per code-block on the TYPE_FLOAT path.
+        private float[]? _scratchFloat;
 
         /// <summary> Initializes the source of compressed data. And sets the number of range
         /// bits and fraction bits and receives the parameters for the dequantizer.
@@ -353,11 +358,16 @@ namespace CoreJ2K.j2k.quantization.dequantizer
                     cblk.offset = 0;
                     cblk.scanw = cblk.w;
                     cblk.progressive = inblk.progressive;
-                    // Get output data array and check its size
+                    // Get output data array and check its size.
+                    // Prefer the caller's existing array; fall back to a grow-only
+                    // instance-level scratch buffer to avoid per-code-block allocation.
                     outfarr = (float[])cblk.Data;
-                    if (outfarr == null || outfarr.Length < cblk.w * cblk.h)
+                    int neededFloat = cblk.w * cblk.h;
+                    if (outfarr == null || outfarr.Length < neededFloat)
                     {
-                        outfarr = new float[cblk.w * cblk.h];
+                        if (_scratchFloat == null || _scratchFloat.Length < neededFloat)
+                            _scratchFloat = new float[neededFloat];
+                        outfarr = _scratchFloat;
                         cblk.Data = outfarr;
                     }
                     break;

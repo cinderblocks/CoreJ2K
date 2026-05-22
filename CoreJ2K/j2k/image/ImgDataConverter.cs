@@ -34,6 +34,7 @@
 * Copyright (c) 1999/2000 JJ2000 Partners.
 * */
 using System;
+using System.Buffers;
 
 namespace CoreJ2K.j2k.image
 {
@@ -63,6 +64,11 @@ namespace CoreJ2K.j2k.image
 
         /// <summary>The number of fraction bits in the casted ints </summary>
         private int fp;
+
+        // Grow-only scratch buffers for type-conversion paths.
+        // Avoids a new float[]/int[] allocation per block on every INT↔FLOAT conversion.
+        private float[]? _scratchFloat;
+        private int[]? _scratchInt;
 
         /// <summary> Constructs a new ImgDataConverter object that operates on the specified
         /// source of image data.
@@ -319,11 +325,16 @@ namespace CoreJ2K.j2k.image
                     float[] farr;
                     int[] srcIArr;
 
-                    // Get data array from resulting blk
+                    // Get data array from resulting blk.
+                    // Prefer caller's existing buffer; fall back to grow-only scratch
+                    // to avoid per-block allocation.
                     farr = (float[])blk.Data;
                     if (farr == null || farr.Length < w * h)
                     {
-                        farr = new float[w * h];
+                        int needF = w * h;
+                        if (_scratchFloat == null || _scratchFloat.Length < needF)
+                            _scratchFloat = new float[needF];
+                        farr = _scratchFloat;
                         blk.Data = farr;
                     }
 
@@ -370,11 +381,16 @@ namespace CoreJ2K.j2k.image
                     int[] iarr;
                     float[] srcFArr;
 
-                    // Get data array from resulting blk
+                    // Get data array from resulting blk.
+                    // Prefer caller's existing buffer; fall back to grow-only scratch
+                    // to avoid per-block allocation.
                     iarr = (int[])blk.Data;
                     if (iarr == null || iarr.Length < w * h)
                     {
-                        iarr = new int[w * h];
+                        int needI = w * h;
+                        if (_scratchInt == null || _scratchInt.Length < needI)
+                            _scratchInt = new int[needI];
+                        iarr = _scratchInt;
                         blk.Data = iarr;
                     }
                     blk.scanw = srcBlk.w;
