@@ -10,8 +10,10 @@ A Managed and Portable JPEG2000 Codec for .NET Platforms
 [![NuGet](https://img.shields.io/nuget/v/CoreJ2K.svg?label=CoreJ2K&logo=nuget)](https://www.nuget.org/packages/CoreJ2K/)
 [![Downloads](https://img.shields.io/nuget/dt/CoreJ2K?label=Downloads&logo=nuget)](https://www.nuget.org/packages/CoreJ2K/)
 [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](http://www.opensource.org/licenses/bsd-license.php)
-[![CI and Release](https://github.com/cinderblocks/CoreJ2K/actions/workflows/ci-and-release.yml/badge.svg)](https://github.com/cinderblocks/CoreJ2K/actions/workflows/ci-and-release.yml)
-[![Socket Badge](https://badge.socket.dev/nuget/package/corej2k)](https://badge.socket.dev/nuget/package/corej2k)
+[![Socket Badge](https://badge.socket.dev/nuget/package/corej2k)](https://badge.socket.dev/nuget/package/corej2k)  
+[![Release Build](https://github.com/cinderblocks/CoreJ2K/actions/workflows/ci-and-release.yml/badge.svg)](https://github.com/cinderblocks/CoreJ2K/actions/workflows/ci-and-release.yml)
+[![CodeQL Security Analysis](https://github.com/cinderblocks/CoreJ2K/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/cinderblocks/CoreJ2K/actions/workflows/codeql-analysis.yml)
+[![Fuzzing](https://github.com/cinderblocks/CoreJ2K/actions/workflows/fuzzing.yml/badge.svg)](https://github.com/cinderblocks/CoreJ2K/actions/workflows/fuzzing.yml)
 
 ---
 
