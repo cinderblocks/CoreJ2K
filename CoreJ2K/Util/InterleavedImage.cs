@@ -210,23 +210,36 @@ namespace CoreJ2K.Util
         public int[] GetComponent(int number)
         {
             if (number < 0 || number >= NumberOfComponents)
-            {
                 throw new ArgumentOutOfRangeException(nameof(number));
-            }
 
+            var component = new int[Width * Height];
+            CopyComponentTo(number, component);
+            return component;
+        }
+
+        /// <summary>
+        /// Copies all samples for a single component into <paramref name="destination"/> without allocating.
+        /// Use this overload with a pooled or stack-allocated buffer to avoid heap allocation for large images.
+        /// </summary>
+        /// <param name="number">Component index (0-based).</param>
+        /// <param name="destination">Span to receive the de-interleaved samples. Must have length &gt;= Width*Height.</param>
+        /// <exception cref="ArgumentOutOfRangeException">If <paramref name="number"/> is out of range.</exception>
+        /// <exception cref="ArgumentException">If <paramref name="destination"/> is too small.</exception>
+        public void CopyComponentTo(int number, Span<int> destination)
+        {
+            if (number < 0 || number >= NumberOfComponents)
+                throw new ArgumentOutOfRangeException(nameof(number));
             var length = Width * Height;
-            var component = new int[length];
+            if (destination.Length < length)
+                throw new ArgumentException("Destination span is too small", nameof(destination));
 
-            // Copy interleaved samples for the requested component
             var srcIndex = number;
             var step = NumberOfComponents;
             for (var k = 0; k < length; ++k)
             {
-                component[k] = Data[srcIndex];
+                destination[k] = data[srcIndex];
                 srcIndex += step;
             }
-
-            return component;
         }
 
         /// <summary>
@@ -236,8 +249,21 @@ namespace CoreJ2K.Util
         /// <param name="samples">Array of samples of length Width*Height.</param>
         public void SetComponent(int number, int[] samples)
         {
-            if (number < 0 || number >= NumberOfComponents) throw new ArgumentOutOfRangeException(nameof(number));
             if (samples == null) throw new ArgumentNullException(nameof(samples));
+            SetComponent(number, (ReadOnlySpan<int>)samples);
+        }
+
+        /// <summary>
+        /// Replaces the samples for the specified component from a span, without allocating.
+        /// Use this overload with a pooled or stack-allocated source buffer.
+        /// </summary>
+        /// <param name="number">Component index (0-based).</param>
+        /// <param name="samples">Span of samples of length Width*Height.</param>
+        /// <exception cref="ArgumentOutOfRangeException">If <paramref name="number"/> is out of range.</exception>
+        /// <exception cref="ArgumentException">If <paramref name="samples"/> length does not equal Width*Height.</exception>
+        public void SetComponent(int number, ReadOnlySpan<int> samples)
+        {
+            if (number < 0 || number >= NumberOfComponents) throw new ArgumentOutOfRangeException(nameof(number));
             var length = Width * Height;
             if (samples.Length != length) throw new ArgumentException("samples length must equal Width*Height", nameof(samples));
 
@@ -245,7 +271,7 @@ namespace CoreJ2K.Util
             var step = NumberOfComponents;
             for (var i = 0; i < length; ++i)
             {
-                Data[dst] = samples[i];
+                data[dst] = samples[i];
                 dst += step;
             }
         }
@@ -364,15 +390,27 @@ namespace CoreJ2K.Util
         }
 
         /// <summary>
-        /// Returns a copy of the raw sample buffer. The returned array can be modified
-        /// without affecting the <see cref="InterleavedImage"/> instance.
+        /// Returns a copy of the raw interleaved sample buffer as a new array.
+        /// The returned array can be modified without affecting this instance.
         /// </summary>
-        /// <returns>A defensive copy of the interleaved sample buffer.</returns>
         public int[] GetDataCopy()
         {
             var copy = new int[dataLength];
-            Array.Copy(data, 0, copy, 0, dataLength);
+            CopyDataTo(copy);
             return copy;
+        }
+
+        /// <summary>
+        /// Copies the raw interleaved sample buffer into <paramref name="destination"/> without allocating.
+        /// Use this overload with a pooled or pre-allocated buffer to avoid heap allocation for large images.
+        /// </summary>
+        /// <param name="destination">Span to receive all samples. Must have length &gt;= Width*Height*NumberOfComponents.</param>
+        /// <exception cref="ArgumentException">If <paramref name="destination"/> is too small.</exception>
+        public void CopyDataTo(Span<int> destination)
+        {
+            if (destination.Length < dataLength)
+                throw new ArgumentException("Destination span is too small", nameof(destination));
+            data.AsSpan(0, dataLength).CopyTo(destination);
         }
 
         /// <summary>
@@ -503,32 +541,6 @@ namespace CoreJ2K.Util
         }
 
         /// <summary>
-        /// Converts interleaved integer samples to a newly-allocated byte array.
-        /// This method delegates to the Span-based overload.
-        /// </summary>
-        private static byte[] ToBytes(int width, int height, int numberOfComponents,
-            IReadOnlyList<double> byteScaling, IReadOnlyList<int> data)
-        {
-            var pixels = width * height;
-            var nc = numberOfComponents;
-            var count = nc * pixels;
-            var bytes = new byte[count];
-            ToBytes(width, height, numberOfComponents, byteScaling, data, bytes);
-            return bytes;
-        }
-
-        /// <summary>
-        /// Converts interleaved integer samples to a Memory&lt;byte&gt; backed by a new byte array.
-        /// Useful when APIs prefer Memory to byte[].
-        /// </summary>
-        private static Memory<byte> ToBytesMemory(int width, int height, int numberOfComponents,
-            IReadOnlyList<double> byteScaling, IReadOnlyList<int> data)
-        {
-            var arr = ToBytes(width, height, numberOfComponents, byteScaling, data);
-            return new Memory<byte>(arr);
-        }
-
-        /// <summary>
         /// Gets all component values for a pixel.
         /// </summary>
         /// <param name="x">X coordinate (0-based).</param>
@@ -559,15 +571,8 @@ namespace CoreJ2K.Util
         /// <exception cref="ArgumentOutOfRangeException">If coordinates are out of range.</exception>
         public int[] GetPixel(int x, int y)
         {
-            if (x < 0 || x >= Width) throw new ArgumentOutOfRangeException(nameof(x));
-            if (y < 0 || y >= Height) throw new ArgumentOutOfRangeException(nameof(y));
-
             var components = new int[NumberOfComponents];
-            var idx = (y * Width + x) * NumberOfComponents;
-            for (var c = 0; c < NumberOfComponents; c++)
-            {
-                components[c] = Data[idx + c];
-            }
+            GetPixel(x, y, components);
             return components;
         }
 

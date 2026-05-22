@@ -1,6 +1,4 @@
 using System;
-using System.Linq;
-using System.Reflection;
 using Xunit;
 using CoreJ2K.Util;
 
@@ -37,11 +35,7 @@ namespace CoreJ2K.Tests
             expected[1] = (byte)Math.Max(0, Math.Min(255, (int)Math.Round(scale * 1)));
             expected[2] = (byte)Math.Max(0, Math.Min(255, (int)Math.Round(scale * 3)));
 
-            // Call private ToBytes via reflection
-            var toBytes = typeof(InterleavedImage).GetMethods(BindingFlags.NonPublic | BindingFlags.Static)
-                .First(m => m.ReturnType == typeof(byte[]) && m.Name == "ToBytes");
-
-            var result = (byte[])toBytes.Invoke(null, new object[] { img.Width, img.Height, img.NumberOfComponents, new double[] { scale }, img.GetDataCopy() });
+            var result = img.GetComponentBytes(0);
 
             Assert.Equal(expected, result);
         }
@@ -61,10 +55,7 @@ namespace CoreJ2K.Tests
                 img.SetSample(x, 0, 0, sample);
             }
 
-            // Invoke private ToBytes to get bytes
-            var toBytes = typeof(InterleavedImage).GetMethods(BindingFlags.NonPublic | BindingFlags.Static)
-                .First(m => m.ReturnType == typeof(byte[]) && m.Name == "ToBytes");
-            var result = (byte[])toBytes.Invoke(null, new object[] { img.Width, img.Height, img.NumberOfComponents, new double[] { scale }, img.GetDataCopy() });
+            var result = img.GetComponentBytes(0);
 
             // Verify each output equals expected rounded/clamped value
             for (int x = 0; x < 5; x++)
@@ -117,6 +108,66 @@ namespace CoreJ2K.Tests
                 Assert.Equal(samples[x], img.GetSample(x, 0, 1));
                 Assert.Equal(x + 1, img.GetSample(x, 0, 0));
             }
+        }
+
+        [Fact]
+        public void SetComponent_SpanOverload_MatchesArrayOverload()
+        {
+            var img1 = new InterleavedImage(3, 1, 2, new[] { 8, 8 });
+            var img2 = new InterleavedImage(3, 1, 2, new[] { 8, 8 });
+
+            ReadOnlySpan<int> span = stackalloc int[] { 7, 14, 21 };
+            img1.SetComponent(0, span);
+            img2.SetComponent(0, new[] { 7, 14, 21 });
+
+            Assert.Equal(img2, img1);
+        }
+
+        [Fact]
+        public void CopyDataTo_MatchesGetDataCopy()
+        {
+            var img = new InterleavedImage(3, 2, 2, new[] { 8, 8 });
+            img.SetComponent(0, new[] { 1, 2, 3, 4, 5, 6 });
+            img.SetComponent(1, new[] { 10, 20, 30, 40, 50, 60 });
+
+            var expected = img.GetDataCopy();
+            var dest = new int[img.Width * img.Height * img.NumberOfComponents];
+            img.CopyDataTo(dest);
+
+            Assert.Equal(expected, dest);
+        }
+
+        [Fact]
+        public void CopyDataTo_ThrowsWhenTooSmall()
+        {
+            var img = new InterleavedImage(4, 4, 3, new[] { 8, 8, 8 });
+            Assert.Throws<ArgumentException>(() => img.CopyDataTo(new int[47]));
+        }
+
+        [Fact]
+        public void CopyComponentTo_SpanOverload_MatchesGetComponent()
+        {
+            var img = new InterleavedImage(4, 2, 3, new[] { 8, 8, 8 });
+            img.SetComponent(0, new[] { 10, 20, 30, 40, 50, 60, 70, 80 });
+            img.SetComponent(1, new[] { 1, 2, 3, 4, 5, 6, 7, 8 });
+            img.SetComponent(2, new[] { 100, 110, 120, 130, 140, 150, 160, 170 });
+
+            for (var c = 0; c < 3; c++)
+            {
+                var expected = img.GetComponent(c);
+                var dest = new int[img.Width * img.Height];
+                img.CopyComponentTo(c, dest);
+                Assert.Equal(expected, dest);
+            }
+        }
+
+        [Fact]
+        public void CopyComponentTo_ThrowsOnInvalidArgs()
+        {
+            var img = new InterleavedImage(2, 2, 2, new[] { 8, 8 });
+            Assert.Throws<ArgumentOutOfRangeException>(() => img.CopyComponentTo(-1, new int[4]));
+            Assert.Throws<ArgumentOutOfRangeException>(() => img.CopyComponentTo(2, new int[4]));
+            Assert.Throws<ArgumentException>(() => img.CopyComponentTo(0, new int[3]));
         }
 
         [Fact]
