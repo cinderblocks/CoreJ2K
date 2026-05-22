@@ -3,7 +3,7 @@
 
 param(
     [Parameter(Mandatory=$false)]
-    [ValidateSet("decoder", "encoder", "headers", "markers")]
+    [ValidateSet("decoder", "encoder", "encoderconfig", "headers", "markers", "jp2", "icc")]
     [string]$Target = "decoder",
     
     [Parameter(Mandatory=$false)]

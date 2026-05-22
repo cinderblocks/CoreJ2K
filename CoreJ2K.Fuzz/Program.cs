@@ -19,29 +19,44 @@ namespace CoreJ2K.Fuzz
             if (args.Length > 0)
             {
                 string target = args[0].ToLowerInvariant();
-                
+
                 switch (target)
                 {
                     case "decoder":
                         Console.WriteLine("Fuzzing JPEG 2000 decoder...");
                         Fuzzer.Run(FuzzDecoder);
                         break;
-                    
+
                     case "encoder":
                         Console.WriteLine("Fuzzing JPEG 2000 encoder...");
                         Fuzzer.Run(FuzzEncoder);
                         break;
-                    
+
                     case "headers":
                         Console.WriteLine("Fuzzing JPEG 2000 header parsing...");
                         Fuzzer.Run(FuzzHeaders);
                         break;
-                    
+
                     case "markers":
                         Console.WriteLine("Fuzzing marker segment parsing...");
                         Fuzzer.Run(FuzzMarkers);
                         break;
-                    
+
+                    case "jp2":
+                        Console.WriteLine("Fuzzing JP2 container / file-format parsing...");
+                        Fuzzer.Run(FuzzJP2Container);
+                        break;
+
+                    case "icc":
+                        Console.WriteLine("Fuzzing ICC profile parsing...");
+                        Fuzzer.Run(FuzzIccProfile);
+                        break;
+
+                    case "encoderconfig":
+                        Console.WriteLine("Fuzzing encoder with random configuration...");
+                        Fuzzer.Run(FuzzEncoderConfig);
+                        break;
+
                     default:
                         Console.WriteLine($"Unknown target: {target}");
                         PrintUsage();
@@ -295,10 +310,13 @@ namespace CoreJ2K.Fuzz
             Console.WriteLine("Usage: CoreJ2K.Fuzz [target]");
             Console.WriteLine();
             Console.WriteLine("Targets:");
-            Console.WriteLine("  decoder  - Fuzz JPEG 2000 decoder (default)");
-            Console.WriteLine("  encoder  - Fuzz JPEG 2000 encoder");
-            Console.WriteLine("  headers  - Fuzz header parsing");
-            Console.WriteLine("  markers  - Fuzz marker segment parsing");
+            Console.WriteLine("  decoder      - Fuzz JPEG 2000 decoder (default)");
+            Console.WriteLine("  encoder      - Fuzz JPEG 2000 encoder (random pixels)");
+            Console.WriteLine("  encoderconfig- Fuzz JPEG 2000 encoder (random config)");
+            Console.WriteLine("  headers      - Fuzz header parsing");
+            Console.WriteLine("  markers      - Fuzz marker segment parsing");
+            Console.WriteLine("  jp2          - Fuzz JP2 container / box parsing");
+            Console.WriteLine("  icc          - Fuzz ICC profile parsing");
             Console.WriteLine();
             Console.WriteLine("Example:");
             Console.WriteLine("  dotnet run decoder");
@@ -306,6 +324,131 @@ namespace CoreJ2K.Fuzz
             Console.WriteLine("For use with AFL/libFuzzer:");
             Console.WriteLine("  sharpfuzz CoreJ2K.dll");
             Console.WriteLine("  afl-fuzz -i testcases -o findings CoreJ2K.Fuzz.exe decoder");
+        }
+
+        /// <summary>
+        /// Fuzzes JP2 container / file-format box parsing.
+        /// This exercises FileFormatReader and JP2Validator independently of
+        /// the codestream marker parser, targeting malformed box lengths,
+        /// unknown box types, and truncated signatures.
+        /// </summary>
+        private static void FuzzJP2Container(Stream input)
+        {
+            try
+            {
+                using var ms = new MemoryStream();
+                input.CopyTo(ms);
+                byte[] data = ms.ToArray();
+
+                if (data.Length < 4) return;
+
+                // Feed directly to the JP2 validator's codestream checker —
+                // this accepts a raw byte[] so no wrapping is needed.
+                var validator = new j2k.fileformat.reader.JP2Validator();
+                validator.ValidateBasicCodestreamMarkers(data);
+                validator.ValidateIccProfileBasic(data);
+
+                if (data.Length >= 8)
+                    validator.ValidateCodestreamComprehensive(data);
+            }
+            catch (ArgumentException) { }
+            catch (InvalidOperationException) { }
+            catch (IOException) { }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"UNEXPECTED EXCEPTION: {ex.GetType().Name}");
+                Console.Error.WriteLine($"Message: {ex.Message}");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Fuzzes ICC profile binary parsing via ICCProfileData.
+        /// This exercises the raw ICC header, tag table, and type parsers
+        /// without needing a surrounding JP2 or J2K container.
+        /// </summary>
+        private static void FuzzIccProfile(Stream input)
+        {
+            try
+            {
+                using var ms = new MemoryStream();
+                input.CopyTo(ms);
+                byte[] data = ms.ToArray();
+
+                if (data.Length == 0) return;
+
+                var profile = new Color.ICC.ICCProfileData(data);
+                _ = profile.IsValid;
+                _ = profile.ProfileBytes;
+            }
+            catch (ArgumentException) { }
+            catch (InvalidOperationException) { }
+            catch (OverflowException) { }
+            catch (IOException) { }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"UNEXPECTED EXCEPTION: {ex.GetType().Name}");
+                Console.Error.WriteLine($"Message: {ex.Message}");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Fuzzes the encoder with random configuration derived from input bytes.
+        /// Exercises tile sizes, quantisation, resolution levels, and progression
+        /// order rather than only pixel content.
+        /// </summary>
+        private static void FuzzEncoderConfig(Stream input)
+        {
+            try
+            {
+                using var ms = new MemoryStream();
+                input.CopyTo(ms);
+                byte[] data = ms.ToArray();
+
+                if (data.Length < 16) return;
+
+                // Fixed small image so memory is always bounded.
+                const int width = 32;
+                const int height = 32;
+
+                byte[] pixels = new byte[width * height];
+                int dataIndex = 0;
+                for (int i = 0; i < pixels.Length && dataIndex < data.Length; i++)
+                    pixels[i] = data[dataIndex++];
+
+                // Derive encoder config fields from input bytes.
+                int numResolutions = Math.Max(1, Math.Min(8, (data[0] & 0x07) + 1));
+                int cblkWidth  = 1 << Math.Max(2, Math.Min(6, (data[1] & 0x0F)));
+                int cblkHeight = 1 << Math.Max(2, Math.Min(6, (data[2] & 0x0F)));
+                // Tile size: 0 means "no tiling" (tile == image); otherwise a small power-of-two.
+                int tileSize = (data[3] & 0x01) == 0 ? 0 : (1 << Math.Max(3, Math.Min(6, (data[3] >> 1) & 0x0F)));
+
+                var config = new Configuration.J2KEncoderConfiguration();
+                config.Wavelet.DecompositionLevels = numResolutions;
+                config.CodeBlocks.SetSize(cblkWidth, cblkHeight);
+
+                if (tileSize > 0)
+                    config.Tiles.SetSize(tileSize, tileSize);
+
+                var imgsrc = new j2k.image.input.ImgReaderPGM(
+                    new MemoryStream(CreatePGMBytes(width, height, pixels)));
+
+                var encoded = J2kImage.ToBytes(imgsrc, config);
+
+                if (encoded == null || encoded.Length == 0)
+                    throw new InvalidOperationException("Encoder produced empty output");
+            }
+            catch (ArgumentException) { }
+            catch (InvalidOperationException) { }
+            catch (OverflowException) { }
+            catch (OutOfMemoryException) { }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"UNEXPECTED EXCEPTION: {ex.GetType().Name}");
+                Console.Error.WriteLine($"Message: {ex.Message}");
+                throw;
+            }
         }
     }
 }

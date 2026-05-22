@@ -14,8 +14,11 @@ on:
         options:
           - decoder
           - encoder
+          - encoderconfig
           - headers
           - markers
+          - jp2
+          - icc
       iterations:
         description: 'Number of iterations'
         required: false
@@ -29,7 +32,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target: [decoder, encoder, headers, markers]
+        target: [decoder, encoder, encoderconfig, headers, markers, jp2, icc]
     
     steps:
       - name: Checkout
