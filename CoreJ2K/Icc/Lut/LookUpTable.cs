@@ -23,7 +23,7 @@ namespace CoreJ2K.Icc.Lut
     public abstract class LookUpTable
     {
         /// <summary>The curve data                  </summary>
-        protected internal Tags_ICCCurveType curve = null;
+        protected internal Tags_ICCCurveType? curve = null;
         /// <summary>Number of values in created lut </summary>
         protected internal int dwNumInput = 0;
 
@@ -33,7 +33,7 @@ namespace CoreJ2K.Icc.Lut
         /// </param>
         /// <param name="dwNumInput">Number of values in created lut
         /// </param>
-        protected internal LookUpTable(Tags_ICCCurveType curve, int dwNumInput)
+        protected internal LookUpTable(Tags_ICCCurveType? curve, int dwNumInput)
         {
             this.curve = curve;
             this.dwNumInput = dwNumInput;

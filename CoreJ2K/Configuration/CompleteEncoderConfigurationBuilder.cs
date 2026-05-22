@@ -382,7 +382,7 @@ namespace CoreJ2K.Configuration
         /// Gets the metadata configuration as a J2KMetadata object.
         /// </summary>
         /// <returns>J2KMetadata object or null if no metadata configured.</returns>
-        public j2k.fileformat.metadata.J2KMetadata GetMetadata()
+        public j2k.fileformat.metadata.J2KMetadata? GetMetadata()
         {
             return _metadata?.ToJ2KMetadata();
         }
@@ -400,11 +400,11 @@ namespace CoreJ2K.Configuration
             
             if (metadata != null)
             {
-                return J2kImage.ToBytes(imgsrc, metadata, config);
+                return J2kImage.ToBytes(imgsrc, metadata, config)!;
             }
             else
             {
-                return J2kImage.ToBytes(imgsrc, config);
+                return J2kImage.ToBytes(imgsrc, config)!;
             }
         }
         

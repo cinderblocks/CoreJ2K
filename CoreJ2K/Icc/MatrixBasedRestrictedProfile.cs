@@ -73,7 +73,7 @@ namespace CoreJ2K.Icc
             rep.Append("trc[RED]:").Append(Environment.NewLine).Append(trc[GREEN]).Append(Environment.NewLine);
             rep.Append("trc[RED]:").Append(Environment.NewLine).Append(trc[BLUE]).Append(Environment.NewLine);
 
-            rep.Append("Red colorant:  ").Append(colorant[RED]).Append(Environment.NewLine);
+            rep.Append("Red colorant:  ").Append(colorant![RED]).Append(Environment.NewLine);
             rep.Append("Red colorant:  ").Append(colorant[GREEN]).Append(Environment.NewLine);
             rep.Append("Red colorant:  ").Append(colorant[BLUE]).Append(Environment.NewLine);
 

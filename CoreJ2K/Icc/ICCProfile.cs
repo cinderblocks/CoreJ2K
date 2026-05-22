@@ -145,7 +145,7 @@ namespace CoreJ2K.Icc
             set => header!.dwCreatorSig = value;
         }
 
-        private ICCProfileVersion ProfileVersion
+        private ICCProfileVersion? ProfileVersion
         {
             get => header!.profileVersion;
 
@@ -165,12 +165,12 @@ namespace CoreJ2K.Icc
         /// <summary> Access the profile header</summary>
         /// <returns> ICCProfileHeader
         /// </returns>
-        public virtual ICCProfileHeader Header => header;
+        public virtual ICCProfileHeader? Header => header;
 
         /// <summary> Access the profile tag table</summary>
         /// <returns> ICCTagTable
         /// </returns>
-        public virtual ICCTagTable TagTable => tags;
+        public virtual ICCTagTable? TagTable => tags;
 
         /// <summary>Gray index. </summary>
         // Renamed for convenience:
@@ -805,7 +805,7 @@ namespace CoreJ2K.Icc
 
             // First look for the gray TRC tag. If the profile is indeed an input profile, and this
             // tag exists, then the profile is a Monochrome Input profile
-            if (tags.TryGetValue(kdwGrayTRCTag, out var grayTag))
+            if (tags!.TryGetValue(kdwGrayTRCTag, out var grayTag))
             {
                 return RestrictedICCProfile.createInstance((ICCCurveType)grayTag);
             }

@@ -226,7 +226,7 @@ namespace CoreJ2K.Util
             else if (inStream != null)
                 return inStream.Read();
             else
-                return inStringReader.Read();
+                return inStringReader!.Read();
         }
 
         private void unread(int ch)
@@ -236,7 +236,7 @@ namespace CoreJ2K.Util
             else if (inStream != null)
                 inStream.UnRead(ch);
             else
-                inStringReader.UnRead(ch);
+                inStringReader!.UnRead(ch);
         }
 
         private void init()

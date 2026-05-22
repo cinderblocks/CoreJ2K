@@ -24,7 +24,8 @@ namespace CoreJ2K.Util
         {
             foreach (var creator in J2kSetup.FindCodecs<IImageCreator>())
             {
-                _creators.Add(Activator.CreateInstance(creator) as IImageCreator);
+                var instance = Activator.CreateInstance(creator) as IImageCreator;
+                if (instance != null) _creators.Add(instance);
             }
         }
 
@@ -32,7 +33,7 @@ namespace CoreJ2K.Util
 
         #region METHODS
 
-        internal static IImage New<T>(int width, int height, int numComponents, byte[] bytes)
+        internal static IImage? New<T>(int width, int height, int numComponents, byte[] bytes)
         {
             try
             {
@@ -45,7 +46,7 @@ namespace CoreJ2K.Util
             }
         }
 
-        internal static BlkImgDataSrc ToPortableImageSource(object imageObject)
+        internal static BlkImgDataSrc? ToPortableImageSource(object imageObject)
         {
             try
             {

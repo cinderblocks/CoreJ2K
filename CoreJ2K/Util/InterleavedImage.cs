@@ -612,7 +612,7 @@ namespace CoreJ2K.Util
         /// <exception cref="ArgumentException">If component counts don't match.</exception>
         /// <exception cref="ArgumentOutOfRangeException">If coordinates or dimensions are invalid.</exception>
         public void CopyRegion(int srcX, int srcY, int width, int height,
-            InterleavedImage destination, int dstX, int dstY)
+            InterleavedImage? destination, int dstX, int dstY)
         {
             if (destination == null) throw new ArgumentNullException(nameof(destination));
             if (NumberOfComponents != destination.NumberOfComponents)

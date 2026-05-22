@@ -65,14 +65,14 @@ namespace CoreJ2K.Color
         public reader_HeaderDecoder hd;
 
         /* Image box structure as pertains to colorspacees. */
-        private PaletteBox pbox = null;
-        private ComponentMappingBox cmbox = null;
-        private ColorSpecificationBox csbox = null;
-        private ChannelDefinitionBox cdbox = null;
-        private ImageHeaderBox ihbox = null;
+        private PaletteBox? pbox = null;
+        private ComponentMappingBox? cmbox = null;
+        private ColorSpecificationBox? csbox = null;
+        private ChannelDefinitionBox? cdbox = null;
+        private ImageHeaderBox? ihbox = null;
 
         /// <summary>Input image </summary>
-        private readonly io_RandomAccessIO inStream = null;
+        private readonly io_RandomAccessIO? inStream = null;
 
         /// <summary>Indent a String that contains newlines. </summary>
         public static string indent(string ident, System.Text.StringBuilder instr)

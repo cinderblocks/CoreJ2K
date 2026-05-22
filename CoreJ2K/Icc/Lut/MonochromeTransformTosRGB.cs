@@ -44,9 +44,9 @@ namespace CoreJ2K.Icc.Lut
         /// <summary>Transform parameter. </summary>
         public const double ksRGB8ReduceAfterExp = 14.025;
 
-        private readonly short[] lut = null;
+        private readonly short[]? lut = null;
         private readonly int dwInputMaxValue = 0;
-        private readonly LookUpTableFP fLut = null;
+        private readonly LookUpTableFP? fLut = null;
 
 
         /// <summary> String representation of class</summary>
@@ -124,7 +124,7 @@ namespace CoreJ2K.Icc.Lut
 
             int i, j, o; //  x, y removed
 
-            var inputData = (int[])inb.Data;
+            var inputData = (int[])inb.Data!;
             var output = (int[])outb.Data;
 
             if (output == null || output.Length < inputData.Length)
@@ -166,7 +166,7 @@ namespace CoreJ2K.Icc.Lut
 
             int i, j, o; // x, y removed
 
-            var inputData = (float[])inb.Data;
+            var inputData = (float[])inb.Data!;
             var output = (float[])outb.Data;
 
 

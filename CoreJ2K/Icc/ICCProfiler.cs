@@ -37,17 +37,17 @@ namespace CoreJ2K.Icc
         private static readonly int BLUE;
 
         // ICCProfiles.
-        internal RestrictedICCProfile ricc = null;
-        internal ICCProfile icc = null;
+        internal RestrictedICCProfile? ricc = null;
+        internal ICCProfile? icc = null;
 
         // Temporary variables needed during profiling.
         private DataBlkInt[]? tempInt; // Holds the results of the transform.
         private DataBlkFloat[]? tempFloat; // Holds the results of the transform.
 
-        private readonly object xform = null;
+        private readonly object? xform = null;
 
         /// <summary>The image's ICC profile. </summary>
-        private readonly RestrictedICCProfile iccp = null;
+        private readonly RestrictedICCProfile? iccp = null;
 
         /// <summary> Factory method for creating instances of this class.</summary>
         /// <param name="src">-- source of image data
@@ -238,7 +238,7 @@ namespace CoreJ2K.Icc
                             InternalBuffer = outblk;
 
                             // Reference the output array
-                            workDataInt[i] = (int[])workInt[i].Data;
+                            workDataInt[i] = (int[])workInt[i].Data!;
 
                             // Request data from the source.    
                             inInt[i] = (DataBlkInt)src.GetInternCompData(inInt[i], i);
@@ -271,7 +271,7 @@ namespace CoreJ2K.Icc
                             InternalBuffer = outblk;
 
                             // Reference the output array
-                            workDataFloat[i] = (float[])workFloat[i].Data;
+                            workDataFloat[i] = (float[])workFloat[i].Data!;
 
                             // Request data from the source.    
                             inFloat[i] = (DataBlkFloat)src.GetInternCompData(inFloat[i], i);
@@ -311,12 +311,12 @@ namespace CoreJ2K.Icc
 
                         if (ncomps == 1)
                         {
-                            ((MonochromeTransformTosRGB)xform).apply(workInt[c], tempInt[c]);
+                            ((MonochromeTransformTosRGB)xform!).apply(workInt[c], tempInt[c]);
                         }
                         else
                         {
                             // ncomps == 3
-                            ((MatrixBasedTransformTosRGB)xform).apply(workInt, tempInt);
+                            ((MatrixBasedTransformTosRGB)xform!).apply(workInt, tempInt);
                         }
 
                         outblk.progressive = inInt[c].progressive;
@@ -328,12 +328,12 @@ namespace CoreJ2K.Icc
 
                         if (ncomps == 1)
                         {
-                            ((MonochromeTransformTosRGB)xform).apply(workFloat[c], tempFloat[c]);
+                            ((MonochromeTransformTosRGB)xform!).apply(workFloat[c], tempFloat[c]);
                         }
                         else
                         {
                             // ncomps == 3
-                            ((MatrixBasedTransformTosRGB)xform).apply(workFloat, tempFloat);
+                            ((MatrixBasedTransformTosRGB)xform!).apply(workFloat, tempFloat);
                         }
 
                         outblk.progressive = inFloat[c].progressive;
@@ -357,7 +357,7 @@ namespace CoreJ2K.Icc
             {
                 FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.ERROR,
                     $"matrix transform problem:\n{e.Message}");
-                if (pl.GetParameter("debug").Equals("on"))
+                if (pl.GetParameter("debug")?.Equals("on") == true)
                 {
                     FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.ERROR, e.StackTrace!);
                 }
@@ -365,13 +365,13 @@ namespace CoreJ2K.Icc
                 {
                     FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.ERROR, "Use '-debug' option for more details");
                 }
-                return null;
+                return null!;
             }
             catch (MonochromeTransformException e)
             {
                 FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.ERROR,
                     $"monochrome transform problem:\n{e.Message}");
-                if (pl.GetParameter("debug").Equals("on"))
+                if (pl.GetParameter("debug")?.Equals("on") == true)
                 {
                     FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.ERROR, e.StackTrace!);
                 }
@@ -379,7 +379,7 @@ namespace CoreJ2K.Icc
                 {
                     FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.ERROR, "Use '-debug' option for more details");
                 }
-                return null;
+                return null!;
             }
 
             return outblk;

@@ -28,8 +28,8 @@ namespace CoreJ2K.Color.Boxes
         /// <summary>Return the number of palette columns. </summary>
         public int NumColumns { get; private set; }
 
-        private short[] bitdepth;
-        private int[][] entries;
+        private short[]? bitdepth;
+        private int[][]? entries;
 
         /// <summary> Construct a PaletteBox from an input image.</summary>
         /// <param name="in">RandomAccessIO jp2 image
@@ -128,7 +128,7 @@ namespace CoreJ2K.Color.Boxes
         /// <summary>Are entries signed predicate. </summary>
         public bool IsSigned(int column)
         {
-            return (bitdepth[column] & 0x80) == 1;
+            return (bitdepth![column] & 0x80) == 1;
         }
 
         /// <summary>Are entries unsigned predicate. </summary>
@@ -140,13 +140,13 @@ namespace CoreJ2K.Color.Boxes
         /// <summary>Return the bitdepth of palette entries. </summary>
         public short GetBitDepth(int column)
         {
-            return (short)((bitdepth[column] & 0x7f) + 1);
+            return (short)((bitdepth![column] & 0x7f) + 1);
         }
 
         /// <summary>Return an entry for a given index and column. </summary>
         public int GetEntry(int entry, int column)
         {
-            return entries[entry][column];
+            return entries![entry][column];
         }
 
         /// <summary>Return a suitable String representation of the class instance. </summary>

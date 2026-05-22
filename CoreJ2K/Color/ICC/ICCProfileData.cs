@@ -14,7 +14,7 @@ namespace CoreJ2K.Color.ICC
         /// <summary>
         /// Gets the raw ICC profile bytes.
         /// </summary>
-        public byte[] ProfileBytes { get; }
+        public byte[]? ProfileBytes { get; }
 
         /// <summary>
         /// Gets the ICC profile version (major.minor).

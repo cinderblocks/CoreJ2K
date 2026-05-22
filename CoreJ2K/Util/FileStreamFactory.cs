@@ -10,7 +10,7 @@ namespace CoreJ2K.Util
     {
         #region FIELDS
 
-        private static IFileStreamCreator _creator;
+        private static IFileStreamCreator? _creator;
 
         #endregion
 

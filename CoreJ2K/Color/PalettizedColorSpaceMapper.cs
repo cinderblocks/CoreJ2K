@@ -151,7 +151,7 @@ namespace CoreJ2K.Color
 
                     // Request data from the source.        
                     inInt[0] = (DataBlkInt)src.GetInternCompData(inInt[0], 0);
-                    dataInt[0] = (int[])inInt[0].Data;
+                    dataInt[0] = (int[])inInt[0].Data!;
                     var outdataInt = ((DataBlkInt)output).DataInt;
 
                     // The nitty-gritty.
@@ -180,7 +180,7 @@ namespace CoreJ2K.Color
 
                     // Request data from the source.        
                     inFloat[0] = (DataBlkFloat)src.GetInternCompData(inFloat[0], 0);
-                    dataFloat[0] = (float[])inFloat[0].Data;
+                    dataFloat[0] = (float[])inFloat[0].Data!;
                     var outdataFloat = ((DataBlkFloat)output).DataFloat;
 
                     // The nitty-gritty.

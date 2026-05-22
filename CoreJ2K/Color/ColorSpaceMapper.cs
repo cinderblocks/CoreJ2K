@@ -48,7 +48,7 @@ namespace CoreJ2K.Color
         /// if no options are supported.
         /// 
         /// </returns>
-        public static string[][] ParameterInfo => pinfo;
+        public static string?[][] ParameterInfo => pinfo;
 
         /// <summary> Arrange for the input DataBlk to receive an
         /// appropriately sized and typed data buffer

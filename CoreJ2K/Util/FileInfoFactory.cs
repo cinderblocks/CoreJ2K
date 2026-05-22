@@ -9,7 +9,7 @@ namespace CoreJ2K.Util
     {
         #region FIELDS
 
-        private static IFileInfoCreator _creator;
+        private static IFileInfoCreator? _creator;
 
         #endregion
 

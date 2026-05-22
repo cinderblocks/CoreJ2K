@@ -34,7 +34,7 @@ namespace CoreJ2K.Color.Boxes
             // Return a String representation of the colorspace method. 
             Method.ToString();
 
-        public byte[] ICCProfile { get; private set; } = null;
+        public byte[]? ICCProfile { get; private set; } = null;
 
         /// <summary> Construct a ColorSpecificationBox from an input image.</summary>
         /// <param name="in">RandomAccessIO jp2 image

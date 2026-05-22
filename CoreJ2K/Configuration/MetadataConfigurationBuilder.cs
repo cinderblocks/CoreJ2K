@@ -16,7 +16,7 @@ namespace CoreJ2K.Configuration
         private readonly List<string> _comments = new List<string>();
         private readonly List<string> _xmlData = new List<string>();
         private readonly List<UuidData> _uuids = new List<UuidData>();
-        private string _intellectualPropertyRights = null;
+        private string? _intellectualPropertyRights = null;
         
         /// <summary>
         /// Gets the list of comments to include in the JP2 file.
@@ -36,7 +36,7 @@ namespace CoreJ2K.Configuration
         /// <summary>
         /// Gets the intellectual property rights information.
         /// </summary>
-        public string IntellectualPropertyRights => _intellectualPropertyRights;
+        public string? IntellectualPropertyRights => _intellectualPropertyRights;
         
         /// <summary>
         /// Adds a comment to the JP2 file.
@@ -332,7 +332,7 @@ namespace CoreJ2K.Configuration
         public Guid Uuid { get; set; }
         
         /// <summary>Gets or sets the data associated with this UUID.</summary>
-        public byte[] Data { get; set; }
+        public byte[] Data { get; set; } = Array.Empty<byte>();
     }
     
     /// <summary>

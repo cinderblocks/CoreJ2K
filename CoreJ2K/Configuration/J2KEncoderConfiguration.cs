@@ -24,7 +24,7 @@ namespace CoreJ2K.Configuration
         private CodeBlockConfiguration _codeBlockConfig = new CodeBlockConfiguration();
         private EntropyCodingConfiguration _entropyConfig = new EntropyCodingConfiguration();
         private ErrorResilienceConfiguration _resilienceConfig = new ErrorResilienceConfiguration();
-        private ROIConfiguration _roiConfig = null;
+        private ROIConfiguration? _roiConfig = null;
         
         /// <summary>
         /// Gets or sets the target bitrate in bits per pixel.
@@ -93,7 +93,7 @@ namespace CoreJ2K.Configuration
         /// <summary>
         /// Gets the ROI configuration, if any.
         /// </summary>
-        public ROIConfiguration ROI => _roiConfig;
+        public ROIConfiguration? ROI => _roiConfig;
         
         /// <summary>
         /// Sets the target bitrate in bits per pixel.

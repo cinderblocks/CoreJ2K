@@ -13,7 +13,7 @@ namespace CoreJ2K.Util
         private readonly bool includeDelims = false;
 
         /// Char representation of the String to tokenize.
-        private readonly char[] chars = null;
+        private readonly char[]? chars = null;
 
         //The tokenizer uses the default delimiter set: the space character, the tab character, the newline character, and the carriage-return character and the form-feed character
         private string delimiters = " \t\n\r\f";
@@ -187,7 +187,7 @@ namespace CoreJ2K.Util
             }
         }
 
-        private string currentToken = null;
+        private string? currentToken = null;
         private bool hasCurrent = false;
 
         /// <summary>
@@ -199,7 +199,7 @@ namespace CoreJ2K.Util
             {
                 if (!hasCurrent)
                     throw new InvalidOperationException("Enumeration has not started. Call MoveNext().");
-                return currentToken;
+                return currentToken!;
             }
         }
 

@@ -227,7 +227,7 @@ namespace CoreJ2K.j2k.util
         /// <param name="pname">The parameter name.</param>
         /// <returns> the value of the parameter as a string, or null if there is no
         /// parameter with the name 'pname'.</returns>
-        public virtual string GetParameter(string pname)
+        public virtual string? GetParameter(string pname)
         {
             if (TryGetValue(pname, out var pval) || defaults == null) { return pval; }
 

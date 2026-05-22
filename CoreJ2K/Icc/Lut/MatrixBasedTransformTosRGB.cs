@@ -72,7 +72,7 @@ namespace CoreJ2K.Icc.Lut
         //private int dwMaxCols = 0; // Maximum number of columns that can be processed
         //private int dwMaxRows = 0; // Maximum number of rows that can be processed
 
-        private float[][] fBuf = null; // Intermediate output of the first LUT operation.
+        private float[][]? fBuf = null;
 
         /// <summary> String representation of class</summary>
         /// <returns> suitable representation for class 
@@ -423,7 +423,7 @@ namespace CoreJ2K.Icc.Lut
         {
             var j = 0;
             float wTemp;
-            var inputData = (float[])inb.Data; // input pixel reference
+            var inputData = (float[])inb.Data!; // input pixel reference
             var lutFP = lut.lut;
 
             for (var y = inb.uly; y < inb.uly + inb.h; ++y)

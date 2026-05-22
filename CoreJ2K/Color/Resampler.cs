@@ -198,7 +198,7 @@ namespace CoreJ2K.Color
                     dataInt[compIndex] = inblkInt.DataInt;
 
                     // Reference the working array   
-                    var outdataInt = (int[])outblk.Data;
+                    var outdataInt = (int[])outblk.Data!;
 
                     // Create data array if necessary
                     if (outdataInt == null || outdataInt.Length != outblk.w * outblk.h)
@@ -260,7 +260,7 @@ namespace CoreJ2K.Color
                     dataFloat[compIndex] = inblkFloat.DataFloat;
 
                     // Reference the working array   
-                    var outdataFloat = (float[])outblk.Data;
+                    var outdataFloat = (float[])outblk.Data!;
 
                     // Create data array if necessary
                     if (outdataFloat == null || outdataFloat.Length != outblk.w * outblk.h)

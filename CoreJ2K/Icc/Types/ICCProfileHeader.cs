@@ -176,11 +176,11 @@ namespace CoreJ2K.Icc.Types
 
             raf.Seek(offProfileSize, System.IO.SeekOrigin.Begin); raf.WriteByte((byte)dwProfileSize);
             raf.Seek(offCMMTypeSignature, System.IO.SeekOrigin.Begin); raf.WriteByte((byte)dwCMMTypeSignature);
-            raf.Seek(offProfileVersion, System.IO.SeekOrigin.Begin); profileVersion.write(raf);
+            raf.Seek(offProfileVersion, System.IO.SeekOrigin.Begin); profileVersion!.write(raf);
             raf.Seek(offProfileClass, System.IO.SeekOrigin.Begin); raf.WriteByte((byte)dwProfileClass);
             raf.Seek(offColorSpaceType, System.IO.SeekOrigin.Begin); raf.WriteByte((byte)dwColorSpaceType);
             raf.Seek(offPCSType, System.IO.SeekOrigin.Begin); raf.WriteByte((byte)dwPCSType);
-            raf.Seek(offDateTime, System.IO.SeekOrigin.Begin); dateTime.write(raf);
+            raf.Seek(offDateTime, System.IO.SeekOrigin.Begin); dateTime!.write(raf);
             raf.Seek(offProfileSignature, System.IO.SeekOrigin.Begin); raf.WriteByte((byte)dwProfileSignature);
             raf.Seek(offPlatformSignature, System.IO.SeekOrigin.Begin); raf.WriteByte((byte)dwPlatformSignature);
             raf.Seek(offCMMFlags, System.IO.SeekOrigin.Begin); raf.WriteByte((byte)dwCMMFlags);
@@ -189,7 +189,7 @@ namespace CoreJ2K.Icc.Types
             raf.Seek(offDeviceAttributes1, System.IO.SeekOrigin.Begin); raf.WriteByte((byte)dwDeviceAttributes1);
             raf.Seek(offDeviceAttributesReserved, System.IO.SeekOrigin.Begin); raf.WriteByte((byte)dwDeviceAttributesReserved);
             raf.Seek(offRenderingIntent, System.IO.SeekOrigin.Begin); raf.WriteByte((byte)dwRenderingIntent);
-            raf.Seek(offPCSIlluminant, System.IO.SeekOrigin.Begin); PCSIlluminant.write(raf);
+            raf.Seek(offPCSIlluminant, System.IO.SeekOrigin.Begin); PCSIlluminant!.write(raf);
             raf.Seek(offCreatorSig, System.IO.SeekOrigin.Begin); raf.WriteByte((byte)dwCreatorSig);
             raf.Seek(offReserved, System.IO.SeekOrigin.Begin);
             raf.Write(reserved, 0, reserved.Length);
