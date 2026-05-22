@@ -182,11 +182,23 @@ namespace CoreJ2K.Util
         /// <returns>An instance of <typeparamref name="T"/> representing the converted image.</returns>
         public T As<T>()
         {
-            var image = ImageFactory.New<T>(Width, Height, NumberOfComponents,
-                ToBytes(Width, Height, NumberOfComponents, byteScaling, Data));
-            if (image == null)
-                throw new InvalidOperationException($"No image creator registered for target type {typeof(T).FullName}.");
-            return image.As<T>();
+            // Rent a byte buffer to avoid a second LOH allocation for the scaled-byte image.
+            // All registered IImageCreator implementations read the byte array synchronously
+            // inside GetImageObject(), so it is safe to return the buffer immediately after.
+            var byteCount = dataLength; // Width * Height * NumberOfComponents
+            var byteBuffer = ArrayPool<byte>.Shared.Rent(byteCount);
+            try
+            {
+                ToBytes(Width, Height, NumberOfComponents, byteScaling, data, byteBuffer);
+                var image = ImageFactory.New<T>(Width, Height, NumberOfComponents, byteBuffer);
+                if (image == null)
+                    throw new InvalidOperationException($"No image creator registered for target type {typeof(T).FullName}.");
+                return image.As<T>();
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(byteBuffer, clearArray: false);
+            }
         }
 
         /// <summary>
