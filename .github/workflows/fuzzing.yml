@@ -82,7 +82,13 @@ jobs:
 
       - name: Check for crashes
         run: |
-          $findings = Get-ChildItem -Path CoreJ2K.Fuzz\Findings -Filter "crash_*" -ErrorAction SilentlyContinue
+          $findingsPath = "CoreJ2K.Fuzz\Findings"
+          if (!(Test-Path $findingsPath)) {
+            Write-Host "No findings directory created."
+            exit 0
+          }
+
+          $findings = Get-ChildItem -Path $findingsPath -Filter "crash_*" -ErrorAction SilentlyContinue
           if ($findings.Count -gt 0) {
             Write-Error "Fuzzing found $($findings.Count) crashes! Check artifacts."
             exit 1
