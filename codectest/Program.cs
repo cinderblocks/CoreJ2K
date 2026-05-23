@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2025 Sjofn LLC.
+﻿// Copyright (c) 2025-2026 Sjofn LLC.
 // Licensed under the BSD 3-Clause License.
 
 using System;
@@ -24,6 +24,11 @@ using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 using CoreJ2K.ImageSharp;
+using Avalonia;
+using Avalonia.Headless;
+using Avalonia.Media.Imaging;
+using Avalonia.Threading;
+using CoreJ2K.Avalonia;
 #endif
 
 namespace codectest
@@ -63,6 +68,7 @@ namespace codectest
             RunDemo("Pfim Integration",            DemonstratePfimIntegration);
 #if NET8_0_OR_GREATER
             RunDemo("ImageSharp Integration",      DemonstrateImageSharpIntegration);
+            RunDemo("Avalonia Integration",        DemonstrateAvaloniaIntegration);
 #endif
             RunDemo("Native Plugin Conversions",   DemonstrateNativePluginConversions);
             RunDemo("TLM Fast Random Tile Access", DemonstrateTLMFastAccess);
@@ -373,6 +379,76 @@ namespace codectest
 
             image.SaveAsJ2K(Path.Combine("output", "imagesharp_custom.jp2"), builder);
             Console.WriteLine($"? Saved with custom config (ImageSharp)");
+        }
+#endif
+
+        #endregion
+
+        #region Avalonia Integration
+
+#if NET8_0_OR_GREATER
+        private static bool s_avaloniaInitialized;
+
+        private static void EnsureAvaloniaHeadless()
+        {
+            if (s_avaloniaInitialized) return;
+            AppBuilder.Configure<AvaloniaCodecTestApp>()
+                .UseHeadless(new AvaloniaHeadlessPlatformOptions
+                {
+                    UseHeadlessDrawing = false
+                })
+                .UseSkia()
+                .SetupWithoutStarting();
+            s_avaloniaInitialized = true;
+        }
+
+        private sealed class AvaloniaCodecTestApp : Application { }
+
+        static void DemonstrateAvaloniaIntegration()
+        {
+            Console.WriteLine("\n???  Avalonia Integration");
+            Console.WriteLine("------------------------");
+
+            EnsureAvaloniaHeadless();
+
+            // Decode a JP2 sample into an Avalonia WriteableBitmap.
+            var sample = Path.Combine("samples", "racoon.jp2");
+            if (!File.Exists(sample))
+            {
+                // Fall back to any available .jp2/.j2k sample.
+                var candidates = Directory.Exists("samples")
+                    ? Directory.GetFiles("samples", "*.jp2").Concat(Directory.GetFiles("samples", "*.j2k")).ToArray()
+                    : Array.Empty<string>();
+                if (candidates.Length == 0)
+                {
+                    Console.WriteLine("  No JP2 samples found; skipping Avalonia demo.");
+                    return;
+                }
+                sample = candidates[0];
+            }
+
+            Dispatcher.UIThread.Invoke(() =>
+            {
+                var bitmap = AvaloniaJ2kExtensions.FromJ2KFile(sample);
+                Console.WriteLine($"? Decoded {Path.GetFileName(sample)} -> WriteableBitmap {bitmap.PixelSize.Width}x{bitmap.PixelSize.Height}");
+
+                // Round-trip encode the decoded bitmap with a few presets.
+                bitmap.SaveAsJ2KLossless(Path.Combine("output", "avalonia_lossless.jp2"));
+                Console.WriteLine($"? Saved lossless (Avalonia)");
+
+                File.WriteAllBytes(
+                    Path.Combine("output", "avalonia_highquality.jp2"),
+                    bitmap.EncodeToJ2KHighQuality("© 2025 Avalonia Demo"));
+                Console.WriteLine($"? Saved high quality (Avalonia)");
+
+                var builder = new CompleteEncoderConfigurationBuilder()
+                    .ForWeb()
+                    .WithProgression(p => p.UseRLCP())
+                    .WithComment($"Avalonia demo: {bitmap.PixelSize.Width}x{bitmap.PixelSize.Height}")
+                    .WithCopyright("© 2025 CoreJ2K");
+                bitmap.SaveAsJ2K(Path.Combine("output", "avalonia_custom.jp2"), builder);
+                Console.WriteLine($"? Saved with custom config (Avalonia)");
+            });
         }
 #endif
 
