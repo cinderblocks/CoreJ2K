@@ -28,11 +28,14 @@ dotnet add package CoreJ2K.Skia
 
 ```csharp
 using CoreJ2K;
-using CoreJ2K.Configuration;
+using SkiaSharp;
 
-// Decode
-var image = J2kImage.FromStream(File.OpenRead("image.jp2"));
+// Decode – legacy path (returns InterleavedImage, useful for sample-level access)
+using var image = J2kImage.FromStream(File.OpenRead("image.jp2"));
 var bitmap = image.As<SKBitmap>();
+
+// Decode – fast path (8-bit images, skips the intermediate int[] buffer: ~4× less memory)
+var bitmap2 = J2kImage.DecodeToImage<SKBitmap>(File.OpenRead("image.jp2"));
 
 // Encode with modern API (recommended)
 byte[] data = CompleteConfigurationPresets.Web
@@ -146,6 +149,33 @@ var image2 = J2kImage.FromBytes(data);
 using var output = File.OpenWrite("output.png");
 bitmap.Encode(output, SKEncodedImageFormat.Png, 90);
 ```
+
+#### Fast Decode (8-bit, ~4× less peak memory)
+
+For the common 8-bit decode-and-display path, `DecodeToImage<T>` writes pixels **directly into the backend image**, skipping the intermediate `int[]` buffer that `InterleavedImage` would normally allocate. Use this whenever you don't need sample-level access after decoding.
+
+```csharp
+using CoreJ2K;
+using SkiaSharp;
+
+// From stream – fast path (8-bit components: ~1 B/sample peak vs ~5 B/sample legacy)
+SKBitmap bitmap = J2kImage.DecodeToImage<SKBitmap>(File.OpenRead("image.jp2"));
+
+// From byte array
+SKBitmap bitmap2 = J2kImage.DecodeToImage<SKBitmap>(File.ReadAllBytes("image.j2k"));
+
+// From file path
+SKBitmap bitmap3 = J2kImage.DecodeFileToImage<SKBitmap>("image.jp2");
+```
+
+> **When to use the legacy `FromStream` path instead:**  
+> - You need to inspect or modify individual samples (`GetSample`, `SetComponent`, `Crop`, …).  
+> - Any component has bit depth > 8 (the fast path falls back automatically, but you may also call `FromStream` directly).
+
+| API | Peak memory (8-bit RGB) | Best for |
+|-----|------------------------|----------|
+| `DecodeToImage<T>` | ~1 B/sample | Display / encode pipeline |
+| `FromStream().As<T>()` | ~5 B/sample | Sample inspection / editing |
 
 #### Fast Random Tile Access (with TLM markers)
 
@@ -380,7 +410,8 @@ Common encoder parameters (case-sensitive):
 
 ### Usage Notes
 
-- **InterleavedImage**: Cross-platform image wrapper. Use `As<T>()` to convert to platform types (e.g., `SKBitmap`)
+- **InterleavedImage**: Cross-platform image wrapper. Use `As<T>()` to convert to platform types (e.g., `SKBitmap`). Carries a full `int[]` sample buffer — use `DecodeToImage<T>` instead when you only need the final bitmap.
+- **DecodeToImage\<T\>**: Memory-efficient decode that skips `InterleavedImage` entirely for 8-bit images (~4× less peak memory). Falls back to `FromStream + As<T>` automatically for >8-bit components.
 - **ParameterList**: Optional encoding parameters. Use indexer to set: `params["key"] = "value"`
 - **Image Sources**: Accepts SKBitmap, Bitmap, Image, or codec-specific formats (PGM/PPM/PGX streams)
 - **Thread Safety**: Decoding and encoding operations are thread-safe

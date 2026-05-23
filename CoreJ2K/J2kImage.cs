@@ -33,7 +33,7 @@ namespace CoreJ2K
     using System.Text;
     using Util;
 
-    public class J2kImage
+    public partial class J2kImage
     {
 
         #region Static Decoder Methods
