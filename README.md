@@ -81,7 +81,7 @@ CoreJ2K is a **pure C# implementation** of the JPEG 2000 image compression stand
 
 | Feature | Description |
 |---------|-------------|
-| **🏆 Standards Compliant** | 100% JPEG 2000 Part 1 (ISO/IEC 15444-1) • 27 codestream markers • 22 JP2 boxes |
+| **🏆 Standards Compliant** | 100% JPEG 2000 Part 1 (ISO/IEC 15444-1) • 27 codestream markers • 22 JP2 boxes • Part 14 JPXML |
 | **⚡ Modern .NET** | .NET Standard 2.0/2.1 • .NET 8/9/10 • .NET Framework 4.8.1 (via netstandard2.0) • All platforms |
 | **🎯 Production Ready** | Lossless/Lossy • ROI • Files >4GB • Error resilience • 2500+ tests |
 | **📦 Easy Integration** | NuGet packages • Simple API • SkiaSharp/ImageSharp/System.Drawing support |
@@ -325,6 +325,7 @@ byte[] data = J2kImage.ToBytes(image, config);
 - [Wavelet Configuration Guide](docs/WAVELET_CONFIGURATION_GUIDE.md) - Transform settings
 - [Progression Configuration Guide](docs/PROGRESSION_CONFIGURATION_GUIDE.md) - Data organization
 - [Metadata Configuration Guide](docs/METADATA_CONFIGURATION_GUIDE.md) - Comments, copyright, XML
+- [Part 14 JPXML Implementation](docs/PART14_JPXML_IMPLEMENTATION.md) - XML metadata representation (ISO/IEC 15444-14)
 
 ### Traditional API (Encoding Guide)
 
@@ -455,13 +456,14 @@ else
 | **TLM Fast Access** | ✅ **NEW!** | O(1) random tile seeking • 100-1000x speed-up |
 | **Extended Length** | ✅ Complete | XLBox support for files >4GB |
 | **ICC Profiles** | ✅ Complete | Full color management support |
-| **Metadata** | ✅ Complete | XML, UUID, resolution, channels |
+| **Metadata** | ✅ Complete | XML, UUID, resolution, channels, Part 14 JPXML |
 
 **Compliance Scores:**
 - Baseline Profile: ✅ 100%
 - Profile 0: ✅ 100%
 - Profile 1: ✅ 100%
 - Extended Features: ✅ 100%
+- Part 14 JPXML: ✅ 100%
 
 ### Library Comparison
 
@@ -477,6 +479,7 @@ Quick comparison with major JPEG 2000 libraries:
 | **Memory Safety** | ✅ Managed | ⚠️ Manual | ⚠️ Manual | ✅ Managed | ⚠️ Manual |
 | **Pointer Markers** | ✅ Full R/W | ✅ Full R/W | ⚠️ Read only | ⚠️ Read only | ✅ Full R/W |
 | **Files >4GB** | ✅ Yes | ✅ Yes | ⚠️ Limited | ❌ No | ✅ Yes |
+| **Part 14 JPXML** | ✅ Full R/W | ⚠️ Partial | ❌ No | ❌ No | ❌ No |
 | **Active Dev** | ✅ 2026 | ✅ 2025 | ✅ 2025 | ❌ 2010 | ✅ 2025 |
 
 **CoreJ2K Unique Advantages:**
@@ -496,6 +499,7 @@ CoreJ2K supports multiple parts of ISO/IEC 15444:
 | **Part 1** | Core Coding System | ✅ Full | ✅ Full | **100%** Complete |
 | **Part 2** | Extensions | ⚠️ Partial | ⚠️ Partial | ~30% (select features) |
 | **Part 4** | Conformance Testing | N/A | N/A | **100%** Complete |
+| **Part 14** | XML Representation (JPXML) | ✅ Full | ✅ Full | **100%** Complete |
 
 **Part 1 covers 99% of real-world JPEG 2000 usage** including:
 - ✅ Medical imaging (DICOM)
@@ -610,6 +614,7 @@ Free to use in commercial and open-source projects. No licensing fees.
 | **Quality Layers** | ✅ Unlimited | ✅ Unlimited | ✅ Unlimited | ✅ Unlimited | ⚠️ Limited | ⚠️ Limited | ✅ Unlimited |
 | **ICC Profile Support** | ✅ Full | ✅ Full | ✅ Full | ⚠️ Basic | ⚠️ Basic | ✅ Full | ✅ Full |
 | **Metadata (XML/UUID)** | ✅ Full | ✅ Full | ⚠️ Partial | ⚠️ Partial | ❌ No | ⚠️ Basic | ✅ Full |
+| **Part 14 JPXML (XML metadata representation)** | ✅ Full R/W | ⚠️ Partial | ❌ No | ❌ No | ❌ No | ❌ No | ❌ No |
 | **Palette/Component Mapping** | ✅ Full | ✅ Full | ✅ Full | ⚠️ Partial | ⚠️ Partial | ❌ No | ✅ Full |
 
 ### Technical Characteristics
