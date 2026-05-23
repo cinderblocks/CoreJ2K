@@ -43,6 +43,13 @@ namespace CoreJ2K.j2k.fileformat.metadata
         public List<JprBox> IntellectualPropertyRights { get; } = new List<JprBox>();
 
         /// <summary>
+        /// Gets the list of JP2 Intellectual Property boxes ('jp2i') per ISO/IEC 15444-1 §I.7.3.
+        /// Unlike the Part 2 JPR box, the contents of this box are not constrained by the standard
+        /// and may contain arbitrary binary or textual data (e.g., copyright statements, vendor IP info).
+        /// </summary>
+        public List<IntellectualPropertyBox> IntellectualPropertyBoxes { get; } = new List<IntellectualPropertyBox>();
+
+        /// <summary>
         /// Gets the list of Label boxes from JPEG 2000 Part 2.
         /// </summary>
         public List<LabelBox> Labels { get; } = new List<LabelBox>();
@@ -589,6 +596,36 @@ namespace CoreJ2K.j2k.fileformat.metadata
             var label = GetLabel();
             var preview = label?.Length > 50 ? label.Substring(0, 50) + "..." : label;
             return $"Label Box: {preview ?? "(binary data)"}";
+        }
+    }
+
+    /// <summary>
+    /// Represents a JP2 Intellectual Property box ('jp2i') per ISO/IEC 15444-1 §I.7.3.
+    /// Holds arbitrary intellectual-property information (copyright text, vendor IP, etc.).
+    /// The standard does not constrain the contents, so the data is exposed as both
+    /// raw bytes and a best-effort UTF-8 text decoding.
+    /// </summary>
+    public class IntellectualPropertyBox
+    {
+        /// <summary>Gets or sets the raw box payload (excluding the 8-byte box header).</summary>
+        public byte[]? RawData { get; set; }
+
+        /// <summary>Gets or sets a best-effort UTF-8 textual interpretation of the payload.</summary>
+        public string? Text { get; set; }
+
+        /// <summary>Returns the text if available; otherwise tries to decode RawData as UTF-8.</summary>
+        public string? GetText()
+        {
+            if (!string.IsNullOrEmpty(Text)) return Text;
+            if (RawData == null) return null;
+            try { return Encoding.UTF8.GetString(RawData); } catch { return null; }
+        }
+
+        public override string ToString()
+        {
+            var text = GetText();
+            var preview = text?.Length > 50 ? text.Substring(0, 50) + "..." : text;
+            return $"Intellectual Property Box (jp2i): {preview ?? $"({RawData?.Length ?? 0} bytes binary)"}";
         }
     }
 

@@ -53,7 +53,7 @@ namespace CoreJ2K.j2k.fileformat
         public const int FILE_TYPE_BOX = 0x66747970;
         public const int JP2_HEADER_BOX = 0x6a703268;
         public const int CONTIGUOUS_CODESTREAM_BOX = 0x6a703263;
-        public const int INTELLECTUAL_PROPERTY_BOX = 0x64703269;
+        public const int INTELLECTUAL_PROPERTY_BOX = 0x6a703269;
         public const int XML_BOX = 0x786d6c20;
         public const int UUID_BOX = 0x75756964;
         public const int UUID_INFO_BOX = 0x75696e66;

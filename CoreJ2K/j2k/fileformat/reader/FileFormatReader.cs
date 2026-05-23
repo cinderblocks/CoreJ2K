@@ -822,11 +822,39 @@ namespace CoreJ2K.j2k.fileformat.reader
             return true;
         }
 
-        /// <summary> This method reads the contents of the Intellectual property box
-        /// 
+        /// <summary>
+        /// Reads the contents of the JP2 Intellectual Property box ('jp2i') per ISO/IEC 15444-1 §I.7.3.
+        /// The contents of this box are unconstrained by the standard, so the payload is captured as
+        /// raw bytes plus a best-effort UTF-8 text decoding for convenience.
         /// </summary>
+        /// <param name="length">Total box length including the 8-byte header.</param>
         public virtual void readIntPropertyBox(int length)
         {
+            if (length <= 8) return; // Empty box
+
+            try
+            {
+                var dataLength = length - 8;
+                var data = new byte[dataLength];
+                inStream.readFully(data, 0, dataLength);
+
+                string? text = null;
+                try { text = Encoding.UTF8.GetString(data); } catch { /* leave as binary */ }
+
+                Metadata.IntellectualPropertyBoxes.Add(new IntellectualPropertyBox
+                {
+                    RawData = data,
+                    Text = text
+                });
+
+                FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                    $"Found JP2 Intellectual Property (jp2i) box ({dataLength} bytes)");
+            }
+            catch (Exception e)
+            {
+                FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING,
+                    $"Error reading JP2 Intellectual Property (jp2i) box: {e.Message}");
+            }
         }
 
         /// <summary> This method reads the contents of the XML box
