@@ -173,13 +173,20 @@ namespace CoreJ2K
                 var converter = new ImgDataConverter(invWT, 0);
                 var ictransf = new InvCompTransf(converter, decSpec, depth, pl);
 
+                // Inverse non-linearity point transform (NLT, ISO/IEC 15444-2)
+                BlkImgDataSrc postCt = ictransf;
+                if (hd.NLTSegments != null && hd.NLTSegments.Count > 0)
+                {
+                    postCt = new j2k.image.nlt.InvNLT(ictransf, hd.NLTSegments);
+                }
+
                 BlkImgDataSrc color;
                 if (ff.JP2FFUsed && pl.GetParameter("nocolorspace").Equals("off"))
                 {
                     try
                     {
                         var csMap = new ColorSpace(in_stream, hd, pl);
-                        var channels = hd.createChannelDefinitionMapper(ictransf, csMap);
+                        var channels = hd.createChannelDefinitionMapper(postCt, csMap);
                         var resampled = hd.createResampler(channels, csMap);
                         var palettized = hd.createPalettizedColorSpaceMapper(resampled, csMap);
                         color = hd.createColorSpaceMapper(palettized, csMap);
@@ -195,10 +202,10 @@ namespace CoreJ2K
                 }
                 else
                 {
-                    color = ictransf;
+                    color = postCt;
                 }
 
-                var decodedImage = color ?? ictransf;
+                var decodedImage = color ?? postCt;
                 var numComps = decodedImage.NumComps;
                 var imgWidth = decodedImage.ImgWidth;
                 var imgHeight = decodedImage.ImgHeight;

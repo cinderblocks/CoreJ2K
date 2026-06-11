@@ -61,6 +61,19 @@ namespace CoreJ2K.j2k.codestream
         public const int RSIZ_ER_FLAG = 0x01;
         /// <summary>ROI present marker flag bit in Rsiz field in SIZ marker: 0x02 </summary>
         public const int RSIZ_ROI = 0x02;
+        /// <summary>Extended-capabilities flag bit (MSB) in the Rsiz field in the SIZ marker
+        /// (ISO/IEC 15444-2): 0x8000. When set, the codestream uses JPEG 2000 Part 2
+        /// extensions whose capabilities are enumerated in the CAP marker segment.
+        /// </summary>
+        public const int RSIZ_EXTENSIONS = 0x8000;
+        /// <summary>Extended capabilities marker (CAP): 0xFF50 (ISO/IEC 15444-2 / 15444-1 Amd).
+        /// Signals which Part 2 capabilities are required to decode the codestream.
+        /// </summary>
+        public const short CAP = unchecked((short)0xff50);
+        /// <summary>Non-linearity point transformation marker (NLT): 0xFF76 (ISO/IEC 15444-2).
+        /// Defines a per-component point transformation applied to image samples.
+        /// </summary>
+        public const short NLT = unchecked((short)0xff76);
         /// <summary>Component bitdepth bits in Ssiz field in SIZ marker: 7 </summary>
         public const int SSIZ_DEPTH_BITS = 7;
         /// <summary>The maximum number of component bitdepth </summary>

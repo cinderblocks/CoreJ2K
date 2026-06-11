@@ -292,6 +292,23 @@ namespace CoreJ2K.j2k.codestream.reader
         /// <summary>Counts number of PPT markers found in the header </summary>
         private int[][] nPPTMarkSeg = null;
 
+        /// <summary>Counts number of NLT markers found in the header (Part 2) </summary>
+        private int nNLTMarkSeg = 0;
+
+        /// <summary>True if the codestream signals JPEG 2000 Part 2 extended capabilities (Rsiz &gt; 2). </summary>
+        private bool usesExtensions = false;
+
+        /// <summary>Parsed Non-linearity point transformation (NLT) marker segments (Part 2). </summary>
+        private readonly System.Collections.Generic.List<NLTMarkerSegment> nltSegments =
+            new System.Collections.Generic.List<NLTMarkerSegment>();
+
+        /// <summary>True if the codestream signals JPEG 2000 Part 2 extended capabilities. </summary>
+        public virtual bool UsesExtensions => usesExtensions;
+
+        /// <summary>The Non-linearity point transformation (NLT) marker segments found in the
+        /// main header (ISO/IEC 15444-2). Empty for Part 1 codestreams. </summary>
+        public virtual System.Collections.Generic.IList<NLTMarkerSegment> NLTSegments => nltSegments;
+
         /// <summary>Flag bit for SIZ marker segment found </summary>
         private const int SIZ_FOUND = 1;
 
@@ -339,6 +356,12 @@ namespace CoreJ2K.j2k.codestream.reader
 
         /// <summary>Flag bit for CRG marker segment found </summary>
         public const int CRG_FOUND = 1 << 16;
+
+        /// <summary>Flag bit for CAP marker segment found (Part 2 extended capabilities) </summary>
+        public const int CAP_FOUND = 1 << 17;
+
+        /// <summary>Flag bit for NLT marker segment found (Part 2 non-linearity point transformation) </summary>
+        public const int NLT_FOUND = 1 << 18;
 
         /// <summary>The reset mask for new tiles </summary>
         //private static readonly int TILE_RESET = ~ (PLM_FOUND | SIZ_FOUND | RGN_FOUND);
@@ -626,7 +649,14 @@ namespace CoreJ2K.j2k.codestream.reader
             ms.rsiz = ehs.ReadUInt16();
             if (ms.rsiz > 2)
             {
-                throw new InvalidOperationException("Codestream capabiities not JPEG 2000 - Part I" + " compliant");
+                // Values above 2 indicate JPEG 2000 Part 2 (ISO/IEC 15444-2) extended
+                // capabilities. These are not Part 1 baseline, but the decoder can still
+                // process the codestream; features signalled via the CAP marker and Part 2
+                // marker segments (e.g. NLT) are handled where supported and otherwise
+                // skipped. Record the flag rather than rejecting the codestream outright.
+                usesExtensions = true;
+                FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                    $"Codestream signals JPEG 2000 Part 2 extended capabilities (Rsiz=0x{ms.rsiz:X4}).");
             }
 
             // Read image size
@@ -716,6 +746,42 @@ namespace CoreJ2K.j2k.codestream.reader
 
             // Check marker length
             checkMarkerLength(ehs, "CRG marker");
+        }
+
+        /// <summary> Reads a CAP (extended capabilities) marker segment (ISO/IEC 15444-2).
+        /// The CAP marker enumerates the JPEG 2000 Part 2 capabilities required to
+        /// decode the codestream. The contents are recorded for informational purposes;
+        /// individual features are handled by their own marker segments where supported.
+        /// </summary>
+        /// <param name="ehs">The encoded header stream</param>
+        private void readCAP(System.IO.BinaryReader ehs)
+        {
+            ehs.ReadUInt16();              // Lcap (length)
+            var pcap = ehs.ReadUInt32();   // Pcap: bitmap of parts that define capabilities
+
+            // One Ccap (16-bit) field follows for each set bit in Pcap.
+            var nCcap = 0;
+            for (var b = 0; b < 32; b++)
+                if ((pcap & (1u << b)) != 0)
+                    nCcap++;
+            for (var i = 0; i < nCcap; i++)
+                ehs.ReadUInt16();
+
+            usesExtensions = true;
+            FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                $"Read CAP marker (Part 2 extended capabilities, Pcap=0x{pcap:X8}).");
+        }
+
+        /// <summary> Reads an NLT (Non-linearity point transformation) marker segment
+        /// (ISO/IEC 15444-2) and stores it for use by the inverse point transform stage.
+        /// </summary>
+        /// <param name="ehs">The encoded header stream</param>
+        private void readNLT(System.IO.BinaryReader ehs)
+        {
+            var seg = NLTMarkerSegment.Read(ehs);
+            nltSegments.Add(seg);
+            FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                $"Read NLT marker segment: {seg}");
         }
 
         /// <summary> Reads a COM marker segments and realigns the bit stream at the point
@@ -2439,6 +2505,16 @@ namespace CoreJ2K.j2k.codestream.reader
                     htKey = "PLT";
                     break;
 
+                case Markers.CAP:
+                    nfMarkSeg |= CAP_FOUND;
+                    htKey = "CAP";
+                    break;
+
+                case Markers.NLT:
+                    nfMarkSeg |= NLT_FOUND;
+                    htKey = $"NLT{(nNLTMarkSeg++)}";
+                    break;
+
                 default:
                     htKey = "UNKNOWN";
                     FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING,
@@ -2749,6 +2825,23 @@ namespace CoreJ2K.j2k.codestream.reader
                 {
                     bais = new System.IO.MemoryStream(ht[$"PPM{i}"]);
                     readPPM(new Util.EndianBinaryReader(bais));
+                }
+            }
+
+            // CAP marker segment (Part 2 extended capabilities)
+            if ((nfMarkSeg & CAP_FOUND) != 0)
+            {
+                bais = new System.IO.MemoryStream(ht["CAP"]);
+                readCAP(new Util.EndianBinaryReader(bais, true));
+            }
+
+            // NLT marker segments (Part 2 non-linearity point transformation)
+            if ((nfMarkSeg & NLT_FOUND) != 0)
+            {
+                for (var i = 0; i < nNLTMarkSeg; i++)
+                {
+                    bais = new System.IO.MemoryStream(ht[$"NLT{i}"]);
+                    readNLT(new Util.EndianBinaryReader(bais, true));
                 }
             }
 

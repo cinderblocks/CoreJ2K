@@ -16,6 +16,13 @@ namespace CoreJ2K.j2k.codestream.writer.markers
         private readonly Tiler tiler;
         private readonly int nComp;
 
+        /// <summary>
+        /// Codestream capabilities (Rsiz). 0 = JPEG 2000 Part 1 baseline (default).
+        /// Set to <see cref="Markers.RSIZ_EXTENSIONS"/> (or other Part 2 value) to signal
+        /// that the codestream uses ISO/IEC 15444-2 extensions enumerated in the CAP marker.
+        /// </summary>
+        public int Rsiz { get; set; } = 0;
+
         public SIZMarkerWriter(ImgData origSrc, bool[] isOrigSig, Tiler tiler, int nComp)
         {
             this.origSrc = origSrc;
@@ -35,8 +42,8 @@ namespace CoreJ2K.j2k.codestream.writer.markers
             var markSegLen = 38 + 3 * nComp;
             writer.Write((short)markSegLen);
 
-            // Rsiz (codestream capabilities)
-            writer.Write((short)0); // JPEG 2000 - Part I
+            // Rsiz (codestream capabilities); 0 = Part 1 baseline
+            writer.Write((short)Rsiz);
 
             // Xsiz (original image width)
             writer.Write(tiler.ImgWidth + tiler.ImgULX);

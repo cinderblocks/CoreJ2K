@@ -18,6 +18,7 @@ namespace CoreJ2K
     using j2k.image;
     using j2k.image.forwcomptransf;
     using j2k.image.input;
+    using j2k.image.nlt;
     using j2k.image.invcomptransf;
     using j2k.io;
     using j2k.quantization.dequantizer;
@@ -210,8 +211,15 @@ namespace CoreJ2K
             // **** Data converter **** (after inverse transform module)
             var converter = new ImgDataConverter(invWT, 0);
 
-            // **** Inverse component transformation **** 
+            // **** Inverse component transformation ****
             var ictransf = new InvCompTransf(converter, decSpec, depth, pl);
+
+            // **** Inverse non-linearity point transform (NLT, ISO/IEC 15444-2) ****
+            BlkImgDataSrc postCt = ictransf;
+            if (hd.NLTSegments != null && hd.NLTSegments.Count > 0)
+            {
+                postCt = new InvNLT(ictransf, hd.NLTSegments);
+            }
 
             // **** Color space mapping ****
             BlkImgDataSrc color;
@@ -220,7 +228,7 @@ namespace CoreJ2K
                 try
                 {
                     var csMap = new ColorSpace(in_stream, hd, pl);
-                    var channels = hd.createChannelDefinitionMapper(ictransf, csMap);
+                    var channels = hd.createChannelDefinitionMapper(postCt, csMap);
                     var resampled = hd.createResampler(channels, csMap);
                     var palettized = hd.createPalettizedColorSpaceMapper(resampled, csMap);
                     color = hd.createColorSpaceMapper(palettized, csMap);
@@ -237,7 +245,7 @@ namespace CoreJ2K
             else
             {
                 // Skip colorspace mapping
-                color = ictransf;
+                color = postCt;
             }
 
             // This is the last image in the decoding chain and should be
@@ -245,7 +253,7 @@ namespace CoreJ2K
             var decodedImage = color;
             if (color == null)
             {
-                decodedImage = ictransf;
+                decodedImage = postCt;
             }
             var numComps = decodedImage.NumComps;
             var imgWidth = decodedImage.ImgWidth;
@@ -491,8 +499,15 @@ namespace CoreJ2K
             // **** Data converter **** (after inverse transform module)
             var converter = new ImgDataConverter(invWT, 0);
 
-            // **** Inverse component transformation **** 
+            // **** Inverse component transformation ****
             var ictransf = new InvCompTransf(converter, decSpec, depth, pl);
+
+            // **** Inverse non-linearity point transform (NLT, ISO/IEC 15444-2) ****
+            BlkImgDataSrc postCt = ictransf;
+            if (hd.NLTSegments != null && hd.NLTSegments.Count > 0)
+            {
+                postCt = new InvNLT(ictransf, hd.NLTSegments);
+            }
 
             // **** Color space mapping ****
             BlkImgDataSrc color;
@@ -501,7 +516,7 @@ namespace CoreJ2K
                 try
                 {
                     var csMap = new ColorSpace(in_stream, hd, pl);
-                    var channels = hd.createChannelDefinitionMapper(ictransf, csMap);
+                    var channels = hd.createChannelDefinitionMapper(postCt, csMap);
                     var resampled = hd.createResampler(channels, csMap);
                     var palettized = hd.createPalettizedColorSpaceMapper(resampled, csMap);
                     color = hd.createColorSpaceMapper(palettized, csMap);
@@ -518,7 +533,7 @@ namespace CoreJ2K
             else
             {
                 // Skip colorspace mapping
-                color = ictransf;
+                color = postCt;
             }
 
             // This is the last image in the decoding chain and should be
@@ -526,7 +541,7 @@ namespace CoreJ2K
             var decodedImage = color;
             if (color == null)
             {
-                decodedImage = ictransf;
+                decodedImage = postCt;
             }
             var numComps = decodedImage.NumComps;
             var imgWidth = decodedImage.ImgWidth;
@@ -783,6 +798,16 @@ namespace CoreJ2K
         /// <param name="parameters">Optional encoder parameters.</param>
         /// <returns>The encoded JPEG2000 data.</returns>
         public static byte[]? ToBytes(BlkImgDataSrc imgsrc, j2k.fileformat.metadata.J2KMetadata? metadata, ParameterList? parameters = null)
+            => ToBytes(imgsrc, metadata, parameters, null);
+
+        /// <summary>
+        /// Encodes the image, optionally applying JPEG 2000 Part 2 (ISO/IEC 15444-2)
+        /// Non-linearity point transformation (NLT) segments. When <paramref name="nltSegments"/>
+        /// is non-empty, the forward point transform is applied before compression, the codestream
+        /// is branded with Part 2 capabilities (Rsiz + CAP), and the NLT marker segments are written.
+        /// </summary>
+        public static byte[]? ToBytes(BlkImgDataSrc imgsrc, j2k.fileformat.metadata.J2KMetadata? metadata, ParameterList? parameters,
+            System.Collections.Generic.IList<j2k.codestream.NLTMarkerSegment>? nltSegments)
         {
             if (imgsrc == null)
             {
@@ -1071,10 +1096,18 @@ namespace CoreJ2K
                         + "image quality might be greatly degraded. Use "
                         + "the 'Mct' option to specify a color transform");
             }
+            // **** Forward non-linearity point transform (NLT, ISO/IEC 15444-2) ****
+            var hasNlt = nltSegments != null && nltSegments.Count > 0;
+            BlkImgDataSrc ctSource = imgtiler;
+            if (hasNlt)
+            {
+                ctSource = new j2k.image.nlt.ForwNLT(imgtiler, nltSegments);
+            }
+
             ForwCompTransf fctransf;
             try
             {
-                fctransf = new ForwCompTransf(imgtiler, encSpec);
+                fctransf = new ForwCompTransf(ctSource, encSpec);
             }
             catch (ArgumentException e)
             {
@@ -1177,6 +1210,10 @@ namespace CoreJ2K
                 // **** HeaderEncoder ****
                 var imsigned = Enumerable.Repeat(false, ncomp).ToArray();   // TODO Consider supporting signed components.
                 var headenc = new HeaderEncoder(imgsrc, imsigned, dwt, imgtiler, encSpec, rois, ralloc, pl);
+                if (hasNlt)
+                {
+                    headenc.NLTSegments = nltSegments;
+                }
                 ralloc.HeaderEncoder = headenc;
 
                 // **** Write header to be able to estimate header overhead ****

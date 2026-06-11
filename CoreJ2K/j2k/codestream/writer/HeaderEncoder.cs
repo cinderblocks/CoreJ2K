@@ -195,6 +195,13 @@ namespace CoreJ2K.j2k.codestream.writer
         /// <summary>Whether or not to write PPT markers</summary>
         private readonly bool usePPT;
 
+        /// <summary>
+        /// Non-linearity point transformation (NLT) marker segments to emit in the main
+        /// header (ISO/IEC 15444-2). When non-empty, the SIZ Rsiz field is set to signal
+        /// Part 2 extensions and a CAP marker is written. Null/empty for Part 1 output.
+        /// </summary>
+        public System.Collections.Generic.IList<NLTMarkerSegment> NLTSegments { get; set; }
+
         /// <summary> Initializes the header writer with the references to the coding chain.
         /// 
         /// </summary>
@@ -505,10 +512,25 @@ namespace CoreJ2K.j2k.codestream.writer
             // +---------------------------------+
             writeSOC();
 
+            // Part 2: signal extended capabilities in Rsiz when NLT segments are present.
+            var hasNlt = NLTSegments != null && NLTSegments.Count > 0;
+            if (hasNlt)
+            {
+                sizWriter.Rsiz = Markers.RSIZ_EXTENSIONS;
+            }
+
             // +---------------------------------+
             // |    Image and tile SIZe (SIZ)    |
             // +---------------------------------+
             sizWriter.Write(hbuf);
+
+            // +---------------------------------+
+            // |  Extended CAPabilities (CAP)    |  (Part 2)
+            // +---------------------------------+
+            if (hasNlt)
+            {
+                writeCAP();
+            }
 
             // +-------------------------------+
             // |   COding style Default (COD)  |
@@ -575,10 +597,38 @@ namespace CoreJ2K.j2k.codestream.writer
                 writePPM(ppmData);
             }
 
+            // +--------------------------------------+
+            // |  Non-Linearity point transform (NLT) |  (Part 2)
+            // +--------------------------------------+
+            if (hasNlt)
+            {
+                foreach (var nlt in NLTSegments)
+                {
+                    nlt.Write(hbuf);
+                }
+            }
+
             // +--------------------------+
             // |    Comments (COM)       |
             // +--------------------------+
             comWriter.Write(hbuf);
+        }
+
+        /// <summary>
+        /// Writes a minimal CAP (extended capabilities) marker segment (ISO/IEC 15444-2)
+        /// declaring that the codestream uses JPEG 2000 Part 2 capabilities. The Part bit
+        /// in Pcap follows the bit-(32 - part) convention; a single zero-valued Ccap field
+        /// accompanies it.
+        /// </summary>
+        private void writeCAP()
+        {
+            // Pcap bit for Part 2 (bit numbered 32 - part, counting the MSB as bit 1).
+            const uint pcap = 1u << (32 - 2);
+
+            hbuf.Write(Markers.CAP);     // CAP marker
+            hbuf.Write((short)8);        // Lcap = Lcap(2) + Pcap(4) + one Ccap(2)
+            hbuf.Write(pcap);            // Pcap
+            hbuf.Write((short)0);        // Ccap for Part 2 (no specific sub-capabilities flagged)
         }
 
         /// <summary> Writes tile-part header. JJ2000 tile-part header corresponds to the
