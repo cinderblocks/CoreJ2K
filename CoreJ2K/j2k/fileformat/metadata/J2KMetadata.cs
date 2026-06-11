@@ -55,6 +55,57 @@ namespace CoreJ2K.j2k.fileformat.metadata
         public List<LabelBox> Labels { get; } = new List<LabelBox>();
 
         /// <summary>
+        /// Gets the list of Association ('asoc') boxes from JPEG 2000 Part 2 (JPX).
+        /// Each binds a set of metadata boxes to the entities named by its Number List.
+        /// </summary>
+        public List<AssociationBox> Associations { get; } = new List<AssociationBox>();
+
+        /// <summary>
+        /// Gets or sets the Data Reference ('dtbl') box from JPEG 2000 Part 2 (JPX),
+        /// listing external data sources that Fragment Lists refer to by index.
+        /// </summary>
+        public DataReferenceBox? DataReference { get; set; }
+
+        /// <summary>
+        /// Gets the list of Fragment Table ('ftbl') boxes from JPEG 2000 Part 2 (JPX).
+        /// </summary>
+        public List<FragmentTableBox> FragmentTables { get; } = new List<FragmentTableBox>();
+
+        /// <summary>
+        /// Gets the list of Cross Reference ('cref') boxes from JPEG 2000 Part 2 (JPX).
+        /// </summary>
+        public List<CrossReferenceBox> CrossReferences { get; } = new List<CrossReferenceBox>();
+
+        /// <summary>
+        /// Gets the list of Codestream Header ('jpch') boxes from JPEG 2000 Part 2 (JPX).
+        /// </summary>
+        public List<CodestreamHeaderBox> CodestreamHeaders { get; } = new List<CodestreamHeaderBox>();
+
+        /// <summary>
+        /// Gets the list of Compositing Layer Header ('jplh') boxes from JPEG 2000 Part 2 (JPX).
+        /// </summary>
+        public List<CompositingLayerHeaderBox> CompositingLayerHeaders { get; } = new List<CompositingLayerHeaderBox>();
+
+        /// <summary>
+        /// Gets or sets whether the File Type box should advertise the JPEG 2000 Part 2
+        /// 'jpx ' brand. When false (the default) the brand is selected automatically:
+        /// 'jpx ' is emitted whenever any JPX-only box is present (see <see cref="HasJpxBoxes"/>).
+        /// </summary>
+        public bool UseJpxBrand { get; set; }
+
+        /// <summary>
+        /// Returns true if any JPEG 2000 Part 2 (JPX) extended box is present, requiring
+        /// the file to be branded 'jpx ' rather than 'jp2 '.
+        /// </summary>
+        public bool HasJpxBoxes =>
+            Associations.Count > 0
+            || DataReference != null
+            || FragmentTables.Count > 0
+            || CrossReferences.Count > 0
+            || CodestreamHeaders.Count > 0
+            || CompositingLayerHeaders.Count > 0;
+
+        /// <summary>
         /// Gets or sets the UUID Info box data (contains UUID list and URL boxes).
         /// </summary>
         public UuidInfoBox? UuidInfo { get; set; }
@@ -147,6 +198,29 @@ namespace CoreJ2K.j2k.fileformat.metadata
         public void AddLabel(string label)
         {
             Labels.Add(new LabelBox { Label = label });
+        }
+
+        /// <summary>
+        /// Creates an Association ('asoc') box that binds a label to one or more entities
+        /// and adds it to the metadata (JPEG 2000 Part 2 / JPX). This is the typical way to
+        /// attach a human-readable label to a specific codestream or compositing layer.
+        /// </summary>
+        /// <param name="numberList">Identifies the associated entities (codestreams, layers, or the whole result).</param>
+        /// <param name="label">Optional label text to carry inside the association.</param>
+        /// <returns>The created association, for further customization.</returns>
+        public AssociationBox AddAssociation(NumberListBox numberList, string? label = null)
+        {
+            var asoc = new AssociationBox { NumberList = numberList };
+            if (!string.IsNullOrEmpty(label))
+            {
+                asoc.Children.Add(new Jp2BoxData
+                {
+                    BoxType = FileFormatBoxes.LBL_BOX,
+                    Content = Encoding.UTF8.GetBytes(label)
+                });
+            }
+            Associations.Add(asoc);
+            return asoc;
         }
 
         /// <summary>

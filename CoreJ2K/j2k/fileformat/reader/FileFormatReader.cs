@@ -300,6 +300,30 @@ namespace CoreJ2K.j2k.fileformat.reader
                             readLabelBox(length);
                             break;
 
+                        case FileFormatBoxes.ASSOCIATION_BOX:
+                            readAssociationBox(length);
+                            break;
+
+                        case FileFormatBoxes.DATA_REFERENCE_BOX:
+                            readDataReferenceBox(length);
+                            break;
+
+                        case FileFormatBoxes.FRAGMENT_TABLE_BOX:
+                            readFragmentTableBox(length);
+                            break;
+
+                        case FileFormatBoxes.CROSS_REFERENCE_BOX:
+                            readCrossReferenceBox(length);
+                            break;
+
+                        case FileFormatBoxes.CODESTREAM_HEADER_BOX:
+                            readCodestreamHeaderBox(length);
+                            break;
+
+                        case FileFormatBoxes.COMPOSITING_LAYER_HEADER_BOX:
+                            readCompositingLayerHeaderBox(length);
+                            break;
+
                         default:
                             FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING,
                                 $"Unknown box-type: 0x{Convert.ToString(box, 16)}");
@@ -1143,6 +1167,148 @@ namespace CoreJ2K.j2k.fileformat.reader
             {
                 FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING,
                     $"Error reading Label (LBL) box: {e.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Reads the payload (DBox) of the box currently positioned at the start of its content.
+        /// Returns an empty array for boxes that carry no payload.
+        /// </summary>
+        /// <param name="length">Total box length including the 8-byte header (LBox value).</param>
+        private byte[] ReadBoxPayload(int length)
+        {
+            if (length <= 8)
+                return Array.Empty<byte>();
+
+            var dataLength = length - 8;
+            var payload = new byte[dataLength];
+            inStream.readFully(payload, 0, dataLength);
+            return payload;
+        }
+
+        /// <summary>
+        /// Reads an Association ('asoc') box (JPEG 2000 Part 2 / JPX) and adds it to the metadata.
+        /// </summary>
+        /// <param name="length">The total length of the box including header.</param>
+        public virtual void readAssociationBox(int length)
+        {
+            try
+            {
+                var asoc = AssociationBox.Parse(ReadBoxPayload(length));
+                Metadata.Associations.Add(asoc);
+
+                FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                    $"Found Association (asoc) box: {asoc.Children.Count} child box(es)" +
+                    (asoc.NumberList != null ? $", {asoc.NumberList.Entries.Count} entity ref(s)" : ""));
+            }
+            catch (Exception e)
+            {
+                FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING,
+                    $"Error reading Association (asoc) box: {e.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Reads a Data Reference ('dtbl') box (JPEG 2000 Part 2 / JPX) and adds it to the metadata.
+        /// </summary>
+        /// <param name="length">The total length of the box including header.</param>
+        public virtual void readDataReferenceBox(int length)
+        {
+            try
+            {
+                Metadata.DataReference = DataReferenceBox.Parse(ReadBoxPayload(length));
+
+                FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                    $"Found Data Reference (dtbl) box: {Metadata.DataReference.Entries.Count} URL(s)");
+            }
+            catch (Exception e)
+            {
+                FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING,
+                    $"Error reading Data Reference (dtbl) box: {e.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Reads a Fragment Table ('ftbl') box (JPEG 2000 Part 2 / JPX) and adds it to the metadata.
+        /// </summary>
+        /// <param name="length">The total length of the box including header.</param>
+        public virtual void readFragmentTableBox(int length)
+        {
+            try
+            {
+                var ftbl = FragmentTableBox.Parse(ReadBoxPayload(length));
+                Metadata.FragmentTables.Add(ftbl);
+
+                FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                    $"Found Fragment Table (ftbl) box: {ftbl.FragmentList?.Fragments.Count ?? 0} fragment(s)");
+            }
+            catch (Exception e)
+            {
+                FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING,
+                    $"Error reading Fragment Table (ftbl) box: {e.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Reads a Cross Reference ('cref') box (JPEG 2000 Part 2 / JPX) and adds it to the metadata.
+        /// </summary>
+        /// <param name="length">The total length of the box including header.</param>
+        public virtual void readCrossReferenceBox(int length)
+        {
+            try
+            {
+                var cref = CrossReferenceBox.Parse(ReadBoxPayload(length));
+                Metadata.CrossReferences.Add(cref);
+
+                FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                    $"Found Cross Reference (cref) box: {cref.FragmentList?.Fragments.Count ?? 0} fragment(s)");
+            }
+            catch (Exception e)
+            {
+                FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING,
+                    $"Error reading Cross Reference (cref) box: {e.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Reads a Codestream Header ('jpch') box (JPEG 2000 Part 2 / JPX) and adds it to the metadata.
+        /// </summary>
+        /// <param name="length">The total length of the box including header.</param>
+        public virtual void readCodestreamHeaderBox(int length)
+        {
+            try
+            {
+                var jpch = CodestreamHeaderBox.Parse(ReadBoxPayload(length));
+                Metadata.CodestreamHeaders.Add(jpch);
+
+                FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                    $"Found Codestream Header (jpch) box: {jpch.Children.Count} child box(es)");
+            }
+            catch (Exception e)
+            {
+                FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING,
+                    $"Error reading Codestream Header (jpch) box: {e.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Reads a Compositing Layer Header ('jplh') box (JPEG 2000 Part 2 / JPX) and adds it to the metadata.
+        /// </summary>
+        /// <param name="length">The total length of the box including header.</param>
+        public virtual void readCompositingLayerHeaderBox(int length)
+        {
+            try
+            {
+                var jplh = CompositingLayerHeaderBox.Parse(ReadBoxPayload(length));
+                Metadata.CompositingLayerHeaders.Add(jplh);
+
+                FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                    $"Found Compositing Layer Header (jplh) box: {jplh.Children.Count} child box(es)");
+            }
+            catch (Exception e)
+            {
+                FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING,
+                    $"Error reading Compositing Layer Header (jplh) box: {e.Message}");
             }
         }
 

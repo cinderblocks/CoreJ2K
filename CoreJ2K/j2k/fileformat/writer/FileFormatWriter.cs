@@ -145,6 +145,7 @@ namespace CoreJ2K.j2k.fileformat.writer
         {
             byte[] codestream;
             int metadataLength = 0;
+            int ftbLength = FTB_LENGTH;
 
             try
             {
@@ -159,8 +160,8 @@ namespace CoreJ2K.j2k.fileformat.writer
                 fi.writeInt(FileFormatBoxes.JP2_SIGNATURE_BOX);
                 fi.writeInt(0x0d0a870a);
 
-                // Write File Type box
-                writeFileTypeBox();
+                // Write File Type box (length varies with the brand: jp2 vs jpx)
+                ftbLength = writeFileTypeBox();
 
                 // Write JP2 Header box
                 writeJP2HeaderBox();
@@ -182,10 +183,10 @@ namespace CoreJ2K.j2k.fileformat.writer
                     $"Error while writing JP2 file format(2): {e.Message}\n{e.StackTrace}");
             }
             
-            var baseLength = bpcVaries 
-                ? 12 + FTB_LENGTH + 8 + IHB_LENGTH + CSB_LENGTH + BPC_LENGTH + nc + 8
-                : 12 + FTB_LENGTH + 8 + IHB_LENGTH + CSB_LENGTH + 8;
-                
+            var baseLength = bpcVaries
+                ? 12 + ftbLength + 8 + IHB_LENGTH + CSB_LENGTH + BPC_LENGTH + nc + 8
+                : 12 + ftbLength + 8 + IHB_LENGTH + CSB_LENGTH + 8;
+
             return baseLength + metadataLength;
         }
 
@@ -227,7 +228,59 @@ namespace CoreJ2K.j2k.fileformat.writer
                 bytesWritten += writeLabelBox(labelBox);
             }
 
+            // Write JPEG 2000 Part 2 (JPX) extended boxes
+            foreach (var asoc in Metadata.Associations)
+            {
+                bytesWritten += writeContentBox(FileFormatBoxes.ASSOCIATION_BOX, asoc.GetContentBytes());
+            }
+
+            if (Metadata.DataReference != null && Metadata.DataReference.Entries.Count > 0)
+            {
+                bytesWritten += writeContentBox(FileFormatBoxes.DATA_REFERENCE_BOX, Metadata.DataReference.GetContentBytes());
+            }
+
+            foreach (var ftbl in Metadata.FragmentTables)
+            {
+                bytesWritten += writeContentBox(FileFormatBoxes.FRAGMENT_TABLE_BOX, ftbl.GetContentBytes());
+            }
+
+            foreach (var cref in Metadata.CrossReferences)
+            {
+                bytesWritten += writeContentBox(FileFormatBoxes.CROSS_REFERENCE_BOX, cref.GetContentBytes());
+            }
+
+            foreach (var jpch in Metadata.CodestreamHeaders)
+            {
+                bytesWritten += writeContentBox(FileFormatBoxes.CODESTREAM_HEADER_BOX, jpch.GetContentBytes());
+            }
+
+            foreach (var jplh in Metadata.CompositingLayerHeaders)
+            {
+                bytesWritten += writeContentBox(FileFormatBoxes.COMPOSITING_LAYER_HEADER_BOX, jplh.GetContentBytes());
+            }
+
             return bytesWritten;
+        }
+
+        /// <summary>
+        /// Writes a box consisting of the standard 8-byte header followed by the supplied
+        /// pre-serialized content bytes (DBox). Used for the JPEG 2000 Part 2 (JPX) boxes
+        /// whose binary form is produced by their model classes.
+        /// </summary>
+        /// <param name="boxType">The box type (TBox).</param>
+        /// <param name="content">The box payload, excluding the header.</param>
+        /// <returns>Total number of bytes written, including the 8-byte header.</returns>
+        private int writeContentBox(int boxType, byte[] content)
+        {
+            content = content ?? Array.Empty<byte>();
+            var boxLength = 8 + content.Length;
+
+            fi.writeInt(boxLength);   // LBox
+            fi.writeInt(boxType);     // TBox
+            if (content.Length > 0)
+                fi.write(content, 0, content.Length);
+
+            return boxLength;
         }
 
         /// <summary>
@@ -473,15 +526,37 @@ namespace CoreJ2K.j2k.fileformat.writer
             }
         }
 
-        /// <summary> This method writes the File Type box
-        /// 
+        /// <summary> This method writes the File Type box.
+        ///
+        /// When the attached metadata contains JPEG 2000 Part 2 (JPX) boxes, or
+        /// <see cref="J2KMetadata.UseJpxBrand"/> is set, the box advertises the 'jpx '
+        /// brand with a 'jp2 ' + 'jpx ' compatibility list; otherwise the baseline
+        /// 'jp2 ' brand is written.
         /// </summary>
+        /// <returns>The total number of bytes written, including the 8-byte header.</returns>
         /// <exception cref="java.io.IOException">If an I/O error ocurred.
-        /// 
+        ///
         /// </exception>
-        public virtual void writeFileTypeBox()
+        public virtual int writeFileTypeBox()
         {
-            // Write box length (LBox)
+            var useJpx = Metadata != null && (Metadata.UseJpxBrand || Metadata.HasJpxBoxes);
+
+            if (useJpx)
+            {
+                // LBox(4) + TBox(4) + BR(4) + MinV(4) + CL[0](4) + CL[1](4) = 24
+                const int jpxLength = 24;
+
+                fi.writeInt(jpxLength);                  // LBox
+                fi.writeInt(FileFormatBoxes.FILE_TYPE_BOX); // TBox
+                fi.writeInt(FileFormatBoxes.FT_BR_JPX);  // BR = 'jpx '
+                fi.writeInt(0);                          // MinV
+                fi.writeInt(FileFormatBoxes.FT_BR);      // CL[0] = 'jp2 '
+                fi.writeInt(FileFormatBoxes.FT_BR_JPX);  // CL[1] = 'jpx '
+
+                return jpxLength;
+            }
+
+            // Baseline JP2 File Type box
             // LBox(4) + TBox (4) + BR(4) + MinV(4) + CL(4) = 20
             fi.writeInt(FTB_LENGTH);
 
@@ -497,6 +572,8 @@ namespace CoreJ2K.j2k.fileformat.writer
 
             // Write Compatibility list
             fi.writeInt(FileFormatBoxes.FT_BR);
+
+            return FTB_LENGTH;
         }
 
         /// <summary> This method writes the JP2Header box

@@ -61,7 +61,19 @@ namespace CoreJ2K.j2k.fileformat
         /// <summary>JPEG 2000 Part 2 boxes</summary>
         public const int JPR_BOX = 0x6a707220; // 'jpr ' - Intellectual Property Rights box (Part 2)
         public const int LBL_BOX = 0x6c626c20; // 'lbl ' - Label box (Part 2)
-        
+
+        /// <summary>JPEG 2000 Part 2 (JPX) extended file-format boxes (ISO/IEC 15444-2)</summary>
+        public const int ASSOCIATION_BOX = 0x61736f63;       // 'asoc' - Association (superbox)
+        public const int NUMBER_LIST_BOX = 0x6e6c7374;       // 'nlst' - Number List box
+        public const int DATA_REFERENCE_BOX = 0x6474626c;    // 'dtbl' - Data Reference box
+        public const int FRAGMENT_TABLE_BOX = 0x6674626c;    // 'ftbl' - Fragment Table (superbox)
+        public const int FRAGMENT_LIST_BOX = 0x666c7374;     // 'flst' - Fragment List box
+        public const int CROSS_REFERENCE_BOX = 0x63726566;   // 'cref' - Cross Reference box
+        public const int CODESTREAM_HEADER_BOX = 0x6a706368; // 'jpch' - Codestream Header (superbox)
+        public const int COMPOSITING_LAYER_HEADER_BOX = 0x6a706c68; // 'jplh' - Compositing Layer Header (superbox)
+        /// <summary>File Type brand for JPEG 2000 Part 2 (JPX): 'jpx '</summary>
+        public const int FT_BR_JPX = 0x6a707820;
+
         /// <summary>JP2 Header boxes </summary>
         public const int IMAGE_HEADER_BOX = 0x69686472;
         public const int BITS_PER_COMPONENT_BOX = 0x62706363;
