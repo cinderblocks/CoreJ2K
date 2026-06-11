@@ -17,4 +17,11 @@
   <ItemGroup>
     <ProjectReference Include="..\..\CoreJ2K\CoreJ2K.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <!-- Third-party JP2 test fixtures (CC-BY subset of jpylyzer-test-files); see TestFiles/jpylyzer/ATTRIBUTION.md -->
+    <None Include="TestFiles\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 </Project>
