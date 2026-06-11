@@ -309,6 +309,38 @@ namespace CoreJ2K.j2k.codestream.reader
         /// main header (ISO/IEC 15444-2). Empty for Part 1 codestreams. </summary>
         public virtual System.Collections.Generic.IList<NLTMarkerSegment> NLTSegments => nltSegments;
 
+        /// <summary>Counts number of MCT markers found in the header (Part 2) </summary>
+        private int nMCTMarkSeg = 0;
+
+        /// <summary>Counts number of MCC markers found in the header (Part 2) </summary>
+        private int nMCCMarkSeg = 0;
+
+        /// <summary>Parsed Multiple Component Transform array (MCT) marker segments (Part 2). </summary>
+        private readonly System.Collections.Generic.List<MctArrayMarkerSegment> mctArrays =
+            new System.Collections.Generic.List<MctArrayMarkerSegment>();
+
+        /// <summary>Parsed Multiple Component Collection (MCC) marker segments (Part 2). </summary>
+        private readonly System.Collections.Generic.List<MccMarkerSegment> mccSegments =
+            new System.Collections.Generic.List<MccMarkerSegment>();
+
+        /// <summary>Parsed Multiple Component transformation Ordering (MCO) marker segment (Part 2). </summary>
+        private McoMarkerSegment mcoSegment = null;
+
+        /// <summary>Parsed Component Bit Depth (CBD) marker segment (Part 2). </summary>
+        private CbdMarkerSegment cbdSegment = null;
+
+        /// <summary>The Multiple Component Transform array (MCT) marker segments (ISO/IEC 15444-2). </summary>
+        public virtual System.Collections.Generic.IList<MctArrayMarkerSegment> MctArrays => mctArrays;
+
+        /// <summary>The Multiple Component Collection (MCC) marker segments (ISO/IEC 15444-2). </summary>
+        public virtual System.Collections.Generic.IList<MccMarkerSegment> MccSegments => mccSegments;
+
+        /// <summary>The Multiple Component transformation Ordering (MCO) marker segment, or null. </summary>
+        public virtual McoMarkerSegment McoSegment => mcoSegment;
+
+        /// <summary>The Component Bit Depth (CBD) marker segment, or null. </summary>
+        public virtual CbdMarkerSegment CbdSegment => cbdSegment;
+
         /// <summary>Flag bit for SIZ marker segment found </summary>
         private const int SIZ_FOUND = 1;
 
@@ -362,6 +394,18 @@ namespace CoreJ2K.j2k.codestream.reader
 
         /// <summary>Flag bit for NLT marker segment found (Part 2 non-linearity point transformation) </summary>
         public const int NLT_FOUND = 1 << 18;
+
+        /// <summary>Flag bit for MCT marker segment found (Part 2 multiple component transform) </summary>
+        public const int MCT_FOUND = 1 << 19;
+
+        /// <summary>Flag bit for MCC marker segment found (Part 2 multiple component collection) </summary>
+        public const int MCC_FOUND = 1 << 20;
+
+        /// <summary>Flag bit for MCO marker segment found (Part 2 multiple component ordering) </summary>
+        public const int MCO_FOUND = 1 << 21;
+
+        /// <summary>Flag bit for CBD marker segment found (Part 2 component bit depth) </summary>
+        public const int CBD_FOUND = 1 << 22;
 
         /// <summary>The reset mask for new tiles </summary>
         //private static readonly int TILE_RESET = ~ (PLM_FOUND | SIZ_FOUND | RGN_FOUND);
@@ -2515,6 +2559,26 @@ namespace CoreJ2K.j2k.codestream.reader
                     htKey = $"NLT{(nNLTMarkSeg++)}";
                     break;
 
+                case Markers.MCT:
+                    nfMarkSeg |= MCT_FOUND;
+                    htKey = $"MCT{(nMCTMarkSeg++)}";
+                    break;
+
+                case Markers.MCC:
+                    nfMarkSeg |= MCC_FOUND;
+                    htKey = $"MCC{(nMCCMarkSeg++)}";
+                    break;
+
+                case Markers.MCO:
+                    nfMarkSeg |= MCO_FOUND;
+                    htKey = "MCO";
+                    break;
+
+                case Markers.CBD:
+                    nfMarkSeg |= CBD_FOUND;
+                    htKey = "CBD";
+                    break;
+
                 default:
                     htKey = "UNKNOWN";
                     FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING,
@@ -2843,6 +2907,47 @@ namespace CoreJ2K.j2k.codestream.reader
                     bais = new System.IO.MemoryStream(ht[$"NLT{i}"]);
                     readNLT(new Util.EndianBinaryReader(bais, true));
                 }
+            }
+
+            // MCT array marker segments (Part 2 multiple component transform)
+            if ((nfMarkSeg & MCT_FOUND) != 0)
+            {
+                for (var i = 0; i < nMCTMarkSeg; i++)
+                {
+                    bais = new System.IO.MemoryStream(ht[$"MCT{i}"]);
+                    mctArrays.Add(MctArrayMarkerSegment.Read(new Util.EndianBinaryReader(bais, true)));
+                }
+            }
+
+            // MCC marker segments (Part 2 multiple component collection)
+            if ((nfMarkSeg & MCC_FOUND) != 0)
+            {
+                for (var i = 0; i < nMCCMarkSeg; i++)
+                {
+                    bais = new System.IO.MemoryStream(ht[$"MCC{i}"]);
+                    mccSegments.Add(MccMarkerSegment.Read(new Util.EndianBinaryReader(bais, true)));
+                }
+            }
+
+            // MCO marker segment (Part 2 multiple component ordering)
+            if ((nfMarkSeg & MCO_FOUND) != 0)
+            {
+                bais = new System.IO.MemoryStream(ht["MCO"]);
+                mcoSegment = McoMarkerSegment.Read(new Util.EndianBinaryReader(bais, true));
+            }
+
+            // CBD marker segment (Part 2 component bit depth)
+            if ((nfMarkSeg & CBD_FOUND) != 0)
+            {
+                bais = new System.IO.MemoryStream(ht["CBD"]);
+                cbdSegment = CbdMarkerSegment.Read(new Util.EndianBinaryReader(bais, true));
+            }
+
+            if ((nfMarkSeg & (MCT_FOUND | MCC_FOUND | MCO_FOUND | CBD_FOUND)) != 0)
+            {
+                FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                    $"Read multiple component transform markers: {mctArrays.Count} MCT array(s), " +
+                    $"{mccSegments.Count} MCC, MCO={(mcoSegment != null ? "yes" : "no")}, CBD={(cbdSegment != null ? "yes" : "no")}.");
             }
 
             // Reset the hashtable

@@ -202,6 +202,18 @@ namespace CoreJ2K.j2k.codestream.writer
         /// </summary>
         public System.Collections.Generic.IList<NLTMarkerSegment> NLTSegments { get; set; }
 
+        /// <summary>Multiple Component Transform array (MCT) marker segments to emit (Part 2).</summary>
+        public System.Collections.Generic.IList<MctArrayMarkerSegment> MctArrays { get; set; }
+
+        /// <summary>Multiple Component Collection (MCC) marker segments to emit (Part 2).</summary>
+        public System.Collections.Generic.IList<MccMarkerSegment> MccSegments { get; set; }
+
+        /// <summary>Multiple Component transformation Ordering (MCO) marker segment to emit (Part 2).</summary>
+        public McoMarkerSegment McoSegment { get; set; }
+
+        /// <summary>Component Bit Depth (CBD) marker segment to emit (Part 2).</summary>
+        public CbdMarkerSegment CbdSegment { get; set; }
+
         /// <summary> Initializes the header writer with the references to the coding chain.
         /// 
         /// </summary>
@@ -512,9 +524,13 @@ namespace CoreJ2K.j2k.codestream.writer
             // +---------------------------------+
             writeSOC();
 
-            // Part 2: signal extended capabilities in Rsiz when NLT segments are present.
+            // Part 2: signal extended capabilities in Rsiz when any Part 2 marker is present.
             var hasNlt = NLTSegments != null && NLTSegments.Count > 0;
-            if (hasNlt)
+            var hasMct = (MctArrays != null && MctArrays.Count > 0)
+                         || (MccSegments != null && MccSegments.Count > 0)
+                         || McoSegment != null;
+            var hasPart2 = hasNlt || hasMct;
+            if (hasPart2)
             {
                 sizWriter.Rsiz = Markers.RSIZ_EXTENSIONS;
             }
@@ -527,9 +543,22 @@ namespace CoreJ2K.j2k.codestream.writer
             // +---------------------------------+
             // |  Extended CAPabilities (CAP)    |  (Part 2)
             // +---------------------------------+
-            if (hasNlt)
+            if (hasPart2)
             {
                 writeCAP();
+            }
+
+            // +-------------------------------------------+
+            // |  Multiple Component Transform (MCT family) |  (Part 2)
+            // +-------------------------------------------+
+            if (hasMct)
+            {
+                if (CbdSegment != null) CbdSegment.Write(hbuf);
+                if (MctArrays != null)
+                    foreach (var arr in MctArrays) arr.Write(hbuf);
+                if (MccSegments != null)
+                    foreach (var mcc in MccSegments) mcc.Write(hbuf);
+                if (McoSegment != null) McoSegment.Write(hbuf);
             }
 
             // +-------------------------------+

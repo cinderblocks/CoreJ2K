@@ -214,11 +214,19 @@ namespace CoreJ2K
             // **** Inverse component transformation ****
             var ictransf = new InvCompTransf(converter, decSpec, depth, pl);
 
+            // **** Inverse multiple component transform (MCT, ISO/IEC 15444-2) ****
+            BlkImgDataSrc afterCt = ictransf;
+            var mctStages = j2k.codestream.MctTransform.AssembleDecodeStages(hd.MctArrays, hd.MccSegments, hd.McoSegment);
+            if (mctStages.Count > 0)
+            {
+                afterCt = j2k.image.mct.ComponentTransform.BuildChain(ictransf, mctStages, inverse: true);
+            }
+
             // **** Inverse non-linearity point transform (NLT, ISO/IEC 15444-2) ****
-            BlkImgDataSrc postCt = ictransf;
+            BlkImgDataSrc postCt = afterCt;
             if (hd.NLTSegments != null && hd.NLTSegments.Count > 0)
             {
-                postCt = new InvNLT(ictransf, hd.NLTSegments);
+                postCt = new InvNLT(afterCt, hd.NLTSegments);
             }
 
             // **** Color space mapping ****
@@ -502,11 +510,19 @@ namespace CoreJ2K
             // **** Inverse component transformation ****
             var ictransf = new InvCompTransf(converter, decSpec, depth, pl);
 
+            // **** Inverse multiple component transform (MCT, ISO/IEC 15444-2) ****
+            BlkImgDataSrc afterCt = ictransf;
+            var mctStages = j2k.codestream.MctTransform.AssembleDecodeStages(hd.MctArrays, hd.MccSegments, hd.McoSegment);
+            if (mctStages.Count > 0)
+            {
+                afterCt = j2k.image.mct.ComponentTransform.BuildChain(ictransf, mctStages, inverse: true);
+            }
+
             // **** Inverse non-linearity point transform (NLT, ISO/IEC 15444-2) ****
-            BlkImgDataSrc postCt = ictransf;
+            BlkImgDataSrc postCt = afterCt;
             if (hd.NLTSegments != null && hd.NLTSegments.Count > 0)
             {
-                postCt = new InvNLT(ictransf, hd.NLTSegments);
+                postCt = new InvNLT(afterCt, hd.NLTSegments);
             }
 
             // **** Color space mapping ****
@@ -807,7 +823,8 @@ namespace CoreJ2K
         /// is branded with Part 2 capabilities (Rsiz + CAP), and the NLT marker segments are written.
         /// </summary>
         public static byte[]? ToBytes(BlkImgDataSrc imgsrc, j2k.fileformat.metadata.J2KMetadata? metadata, ParameterList? parameters,
-            System.Collections.Generic.IList<j2k.codestream.NLTMarkerSegment>? nltSegments)
+            System.Collections.Generic.IList<j2k.codestream.NLTMarkerSegment>? nltSegments,
+            System.Collections.Generic.IList<j2k.codestream.MctEncodeSpec>? mctSpecs = null)
         {
             if (imgsrc == null)
             {
@@ -1104,6 +1121,22 @@ namespace CoreJ2K
                 ctSource = new j2k.image.nlt.ForwNLT(imgtiler, nltSegments);
             }
 
+            // **** Forward multiple component transform (MCT, ISO/IEC 15444-2) ****
+            var hasMct = mctSpecs != null && mctSpecs.Count > 0;
+            j2k.codestream.McoMarkerSegment? mctMco = null;
+            System.Collections.Generic.List<j2k.codestream.MctArrayMarkerSegment>? mctArraysToWrite = null;
+            System.Collections.Generic.List<j2k.codestream.MccMarkerSegment>? mctMccsToWrite = null;
+            if (hasMct)
+            {
+                var forwardStages = j2k.codestream.MctTransform.BuildForwardStages(mctSpecs);
+                ctSource = j2k.image.mct.ComponentTransform.BuildChain(ctSource, forwardStages, inverse: false);
+
+                var built = j2k.codestream.MctTransform.BuildMarkers(mctSpecs);
+                mctArraysToWrite = built.Arrays;
+                mctMccsToWrite = built.Mccs;
+                mctMco = built.Mco;
+            }
+
             ForwCompTransf fctransf;
             try
             {
@@ -1213,6 +1246,20 @@ namespace CoreJ2K
                 if (hasNlt)
                 {
                     headenc.NLTSegments = nltSegments;
+                }
+                if (hasMct)
+                {
+                    headenc.MctArrays = mctArraysToWrite;
+                    headenc.MccSegments = mctMccsToWrite;
+                    headenc.McoSegment = mctMco;
+
+                    var cbdDepths = new byte[ncomp];
+                    for (var ci = 0; ci < ncomp; ci++)
+                    {
+                        var bits = imgsrc.GetNomRangeBits(ci);
+                        cbdDepths[ci] = (byte)(((bits - 1) & 0x7F) | (imgsrc.IsOrigSigned(ci) ? 0x80 : 0x00));
+                    }
+                    headenc.CbdSegment = new j2k.codestream.CbdMarkerSegment { ComponentDepths = cbdDepths };
                 }
                 ralloc.HeaderEncoder = headenc;
 

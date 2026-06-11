@@ -74,6 +74,23 @@ namespace CoreJ2K.j2k.codestream
         /// Defines a per-component point transformation applied to image samples.
         /// </summary>
         public const short NLT = unchecked((short)0xff76);
+        /// <summary>Multiple component transformation definition marker (MCT): 0xFF74 (ISO/IEC 15444-2).
+        /// Defines a reusable transform array (decorrelation matrix or offset vector).
+        /// </summary>
+        public const short MCT = unchecked((short)0xff74);
+        /// <summary>Multiple component collection marker (MCC): 0xFF75 (ISO/IEC 15444-2).
+        /// Defines a component collection and the transform applied to it.
+        /// </summary>
+        public const short MCC = unchecked((short)0xff75);
+        /// <summary>Multiple component transformation ordering marker (MCO): 0xFF77 (ISO/IEC 15444-2).
+        /// Specifies the order in which the component collection transforms are applied.
+        /// </summary>
+        public const short MCO = unchecked((short)0xff77);
+        /// <summary>Component bit depth definition marker (CBD): 0xFF78 (ISO/IEC 15444-2).
+        /// Defines the bit depths of the (intermediate) components produced by a
+        /// multiple component transformation.
+        /// </summary>
+        public const short CBD = unchecked((short)0xff78);
         /// <summary>Component bitdepth bits in Ssiz field in SIZ marker: 7 </summary>
         public const int SSIZ_DEPTH_BITS = 7;
         /// <summary>The maximum number of component bitdepth </summary>

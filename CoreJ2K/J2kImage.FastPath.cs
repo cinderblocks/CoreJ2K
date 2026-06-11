@@ -173,11 +173,19 @@ namespace CoreJ2K
                 var converter = new ImgDataConverter(invWT, 0);
                 var ictransf = new InvCompTransf(converter, decSpec, depth, pl);
 
+                // Inverse multiple component transform (MCT, ISO/IEC 15444-2)
+                BlkImgDataSrc afterCt = ictransf;
+                var mctStages = j2k.codestream.MctTransform.AssembleDecodeStages(hd.MctArrays, hd.MccSegments, hd.McoSegment);
+                if (mctStages.Count > 0)
+                {
+                    afterCt = j2k.image.mct.ComponentTransform.BuildChain(ictransf, mctStages, inverse: true);
+                }
+
                 // Inverse non-linearity point transform (NLT, ISO/IEC 15444-2)
-                BlkImgDataSrc postCt = ictransf;
+                BlkImgDataSrc postCt = afterCt;
                 if (hd.NLTSegments != null && hd.NLTSegments.Count > 0)
                 {
-                    postCt = new j2k.image.nlt.InvNLT(ictransf, hd.NLTSegments);
+                    postCt = new j2k.image.nlt.InvNLT(afterCt, hd.NLTSegments);
                 }
 
                 BlkImgDataSrc color;
