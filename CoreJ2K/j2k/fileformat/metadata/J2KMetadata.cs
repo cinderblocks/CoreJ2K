@@ -739,13 +739,21 @@ namespace CoreJ2K.j2k.fileformat.metadata
     }
 
     /// <summary>
-    /// Represents a Reader Requirements (rreq) box from JPEG 2000 Part 1.
-    /// The Reader Requirements box specifies what features a decoder must support to properly decode the file.
-    /// This allows decoders to quickly determine if they can handle a file before attempting to decode it.
+    /// Represents a Reader Requirements (rreq) box from JPEG 2000 (ISO/IEC 15444-1/2).
+    /// The Reader Requirements box specifies what features a decoder must support to properly decode the file,
+    /// and is required in every conformant JPX (Part 2) file.
     /// </summary>
+    /// <remarks>
+    /// CoreJ2K writes rreq automatically for any JPX-branded output, computing the FUAM/DCM
+    /// masks and feature list from the Part 2 markers present in the codestream.
+    ///
+    /// The Part 2 standard feature IDs below (FEATURE_JPX_*) are CoreJ2K's documented mapping
+    /// following ISO/IEC 15444-2 Annex M; they have not been validated against third-party JPX producers.
+    /// Each feature is assigned a unique mask bit: feature SF=n gets bit (n-1) of a 16-bit big-endian mask.
+    /// </remarks>
     public class ReaderRequirementsBox
     {
-        // Common standard feature IDs per ISO/IEC 15444-1 Annex I
+        // Standard feature IDs per ISO/IEC 15444-1 Annex I (file-level constraint features)
         public const ushort FEATURE_NO_EXTENSIONS = 0;
         public const ushort FEATURE_DCT_ONLY = 1;
         public const ushort FEATURE_NO_OPACITY = 2;
@@ -763,6 +771,17 @@ namespace CoreJ2K.j2k.fileformat.metadata
         public const ushort FEATURE_VERTICAL_CAUSAL_CONTEXT = 73;
         public const ushort FEATURE_PREDICTABLE_TERMINATION = 74;
         public const ushort FEATURE_SEGMENTATION_SYMBOLS = 75;
+
+        // Part 2 (JPX) standard features per ISO/IEC 15444-2 Annex M.
+        // CoreJ2K's documented mapping — not validated against third-party JPX producers.
+        public const ushort FEATURE_JPX_MCT = 1;   // Multiple component transforms (MCT/MCC/MCO)
+        public const ushort FEATURE_JPX_NLT = 2;   // Non-linearity point transforms (NLT)
+        public const ushort FEATURE_JPX_DCO = 3;   // Variable DC offset (DCO)
+        public const ushort FEATURE_JPX_ATK = 4;   // Arbitrary wavelet transform kernels (ATK)
+        public const ushort FEATURE_JPX_DFS = 5;   // Arbitrary decomposition structures (DFS/ADS)
+
+        // Mask length used when writing JPX rreq boxes (2 bytes → 16 feature bits).
+        private const int WriteMaskLength = 2;
 
         /// <summary>
         /// Gets the list of standard features (Feature IDs) that the reader must support.
@@ -847,6 +866,61 @@ namespace CoreJ2K.j2k.fileformat.metadata
                 default:
                     return $"Unknown feature {featureId}";
             }
+        }
+
+        /// <summary>
+        /// Builds a <see cref="ReaderRequirementsBox"/> for a JPX codestream, populating
+        /// the standard feature list from the active Part 2 codestream extensions.
+        /// </summary>
+        public static ReaderRequirementsBox BuildForJpx(bool hasMct = false, bool hasNlt = false, bool hasDco = false)
+        {
+            var box = new ReaderRequirementsBox();
+            if (hasMct) box.StandardFeatures.Add(FEATURE_JPX_MCT);
+            if (hasNlt) box.StandardFeatures.Add(FEATURE_JPX_NLT);
+            if (hasDco) box.StandardFeatures.Add(FEATURE_JPX_DCO);
+            return box;
+        }
+
+        /// <summary>
+        /// Serializes the rreq DBox payload (everything after LBox+TBox) for use with
+        /// <c>FileFormatWriter.writeContentBox</c>. Uses a 2-byte mask (ML=2); each
+        /// standard feature SF=n occupies bit (n-1) of the 16-bit big-endian FUAM/DCM.
+        /// Vendor features are not currently serialized by this path.
+        /// </summary>
+        public byte[] GetContentBytes()
+        {
+            const int ml = WriteMaskLength;
+            var nsf = StandardFeatures.Count;
+
+            // 1(ML) + ml(FUAM) + ml(DCM) + 2(NSF) + nsf*(2+ml) + 2(NVF)
+            var buf = new byte[1 + ml + ml + 2 + nsf * (2 + ml) + 2];
+            int pos = 0;
+
+            // Compute FUAM = DCM = OR of all per-feature mask bits
+            ushort mask = 0;
+            foreach (var sf in StandardFeatures)
+                if (sf >= 1 && sf <= 16) mask |= (ushort)(1 << (sf - 1));
+
+            buf[pos++] = ml;                             // ML
+            buf[pos++] = (byte)(mask >> 8);              // FUAM hi
+            buf[pos++] = (byte)(mask & 0xFF);            // FUAM lo
+            buf[pos++] = (byte)(mask >> 8);              // DCM  hi
+            buf[pos++] = (byte)(mask & 0xFF);            // DCM  lo
+            buf[pos++] = (byte)(nsf >> 8);               // NSF  hi
+            buf[pos++] = (byte)(nsf & 0xFF);             // NSF  lo
+
+            foreach (var sf in StandardFeatures)
+            {
+                ushort sm = sf >= 1 && sf <= 16 ? (ushort)(1 << (sf - 1)) : (ushort)0;
+                buf[pos++] = (byte)(sf >> 8);            // SF hi
+                buf[pos++] = (byte)(sf & 0xFF);          // SF lo
+                buf[pos++] = (byte)(sm >> 8);            // SM hi
+                buf[pos++] = (byte)(sm & 0xFF);          // SM lo
+            }
+
+            buf[pos++] = 0;                              // NVF hi
+            buf[pos] = 0;                                // NVF lo
+            return buf;
         }
 
         public override string ToString()

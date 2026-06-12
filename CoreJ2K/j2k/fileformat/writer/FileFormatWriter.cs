@@ -192,11 +192,20 @@ namespace CoreJ2K.j2k.fileformat.writer
 
         /// <summary>
         /// Writes all metadata boxes (XML, UUID, JPR, Label, and UUID Info boxes).
+        /// For JPX output, an rreq (Reader Requirements) box is written first — it is
+        /// required by ISO/IEC 15444-2 for every conformant JPX file.
         /// </summary>
         /// <returns>Total bytes written for metadata.</returns>
         private int writeMetadataBoxes()
         {
             var bytesWritten = 0;
+
+            // Write Reader Requirements box (required for conformant JPX files)
+            if (Metadata.HasJpxBoxes || Metadata.UseJpxBrand || Metadata.ReaderRequirements != null)
+            {
+                var rreq = Metadata.ReaderRequirements ?? new ReaderRequirementsBox();
+                bytesWritten += writeContentBox(FileFormatBoxes.READER_REQUIREMENTS_BOX, rreq.GetContentBytes());
+            }
 
             // Write XML boxes
             foreach (var xmlBox in Metadata.XmlBoxes)

@@ -1051,22 +1051,26 @@ namespace CoreJ2K.j2k.fileformat.reader
                 // Read NSF (number of standard features) - 2 bytes
                 var numStdFeatures = inStream.readShort();
 
-                // Read standard features
+                // Read standard features: each entry is SF(2) + SM(maskLength bytes)
                 for (int i = 0; i < numStdFeatures; i++)
                 {
                     var featureId = (ushort)inStream.readShort();
                     readerReq.StandardFeatures.Add(featureId);
+                    // Consume SM (feature mask) — maskLength bytes, not stored
+                    for (int b = 0; b < maskLength; b++) inStream.readByte();
                 }
 
                 // Read NVF (number of vendor features) - 2 bytes
                 var numVendorFeatures = inStream.readShort();
 
-                // Read vendor features (UUIDs)
+                // Read vendor features: each entry is VF(16) + VM(maskLength bytes)
                 for (int i = 0; i < numVendorFeatures; i++)
                 {
                     var uuidBytes = new byte[16];
                     inStream.readFully(uuidBytes, 0, 16);
                     readerReq.VendorFeatures.Add(new Guid(uuidBytes));
+                    // Consume VM (vendor feature mask) — maskLength bytes, not stored
+                    for (int b = 0; b < maskLength; b++) inStream.readByte();
                 }
 
                 // Check if JP2 compatible (bit 5 of first FUAM byte should be 0 for baseline JP2)

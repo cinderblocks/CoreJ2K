@@ -1347,6 +1347,17 @@ namespace CoreJ2K
                 // **** File Format ****
                 if (useFileFormat)
                 {
+                    // Auto-generate Reader Requirements for JPX output when Part 2 features are active.
+                    // The rreq box is required in every conformant JPX file (ISO/IEC 15444-2 §M.9.2).
+                    var isJpx = hasNlt || hasMct || hasDco
+                                || (metadata?.HasJpxBoxes ?? false)
+                                || (metadata?.UseJpxBrand ?? false);
+                    if (isJpx)
+                    {
+                        metadata ??= new j2k.fileformat.metadata.J2KMetadata();
+                        metadata.ReaderRequirements ??= j2k.fileformat.metadata.ReaderRequirementsBox.BuildForJpx(hasMct, hasNlt, hasDco);
+                    }
+
                     try
                     {
                         var nc = imgsrc.NumComps;
@@ -1364,7 +1375,7 @@ namespace CoreJ2K
                             nc,
                             bpc,
                             fileLength);
-                        
+
                         // Attach metadata if provided
                         if (metadata != null)
                         {
