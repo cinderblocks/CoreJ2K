@@ -70,6 +70,11 @@ namespace CoreJ2K.j2k.codestream
         /// Signals which Part 2 capabilities are required to decode the codestream.
         /// </summary>
         public const short CAP = unchecked((short)0xff50);
+        /// <summary>Variable DC offset marker (DCO): 0xFF70 (ISO/IEC 15444-2).
+        /// Defines per-component integer DC offsets applied to image samples before the
+        /// forward transform (removed on encode, restored on decode).
+        /// </summary>
+        public const short DCO = unchecked((short)0xff70);
         /// <summary>Non-linearity point transformation marker (NLT): 0xFF76 (ISO/IEC 15444-2).
         /// Defines a per-component point transformation applied to image samples.
         /// </summary>

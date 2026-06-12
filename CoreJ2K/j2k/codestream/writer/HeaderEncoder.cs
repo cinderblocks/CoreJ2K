@@ -202,6 +202,12 @@ namespace CoreJ2K.j2k.codestream.writer
         /// </summary>
         public System.Collections.Generic.IList<NLTMarkerSegment> NLTSegments { get; set; }
 
+        /// <summary>
+        /// Variable DC offset (DCO) marker segment to emit (ISO/IEC 15444-2). When non-null,
+        /// triggers Part 2 capability signaling. Null for Part 1 output.
+        /// </summary>
+        public DCOMarkerSegment DcoSegment { get; set; }
+
         /// <summary>Multiple Component Transform array (MCT) marker segments to emit (Part 2).</summary>
         public System.Collections.Generic.IList<MctArrayMarkerSegment> MctArrays { get; set; }
 
@@ -529,7 +535,8 @@ namespace CoreJ2K.j2k.codestream.writer
             var hasMct = (MctArrays != null && MctArrays.Count > 0)
                          || (MccSegments != null && MccSegments.Count > 0)
                          || McoSegment != null;
-            var hasPart2 = hasNlt || hasMct;
+            var hasDco = DcoSegment != null;
+            var hasPart2 = hasNlt || hasMct || hasDco;
             if (hasPart2)
             {
                 sizWriter.Rsiz = Markers.RSIZ_EXTENSIONS;
@@ -624,6 +631,14 @@ namespace CoreJ2K.j2k.codestream.writer
             if (ppmData != null && ppmData.Count > 0)
             {
                 writePPM(ppmData);
+            }
+
+            // +-------------------------------+
+            // |  Variable DC offset (DCO)     |  (Part 2)
+            // +-------------------------------+
+            if (hasDco)
+            {
+                DcoSegment.Write(hbuf);
             }
 
             // +--------------------------------------+

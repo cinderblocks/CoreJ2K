@@ -10,6 +10,7 @@ namespace CoreJ2K
     using j2k.entropy.decoder;
     using j2k.fileformat.reader;
     using j2k.image;
+    using j2k.image.dco;
     using j2k.image.invcomptransf;
     using j2k.io;
     using j2k.quantization.dequantizer;
@@ -186,6 +187,12 @@ namespace CoreJ2K
                 if (hd.NLTSegments != null && hd.NLTSegments.Count > 0)
                 {
                     postCt = new j2k.image.nlt.InvNLT(afterCt, hd.NLTSegments);
+                }
+
+                // Inverse variable DC offset (DCO, ISO/IEC 15444-2)
+                if (hd.DcoSegment != null)
+                {
+                    postCt = new InvDCO(postCt, hd.DcoSegment);
                 }
 
                 BlkImgDataSrc color;

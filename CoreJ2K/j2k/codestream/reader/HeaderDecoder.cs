@@ -302,12 +302,18 @@ namespace CoreJ2K.j2k.codestream.reader
         private readonly System.Collections.Generic.List<NLTMarkerSegment> nltSegments =
             new System.Collections.Generic.List<NLTMarkerSegment>();
 
+        /// <summary>Parsed Variable DC Offset (DCO) marker segment (Part 2). </summary>
+        private DCOMarkerSegment dcoSegment = null;
+
         /// <summary>True if the codestream signals JPEG 2000 Part 2 extended capabilities. </summary>
         public virtual bool UsesExtensions => usesExtensions;
 
         /// <summary>The Non-linearity point transformation (NLT) marker segments found in the
         /// main header (ISO/IEC 15444-2). Empty for Part 1 codestreams. </summary>
         public virtual System.Collections.Generic.IList<NLTMarkerSegment> NLTSegments => nltSegments;
+
+        /// <summary>The Variable DC Offset (DCO) marker segment, or null (ISO/IEC 15444-2). </summary>
+        public virtual DCOMarkerSegment DcoSegment => dcoSegment;
 
         /// <summary>Counts number of MCT markers found in the header (Part 2) </summary>
         private int nMCTMarkSeg = 0;
@@ -406,6 +412,9 @@ namespace CoreJ2K.j2k.codestream.reader
 
         /// <summary>Flag bit for CBD marker segment found (Part 2 component bit depth) </summary>
         public const int CBD_FOUND = 1 << 22;
+
+        /// <summary>Flag bit for DCO marker segment found (Part 2 variable DC offset) </summary>
+        public const int DCO_FOUND = 1 << 23;
 
         /// <summary>The reset mask for new tiles </summary>
         //private static readonly int TILE_RESET = ~ (PLM_FOUND | SIZ_FOUND | RGN_FOUND);
@@ -2579,6 +2588,11 @@ namespace CoreJ2K.j2k.codestream.reader
                     htKey = "CBD";
                     break;
 
+                case Markers.DCO:
+                    nfMarkSeg |= DCO_FOUND;
+                    htKey = "DCO";
+                    break;
+
                 default:
                     htKey = "UNKNOWN";
                     FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING,
@@ -2941,6 +2955,15 @@ namespace CoreJ2K.j2k.codestream.reader
             {
                 bais = new System.IO.MemoryStream(ht["CBD"]);
                 cbdSegment = CbdMarkerSegment.Read(new Util.EndianBinaryReader(bais, true));
+            }
+
+            // DCO marker segment (Part 2 variable DC offset)
+            if ((nfMarkSeg & DCO_FOUND) != 0)
+            {
+                bais = new System.IO.MemoryStream(ht["DCO"]);
+                dcoSegment = DCOMarkerSegment.Read(new Util.EndianBinaryReader(bais, true));
+                FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                    $"Read DCO marker segment: {dcoSegment}");
             }
 
             if ((nfMarkSeg & (MCT_FOUND | MCC_FOUND | MCO_FOUND | CBD_FOUND)) != 0)

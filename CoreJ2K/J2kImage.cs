@@ -19,6 +19,7 @@ namespace CoreJ2K
     using j2k.image.forwcomptransf;
     using j2k.image.input;
     using j2k.image.nlt;
+    using j2k.image.dco;
     using j2k.image.invcomptransf;
     using j2k.io;
     using j2k.quantization.dequantizer;
@@ -227,6 +228,12 @@ namespace CoreJ2K
             if (hd.NLTSegments != null && hd.NLTSegments.Count > 0)
             {
                 postCt = new InvNLT(afterCt, hd.NLTSegments);
+            }
+
+            // **** Inverse variable DC offset (DCO, ISO/IEC 15444-2) ****
+            if (hd.DcoSegment != null)
+            {
+                postCt = new InvDCO(postCt, hd.DcoSegment);
             }
 
             // **** Color space mapping ****
@@ -523,6 +530,12 @@ namespace CoreJ2K
             if (hd.NLTSegments != null && hd.NLTSegments.Count > 0)
             {
                 postCt = new InvNLT(afterCt, hd.NLTSegments);
+            }
+
+            // **** Inverse variable DC offset (DCO, ISO/IEC 15444-2) ****
+            if (hd.DcoSegment != null)
+            {
+                postCt = new InvDCO(postCt, hd.DcoSegment);
             }
 
             // **** Color space mapping ****
@@ -824,7 +837,8 @@ namespace CoreJ2K
         /// </summary>
         public static byte[]? ToBytes(BlkImgDataSrc imgsrc, j2k.fileformat.metadata.J2KMetadata? metadata, ParameterList? parameters,
             System.Collections.Generic.IList<j2k.codestream.NLTMarkerSegment>? nltSegments,
-            System.Collections.Generic.IList<j2k.codestream.MctEncodeSpec>? mctSpecs = null)
+            System.Collections.Generic.IList<j2k.codestream.MctEncodeSpec>? mctSpecs = null,
+            j2k.codestream.DCOMarkerSegment? dcoSegment = null)
         {
             if (imgsrc == null)
             {
@@ -1112,12 +1126,19 @@ namespace CoreJ2K
                         + "image quality might be greatly degraded. Use "
                         + "the 'Mct' option to specify a color transform");
             }
+            // **** Forward variable DC offset (DCO, ISO/IEC 15444-2) ****
+            var hasDco = dcoSegment != null;
+            BlkImgDataSrc ctSource = imgtiler;
+            if (hasDco)
+            {
+                ctSource = new ForwDCO(imgtiler, dcoSegment);
+            }
+
             // **** Forward non-linearity point transform (NLT, ISO/IEC 15444-2) ****
             var hasNlt = nltSegments != null && nltSegments.Count > 0;
-            BlkImgDataSrc ctSource = imgtiler;
             if (hasNlt)
             {
-                ctSource = new j2k.image.nlt.ForwNLT(imgtiler, nltSegments);
+                ctSource = new j2k.image.nlt.ForwNLT(ctSource, nltSegments);
             }
 
             // **** Forward multiple component transform (MCT, ISO/IEC 15444-2) ****
@@ -1235,6 +1256,10 @@ namespace CoreJ2K
                 // **** HeaderEncoder ****
                 var imsigned = Enumerable.Repeat(false, ncomp).ToArray();   // TODO Consider supporting signed components.
                 var headenc = new HeaderEncoder(imgsrc, imsigned, dwt, imgtiler, encSpec, rois, ralloc, pl);
+                if (hasDco)
+                {
+                    headenc.DcoSegment = dcoSegment;
+                }
                 if (hasNlt)
                 {
                     headenc.NLTSegments = nltSegments;
