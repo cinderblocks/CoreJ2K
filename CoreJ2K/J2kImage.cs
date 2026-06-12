@@ -1094,8 +1094,7 @@ namespace CoreJ2K
             }
             catch (ArgumentException e)
             {
-                error($"Could not tile image{((e.Message != null) ? (":\n" + e.Message) : "")}", 2);
-                return null;
+                throw new InvalidOperationException($"Could not tile image{((e.Message != null) ? (":\n" + e.Message) : "")}", e);
             }
             var ntiles = imgtiler.GetNumTiles();
 
@@ -1144,10 +1143,8 @@ namespace CoreJ2K
             }
             catch (ArgumentException e)
             {
-                error(
-                    $"Could not instantiate forward component transformation{((e.Message != null) ? (":\n" + e.Message) : "")}",
-                    2);
-                return null;
+                throw new InvalidOperationException(
+                    $"Could not instantiate forward component transformation{((e.Message != null) ? (":\n" + e.Message) : "")}", e);
             }
 
             // **** ImgDataConverter ****
@@ -1162,8 +1159,7 @@ namespace CoreJ2K
             }
             catch (ArgumentException e)
             {
-                error($"Could not instantiate wavelet transform{((e.Message != null) ? (":\n" + e.Message) : "")}", 2);
-                return null;
+                throw new InvalidOperationException($"Could not instantiate wavelet transform{((e.Message != null) ? (":\n" + e.Message) : "")}", e);
             }
 
             // **** Quantizer ****
@@ -1174,8 +1170,7 @@ namespace CoreJ2K
             }
             catch (ArgumentException e)
             {
-                error($"Could not instantiate quantizer{((e.Message != null) ? (":\n" + e.Message) : "")}", 2);
-                return null;
+                throw new InvalidOperationException($"Could not instantiate quantizer{((e.Message != null) ? (":\n" + e.Message) : "")}", e);
             }
 
             // **** ROIScaler ****
@@ -1186,8 +1181,7 @@ namespace CoreJ2K
             }
             catch (ArgumentException e)
             {
-                error($"Could not instantiate ROI scaler{((e.Message != null) ? (":\n" + e.Message) : "")}", 2);
-                return null;
+                throw new InvalidOperationException($"Could not instantiate ROI scaler{((e.Message != null) ? (":\n" + e.Message) : "")}", e);
             }
 
             // **** EntropyCoder ****
@@ -1209,8 +1203,7 @@ namespace CoreJ2K
             }
             catch (ArgumentException e)
             {
-                error($"Could not instantiate entropy coder{((e.Message != null) ? (":\n" + e.Message) : "")}", 2);
-                return null;
+                throw new InvalidOperationException($"Could not instantiate entropy coder{((e.Message != null) ? (":\n" + e.Message) : "")}", e);
             }
 
             // **** CodestreamWriter ****
@@ -1236,8 +1229,7 @@ namespace CoreJ2K
                 }
                 catch (ArgumentException e)
                 {
-                    error($"Could not instantiate rate allocator{((e.Message != null) ? (":\n" + e.Message) : "")}", 2);
-                    return null;
+                    throw new InvalidOperationException($"Could not instantiate rate allocator{((e.Message != null) ? (":\n" + e.Message) : "")}", e);
                 }
 
                 // **** HeaderEncoder ****
