@@ -34,6 +34,8 @@ namespace CoreJ2K
     using System.IO;
     using System.Runtime.InteropServices;
     using System.Text;
+    using System.Threading;
+    using System.Threading.Tasks;
     using Util;
 
     public partial class J2kImage
@@ -869,10 +871,7 @@ namespace CoreJ2K
             }
 
             if (ppminput && counter > 1)
-            {
-                error("With PPM input format only 1 input file can be specified", 2);
-                return null;
-            }
+                throw new ArgumentException("With PPM input format only one input stream can be specified.", nameof(streams));
 
             BlkImgDataSrc imgsrc;
 
@@ -892,13 +891,13 @@ namespace CoreJ2K
             return imgsrc;
         }
 
-        public static byte[]? ToBytes(object imageObject, ParameterList? parameters = null)
+        public static byte[] ToBytes(object imageObject, ParameterList? parameters = null)
         {
             var imgsrc = ImageFactory.ToPortableImageSource(imageObject);
             return ToBytes(imgsrc, parameters);
         }
 
-        public static byte[]? ToBytes(BlkImgDataSrc imgsrc, ParameterList? parameters = null)
+        public static byte[] ToBytes(BlkImgDataSrc imgsrc, ParameterList? parameters = null)
         {
             return ToBytes(imgsrc, null, parameters);
         }
@@ -910,7 +909,7 @@ namespace CoreJ2K
         /// <param name="metadata">Optional metadata (comments, XML, UUIDs) to include.</param>
         /// <param name="parameters">Optional encoder parameters.</param>
         /// <returns>The encoded JPEG2000 data.</returns>
-        public static byte[]? ToBytes(BlkImgDataSrc imgsrc, j2k.fileformat.metadata.J2KMetadata? metadata, ParameterList? parameters = null)
+        public static byte[] ToBytes(BlkImgDataSrc imgsrc, j2k.fileformat.metadata.J2KMetadata? metadata, ParameterList? parameters = null)
             => ToBytes(imgsrc, metadata, parameters, null);
 
         /// <summary>
@@ -919,7 +918,7 @@ namespace CoreJ2K
         /// is non-empty, the forward point transform is applied before compression, the codestream
         /// is branded with Part 2 capabilities (Rsiz + CAP), and the NLT marker segments are written.
         /// </summary>
-        public static byte[]? ToBytes(BlkImgDataSrc imgsrc, j2k.fileformat.metadata.J2KMetadata? metadata, ParameterList? parameters,
+        public static byte[] ToBytes(BlkImgDataSrc imgsrc, j2k.fileformat.metadata.J2KMetadata? metadata, ParameterList? parameters,
             System.Collections.Generic.IList<j2k.codestream.NLTMarkerSegment>? nltSegments,
             System.Collections.Generic.IList<j2k.codestream.MctEncodeSpec>? mctSpecs = null,
             j2k.codestream.DCOMarkerSegment? dcoSegment = null)
@@ -954,10 +953,7 @@ namespace CoreJ2K
             }
 
             if (pl.GetParameter("tiles") == null)
-            {
-                error("No tiles option specified", 2);
-                return null;
-            }
+                throw new InvalidOperationException("No tiles option specified.");
 
             if (string.Equals(pl.GetParameter("pph_tile"), "on", StringComparison.OrdinalIgnoreCase))
             {
@@ -998,10 +994,7 @@ namespace CoreJ2K
                 throw new ArgumentException("Cannot use '-rate' and '-lossless' option at  the same time.");
 
             if (pl.GetParameter("rate") == null)
-            {
-                error("Target bitrate not specified", 2);
-                return null;
-            }
+                throw new InvalidOperationException("Target bitrate not specified.");
             float rate;
             try
             {
@@ -1013,8 +1006,7 @@ namespace CoreJ2K
             }
             catch (FormatException)
             {
-                error($"Invalid value in 'rate' option: {pl.GetParameter("rate")}", 2);
-                return null;
+                throw new ArgumentException($"Invalid value in 'rate' option: {pl.GetParameter("rate")}");
             }
             int pktspertp;
             try
@@ -1036,8 +1028,7 @@ namespace CoreJ2K
             }
             catch (FormatException)
             {
-                error($"Invalid value in 'tile_parts' option: {pl.GetParameter("tile_parts")}", 2);
-                return null;
+                throw new ArgumentException($"Invalid value in 'tile_parts' option: {pl.GetParameter("tile_parts")}");
             }
 
             // **** ImgReader ****
@@ -1052,17 +1043,11 @@ namespace CoreJ2K
 
             stok.NextToken();
             if (stok.ttype != StreamTokenizerSupport.TT_NUMBER)
-            {
-                error($"An error occurred while parsing the tiles option: {pl.GetParameter("tiles")}", 2);
-                return null;
-            }
+                throw new ArgumentException($"An error occurred while parsing the tiles option: {pl.GetParameter("tiles")}");
             var tw = (int)stok.nval;
             stok.NextToken();
             if (stok.ttype != StreamTokenizerSupport.TT_NUMBER)
-            {
-                error($"An error occurred while parsing the tiles option: {pl.GetParameter("tiles")}", 2);
-                return null;
-            }
+                throw new ArgumentException($"An error occurred while parsing the tiles option: {pl.GetParameter("tiles")}");
             var th = (int)stok.nval;
 
             // Validate tile dimensions
@@ -1322,8 +1307,7 @@ namespace CoreJ2K
                 }
                 catch (IOException e)
                 {
-                    error($"Could not open output file{((e.Message != null) ? (":\n" + e.Message) : "")}", 2);
-                    return null;
+                    throw new InvalidOperationException($"Could not open output stream for writing: {e.Message}", e);
                 }
 
                 // **** Rate allocator ****
@@ -1421,10 +1405,7 @@ namespace CoreJ2K
                     }
                     catch (IOException e)
                     {
-                        error(
-                            $"Error while creating tileparts or packed packet headers{((e.Message != null) ? (":\n" + e.Message) : "")}",
-                            2);
-                        return null;
+                        throw new InvalidOperationException($"Error while creating tile-parts or packed packet headers: {e.Message}", e);
                     }
                 }
 
@@ -1488,7 +1469,7 @@ namespace CoreJ2K
         /// <param name="imageObject">The image to encode (SKBitmap, Bitmap, etc.).</param>
         /// <param name="configuration">Modern encoder configuration.</param>
         /// <returns>The encoded JPEG 2000 data.</returns>
-        public static byte[]? ToBytes(object imageObject, Configuration.J2KEncoderConfiguration configuration)
+        public static byte[] ToBytes(object imageObject, Configuration.J2KEncoderConfiguration configuration)
         {
             if (configuration == null)
                 throw new ArgumentNullException(nameof(configuration));
@@ -1506,7 +1487,7 @@ namespace CoreJ2K
         /// <param name="imgsrc">The image source to encode.</param>
         /// <param name="configuration">Modern encoder configuration.</param>
         /// <returns>The encoded JPEG 2000 data.</returns>
-        public static byte[]? ToBytes(BlkImgDataSrc imgsrc, Configuration.J2KEncoderConfiguration configuration)
+        public static byte[] ToBytes(BlkImgDataSrc imgsrc, Configuration.J2KEncoderConfiguration configuration)
         {
             if (configuration == null)
                 throw new ArgumentNullException(nameof(configuration));
@@ -1531,7 +1512,7 @@ namespace CoreJ2K
         /// <param name="metadata">Optional metadata to include in the JP2 file.</param>
         /// <param name="configuration">Modern encoder configuration.</param>
         /// <returns>The encoded JPEG 2000 data.</returns>
-        public static byte[]? ToBytes(BlkImgDataSrc imgsrc, j2k.fileformat.metadata.J2KMetadata? metadata, Configuration.J2KEncoderConfiguration configuration)
+        public static byte[] ToBytes(BlkImgDataSrc imgsrc, j2k.fileformat.metadata.J2KMetadata? metadata, Configuration.J2KEncoderConfiguration configuration)
         {
             if (configuration == null)
                 throw new ArgumentNullException(nameof(configuration));
@@ -1561,7 +1542,7 @@ namespace CoreJ2K
         {
             if (output == null) throw new ArgumentNullException(nameof(output));
             var data = ToBytes(imgsrc, parameters);
-            if (data != null) output.Write(data, 0, data.Length);
+            output.Write(data, 0, data.Length);
         }
 
         /// <summary>Encodes with metadata and writes to <paramref name="output"/>.</summary>
@@ -1570,7 +1551,7 @@ namespace CoreJ2K
         {
             if (output == null) throw new ArgumentNullException(nameof(output));
             var data = ToBytes(imgsrc, metadata, parameters);
-            if (data != null) output.Write(data, 0, data.Length);
+            output.Write(data, 0, data.Length);
         }
 
         /// <summary>Encodes with metadata and Part 2 transforms, then writes to <paramref name="output"/>.</summary>
@@ -1582,7 +1563,7 @@ namespace CoreJ2K
         {
             if (output == null) throw new ArgumentNullException(nameof(output));
             var data = ToBytes(imgsrc, metadata, parameters, nltSegments, mctSpecs, dcoSegment);
-            if (data != null) output.Write(data, 0, data.Length);
+            output.Write(data, 0, data.Length);
         }
 
         /// <summary>Encodes using modern configuration and writes to <paramref name="output"/>.</summary>
@@ -1590,8 +1571,8 @@ namespace CoreJ2K
             Configuration.J2KEncoderConfiguration configuration)
         {
             if (output == null) throw new ArgumentNullException(nameof(output));
-            var data = ToBytes(imgsrc, configuration);
-            if (data != null) output.Write(data, 0, data.Length);
+            var d1 = ToBytes(imgsrc, configuration);
+            output.Write(d1, 0, d1.Length);
         }
 
         /// <summary>Encodes using modern configuration with metadata and writes to <paramref name="output"/>.</summary>
@@ -1600,9 +1581,68 @@ namespace CoreJ2K
             Configuration.J2KEncoderConfiguration configuration)
         {
             if (output == null) throw new ArgumentNullException(nameof(output));
-            var data = ToBytes(imgsrc, metadata, configuration);
-            if (data != null) output.Write(data, 0, data.Length);
+            var d2 = ToBytes(imgsrc, metadata, configuration);
+            output.Write(d2, 0, d2.Length);
         }
+
+        #endregion
+
+        #region Async Methods
+
+        /// <summary>Decodes a JPEG 2000 stream asynchronously and returns image and metadata.</summary>
+        public static Task<J2kDecodeResult> DecodeStreamAsync(Stream stream,
+            ParameterList? parameters = null, CancellationToken cancellationToken = default)
+            => Task.Run(() => DecodeStream(stream, parameters), cancellationToken);
+
+        /// <summary>Decodes a JPEG 2000 stream asynchronously using modern configuration.</summary>
+        public static Task<J2kDecodeResult> DecodeStreamAsync(Stream stream,
+            Configuration.J2KDecoderConfiguration configuration,
+            CancellationToken cancellationToken = default)
+            => Task.Run(() => DecodeStream(stream, configuration), cancellationToken);
+
+        /// <summary>Decodes JPEG 2000 data from a byte array asynchronously.</summary>
+        public static Task<J2kDecodeResult> DecodeBytesAsync(byte[] data,
+            ParameterList? parameters = null, CancellationToken cancellationToken = default)
+            => Task.Run(() => DecodeBytes(data, parameters), cancellationToken);
+
+        /// <summary>Decodes JPEG 2000 data from a byte array asynchronously using modern configuration.</summary>
+        public static Task<J2kDecodeResult> DecodeBytesAsync(byte[] data,
+            Configuration.J2KDecoderConfiguration configuration,
+            CancellationToken cancellationToken = default)
+            => Task.Run(() => DecodeBytes(data, configuration), cancellationToken);
+
+        /// <summary>Decodes JPEG 2000 data from a <see cref="ReadOnlyMemory{T}"/> buffer asynchronously.</summary>
+        public static Task<J2kDecodeResult> DecodeBytesAsync(ReadOnlyMemory<byte> data,
+            ParameterList? parameters = null, CancellationToken cancellationToken = default)
+            => Task.Run(() => DecodeBytes(data, parameters), cancellationToken);
+
+        /// <summary>Decodes JPEG 2000 data from a <see cref="ReadOnlyMemory{T}"/> buffer asynchronously using modern configuration.</summary>
+        public static Task<J2kDecodeResult> DecodeBytesAsync(ReadOnlyMemory<byte> data,
+            Configuration.J2KDecoderConfiguration configuration,
+            CancellationToken cancellationToken = default)
+            => Task.Run(() => DecodeBytes(data, configuration), cancellationToken);
+
+        /// <summary>Encodes an image source asynchronously and returns the encoded bytes.</summary>
+        public static Task<byte[]> ToBytesAsync(BlkImgDataSrc imgsrc,
+            ParameterList? parameters = null, CancellationToken cancellationToken = default)
+            => Task.Run(() => ToBytes(imgsrc, parameters), cancellationToken);
+
+        /// <summary>Encodes an image source asynchronously using modern configuration.</summary>
+        public static Task<byte[]> ToBytesAsync(BlkImgDataSrc imgsrc,
+            Configuration.J2KEncoderConfiguration configuration,
+            CancellationToken cancellationToken = default)
+            => Task.Run(() => ToBytes(imgsrc, configuration), cancellationToken);
+
+        /// <summary>Encodes an image source asynchronously and writes the result to <paramref name="output"/>.</summary>
+        public static Task WriteToAsync(Stream output, BlkImgDataSrc imgsrc,
+            ParameterList? parameters = null, CancellationToken cancellationToken = default)
+            => Task.Run(() => WriteTo(output, imgsrc, parameters), cancellationToken);
+
+        /// <summary>Encodes an image source asynchronously using modern configuration and writes to <paramref name="output"/>.</summary>
+        public static Task WriteToAsync(Stream output, BlkImgDataSrc imgsrc,
+            Configuration.J2KEncoderConfiguration configuration,
+            CancellationToken cancellationToken = default)
+            => Task.Run(() => WriteTo(output, imgsrc, configuration), cancellationToken);
 
         #endregion
 

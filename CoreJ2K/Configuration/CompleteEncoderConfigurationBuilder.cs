@@ -3,8 +3,12 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using CoreJ2K.j2k.codestream;
+using CoreJ2K.Util;
 
 namespace CoreJ2K.Configuration
 {
@@ -326,6 +330,16 @@ namespace CoreJ2K.Configuration
         }
         
         /// <summary>
+        /// Enables or disables JP2/JPX file-format output (wraps the codestream in the file container).
+        /// Equivalent to <c>.WithEncoder(e => e.WithFileFormat(value))</c>.
+        /// </summary>
+        public CompleteEncoderConfigurationBuilder WithFileFormat(bool value = true)
+        {
+            _encoderConfig.WithFileFormat(value);
+            return this;
+        }
+
+        /// <summary>
         /// Adds a comment to the metadata.
         /// </summary>
         /// <param name="comment">The comment text.</param>
@@ -505,8 +519,43 @@ namespace CoreJ2K.Configuration
                 _dco)!;
         }
         
+        /// <summary>
+        /// Encodes an image object (SKBitmap, Bitmap, etc.) using this configuration.
+        /// The object is converted to an encodable source via <see cref="ImageFactory"/>.
+        /// </summary>
+        public byte[] Encode(object imageObject)
+        {
+            var imgsrc = ImageFactory.ToPortableImageSource(imageObject);
+            return Encode(imgsrc);
+        }
+
+        /// <summary>
+        /// Encodes an image and writes the result to <paramref name="output"/>.
+        /// The object is converted to an encodable source via <see cref="ImageFactory"/>.
+        /// </summary>
+        public void WriteTo(object imageObject, Stream output)
+        {
+            var imgsrc = ImageFactory.ToPortableImageSource(imageObject);
+            WriteTo(imgsrc, output);
+        }
+
+        /// <summary>Encodes an image asynchronously and returns the encoded bytes.</summary>
+        public Task<byte[]> EncodeAsync(j2k.image.BlkImgDataSrc imgsrc,
+            CancellationToken cancellationToken = default)
+            => Task.Run(() => Encode(imgsrc), cancellationToken);
+
+        /// <summary>Encodes an image object asynchronously and returns the encoded bytes.</summary>
+        public Task<byte[]> EncodeAsync(object imageObject,
+            CancellationToken cancellationToken = default)
+            => Task.Run(() => Encode(imageObject), cancellationToken);
+
+        /// <summary>Encodes an image asynchronously and writes the result to <paramref name="output"/>.</summary>
+        public Task WriteToAsync(j2k.image.BlkImgDataSrc imgsrc, Stream output,
+            CancellationToken cancellationToken = default)
+            => Task.Run(() => WriteTo(imgsrc, output), cancellationToken);
+
         #endregion
-        
+
         #region Validation
         
         /// <summary>

@@ -3,6 +3,9 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 using CoreJ2K.j2k.util;
 
 namespace CoreJ2K.Configuration
@@ -286,6 +289,33 @@ namespace CoreJ2K.Configuration
         /// Checks if the configuration is valid.
         /// </summary>
         public bool IsValid => Validate().Count == 0;
+
+        /// <summary>Decodes JPEG 2000 data from a byte array using this configuration.</summary>
+        public J2kDecodeResult Decode(byte[] data)
+            => J2kImage.DecodeBytes(data, this);
+
+        /// <summary>Decodes JPEG 2000 data from a <see cref="ReadOnlyMemory{T}"/> buffer using this configuration.</summary>
+        public J2kDecodeResult Decode(ReadOnlyMemory<byte> data)
+            => J2kImage.DecodeBytes(data, this);
+
+        /// <summary>Decodes a JPEG 2000 stream using this configuration.</summary>
+        public J2kDecodeResult Decode(Stream stream)
+            => J2kImage.DecodeStream(stream, this);
+
+        /// <summary>Decodes JPEG 2000 data from a byte array asynchronously using this configuration.</summary>
+        public Task<J2kDecodeResult> DecodeAsync(byte[] data,
+            CancellationToken cancellationToken = default)
+            => J2kImage.DecodeBytesAsync(data, this, cancellationToken);
+
+        /// <summary>Decodes JPEG 2000 data from a <see cref="ReadOnlyMemory{T}"/> buffer asynchronously using this configuration.</summary>
+        public Task<J2kDecodeResult> DecodeAsync(ReadOnlyMemory<byte> data,
+            CancellationToken cancellationToken = default)
+            => J2kImage.DecodeBytesAsync(data, this, cancellationToken);
+
+        /// <summary>Decodes a JPEG 2000 stream asynchronously using this configuration.</summary>
+        public Task<J2kDecodeResult> DecodeAsync(Stream stream,
+            CancellationToken cancellationToken = default)
+            => J2kImage.DecodeStreamAsync(stream, this, cancellationToken);
     }
     
     /// <summary>
