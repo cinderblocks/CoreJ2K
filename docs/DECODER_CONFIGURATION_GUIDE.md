@@ -537,6 +537,51 @@ var streamConfig = new J2KDecoderConfiguration()
 | **Analysis** | 0-2 | - | Off | Max code blocks | No |
 | **Archival** | -1 (highest) | - | On | None | Yes |
 
+## J2kDecodeResult — Image and Metadata Together
+
+All `Decode*` methods return a `J2kDecodeResult` that bundles the decoded image
+and any file-format metadata in a single object. This replaces the `out` parameter
+overloads of `FromStream`.
+
+```csharp
+// Decode and inspect metadata in one call
+var result = J2kImage.DecodeBytes(fileBytes);
+var image    = result.Image;
+var metadata = result.Metadata;
+
+// Or use deconstruction
+var (image, metadata) = J2kImage.DecodeBytes(fileBytes);
+
+// Works with configuration too
+var config = new J2KDecoderConfiguration().WithHighestResolution();
+var result = J2kImage.DecodeBytes(fileBytes, config);
+```
+
+Entry points:
+
+| Method | Source |
+|--------|--------|
+| `J2kImage.DecodeFile(path)` | File path |
+| `J2kImage.DecodeBytes(byte[])` | Byte array |
+| `J2kImage.DecodeBytes(ReadOnlyMemory<byte>)` | Memory buffer |
+| `J2kImage.DecodeStream(stream)` | Stream |
+
+Each has a `J2KDecoderConfiguration` overload as well.
+
+## ReadOnlyMemory Decode
+
+`FromBytes` and `DecodeBytes` both accept `ReadOnlyMemory<byte>`, which avoids
+an array copy when the data is already in a pooled or sliced buffer:
+
+```csharp
+ReadOnlyMemory<byte> mem = pool.Rent(size);
+// ... fill mem ...
+var image = J2kImage.FromBytes(mem);
+var result = J2kImage.DecodeBytes(mem);
+```
+
+When the memory is backed by an array (the common case), no copy is made.
+
 ## See Also
 
 - [Encoder Configuration Guide](ENCODER_CONFIGURATION_GUIDE.md)

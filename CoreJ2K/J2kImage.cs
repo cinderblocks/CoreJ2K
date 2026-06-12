@@ -32,6 +32,7 @@ namespace CoreJ2K
     using System;
     using System.Collections.Generic;
     using System.IO;
+    using System.Runtime.InteropServices;
     using System.Text;
     using Util;
 
@@ -94,6 +95,20 @@ namespace CoreJ2K
             {
                 return FromStream(stream, configuration);
             }
+        }
+
+        /// <summary>Decodes JPEG 2000 data from a <see cref="ReadOnlyMemory{T}"/> buffer.</summary>
+        public static InterleavedImage FromBytes(ReadOnlyMemory<byte> data, ParameterList? parameters = null)
+        {
+            using var stream = MemoryStreamFromMemory(data);
+            return FromStream(stream, parameters);
+        }
+
+        /// <summary>Decodes JPEG 2000 data from a <see cref="ReadOnlyMemory{T}"/> buffer using modern configuration.</summary>
+        public static InterleavedImage FromBytes(ReadOnlyMemory<byte> data, Configuration.J2KDecoderConfiguration configuration)
+        {
+            using var stream = MemoryStreamFromMemory(data);
+            return FromStream(stream, configuration);
         }
 
         public static InterleavedImage FromStream(Stream stream, ParameterList? parameters = null)
@@ -736,6 +751,75 @@ namespace CoreJ2K
             var pl = configuration.ToParameterList();
             
             return FromStream(stream, out metadata, pl);
+        }
+
+        #endregion
+
+        #region Decode Methods (return J2kDecodeResult)
+
+        /// <summary>
+        /// Decodes a JPEG 2000 file and returns both the image and any file-format metadata.
+        /// </summary>
+        public static J2kDecodeResult DecodeFile(string filename, ParameterList? parameters = null)
+        {
+            using var stream = FileStreamFactory.New(filename, "r");
+            return DecodeStream(stream, parameters);
+        }
+
+        /// <summary>Decodes a JPEG 2000 file using modern configuration and returns image and metadata.</summary>
+        public static J2kDecodeResult DecodeFile(string filename, Configuration.J2KDecoderConfiguration configuration)
+        {
+            using var stream = FileStreamFactory.New(filename, "r");
+            return DecodeStream(stream, configuration);
+        }
+
+        /// <summary>Decodes JPEG 2000 data from a byte array and returns image and metadata.</summary>
+        public static J2kDecodeResult DecodeBytes(byte[] data, ParameterList? parameters = null)
+        {
+            using var stream = new MemoryStream(data);
+            return DecodeStream(stream, parameters);
+        }
+
+        /// <summary>Decodes JPEG 2000 data from a byte array using modern configuration and returns image and metadata.</summary>
+        public static J2kDecodeResult DecodeBytes(byte[] data, Configuration.J2KDecoderConfiguration configuration)
+        {
+            using var stream = new MemoryStream(data);
+            return DecodeStream(stream, configuration);
+        }
+
+        /// <summary>Decodes JPEG 2000 data from a <see cref="ReadOnlyMemory{T}"/> buffer and returns image and metadata.</summary>
+        public static J2kDecodeResult DecodeBytes(ReadOnlyMemory<byte> data, ParameterList? parameters = null)
+        {
+            using var stream = MemoryStreamFromMemory(data);
+            return DecodeStream(stream, parameters);
+        }
+
+        /// <summary>Decodes JPEG 2000 data from a <see cref="ReadOnlyMemory{T}"/> buffer using modern configuration and returns image and metadata.</summary>
+        public static J2kDecodeResult DecodeBytes(ReadOnlyMemory<byte> data, Configuration.J2KDecoderConfiguration configuration)
+        {
+            using var stream = MemoryStreamFromMemory(data);
+            return DecodeStream(stream, configuration);
+        }
+
+        /// <summary>Decodes a JPEG 2000 stream and returns both the image and any file-format metadata.</summary>
+        public static J2kDecodeResult DecodeStream(Stream stream, ParameterList? parameters = null)
+        {
+            var image = FromStream(stream, out var metadata, parameters);
+            return new J2kDecodeResult(image, metadata);
+        }
+
+        /// <summary>Decodes a JPEG 2000 stream using modern configuration and returns image and metadata.</summary>
+        public static J2kDecodeResult DecodeStream(Stream stream, Configuration.J2KDecoderConfiguration configuration)
+        {
+            var image = FromStream(stream, out var metadata, configuration);
+            return new J2kDecodeResult(image, metadata);
+        }
+
+        private static MemoryStream MemoryStreamFromMemory(ReadOnlyMemory<byte> data)
+        {
+            if (MemoryMarshal.TryGetArray(data, out var segment))
+                return new MemoryStream(segment.Array!, segment.Offset, segment.Count, writable: false);
+            return new MemoryStream(data.ToArray());
         }
 
         #endregion
@@ -1459,6 +1543,65 @@ namespace CoreJ2K
             var pl = configuration.ToParameterList();
             
             return ToBytes(imgsrc, metadata, pl);
+        }
+
+        #endregion
+
+        #region WriteTo Methods
+
+        /// <summary>
+        /// Encodes an image and writes the result directly to <paramref name="output"/>.
+        /// </summary>
+        /// <remarks>
+        /// This is a convenience wrapper over <see cref="ToBytes(BlkImgDataSrc,ParameterList)"/>.
+        /// The encoded bytes are currently buffered internally before being written to the stream;
+        /// a future version may eliminate that intermediate allocation for seekable streams.
+        /// </remarks>
+        public static void WriteTo(Stream output, BlkImgDataSrc imgsrc, ParameterList? parameters = null)
+        {
+            if (output == null) throw new ArgumentNullException(nameof(output));
+            var data = ToBytes(imgsrc, parameters);
+            if (data != null) output.Write(data, 0, data.Length);
+        }
+
+        /// <summary>Encodes with metadata and writes to <paramref name="output"/>.</summary>
+        public static void WriteTo(Stream output, BlkImgDataSrc imgsrc,
+            j2k.fileformat.metadata.J2KMetadata? metadata, ParameterList? parameters = null)
+        {
+            if (output == null) throw new ArgumentNullException(nameof(output));
+            var data = ToBytes(imgsrc, metadata, parameters);
+            if (data != null) output.Write(data, 0, data.Length);
+        }
+
+        /// <summary>Encodes with metadata and Part 2 transforms, then writes to <paramref name="output"/>.</summary>
+        public static void WriteTo(Stream output, BlkImgDataSrc imgsrc,
+            j2k.fileformat.metadata.J2KMetadata? metadata, ParameterList? parameters,
+            System.Collections.Generic.IList<j2k.codestream.NLTMarkerSegment>? nltSegments,
+            System.Collections.Generic.IList<j2k.codestream.MctEncodeSpec>? mctSpecs = null,
+            j2k.codestream.DCOMarkerSegment? dcoSegment = null)
+        {
+            if (output == null) throw new ArgumentNullException(nameof(output));
+            var data = ToBytes(imgsrc, metadata, parameters, nltSegments, mctSpecs, dcoSegment);
+            if (data != null) output.Write(data, 0, data.Length);
+        }
+
+        /// <summary>Encodes using modern configuration and writes to <paramref name="output"/>.</summary>
+        public static void WriteTo(Stream output, BlkImgDataSrc imgsrc,
+            Configuration.J2KEncoderConfiguration configuration)
+        {
+            if (output == null) throw new ArgumentNullException(nameof(output));
+            var data = ToBytes(imgsrc, configuration);
+            if (data != null) output.Write(data, 0, data.Length);
+        }
+
+        /// <summary>Encodes using modern configuration with metadata and writes to <paramref name="output"/>.</summary>
+        public static void WriteTo(Stream output, BlkImgDataSrc imgsrc,
+            j2k.fileformat.metadata.J2KMetadata? metadata,
+            Configuration.J2KEncoderConfiguration configuration)
+        {
+            if (output == null) throw new ArgumentNullException(nameof(output));
+            var data = ToBytes(imgsrc, metadata, configuration);
+            if (data != null) output.Write(data, 0, data.Length);
         }
 
         #endregion

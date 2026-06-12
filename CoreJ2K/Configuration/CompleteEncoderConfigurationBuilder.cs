@@ -471,6 +471,23 @@ namespace CoreJ2K.Configuration
         }
         
         /// <summary>
+        /// Encodes an image using this configuration and writes the result to <paramref name="output"/>.
+        /// </summary>
+        /// <param name="imgsrc">The image source to encode.</param>
+        /// <param name="output">The stream to write the encoded data to.</param>
+        public void WriteTo(j2k.image.BlkImgDataSrc imgsrc, System.IO.Stream output)
+        {
+            if (output == null) throw new System.ArgumentNullException(nameof(output));
+            var config = Build();
+            var metadata = GetMetadata();
+            var pl = config.ToParameterList();
+            J2kImage.WriteTo(output, imgsrc, metadata, pl,
+                _nlts is { Count: > 0 } ? _nlts : null,
+                _mcts is { Count: > 0 } ? _mcts : null,
+                _dco);
+        }
+
+        /// <summary>
         /// Encodes an image using this configuration.
         /// Note: This requires the image to be converted to BlkImgDataSrc first.
         /// </summary>

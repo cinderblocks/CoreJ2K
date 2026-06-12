@@ -25,7 +25,7 @@ using CoreJ2K.Configuration;
 
 // Encode with a preset
 byte[] data = CompleteConfigurationPresets.Web
-    .WithCopyright("© 2025 My Company")
+    .WithCopyright("ï¿½ 2025 My Company")
     .Encode(imageSource);
 ```
 
@@ -35,7 +35,7 @@ byte[] data = CompleteConfigurationPresets.Web
 // Create configuration
 var config = new CompleteEncoderConfigurationBuilder()
     .ForHighQuality()
-    .WithCopyright("© 2025")
+    .WithCopyright("ï¿½ 2025")
     .Build();
 
 // Encode image
@@ -48,7 +48,7 @@ byte[] jp2Data = J2kImage.ToBytes(imageSource, config);
 var config = new CompleteEncoderConfigurationBuilder()
     .ForWeb()
     .WithComment("Product photo")
-    .WithCopyright("© 2025 Company")
+    .WithCopyright("ï¿½ 2025 Company")
     .WithMetadata(m => m.WithXml(xmpData))
     .Build();
 
@@ -167,7 +167,7 @@ var config = new CompleteEncoderConfigurationBuilder()
 - Lossless compression
 - Reversible 5/3 wavelet
 - Resolution progressive
-- 512×512 tiles
+- 512ï¿½512 tiles
 - **Use for:** DICOM, diagnostic imaging, patient records
 
 ### ForArchival()
@@ -177,7 +177,7 @@ Very high quality for long-term preservation.
 ```csharp
 var config = new CompleteEncoderConfigurationBuilder()
     .ForArchival()
-    .WithCopyright("© 2025 Institution");
+    .WithCopyright("ï¿½ 2025 Institution");
 ```
 
 **Settings:**
@@ -185,7 +185,7 @@ var config = new CompleteEncoderConfigurationBuilder()
 - Base step size: 0.0015
 - 6 decomposition levels
 - Error resilience enabled
-- 1024×1024 tiles
+- 1024ï¿½1024 tiles
 - **Use for:** Museums, libraries, historical archives
 
 ### ForWeb()
@@ -201,7 +201,7 @@ var config = new CompleteEncoderConfigurationBuilder()
 **Settings:**
 - Quality: 75%
 - Quality progressive
-- 512×512 tiles
+- 512ï¿½512 tiles
 - Web-optimized
 - **Use for:** Websites, galleries, e-commerce
 
@@ -217,7 +217,7 @@ var config = new CompleteEncoderConfigurationBuilder()
 **Settings:**
 - Bitrate: 0.5 bpp
 - 3 decomposition levels
-- 256×256 tiles
+- 256ï¿½256 tiles
 - Fast encoding
 - **Use for:** Thumbnails, previews, icons
 
@@ -233,7 +233,7 @@ var config = new CompleteEncoderConfigurationBuilder()
 
 **Settings:**
 - Spatial progressive (RPCL)
-- 256×256 tiles
+- 256ï¿½256 tiles
 - Optimized for panning/zooming
 - **Use for:** Maps, satellite imagery, GIS
 
@@ -248,7 +248,7 @@ var config = new CompleteEncoderConfigurationBuilder()
 
 **Settings:**
 - Quality progressive (LRCP)
-- 512×512 tiles
+- 512ï¿½512 tiles
 - Optimized for progressive display
 - **Use for:** Streaming, progressive download
 
@@ -286,7 +286,7 @@ CompleteConfigurationPresets.GeneralPurpose
 
 ```csharp
 byte[] data = CompleteConfigurationPresets.Web
-    .WithCopyright("© 2025")
+    .WithCopyright("ï¿½ 2025")
     .Encode(imageSource);
 ```
 
@@ -322,7 +322,7 @@ byte[] data = CompleteConfigurationPresets.Web
 ```csharp
 .WithMetadata(m => m
     .WithComment("Description")
-    .WithCopyright("© 2025")
+    .WithCopyright("ï¿½ 2025")
     .WithXml(xmpData)
     .WithUuid(guid, data))
 ```
@@ -344,7 +344,7 @@ byte[] data = CompleteConfigurationPresets.Web
 .WithBitrate(2.0f)
 .WithTiles(t => t.SetSize(512, 512))
 .WithComment("Comment text")
-.WithCopyright("© 2025")
+.WithCopyright("ï¿½ 2025")
 ```
 
 ## Real-World Examples
@@ -376,7 +376,7 @@ byte[] dicomData = J2kImage.ToBytes(medicalImage, config);
 ```csharp
 var config = new CompleteEncoderConfigurationBuilder()
     .ForHighQuality()
-    .WithCopyright("© 2025 John Doe Photography")
+    .WithCopyright("ï¿½ 2025 John Doe Photography")
     .WithComment("Sunset over Grand Canyon")
     .WithComment("Canon EOS R5 + RF 24-105mm f/4")
     .WithMetadata(m => m
@@ -399,7 +399,7 @@ var config = new CompleteEncoderConfigurationBuilder()
     .ForWeb()
     .WithProgression(p => p.UseRLCP()) // Resolution progressive
     .WithTiles(t => t.SetSize(512, 512))
-    .WithCopyright("© 2025 E-Shop Inc.")
+    .WithCopyright("ï¿½ 2025 E-Shop Inc.")
     .WithComment("Product SKU: ABC-123")
     .WithComment("Category: Electronics")
     .Build();
@@ -421,7 +421,7 @@ var config = new CompleteEncoderConfigurationBuilder()
                  "<resolution>30m</resolution>" +
                  "<bands>7</bands>" +
                  "</gml:metadata>")
-        .WithCopyright("© 2025 Satellite Provider"))
+        .WithCopyright("ï¿½ 2025 Satellite Provider"))
     .WithTiles(t => t.SetSize(256, 256))
     .Build();
 
@@ -439,7 +439,7 @@ var config = new CompleteEncoderConfigurationBuilder()
         .WithComment("Scanned: 2025-01-15")
         .WithComment("Scanner: Epson Expression 12000XL")
         .WithComment("DPI: 600")
-        .WithCopyright("© 2025 National Archives")
+        .WithCopyright("ï¿½ 2025 National Archives")
         .WithXml("<archive>" +
                  "<collection>Historical Letters</collection>" +
                  "<year>1865</year>" +
@@ -463,7 +463,7 @@ foreach (var (width, height) in sizes)
     var thumbnailConfig = new CompleteEncoderConfigurationBuilder()
         .ForThumbnail()
         .WithTiles(t => t.SetSize(width, height))
-        .WithComment($"Thumbnail {width}×{height}")
+        .WithComment($"Thumbnail {width}ï¿½{height}")
         .Build();
     
     var resizedImage = ResizeImage(originalImage, width, height);
@@ -489,7 +489,7 @@ var config = new CompleteEncoderConfigurationBuilder()
     .WithMetadata(m => m
         .WithComment("Art Gallery Collection")
         .WithComment("Available for purchase")
-        .WithCopyright("© 2025 Artist Name")
+        .WithCopyright("ï¿½ 2025 Artist Name")
         .WithXml(iptcMetadata))
     .Build();
 
@@ -524,7 +524,7 @@ var config = new CompleteEncoderConfigurationBuilder()
     .WithMetadata(m => m
         .WithComment("Custom optimized configuration")
         .WithComment("Tuned for specific use case")
-        .WithCopyright("© 2025 Company")
+        .WithCopyright("ï¿½ 2025 Company")
         .WithXml(customMetadata)
         .WithUuid(applicationGuid, customData))
     .Build();
@@ -605,14 +605,14 @@ byte[] data = config.Encode(imageSource);
 // Build configuration without encoding immediately
 var config = new CompleteEncoderConfigurationBuilder()
     .ForWeb()
-    .WithCopyright("© 2025")
+    .WithCopyright("ï¿½ 2025")
     .Build();
 
 // Get metadata separately
 var metadata = new CompleteEncoderConfigurationBuilder()
     .WithMetadata(m => m
         .WithComment("Test")
-        .WithCopyright("© 2025"))
+        .WithCopyright("ï¿½ 2025"))
     .GetMetadata();
 
 // Use later
@@ -703,12 +703,12 @@ Static preset instances:
 ```csharp
 // Good: Start with a preset and customize
 var config = CompleteConfigurationPresets.Web
-    .WithCopyright("© 2025");
+    .WithCopyright("ï¿½ 2025");
 
 // Also good: Use preset methods
 var config = new CompleteEncoderConfigurationBuilder()
     .ForWeb()
-    .WithCopyright("© 2025");
+    .WithCopyright("ï¿½ 2025");
 ```
 
 ### 2. Match Configuration to Use Case
@@ -728,7 +728,7 @@ var config = new CompleteEncoderConfigurationBuilder()
 
 ```csharp
 // Always include copyright and relevant context
-.WithCopyright("© 2025 Your Organization")
+.WithCopyright("ï¿½ 2025 Your Organization")
 .WithComment("Purpose/Description")
 .WithComment("Source/Origin")
 ```
@@ -791,6 +791,44 @@ if (!config.IsValid)
    .WithProgression(p => p.UseLRCP())
    ```
 
+## Part 2 Transforms (JPX)
+
+DCO, NLT, and MCT are available directly on the builder. Using any of them
+produces a JPX codestream with a `rreq` box written automatically.
+
+```csharp
+// DCO â€” per-component DC offset
+builder.WithDco(128);               // one offset applied to component 0
+builder.WithDco(128, 128, 128);     // one per component
+
+// NLT â€” non-linear point transform
+builder.AddNlt(new NLTMarkerSegment { Type = NLTType.Gamma, GammaExponent = 2.2 });
+builder.AddNlt(s => { s.Type = NLTType.None; });  // inline action form
+
+// MCT â€” multi-component matrix transform
+builder.AddMct(new MctEncodeSpec { ... });
+```
+
+See [Part 2 Transforms Guide](PART2_TRANSFORMS_GUIDE.md) for full details.
+
+## Writing Directly to a Stream
+
+`WriteTo` avoids keeping the full encoded byte array in your code:
+
+```csharp
+using var file = File.OpenWrite("output.jp2");
+new CompleteEncoderConfigurationBuilder()
+    .ForLossless()
+    .WithEncoder(e => e.WithFileFormat(true))
+    .WriteTo(imageSource, file);
+```
+
+`WriteTo` accepts the same image source as `Encode`. Part 2 transforms are applied
+when configured, exactly as with `Encode`.
+
+> **Note:** The current implementation buffers the encoded bytes internally before
+> writing to the stream. A future version will write directly for seekable streams.
+
 ## See Also
 
 - [Encoder Configuration Guide](ENCODER_CONFIGURATION_GUIDE.md)
@@ -798,6 +836,7 @@ if (!config.IsValid)
 - [Wavelet Configuration Guide](WAVELET_CONFIGURATION_GUIDE.md)
 - [Progression Configuration Guide](PROGRESSION_CONFIGURATION_GUIDE.md)
 - [Metadata Configuration Guide](METADATA_CONFIGURATION_GUIDE.md)
+- [Part 2 Transforms Guide](PART2_TRANSFORMS_GUIDE.md)
 
 ---
 
