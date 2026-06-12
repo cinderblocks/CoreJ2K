@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using CoreJ2K.j2k.codestream;
 
 namespace CoreJ2K.Configuration
 {
@@ -18,6 +19,9 @@ namespace CoreJ2K.Configuration
         private WaveletConfigurationBuilder? _wavelet = null;
         private ProgressionConfigurationBuilder? _progression = null;
         private MetadataConfigurationBuilder? _metadata = null;
+        private DCOMarkerSegment? _dco = null;
+        private List<NLTMarkerSegment>? _nlts = null;
+        private List<MctEncodeSpec>? _mcts = null;
         
         /// <summary>
         /// Gets the underlying encoder configuration.
@@ -43,6 +47,21 @@ namespace CoreJ2K.Configuration
         /// Gets the metadata configuration.
         /// </summary>
         public MetadataConfigurationBuilder? Metadata => _metadata;
+
+        /// <summary>
+        /// Gets the configured DC offset segment, or null if DCO is not active.
+        /// </summary>
+        public DCOMarkerSegment? Dco => _dco;
+
+        /// <summary>
+        /// Gets the configured NLT segments, or null if NLT is not active.
+        /// </summary>
+        public IReadOnlyList<NLTMarkerSegment>? Nlts => _nlts?.AsReadOnly();
+
+        /// <summary>
+        /// Gets the configured MCT encode specs, or null if MCT is not active.
+        /// </summary>
+        public IReadOnlyList<MctEncodeSpec>? Mcts => _mcts?.AsReadOnly();
         
         #region Quality Presets
         
@@ -335,7 +354,71 @@ namespace CoreJ2K.Configuration
         }
         
         #endregion
-        
+
+        #region Part 2 Transforms
+
+        /// <summary>
+        /// Applies a Variable DC Offset (DCO, ISO/IEC 15444-2 §A.3) per-component integer
+        /// offset subtracted before wavelet encoding and restored after decoding.
+        /// Produces a JPX codestream; <see cref="J2KEncoderConfiguration.UseFileFormat"/> is
+        /// implied when file-format output is requested.
+        /// </summary>
+        /// <param name="offsets">One signed integer offset per component, in component order.</param>
+        public CompleteEncoderConfigurationBuilder WithDco(params int[] offsets)
+        {
+            if (offsets == null || offsets.Length == 0)
+                throw new ArgumentException("At least one offset is required.", nameof(offsets));
+            _dco = new DCOMarkerSegment { Offsets = (int[])offsets.Clone() };
+            return this;
+        }
+
+        /// <summary>
+        /// Applies a Variable DC Offset (DCO) using a pre-built segment.
+        /// </summary>
+        public CompleteEncoderConfigurationBuilder WithDco(DCOMarkerSegment segment)
+        {
+            _dco = segment ?? throw new ArgumentNullException(nameof(segment));
+            return this;
+        }
+
+        /// <summary>
+        /// Adds a Non-Linear point Transform (NLT, ISO/IEC 15444-2 §A.4) segment.
+        /// Call once per component (or once globally with ComponentIndex == AllComponents).
+        /// Produces a JPX codestream.
+        /// </summary>
+        public CompleteEncoderConfigurationBuilder AddNlt(NLTMarkerSegment segment)
+        {
+            if (segment == null) throw new ArgumentNullException(nameof(segment));
+            _nlts ??= new List<NLTMarkerSegment>();
+            _nlts.Add(segment);
+            return this;
+        }
+
+        /// <summary>
+        /// Configures and adds a Non-Linear point Transform (NLT) segment via an inline action.
+        /// </summary>
+        public CompleteEncoderConfigurationBuilder AddNlt(Action<NLTMarkerSegment> configure)
+        {
+            if (configure == null) throw new ArgumentNullException(nameof(configure));
+            var seg = new NLTMarkerSegment();
+            configure(seg);
+            return AddNlt(seg);
+        }
+
+        /// <summary>
+        /// Adds a Multiple Component Transform (MCT, ISO/IEC 15444-2 §A.5) encode spec.
+        /// Call once per transform stage. Produces a JPX codestream.
+        /// </summary>
+        public CompleteEncoderConfigurationBuilder AddMct(MctEncodeSpec spec)
+        {
+            if (spec == null) throw new ArgumentNullException(nameof(spec));
+            _mcts ??= new List<MctEncodeSpec>();
+            _mcts.Add(spec);
+            return this;
+        }
+
+        #endregion
+
         #region Build Methods
         
         /// <summary>
@@ -397,15 +480,12 @@ namespace CoreJ2K.Configuration
         {
             var config = Build();
             var metadata = GetMetadata();
-            
-            if (metadata != null)
-            {
-                return J2kImage.ToBytes(imgsrc, metadata, config)!;
-            }
-            else
-            {
-                return J2kImage.ToBytes(imgsrc, config)!;
-            }
+            var pl = config.ToParameterList();
+
+            return J2kImage.ToBytes(imgsrc, metadata, pl,
+                _nlts is { Count: > 0 } ? _nlts : null,
+                _mcts is { Count: > 0 } ? _mcts : null,
+                _dco)!;
         }
         
         #endregion
@@ -438,7 +518,29 @@ namespace CoreJ2K.Configuration
             // Validate metadata
             if (_metadata != null)
                 errors.AddRange(_metadata.Validate());
-            
+
+            // Validate Part 2 segments
+            if (_dco != null && _dco.Offsets.Length == 0)
+                errors.Add("DCO segment has no offsets.");
+
+            if (_nlts != null)
+            {
+                foreach (var nlt in _nlts)
+                {
+                    if (nlt.BitDepth < 1 || nlt.BitDepth > 38)
+                        errors.Add($"NLT segment has invalid bit depth {nlt.BitDepth}.");
+                }
+            }
+
+            if (_mcts != null)
+            {
+                foreach (var mct in _mcts)
+                {
+                    if (mct.Components == null || mct.Components.Length < 2)
+                        errors.Add("MCT spec must reference at least 2 components.");
+                }
+            }
+
             return errors;
         }
         
@@ -469,7 +571,16 @@ namespace CoreJ2K.Configuration
             
             if (_metadata != null && _metadata.HasMetadata)
                 parts.Add(_metadata.ToString());
-            
+
+            if (_dco != null)
+                parts.Add($"DCO ({_dco.Offsets.Length} component(s))");
+
+            if (_nlts is { Count: > 0 })
+                parts.Add($"NLT ({_nlts.Count} segment(s))");
+
+            if (_mcts is { Count: > 0 })
+                parts.Add($"MCT ({_mcts.Count} stage(s))");
+
             return string.Join("; ", parts);
         }
     }
