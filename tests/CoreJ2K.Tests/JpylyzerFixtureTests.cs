@@ -47,19 +47,16 @@ namespace CoreJ2K.Tests
             Assert.True(reader.FirstCodeStreamLength > 0);
         }
 
-        // KNOWN LIMITATION (surfaced by this third-party file): full decode of reference.jp2
-        // currently throws ArgumentOutOfRangeException in InvWTFull.waveletTreeReconstruction,
-        // preceded by many entropy "Error detected at bit-plane" warnings. The root cause is
-        // upstream of the wavelet stage — the codestream's coding features are mis-decoded, so the
-        // subband geometry handed to reconstruction is inconsistent. Tracked as a decode bug to
-        // investigate separately; box-level parsing of this file works (see the test above).
-        [Fact(Skip = "Known decode limitation: real-world Kakadu JP2 mis-decodes upstream of InvWTFull; box parsing works.")]
+        // This real-world Kakadu JP2 is tiled 1024x1024 (with partial edge tiles); it exercises the
+        // multi-tile decode path that was fixed in PktDecoder.restart (see MultiTileDecodeTests).
+        [Fact]
         public void ReferenceJp2_Decodes()
         {
             var img = J2kImage.FromBytes(Load("reference.jp2"));
 
             Assert.NotNull(img);
-            Assert.True(img.Width > 0 && img.Height > 0);
+            Assert.Equal(2717, img.Width);
+            Assert.Equal(3701, img.Height);
         }
 
         [Fact]

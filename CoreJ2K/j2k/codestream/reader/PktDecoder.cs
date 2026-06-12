@@ -208,6 +208,13 @@ namespace CoreJ2K.j2k.codestream.reader
         /// <summary>Cached numPrec grid from the previous tile for geometry comparison.</summary>
         private Coord[][] _prevNumPrec;
 
+        /// <summary>Cached tile-component dimensions from the previous tile. A partial (edge) tile
+        /// can share <see cref="_prevMdl"/> and <see cref="_prevNumPrec"/> with a full tile yet be
+        /// smaller, so reusing the code-block scaffold would carry stale (full-tile) code-block
+        /// geometry. These guard the reuse against that.</summary>
+        private int[] _prevTCW;
+        private int[] _prevTCH;
+
         /// <summary>PLT (Packet Length) marker segment data for fast packet access</summary>
         private readonly PacketLengthsData pltData;
 
@@ -297,13 +304,22 @@ namespace CoreJ2K.j2k.codestream.reader
             // reuse the TagTreeDecoder scaffold instead of reallocating it.
             bool sameGeometry = (ttIncl != null) && (_prevMdl != null) &&
                                  (numPrec != null) && (_prevNumPrec != null) &&
-                                 (_prevMdl.Length == nc);
+                                 (_prevMdl.Length == nc) &&
+                                 (_prevTCW != null) && (_prevTCH != null) && (_prevTCW.Length == nc);
             if (sameGeometry)
             {
                 for (var c2 = 0; c2 < nc && sameGeometry; c2++)
                 {
                     if (_prevMdl[c2] != mdl[c2] ||
                         _prevNumPrec[c2].Length != mdl[c2] + 1)
+                    {
+                        sameGeometry = false;
+                        break;
+                    }
+                    // A partial (edge) tile can match mdl and numPrec but be smaller; the code-block
+                    // geometry depends on the actual tile-component size, so it must match too.
+                    if (_prevTCW[c2] != src.GetTileCompWidth(tIdx, c2, mdl[c2]) ||
+                        _prevTCH[c2] != src.GetTileCompHeight(tIdx, c2, mdl[c2]))
                     {
                         sameGeometry = false;
                         break;
@@ -419,7 +435,18 @@ namespace CoreJ2K.j2k.codestream.reader
                         sb = (SubbandSyn)root.GetSubbandByIdx(r, s);
                         nBlk = sb.numCb;
 
-                        if (!sameGeometry)
+                        // Reuse the existing scaffold only when its code-block grid actually matches
+                        // this subband's grid. Even with matching mdl/numPrec, the per-subband grid
+                        // can differ (e.g. partial-edge tiles), in which case we must reallocate
+                        // rather than index past the previous tile's smaller grid.
+                        var gridMatches = sameGeometry
+                            && cbI[c][r][s] != null && cbI[c][r][s].Length == nBlk.y
+                            && lblock[c][r][s] != null && lblock[c][r][s].Length == nBlk.y
+                            && (nBlk.y == 0
+                                || (cbI[c][r][s][0] != null && cbI[c][r][s][0].Length == nBlk.x
+                                    && lblock[c][r][s][0] != null && lblock[c][r][s][0].Length == nBlk.x));
+
+                        if (!gridMatches)
                         {
                             cbI[c][r][s] = new CBlkInfo[nBlk.y][];
                             for (var i3 = 0; i3 < nBlk.y; i3++)
@@ -460,6 +487,17 @@ namespace CoreJ2K.j2k.codestream.reader
                 _prevMdl = new int[nc];
             mdl.CopyTo(_prevMdl, 0);
             _prevNumPrec = numPrec;
+
+            if (_prevTCW == null || _prevTCW.Length != nc)
+            {
+                _prevTCW = new int[nc];
+                _prevTCH = new int[nc];
+            }
+            for (var c = 0; c < nc; c++)
+            {
+                _prevTCW[c] = src.GetTileCompWidth(tIdx, c, mdl[c]);
+                _prevTCH[c] = src.GetTileCompHeight(tIdx, c, mdl[c]);
+            }
 
             return cbI;
         }
