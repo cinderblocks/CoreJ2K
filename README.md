@@ -66,6 +66,7 @@ byte[] j2kData = J2kImage.ToBytes(bitmap);
   - [Usage Notes](#usage-notes)
 - **[Standards & Compliance](#standards--compliance)**
   - [JPEG 2000 Part 1 (100%)](#part-1-core-coding-system)
+  - [JPEG 2000 Part 2 (~50%)](#part-2-extensions)
   - [Library Comparison](#library-comparison)
   - [Full Specification Details](#jpeg-2000-specification-compliance)
 - **[Support](#support)**
@@ -84,7 +85,7 @@ CoreJ2K is a **pure C# implementation** of the JPEG 2000 image compression stand
 
 | Feature | Description |
 |---------|-------------|
-| **🏆 Standards Compliant** | 100% JPEG 2000 Part 1 (ISO/IEC 15444-1) • 27 codestream markers • 22 JP2 boxes • Part 14 JPXML |
+| **🏆 Standards Compliant** | 100% JPEG 2000 Part 1 (ISO/IEC 15444-1) • ~50% Part 2 extensions • 27 codestream markers • 22 JP2 boxes • Part 14 JPXML |
 | **⚡ Modern .NET** | .NET Standard 2.0/2.1 • .NET 8/9/10 • .NET Framework 4.8.1 (via netstandard2.0) • All platforms |
 | **🎯 Production Ready** | Lossless/Lossy • ROI • Files >4GB • Error resilience • 2500+ tests |
 | **📦 Easy Integration** | NuGet packages • Simple API • SkiaSharp/ImageSharp/System.Drawing support |
@@ -496,6 +497,37 @@ else
 - Extended Features: ✅ 100%
 - Part 14 JPXML: ✅ 100%
 
+### Part 2: Extensions
+
+CoreJ2K implements the most commonly used JPEG 2000 Part 2 (ISO/IEC 15444-2) features end-to-end (encode and decode):
+
+| Feature | Markers | Read | Write | Notes |
+|---------|---------|------|-------|-------|
+| **JPX File Format** | ASOC, NLST, DTBL, FTBL, FLST, CREF, JPCH, JPLH | ✅ | ✅ | Full JPX box set + `jpx ` brand |
+| **Extended Capabilities** | CAP (0xFF50) | ✅ | ✅ | Auto-emitted for any Part 2 codestream |
+| **Variable DC Offset** | DCO (0xFF70) | ✅ | ✅ | Per-component integer DC shifts |
+| **Non-linearity Transform** | NLT (0xFF76) | ✅ | ✅ | Gamma (power-law) and LUT types |
+| **Multi-Component Transform** | MCT/MCC/MCO (0xFF74–77) | ✅ | ✅ | Matrix decorrelation, dependency lifting, 5/3 wavelet |
+| **Component Bit Depth** | CBD (0xFF78) | ✅ | ✅ | Per-component depth signaling |
+| **Arbitrary Decomposition** | DFS/ADS (0xFF72–73) | ❌ | ❌ | Non-standard wavelet tree shapes |
+| **Arbitrary Transform Kernels** | ATK (0xFF79) | ❌ | ❌ | Custom wavelet filter coefficients |
+| **Trellis Coded Quantization** | — | ❌ | ❌ | Alternative entropy path |
+| **Single Sample Overlap** | — | ❌ | ❌ | Tie-in with DFS/ADS |
+
+**Coverage: ~50%** — all production-relevant per-sample and multi-component transforms are implemented. Remaining gaps are the wavelet-shape and custom-kernel features (ATK, DFS/ADS).
+
+> **API note:** Pass Part 2 parameters to `J2kImage.ToBytes`:
+> ```csharp
+> // DCO: per-component DC offset
+> var dco = new DCOMarkerSegment { Offsets = new[] { 10, -3, 20 } };
+>
+> // NLT: gamma non-linearity
+> var nlt = new NLTMarkerSegment { Type = NLTType.Gamma, GammaExponent = 2.2 };
+>
+> // Encode with Part 2 extensions (Rsiz + CAP written automatically)
+> byte[] data = J2kImage.ToBytes(src, metadata, pl, nltSegments: new[] { nlt }, dcoSegment: dco);
+> ```
+
 ### Library Comparison
 
 Quick comparison with major JPEG 2000 libraries:
@@ -503,6 +535,7 @@ Quick comparison with major JPEG 2000 libraries:
 | Feature | CoreJ2K | Kakadu | OpenJPEG | JJ2000 | LEADTOOLS |
 |---------|---------|---------|----------|---------|-----------|
 | **Part 1 Compliance** | ✅ 100% | ✅ 100% | ⚠️ ~95% | ⚠️ ~90% | ✅ 100% |
+| **Part 2 Coverage** | ⚠️ ~50% | ✅ ~95% | ⚠️ ~20% | ❌ 0% | ✅ ~80% |
 | **Language** | C# | C++ | C | Java | C/C++ |
 | **License** | BSD (Free) | Commercial | BSD (Free) | JJ2000 | Commercial |
 | **Cost** | ✅ Free | ❌ $$$$ | ✅ Free | ✅ Free | ❌ $$$$ |
@@ -528,7 +561,7 @@ CoreJ2K supports multiple parts of ISO/IEC 15444:
 | Part | Name | Read | Write | Status |
 |------|------|------|-------|--------|
 | **Part 1** | Core Coding System | ✅ Full | ✅ Full | **100%** Complete |
-| **Part 2** | Extensions | ⚠️ Partial | ⚠️ Partial | ~30% (select features) |
+| **Part 2** | Extensions | ⚠️ Partial | ⚠️ Partial | **~50%** — JPX boxes, DCO, NLT, MCT family; ATK/DFS pending |
 | **Part 4** | Conformance Testing | N/A | N/A | **100%** Complete |
 | **Part 14** | XML Representation (JPXML) | ✅ Full | ✅ Full | **100%** Complete |
 
@@ -630,6 +663,7 @@ Free to use in commercial and open-source projects. No licensing fees.
 | Feature | CoreJ2K | Kakadu | OpenJPEG | JJ2000 | JasPer | Pillow | LEADTOOLS |
 |---------|---------|---------|----------|---------|---------|---------|-----------|
 | **Part 1 Compliance** | ✅ 100% | ✅ 100% | ⚠️ ~95% | ⚠️ ~90% | ⚠️ ~85% | ⚠️ ~70% | ✅ 100% |
+| **Part 2 Coverage** | ⚠️ ~50% | ✅ ~95% | ⚠️ ~20% | ❌ 0% | ❌ 0% | ❌ 0% | ✅ ~80% |
 | **Decode** | ✅ Full | ✅ Full | ✅ Full | ✅ Full | ✅ Full | ✅ Basic | ✅ Full |
 | **Encode** | ✅ Full | ✅ Full | ✅ Full | ✅ Full | ✅ Full | ❌ No | ✅ Full |
 | **JP2 File Format** | ✅ Full | ✅ Full | ✅ Full | ✅ Full | ⚠️ Partial | ⚠️ Basic | ✅ Full |
