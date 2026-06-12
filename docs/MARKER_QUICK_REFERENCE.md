@@ -180,7 +180,7 @@ EOC
 
 ### SIZ
 ```
-Lsiz = 38 + 3 × Csiz
+Lsiz = 38 + 3 ï¿½ Csiz
 ```
 Where Csiz = number of components
 
@@ -196,9 +196,9 @@ Lcod = 12 + (decomposition_levels + 1)
 
 ### QCD
 ```
-Reversible:    Lqcd = 4 + (3 × levels + 1)
+Reversible:    Lqcd = 4 + (3 ï¿½ levels + 1)
 Derived:       Lqcd = 5
-Expounded:     Lqcd = 4 + 2 × (3 × levels + 1)
+Expounded:     Lqcd = 4 + 2 ï¿½ (3 ï¿½ levels + 1)
 ```
 
 ### SOT
@@ -295,7 +295,7 @@ SOC (first) ... EOC (last)
 
 **Code-Block Max:**
 ```
-2^(cw+2) × 2^(ch+2) ? 4096
+2^(cw+2) ï¿½ 2^(ch+2) ? 4096
 cw + ch ? 12
 ```
 
@@ -309,6 +309,6 @@ Csiz ? 257 ? 2 bytes
 
 ## See Also
 
-- [Full Marker Reference](CodestreamMarkerReference.md)
+- [Full Marker Reference](CODESTREAM_MARKER_REFERENCE.md)
 - [CodestreamValidator API](CodestreamValidator.md)
 - [ISO/IEC 15444-1 Annex A](https://www.iso.org/standard/78321.html)

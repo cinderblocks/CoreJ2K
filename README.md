@@ -356,6 +356,7 @@ byte[] data = J2kImage.ToBytes(image, config);
 - [Wavelet Configuration Guide](docs/WAVELET_CONFIGURATION_GUIDE.md) - Transform settings
 - [Progression Configuration Guide](docs/PROGRESSION_CONFIGURATION_GUIDE.md) - Data organization
 - [Metadata Configuration Guide](docs/METADATA_CONFIGURATION_GUIDE.md) - Comments, copyright, XML
+- [Part 2 Transforms Guide](docs/PART2_TRANSFORMS_GUIDE.md) - DCO, NLT, MCT (JPX codestream extensions)
 - [Part 14 JPXML Implementation](docs/PART14_JPXML_IMPLEMENTATION.md) - XML metadata representation (ISO/IEC 15444-14)
 
 ### Traditional API (Encoding Guide)
