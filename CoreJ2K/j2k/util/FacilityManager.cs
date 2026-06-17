@@ -70,11 +70,11 @@ namespace CoreJ2K.j2k.util
 
         static FacilityManager()
         {
-            // Initialize with platform-specific logger or use null (will be set later)
+#if NET8_0_OR_GREATER
+            _defMsgLogger = new CoreJ2K.Util.DotnetMsgLogger();
+#else
             _defMsgLogger = J2kSetup.GetSinglePlatformInstance<IMsgLogger>();
-            
-            // If no logger was provided, we'll allow it to be null initially
-            // It will throw when GetMsgLogger() is called if never set
+#endif
         }
 
         #endregion

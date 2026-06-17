@@ -1,0 +1,21 @@
+// Copyright (c) 2025 Sjofn LLC.
+// Licensed under the BSD 3-Clause License.
+
+#if NET8_0_OR_GREATER
+using System.Runtime.CompilerServices;
+using CoreJ2K.Util;
+
+namespace CoreJ2K.Skia
+{
+    internal static class SkiaRegistration
+    {
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "CA2255:The 'ModuleInitializer' attribute should not be used in libraries", Justification = "Intentional auto-registration for plugin assembly.")]
+        [ModuleInitializer]
+        internal static void Register()
+        {
+            ImageFactory.Register(new SKBitmapImageCreator());
+            ImageFactory.Register(new SKPixmapImageCreator());
+        }
+    }
+}
+#endif

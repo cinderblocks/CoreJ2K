@@ -32,32 +32,25 @@ namespace CoreJ2K.j2k.image.input
         public ImgReaderImageSharp(Image img)
         {
             if (img is null) throw new ArgumentNullException(nameof(img));
-            
-            // Clone the image to take ownership and prevent disposal issues
-            // when the caller disposes their reference
-            var imgType = img.GetType();
-            if (imgType.IsGenericType && imgType.GetGenericTypeDefinition() == typeof(Image<>))
-            {
-                var cloneMethod = imgType.GetMethod("Clone", Type.EmptyTypes);
-                if (cloneMethod != null)
-                {
-                    image = (Image)cloneMethod.Invoke(img, null);
-                }
-                else
-                {
-                    // Fallback: clone as Rgba32 if direct clone fails
-                    image = img.CloneAs<Rgba32>();
-                }
-            }
-            else
-            {
-                image = img.CloneAs<Rgba32>();
-            }
-            
+            image = ClonePreserveFormat(img);
             w = image.Width;
             h = image.Height;
             InitializeFormat(image);
             nc = componentCount;
+        }
+
+        private static Image ClonePreserveFormat(Image img)
+        {
+            if (img is Image<L8> l8)       return l8.Clone();
+            if (img is Image<L16> l16)     return l16.Clone();
+            if (img is Image<Rgb24> rgb24) return rgb24.Clone();
+            if (img is Image<Bgr24> bgr24) return bgr24.Clone();
+            if (img is Image<Rgba32> rgba) return rgba.Clone();
+            if (img is Image<Bgra32> bgra) return bgra.Clone();
+            if (img is Image<Argb32> argb) return argb.Clone();
+            if (img is Image<Rgb48> rgb48) return rgb48.Clone();
+            if (img is Image<Rgba64> rgba64) return rgba64.Clone();
+            return img.CloneAs<Rgba32>();
         }
 
         private void InitializeFormat(Image img)

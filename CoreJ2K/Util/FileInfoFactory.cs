@@ -17,7 +17,11 @@ namespace CoreJ2K.Util
 
         static FileInfoFactory()
         {
+#if NET8_0_OR_GREATER
+            _creator = new DotnetFileInfoCreator();
+#else
             _creator = J2kSetup.GetSinglePlatformInstance<IFileInfoCreator>();
+#endif
         }
 
         #endregion

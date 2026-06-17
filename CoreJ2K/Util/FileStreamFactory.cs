@@ -18,7 +18,11 @@ namespace CoreJ2K.Util
 
         static FileStreamFactory()
         {
+#if NET8_0_OR_GREATER
+            _creator = new DotnetFileStreamCreator();
+#else
             _creator = J2kSetup.GetSinglePlatformInstance<IFileStreamCreator>();
+#endif
         }
 
         #endregion

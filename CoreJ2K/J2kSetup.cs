@@ -8,6 +8,7 @@ namespace CoreJ2K
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics.CodeAnalysis;
     using System.Linq;
     using System.Reflection;
 
@@ -29,6 +30,8 @@ namespace CoreJ2K
         /// <returns>The single instance from the platform assembly implementing the <typeparamref name="T"/> type, 
         /// or null if no or more than one implementation is available.</returns>
         /// <remarks>It is implicitly assumed that implementation class has a public, parameter-less constructor.</remarks>
+        [RequiresUnreferencedCode("Scans assembly DefinedTypes via reflection. Use direct instantiation on net8+.")]
+        [RequiresDynamicCode("Uses Activator.CreateInstance on dynamically discovered types.")]
         internal static T? GetSinglePlatformInstance<T>()
         {
             try
@@ -80,6 +83,8 @@ namespace CoreJ2K
         /// <returns>The single instance from the platform assembly implementing the <typeparamref name="T"/> type that is classified as default, 
         /// or null if no or more than one default classified implementations are available.</returns>
         /// <remarks>It is implicitly assumed that all implementation classes has a public, parameter-less constructor.</remarks>
+        [RequiresUnreferencedCode("Scans assembly DefinedTypes via reflection. Use direct instantiation on net8+.")]
+        [RequiresDynamicCode("Uses Activator.CreateInstance on dynamically discovered types.")]
         internal static T? GetDefaultPlatformInstance<T>() where T : IDefaultable
         {
             try
@@ -105,6 +110,8 @@ namespace CoreJ2K
         }
 
 
+        [RequiresUnreferencedCode("Scans disk for CoreJ2K.*.dll and reflects types. Use ImageFactory.Register on net8+.")]
+        [RequiresDynamicCode("Loads assemblies and uses Activator.CreateInstance on discovered types.")]
         internal static IEnumerable<Type> FindCodecs<T>() where T : IImageCreator
         {
             var contractType = typeof(T);
@@ -120,7 +127,7 @@ namespace CoreJ2K
 
             try
             {
-                var currentAssemblyDir = Path.GetDirectoryName(GetCurrentAssembly().Location);
+                var currentAssemblyDir = AppContext.BaseDirectory;
                 if (string.IsNullOrEmpty(currentAssemblyDir))
                     return Enumerable.Empty<Type>();
 
@@ -177,7 +184,7 @@ namespace CoreJ2K
                         {
                             if (t == null) continue;
 
-                            if ((t.IsSubclassOf(typeof(T)) || typeof(T).GetTypeInfo().IsAssignableFrom(t)) && !t.IsAbstract)
+                            if ((t.IsSubclassOf(typeof(T)) || typeof(T).IsAssignableFrom(t)) && !t.IsAbstract)
                             {
                                 result.Add(t);
                             }
@@ -215,6 +222,8 @@ namespace CoreJ2K
         /// <summary>
         /// Find and instantiate codec instances for the given plugin contract T. Instances are cached to avoid repeated disk scans and activations.
         /// </summary>
+        [RequiresUnreferencedCode("Scans disk for CoreJ2K.*.dll and reflects types. Use ImageFactory.Register on net8+.")]
+        [RequiresDynamicCode("Loads assemblies and uses Activator.CreateInstance on discovered types.")]
         internal static IEnumerable<T> FindCodecInstances<T>() where T : IImageCreator
         {
             // Discover types first (may be cached)
@@ -253,9 +262,10 @@ namespace CoreJ2K
 
         private static Assembly GetCurrentAssembly()
         {
-            return typeof(J2kSetup).GetTypeInfo().Assembly;
+            return typeof(J2kSetup).Assembly;
         }
 
+        [RequiresUnreferencedCode("Scans assembly DefinedTypes via reflection.")]
         private static IEnumerable<Type> GetConcreteTypes<T>(Assembly assembly)
         {
             return assembly.DefinedTypes.Where(
@@ -263,7 +273,7 @@ namespace CoreJ2K
                     {
                         try
                         {
-                            return (t.IsSubclassOf(typeof(T)) || typeof(T).GetTypeInfo().IsAssignableFrom(t))
+                            return (t.IsSubclassOf(typeof(T)) || typeof(T).IsAssignableFrom(t))
                                    && !t.IsAbstract;
                         }
                         catch
@@ -273,6 +283,8 @@ namespace CoreJ2K
                     }).Select(t => t.AsType());
         }
 
+        [RequiresUnreferencedCode("Uses Activator.CreateInstance on dynamically discovered types.")]
+        [RequiresDynamicCode("Uses Activator.CreateInstance on dynamically discovered types.")]
         private static T? GetDefaultOrSingleInstance<T>(IEnumerable<Type> types) where T : IDefaultable
         {
             var instances = types.Select(

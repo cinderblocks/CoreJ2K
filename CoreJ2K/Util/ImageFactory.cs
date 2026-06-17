@@ -15,6 +15,7 @@ namespace CoreJ2K.Util
         #region FIELDS
 
         private static readonly List<IImageCreator> _creators = new List<IImageCreator>();
+        private static readonly object _lock = new object();
 
         #endregion
 
@@ -22,16 +23,30 @@ namespace CoreJ2K.Util
 
         static ImageFactory()
         {
-            foreach (var creator in J2kSetup.FindCodecs<IImageCreator>())
+#if !NET8_0_OR_GREATER
+            foreach (var creator in J2kSetup.FindCodecInstances<IImageCreator>())
             {
-                var instance = Activator.CreateInstance(creator) as IImageCreator;
-                if (instance != null) _creators.Add(instance);
+                _creators.Add(creator);
             }
+#endif
         }
 
         #endregion
 
         #region METHODS
+
+        /// <summary>
+        /// Registers an image creator. Call this from a <c>[ModuleInitializer]</c> or application startup
+        /// on platforms where automatic plugin discovery is unavailable (e.g. NativeAOT).
+        /// </summary>
+        public static void Register(IImageCreator creator)
+        {
+            if (creator == null) throw new ArgumentNullException(nameof(creator));
+            lock (_lock)
+            {
+                _creators.Add(creator);
+            }
+        }
 
         internal static IImage? New<T>(int width, int height, int numComponents, byte[] bytes)
         {
