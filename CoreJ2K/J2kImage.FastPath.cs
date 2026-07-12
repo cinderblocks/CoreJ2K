@@ -358,7 +358,8 @@ namespace CoreJ2K
                 if (iimg == null)
                 {
                     throw new InvalidOperationException(
-                        $"No image creator registered for target type {typeof(T).FullName}.");
+                        $"No image creator registered for target type {typeof(T).FullName}. " +
+                        $"Registered creators: {ImageFactory.DescribeRegistered()}.");
                 }
                 return iimg.As<T>();
             }

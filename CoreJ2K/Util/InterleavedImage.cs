@@ -192,7 +192,9 @@ namespace CoreJ2K.Util
                 ToBytes(Width, Height, NumberOfComponents, byteScaling, data, byteBuffer);
                 var image = ImageFactory.New<T>(Width, Height, NumberOfComponents, byteBuffer);
                 if (image == null)
-                    throw new InvalidOperationException($"No image creator registered for target type {typeof(T).FullName}.");
+                    throw new InvalidOperationException(
+                        $"No image creator registered for target type {typeof(T).FullName}. " +
+                        $"Registered creators: {ImageFactory.DescribeRegistered()}.");
                 return image.As<T>();
             }
             finally

@@ -14,7 +14,10 @@ namespace CoreJ2K.Util
     {
         #region FIELDS
 
-        private static readonly List<IImageCreator> _creators = new List<IImageCreator>();
+        // Immutable snapshot, swapped atomically under _lock. Readers (New/ToPortableImageSource)
+        // enumerate whatever snapshot they observe without taking the lock, so a Register racing
+        // an in-flight decode can never invalidate the reader's enumeration.
+        private static volatile IImageCreator[] _creators = Array.Empty<IImageCreator>();
         private static readonly object _lock = new object();
 
         #endregion
@@ -26,7 +29,7 @@ namespace CoreJ2K.Util
 #if !NET8_0_OR_GREATER
             foreach (var creator in J2kSetup.FindCodecInstances<IImageCreator>())
             {
-                _creators.Add(creator);
+                Register(creator);
             }
 #endif
         }
@@ -38,40 +41,58 @@ namespace CoreJ2K.Util
         /// <summary>
         /// Registers an image creator. Call this from a <c>[ModuleInitializer]</c> or application startup
         /// on platforms where automatic plugin discovery is unavailable (e.g. NativeAOT).
+        /// Registration is idempotent per <see cref="IImageCreator.ImageType"/>: registering a creator
+        /// for a type that already has one replaces the previous creator instead of accumulating a
+        /// duplicate, so a manual Register on top of a module initializer is harmless.
         /// </summary>
         public static void Register(IImageCreator creator)
         {
             if (creator == null) throw new ArgumentNullException(nameof(creator));
             lock (_lock)
             {
-                _creators.Add(creator);
+                var updated = new List<IImageCreator>(_creators.Length + 1);
+                foreach (var existing in _creators)
+                {
+                    if (existing.ImageType != creator.ImageType) updated.Add(existing);
+                }
+                updated.Add(creator);
+                _creators = updated.ToArray();
             }
         }
 
         internal static IImage? New<T>(int width, int height, int numComponents, byte[] bytes)
         {
-            try
-            {
-                var creator = _creators.Single(c => c.ImageType.IsAssignableFrom(typeof(T)));
-                return creator.Create(width, height, numComponents, bytes);
-            }
-            catch (Exception)
-            {
-                return null;
-            }
+            return Resolve(typeof(T))?.Create(width, height, numComponents, bytes);
         }
 
         internal static BlkImgDataSrc? ToPortableImageSource(object imageObject)
         {
-            try
+            if (imageObject == null) return null;
+            return Resolve(imageObject.GetType())?.ToPortableImageSource(imageObject);
+        }
+
+        /// <summary>
+        /// Describes the currently registered creators, for use in diagnostic messages when
+        /// resolution fails (e.g. "SKBitmapImageCreator(SKBitmap), AvaloniaImageCreator(WriteableBitmap)").
+        /// </summary>
+        internal static string DescribeRegistered()
+        {
+            var creators = _creators;
+            return creators.Length == 0
+                ? "<none>"
+                : string.Join(", ", creators.Select(c => $"{c.GetType().Name}({c.ImageType.Name})"));
+        }
+
+        private static IImageCreator? Resolve(Type target)
+        {
+            var creators = _creators;
+            IImageCreator? assignable = null;
+            foreach (var creator in creators)
             {
-                var creator = _creators.Single(c => c.ImageType.IsAssignableFrom(imageObject.GetType()));
-                return creator.ToPortableImageSource(imageObject);
+                if (creator.ImageType == target) return creator;
+                if (assignable == null && creator.ImageType.IsAssignableFrom(target)) assignable = creator;
             }
-            catch
-            {
-                return null;
-            }
+            return assignable;
         }
 
         #endregion
