@@ -846,9 +846,16 @@ namespace CoreJ2K.j2k.fileformat.reader
             // subtract the header size to store the actual codestream byte count —
             // otherwise consumers reading 'length' bytes from ccpos overrun the box
             // (and the file, when jp2c is the last box).
+            var payloadLength = length - (int)(ccpos - pos);
+            if (payloadLength < 0)
+            {
+                throw new InvalidOperationException(
+                    "Invalid JP2 file: Contiguous Codestream box length is smaller than its own header");
+            }
+
             if (codeStreamLength == null)
                 codeStreamLength = new List<int>(10);
-            codeStreamLength.Add(length - (int)(ccpos - pos));
+            codeStreamLength.Add(payloadLength);
 
             return true;
         }

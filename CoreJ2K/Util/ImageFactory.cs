@@ -26,17 +26,7 @@ namespace CoreJ2K.Util
 
         static ImageFactory()
         {
-#if NET8_0_OR_GREATER
-            // On JIT runtimes, scan the application directory for CoreJ2K.*.dll plugin
-            // assemblies just like the .NET Framework path, so apps that never statically
-            // touch a plugin assembly (and therefore never trigger its [ModuleInitializer])
-            // still get its creators registered. On NativeAOT dynamic discovery is
-            // impossible; plugins register via [ModuleInitializer] or an explicit Register.
-            if (System.Runtime.CompilerServices.RuntimeFeature.IsDynamicCodeSupported)
-            {
-                AutoRegisterDiscoveredCodecs();
-            }
-#else
+#if !NET8_0_OR_GREATER
             foreach (var creator in J2kSetup.FindCodecInstances<IImageCreator>())
             {
                 Register(creator);
@@ -45,15 +35,62 @@ namespace CoreJ2K.Util
         }
 
 #if NET8_0_OR_GREATER
+        private static volatile bool _autoRegistered;
+        private static readonly object _autoRegisterLock = new object();
+
+        /// <summary>
+        /// On JIT runtimes, scans the application directory for CoreJ2K.*.dll plugin
+        /// assemblies just like the .NET Framework path, so apps that never statically
+        /// touch a plugin assembly (and therefore never trigger its [ModuleInitializer])
+        /// still get its creators registered. On NativeAOT dynamic discovery is
+        /// impossible; plugins register via [ModuleInitializer] or an explicit Register.
+        /// Deliberately NOT run from the static constructor: loading an assembly there
+        /// (type-init lock held → loader lock wanted) can deadlock against a plugin
+        /// [ModuleInitializer] on another thread calling Register (loader lock held →
+        /// type-init lock wanted). Instead this runs lazily on the first conversion,
+        /// outside any type-init lock.
+        /// </summary>
         [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("Trimming", "IL2026",
             Justification = "Best-effort fallback; trimmed apps keep plugin [ModuleInitializer] registration and can call Register explicitly.")]
         [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("AOT", "IL3050",
             Justification = "Guarded by RuntimeFeature.IsDynamicCodeSupported.")]
-        private static void AutoRegisterDiscoveredCodecs()
+        private static void EnsureAutoRegistered()
         {
-            foreach (var creator in J2kSetup.FindCodecInstances<IImageCreator>())
+            if (_autoRegistered) return;
+            lock (_autoRegisterLock)
             {
-                Register(creator);
+                if (_autoRegistered) return;
+                try
+                {
+                    if (System.Runtime.CompilerServices.RuntimeFeature.IsDynamicCodeSupported)
+                    {
+                        foreach (var creator in J2kSetup.FindCodecInstances<IImageCreator>())
+                        {
+                            // First-wins: discovery must never replace a creator the app
+                            // registered explicitly (or that a module initializer added).
+                            RegisterIfAbsent(creator);
+                        }
+                    }
+                }
+                finally
+                {
+                    _autoRegistered = true;
+                }
+            }
+        }
+
+        private static void RegisterIfAbsent(IImageCreator creator)
+        {
+            lock (_lock)
+            {
+                foreach (var existing in _creators)
+                {
+                    if (existing.ImageType == creator.ImageType) return;
+                }
+                var updated = new List<IImageCreator>(_creators.Length + 1);
+                updated.AddRange(_creators);
+                updated.Add(creator);
+                _creators = updated.ToArray();
             }
         }
 #endif
@@ -86,12 +123,18 @@ namespace CoreJ2K.Util
 
         internal static IImage? New<T>(int width, int height, int numComponents, byte[] bytes)
         {
+#if NET8_0_OR_GREATER
+            EnsureAutoRegistered();
+#endif
             return Resolve(typeof(T))?.Create(width, height, numComponents, bytes);
         }
 
         internal static BlkImgDataSrc? ToPortableImageSource(object imageObject)
         {
             if (imageObject == null) return null;
+#if NET8_0_OR_GREATER
+            EnsureAutoRegistered();
+#endif
             return Resolve(imageObject.GetType())?.ToPortableImageSource(imageObject);
         }
 

@@ -74,15 +74,16 @@ namespace CoreJ2K.j2k.util
         /// </param>
         /// <param name="lw">The line width to use in formatting
         /// </param>
+        /// <summary>BOM-less UTF-8: Encoding.UTF8 writes a byte-order mark on first use,
+        /// which shows up as garbage (∩╗┐) when the stream is a console.</summary>
+        private static readonly System.Text.UTF8Encoding Utf8NoBom = new System.Text.UTF8Encoding(false);
+
         protected StreamMsgLogger(Stream outstr, Stream errstr, int lw)
         {
-            // BOM-less UTF-8: Encoding.UTF8 writes a byte-order mark on first use,
-            // which shows up as garbage (∩╗┐) when the stream is a console.
-            var utf8 = new System.Text.UTF8Encoding(false);
-            var temp_writer = new StreamWriter(outstr, utf8);
+            var temp_writer = new StreamWriter(outstr, Utf8NoBom);
             temp_writer.AutoFlush = true;
             outStream = temp_writer;
-            var temp_writer2 = new StreamWriter(errstr, utf8);
+            var temp_writer2 = new StreamWriter(errstr, Utf8NoBom);
             temp_writer2.AutoFlush = true;
             err = temp_writer2;
             mp = new MsgPrinter(lw);
@@ -100,13 +101,23 @@ namespace CoreJ2K.j2k.util
         /// </param>
         protected StreamMsgLogger(StreamWriter outstr, StreamWriter errstr, int lw)
         {
-            var temp_writer = new StreamWriter(outstr.BaseStream, outstr.Encoding);
+            var temp_writer = new StreamWriter(outstr.BaseStream, WithoutBom(outstr.Encoding));
             temp_writer.AutoFlush = true;
             outStream = temp_writer;
-            var temp_writer2 = new StreamWriter(errstr.BaseStream, errstr.Encoding);
+            var temp_writer2 = new StreamWriter(errstr.BaseStream, WithoutBom(errstr.Encoding));
             temp_writer2.AutoFlush = true;
             err = temp_writer2;
             mp = new MsgPrinter(lw);
+        }
+
+        /// <summary>Substitutes BOM-emitting UTF-8 with the BOM-less variant so each
+        /// wrapped writer doesn't inject a fresh BOM into the shared stream; any other
+        /// caller-chosen encoding is preserved as-is.</summary>
+        private static System.Text.Encoding WithoutBom(System.Text.Encoding encoding)
+        {
+            return encoding.CodePage == 65001 && encoding.GetPreamble().Length > 0
+                ? Utf8NoBom
+                : encoding;
         }
 
         /// <summary> Prints the message 'msg' to the output device, appending a newline,

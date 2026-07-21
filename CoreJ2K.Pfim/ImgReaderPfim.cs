@@ -47,7 +47,8 @@ namespace CoreJ2K.j2k.image.input
             else
             {
                 // Generic fallback: derive components from bytes-per-pixel
-                bytesPerPixel = Math.Max(1, image.BitsPerPixel);
+                // (BitsPerPixel is a bit count — divide before using as a byte stride)
+                bytesPerPixel = Math.Max(1, image.BitsPerPixel / 8);
                 componentCount = Math.Max(1, bytesPerPixel);
                 // Derive per-component bit depth from total bits per pixel when available
                 var totalBits = image.BitsPerPixel > 0 ? image.BitsPerPixel : (bytesPerPixel * 8);
