@@ -56,6 +56,14 @@ namespace CoreJ2K.j2k.util
         /// <summary>The printer that formats the text </summary>
         private readonly MsgPrinter mp;
 
+        /// <summary>
+        /// Serializes writes to the shared streams. MsgPrinter.print() issues many
+        /// small Write/WriteLine calls per message (one per wrapped line); without
+        /// this lock, concurrent decode threads (e.g. decoding multiple textures at
+        /// once) interleave those calls and corrupt each other's output mid-line.
+        /// </summary>
+        private readonly object writeLock = new object();
+
         /// <summary> Constructs a StreamMsgLogger that uses 'outstr' as the 'out' stream,
         /// and 'errstr' as the 'err' stream. Note that 'outstr' and 'errstr' can
         /// be System.out and System.err.
@@ -139,8 +147,11 @@ namespace CoreJ2K.j2k.util
 
             }
 
-            mp.print(lout, 0, prefix.Length, $"{prefix}{msg}");
-            lout.Flush();
+            lock (writeLock)
+            {
+                mp.print(lout, 0, prefix.Length, $"{prefix}{msg}");
+                lout.Flush();
+            }
         }
 
         /// <summary> Prints the string 'str' to the 'out' stream, appending a newline. The
@@ -161,7 +172,10 @@ namespace CoreJ2K.j2k.util
         /// </param>
         public virtual void println(string str, int flind, int ind)
         {
-            mp.print(outStream, flind, ind, str);
+            lock (writeLock)
+            {
+                mp.print(outStream, flind, ind, str);
+            }
         }
 
         /// <summary> Writes any buffered data from the print() and println() methods to the

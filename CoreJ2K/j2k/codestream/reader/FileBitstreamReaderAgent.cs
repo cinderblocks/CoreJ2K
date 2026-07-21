@@ -2523,9 +2523,14 @@ namespace CoreJ2K.j2k.codestream.reader
                         {
                             readTilePkts(t);
                         }
+                        catch (System.IO.EndOfStreamException)
+                        {
+                            FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING, $"Codestream truncated in tile {t}");
+                            return;
+                        }
                         catch (System.IO.IOException e)
                         {
-                            FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.ERROR, e.StackTrace);
+                            FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.ERROR, $"{e.GetType().Name}: {e.Message}");
                             throw new InvalidOperationException($"IO Error when reading tile {x} x {y}");
                         }
 
@@ -2603,9 +2608,14 @@ namespace CoreJ2K.j2k.codestream.reader
                 {
                     readTilePkts(t);
                 }
+                catch (System.IO.EndOfStreamException)
+                {
+                    FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING, $"Codestream truncated in tile {t}");
+                    return;
+                }
                 catch (System.IO.IOException e)
                 {
-                    FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.ERROR, e.StackTrace);
+                    FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.ERROR, $"{e.GetType().Name}: {e.Message}");
                     throw new InvalidOperationException($"IO Error when reading tile {x} x {y}");
                 }
             }

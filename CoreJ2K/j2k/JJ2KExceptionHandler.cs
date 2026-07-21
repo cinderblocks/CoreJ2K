@@ -70,10 +70,11 @@ namespace CoreJ2K.j2k
 
             // If no special action
 
-            // Print the Exception message and stack to standard error
-            // including this method in the stack.
-            //e.fillInStackTrace();
-            FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.ERROR, e.StackTrace);
+            // Print a terse summary rather than the full stack trace: this
+            // handler fires per-decode on ordinary truncated/corrupt input,
+            // and a full trace here is both noisy and (under concurrent
+            // decodes) prone to interleaving with other threads' output.
+            FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.ERROR, $"{e.GetType().Name}: {e.Message}");
             // Print an explicative message
             FacilityManager.GetMsgLogger().println("The Thread is being terminated bacause an Exception (shown above)\nhas been thrown and no special action was defined for this Thread.", 0, 0);
             // Stop the thread (do not use stop, since it's deprecated in
