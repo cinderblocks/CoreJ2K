@@ -34,13 +34,15 @@ namespace CoreJ2K.j2k.image.input
             h = img.Height;
 
             // Prefer explicit known formats, otherwise fall back to bytes-per-pixel
+            // Despite the names, Pfim's Rgb24/Rgba32 buffers are BGR(A) memory order
+            // (the little-endian DDS/TGA layout; Pfim's own samples map Rgb24 -> Bgr24).
             if (image.Format == ImageFormat.Rgb24)
             {
-                componentCount = 3; bitsPerComponent = 8; bytesPerPixel = 3; isBgrOrder = false; hasAlpha = false;
+                componentCount = 3; bitsPerComponent = 8; bytesPerPixel = 3; isBgrOrder = true; hasAlpha = false;
             }
             else if (image.Format == ImageFormat.Rgba32)
             {
-                componentCount = 4; bitsPerComponent = 8; bytesPerPixel = 4; isBgrOrder = false; hasAlpha = true;
+                componentCount = 4; bitsPerComponent = 8; bytesPerPixel = 4; isBgrOrder = true; hasAlpha = true;
             }
             else
             {

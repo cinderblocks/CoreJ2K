@@ -29,6 +29,9 @@ namespace CoreJ2K.Util
             // TODO: Right now just supporting 8-bit colortypes. Extend in the future.
             switch (NumComponents)
             {
+                // GDI+ has no direct 8-bit grayscale format; use an indexed
+                // bitmap with a grayscale palette ramp instead.
+                case 1: pixelFormat = PixelFormat.Format8bppIndexed; break;
                 case 3: pixelFormat = PixelFormat.Format24bppRgb; break;
                 case 4: case 5: pixelFormat = PixelFormat.Format32bppArgb; break;
                 default:
@@ -37,6 +40,16 @@ namespace CoreJ2K.Util
             }
 
             var bitmap = new Bitmap(Width, Height, pixelFormat);
+
+            if (NumComponents == 1)
+            {
+                var palette = bitmap.Palette;
+                for (var i = 0; i < 256; ++i)
+                {
+                    palette.Entries[i] = System.Drawing.Color.FromArgb(i, i, i);
+                }
+                bitmap.Palette = palette;
+            }
 
             var dstdata = bitmap.LockBits(
                 new Rectangle(0, 0, Width, Height),
@@ -48,7 +61,13 @@ namespace CoreJ2K.Util
                 var dstScan0 = dstdata.Scan0;
                 var dstStride = dstdata.Stride;
 
-                int bytesPerPixel = (NumComponents == 3) ? 3 : 4;
+                int bytesPerPixel;
+                switch (NumComponents)
+                {
+                    case 1: bytesPerPixel = 1; break;
+                    case 3: bytesPerPixel = 3; break;
+                    default: bytesPerPixel = 4; break;
+                }
                 var src = Bytes;
 
                 if (NumComponents == 5)
@@ -62,11 +81,33 @@ namespace CoreJ2K.Util
                 if (src == null || src.Length < expectedSrcLen)
                     throw new ArgumentException("Source pixel buffer is too small for the image dimensions.");
 
-                for (var y = 0; y < Height; ++y)
+                if (NumComponents == 1)
                 {
-                    var srcOffset = y * srcRowBytes;
-                    var destPtr = IntPtr.Add(dstScan0, y * dstStride);
-                    Marshal.Copy(src, srcOffset, destPtr, srcRowBytes);
+                    // Palette indices copy through unchanged.
+                    for (var y = 0; y < Height; ++y)
+                    {
+                        var srcOffset = y * srcRowBytes;
+                        var destPtr = IntPtr.Add(dstScan0, y * dstStride);
+                        Marshal.Copy(src, srcOffset, destPtr, srcRowBytes);
+                    }
+                }
+                else
+                {
+                    // The codec produces RGB(A) order, but GDI+ 24/32bpp formats store
+                    // pixels as BGR(A) in memory, so swap R and B while copying.
+                    var row = new byte[srcRowBytes];
+                    for (var y = 0; y < Height; ++y)
+                    {
+                        var srcOffset = y * srcRowBytes;
+                        for (var x = 0; x < srcRowBytes; x += bytesPerPixel)
+                        {
+                            row[x + 0] = src[srcOffset + x + 2];
+                            row[x + 1] = src[srcOffset + x + 1];
+                            row[x + 2] = src[srcOffset + x + 0];
+                            if (bytesPerPixel == 4) row[x + 3] = src[srcOffset + x + 3];
+                        }
+                        Marshal.Copy(row, 0, IntPtr.Add(dstScan0, y * dstStride), srcRowBytes);
+                    }
                 }
             }
             finally

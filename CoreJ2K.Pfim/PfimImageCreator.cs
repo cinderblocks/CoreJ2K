@@ -38,7 +38,21 @@ namespace CoreJ2K.Pfim
             }
             if (bytes.Length < expected)
                 throw new ArgumentException("Byte buffer too small for decoded image dimensions.");
-            return new PfimPortableImage(width, height, format, bytes, bpp);
+
+            // Pfim's Rgb24/Rgba32 formats are BGR(A) memory order (it preserves the
+            // little-endian DDS/TGA layout; Pfim's own samples map Rgb24 -> Bgr24).
+            // The codec hands us RGB(A), so swizzle into a new buffer. The input
+            // array is shared with other image creators and must not be mutated.
+            var channels = bpp / 8;
+            var bgr = new byte[expected];
+            for (var i = 0; i + channels <= expected; i += channels)
+            {
+                bgr[i + 0] = bytes[i + 2];
+                bgr[i + 1] = bytes[i + 1];
+                bgr[i + 2] = bytes[i + 0];
+                if (channels == 4) bgr[i + 3] = bytes[i + 3];
+            }
+            return new PfimPortableImage(width, height, format, bgr, bpp);
         }
 
         public override BlkImgDataSrc ToPortableImageSource(object imageObject)
