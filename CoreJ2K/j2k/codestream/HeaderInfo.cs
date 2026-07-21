@@ -456,6 +456,10 @@ namespace CoreJ2K.j2k.codestream
                     case FilterTypes_Fields.W5X3:
                         str += " Filter         : 5-3 reversible\n";
                         break;
+
+                    default:
+                        str += $" Filter         : ATK kernel {spcod_t[0]} (Part 2)\n";
+                        break;
                 }
                 str += (" Multi comp tr. : " + (sgcod_mct == 1) + "\n");
                 if (spcod_ps != null)
@@ -548,6 +552,10 @@ namespace CoreJ2K.j2k.codestream
 
                     case FilterTypes_Fields.W5X3:
                         str += " Filter         : 5-3 reversible\n";
+                        break;
+
+                    default:
+                        str += $" Filter         : ATK kernel {spcoc_t[0]} (Part 2)\n";
                         break;
                 }
                 if (spcoc_ps != null)

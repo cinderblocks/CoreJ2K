@@ -305,6 +305,14 @@ namespace CoreJ2K.j2k.codestream.reader
         /// <summary>Parsed Variable DC Offset (DCO) marker segment (Part 2). </summary>
         private DCOMarkerSegment dcoSegment = null;
 
+        /// <summary>Counts number of ATK markers found in the header (Part 2) </summary>
+        private int nATKMarkSeg = 0;
+
+        /// <summary>Parsed Arbitrary Transformation Kernel (ATK) marker segments (Part 2),
+        /// keyed by kernel index (2..127). </summary>
+        private readonly System.Collections.Generic.Dictionary<int, AtkMarkerSegment> atkSegments =
+            new System.Collections.Generic.Dictionary<int, AtkMarkerSegment>();
+
         /// <summary>True if the codestream signals JPEG 2000 Part 2 extended capabilities. </summary>
         public virtual bool UsesExtensions => usesExtensions;
 
@@ -314,6 +322,10 @@ namespace CoreJ2K.j2k.codestream.reader
 
         /// <summary>The Variable DC Offset (DCO) marker segment, or null (ISO/IEC 15444-2). </summary>
         public virtual DCOMarkerSegment DcoSegment => dcoSegment;
+
+        /// <summary>The Arbitrary Transformation Kernel (ATK) marker segments found in the
+        /// main header, keyed by kernel index (ISO/IEC 15444-2). Empty for Part 1 codestreams. </summary>
+        public virtual System.Collections.Generic.IReadOnlyDictionary<int, AtkMarkerSegment> AtkSegments => atkSegments;
 
         /// <summary>Counts number of MCT markers found in the header (Part 2) </summary>
         private int nMCTMarkSeg = 0;
@@ -415,6 +427,9 @@ namespace CoreJ2K.j2k.codestream.reader
 
         /// <summary>Flag bit for DCO marker segment found (Part 2 variable DC offset) </summary>
         public const int DCO_FOUND = 1 << 23;
+
+        /// <summary>Flag bit for ATK marker segment found (Part 2 arbitrary transformation kernel) </summary>
+        public const int ATK_FOUND = 1 << 24;
 
         /// <summary>The reset mask for new tiles </summary>
         //private static readonly int TILE_RESET = ~ (PLM_FOUND | SIZ_FOUND | RGN_FOUND);
@@ -648,7 +663,16 @@ namespace CoreJ2K.j2k.codestream.reader
                     return new SynWTFilterIntLift5x3();
 
                 default:
-                    throw new CorruptedCodestreamException("Specified wavelet filter " + "not" + " JPEG 2000 part I " + "compliant");
+                    // Part 2 (ISO/IEC 15444-2): ids 2..127 reference an ATK marker
+                    // segment declaring a custom lifting kernel.
+                    if (atkSegments.TryGetValue(kid, out var atk))
+                    {
+                        return atk.Reversible
+                            ? new SynWTFilterIntArbitrary(atk)
+                            : (SynWTFilter)new SynWTFilterFloatArbitrary(atk);
+                    }
+                    throw new CorruptedCodestreamException(
+                        $"Wavelet transformation {kid} references an ATK kernel, but no ATK marker segment with that index is present");
 
             }
         }
@@ -829,6 +853,24 @@ namespace CoreJ2K.j2k.codestream.reader
         /// (ISO/IEC 15444-2) and stores it for use by the inverse point transform stage.
         /// </summary>
         /// <param name="ehs">The encoded header stream</param>
+        /// <summary> Reads an ATK (Arbitrary transformation kernel) marker segment
+        /// (ISO/IEC 15444-2) and registers it by kernel index for use when COD/COC
+        /// transformation bytes reference custom wavelet kernels.
+        /// </summary>
+        /// <param name="ehs">The encoded header stream</param>
+        private void readATK(System.IO.BinaryReader ehs)
+        {
+            var seg = AtkMarkerSegment.Read(ehs);
+            if (seg.Index < AtkMarkerSegment.MinIndex || seg.Index > AtkMarkerSegment.MaxIndex)
+            {
+                throw new CorruptedCodestreamException(
+                    $"ATK marker segment declares invalid kernel index {seg.Index}");
+            }
+            atkSegments[seg.Index] = seg;
+            FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO,
+                $"Read ATK marker segment: {seg}");
+        }
+
         private void readNLT(System.IO.BinaryReader ehs)
         {
             var seg = NLTMarkerSegment.Read(ehs);
@@ -2593,6 +2635,11 @@ namespace CoreJ2K.j2k.codestream.reader
                     htKey = "DCO";
                     break;
 
+                case Markers.ATK:
+                    nfMarkSeg |= ATK_FOUND;
+                    htKey = $"ATK{(nATKMarkSeg++)}";
+                    break;
+
                 default:
                     htKey = "UNKNOWN";
                     FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING,
@@ -2843,6 +2890,18 @@ namespace CoreJ2K.j2k.codestream.reader
             {
                 bais = new System.IO.MemoryStream(ht["CRG"]);
                 readCRG(new Util.EndianBinaryReader(bais, true));
+            }
+
+            // ATK marker segments (Part 2 arbitrary transformation kernels). Read before
+            // COD/COC so that readFilter can resolve custom kernel ids referenced by the
+            // SPcod/SPcoc transformation byte.
+            if ((nfMarkSeg & ATK_FOUND) != 0)
+            {
+                for (var i = 0; i < nATKMarkSeg; i++)
+                {
+                    bais = new System.IO.MemoryStream(ht[$"ATK{i}"]);
+                    readATK(new Util.EndianBinaryReader(bais, true));
+                }
             }
 
             // COD marker segment

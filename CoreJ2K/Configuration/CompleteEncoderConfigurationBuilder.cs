@@ -26,6 +26,7 @@ namespace CoreJ2K.Configuration
         private DCOMarkerSegment? _dco = null;
         private List<NLTMarkerSegment>? _nlts = null;
         private List<MctEncodeSpec>? _mcts = null;
+        private AtkMarkerSegment? _atk = null;
         
         /// <summary>
         /// Gets the underlying encoder configuration.
@@ -66,6 +67,9 @@ namespace CoreJ2K.Configuration
         /// Gets the configured MCT encode specs, or null if MCT is not active.
         /// </summary>
         public IReadOnlyList<MctEncodeSpec>? Mcts => _mcts?.AsReadOnly();
+
+        /// <summary>The configured Arbitrary Transformation Kernel (ATK) segment, if any.</summary>
+        public AtkMarkerSegment? Atk => _atk;
         
         #region Quality Presets
         
@@ -431,6 +435,32 @@ namespace CoreJ2K.Configuration
             return this;
         }
 
+        /// <summary>
+        /// Uses a custom Arbitrary Transformation Kernel (ATK, ISO/IEC 15444-2 §A.6) as
+        /// the wavelet filter for all tile-components. The kernel replaces the Part 1
+        /// 5/3 or 9/7 filter; a reversible kernel requires reversible (lossless)
+        /// quantization and an irreversible one requires lossy quantization. The Part 1
+        /// component transform (RCT/ICT) is disabled. Produces a JPX codestream.
+        /// </summary>
+        public CompleteEncoderConfigurationBuilder WithAtk(AtkMarkerSegment kernel)
+        {
+            if (kernel == null) throw new ArgumentNullException(nameof(kernel));
+            kernel.Validate();
+            _atk = kernel;
+            return this;
+        }
+
+        /// <summary>
+        /// Configures a custom Arbitrary Transformation Kernel (ATK) via an inline action.
+        /// </summary>
+        public CompleteEncoderConfigurationBuilder WithAtk(Action<AtkMarkerSegment> configure)
+        {
+            if (configure == null) throw new ArgumentNullException(nameof(configure));
+            var kernel = new AtkMarkerSegment();
+            configure(kernel);
+            return WithAtk(kernel);
+        }
+
         #endregion
 
         #region Build Methods
@@ -495,10 +525,12 @@ namespace CoreJ2K.Configuration
             var config = Build();
             var metadata = GetMetadata();
             var pl = config.ToParameterList();
+            RemoveFilterOptionsForAtk(pl);
             J2kImage.WriteTo(output, imgsrc, metadata, pl,
                 _nlts is { Count: > 0 } ? _nlts : null,
                 _mcts is { Count: > 0 } ? _mcts : null,
-                _dco);
+                _dco,
+                _atk);
         }
 
         /// <summary>
@@ -512,13 +544,24 @@ namespace CoreJ2K.Configuration
             var config = Build();
             var metadata = GetMetadata();
             var pl = config.ToParameterList();
+            RemoveFilterOptionsForAtk(pl);
 
             return J2kImage.ToBytes(imgsrc, metadata, pl,
                 _nlts is { Count: > 0 } ? _nlts : null,
                 _mcts is { Count: > 0 } ? _mcts : null,
-                _dco)!;
+                _dco,
+                _atk)!;
         }
         
+        // The ATK kernel replaces the wavelet filter, so any Ffilters value emitted by
+        // the wavelet sub-configuration's defaults must not reach the encoder.
+        private void RemoveFilterOptionsForAtk(j2k.util.ParameterList pl)
+        {
+            if (_atk == null) return;
+            pl.Remove("Ffilters");
+            pl.Remove("Ffilters_comp");
+        }
+
         /// <summary>
         /// Encodes an image object (SKBitmap, Bitmap, etc.) using this configuration.
         /// The object is converted to an encodable source via <see cref="ImageFactory"/>.

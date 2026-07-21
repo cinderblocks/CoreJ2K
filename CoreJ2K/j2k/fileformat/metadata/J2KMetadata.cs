@@ -872,12 +872,13 @@ namespace CoreJ2K.j2k.fileformat.metadata
         /// Builds a <see cref="ReaderRequirementsBox"/> for a JPX codestream, populating
         /// the standard feature list from the active Part 2 codestream extensions.
         /// </summary>
-        public static ReaderRequirementsBox BuildForJpx(bool hasMct = false, bool hasNlt = false, bool hasDco = false)
+        public static ReaderRequirementsBox BuildForJpx(bool hasMct = false, bool hasNlt = false, bool hasDco = false, bool hasAtk = false)
         {
             var box = new ReaderRequirementsBox();
             if (hasMct) box.StandardFeatures.Add(FEATURE_JPX_MCT);
             if (hasNlt) box.StandardFeatures.Add(FEATURE_JPX_NLT);
             if (hasDco) box.StandardFeatures.Add(FEATURE_JPX_DCO);
+            if (hasAtk) box.StandardFeatures.Add(FEATURE_JPX_ATK);
             return box;
         }
 

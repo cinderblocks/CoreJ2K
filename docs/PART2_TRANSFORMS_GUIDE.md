@@ -2,19 +2,23 @@
 
 ## Overview
 
-CoreJ2K implements three JPEG 2000 Part 2 (ISO/IEC 15444-2) codestream coding
-extensions that operate as pre-/post-processing stages around the wavelet engine:
+CoreJ2K implements four JPEG 2000 Part 2 (ISO/IEC 15444-2) codestream coding
+extensions — three that operate as pre-/post-processing stages around the wavelet
+engine, and one that replaces the wavelet filter itself:
 
 | Transform | Marker | What it does |
 |-----------|--------|-------------|
 | DCO | `0xFF70` | Per-component signed integer DC offset |
 | NLT | `0xFF76` | Non-linear point transform (gamma, log, LUT) |
 | MCT | `0xFF74`/`0xFF75`/`0xFF76` | Multi-component matrix/dependency/wavelet transform |
+| ATK | `0xFF79` | Arbitrary lifting-based wavelet kernel replacing the 5/3 or 9/7 |
 
-All three produce **JPX** output (ISO/IEC 15444-2 file format). The `rreq` (Reader
+All four produce **JPX** output (ISO/IEC 15444-2 file format). The `rreq` (Reader
 Requirements) box is written automatically, advertising which extensions are in use.
 
-The transforms are additive: DCO, NLT, and MCT can all be active simultaneously.
+The transforms are additive: DCO, NLT, MCT, and ATK can all be active
+simultaneously (ATK disables only the Part 1 RCT/ICT component transform, not
+the Part 2 MCT).
 
 ## Encode Pipeline Order
 
@@ -153,6 +157,37 @@ builder.AddMct(spec);
 
 `AddMct` accumulates stages. Multi-stage transforms are applied in the order added.
 
+### ATK — Arbitrary Transformation Kernel
+
+ATK replaces the Part 1 wavelet filter with a custom lifting kernel for all
+tile-components. Reversible (integer lifting, lossless) and irreversible
+(real-valued lifting with subband gains) kernels are both supported.
+
+```csharp
+// A custom reversible kernel: weaker predict/update than the 5/3
+var kernel = new AtkMarkerSegment
+{
+    Index = 5,               // referenced by the COD transformation byte
+    Reversible = true,
+    Steps = new List<AtkLiftingStep>
+    {
+        new AtkLiftingStep { Coefficients = new double[] { -3, -3 }, Epsilon = 3, Beta = 4 },
+        new AtkLiftingStep { Coefficients = new double[] { 1, 1 },  Epsilon = 3, Beta = 4 }
+    }
+};
+
+var bytes = new CompleteEncoderConfigurationBuilder()
+    .ForLossless()           // reversible kernels require reversible quantization
+    .WithEncoder(e => e.WithFileFormat(true))
+    .WithAtk(kernel)
+    .Encode(imageSource);
+```
+
+Presets `AtkMarkerSegment.CreateW5x3Equivalent(i)` / `CreateW9x7Equivalent(i)`
+express the Part 1 filters in ATK form. See
+[PART2_ATK_IMPLEMENTATION.md](PART2_ATK_IMPLEMENTATION.md) for the lifting model
+and constraints.
+
 ## Combining Transforms
 
 All three can be active simultaneously:
@@ -203,10 +238,15 @@ byte[] data = J2kImage.ToBytes(
 
 | Feature | Marker | Status |
 |---------|--------|--------|
-| Arbitrary Transform Kernels | `0xFF79` | Not implemented |
 | Downsampling Factor Structures | `0xFF72` | Not implemented |
 | Arbitrary Decomposition Structures | `0xFF73` | Not implemented |
 | Trellis Coded Quantization | `0xFF52` | Not implemented |
 
+DFS/ADS change the shape of the wavelet decomposition tree (the packet and
+code-block machinery currently assumes the Part 1 dyadic Mallat structure), and
+TCQ replaces the scalar quantizer; both are substantial engine changes rather
+than additive extensions.
+
 See also: [PART2_NLT_IMPLEMENTATION.md](PART2_NLT_IMPLEMENTATION.md),
-[PART2_MCT_IMPLEMENTATION.md](PART2_MCT_IMPLEMENTATION.md).
+[PART2_MCT_IMPLEMENTATION.md](PART2_MCT_IMPLEMENTATION.md),
+[PART2_ATK_IMPLEMENTATION.md](PART2_ATK_IMPLEMENTATION.md).

@@ -921,7 +921,8 @@ namespace CoreJ2K
         public static byte[] ToBytes(BlkImgDataSrc imgsrc, j2k.fileformat.metadata.J2KMetadata? metadata, ParameterList? parameters,
             System.Collections.Generic.IList<j2k.codestream.NLTMarkerSegment>? nltSegments,
             System.Collections.Generic.IList<j2k.codestream.MctEncodeSpec>? mctSpecs = null,
-            j2k.codestream.DCOMarkerSegment? dcoSegment = null)
+            j2k.codestream.DCOMarkerSegment? dcoSegment = null,
+            j2k.codestream.AtkMarkerSegment? atkKernel = null)
         {
             if (imgsrc == null)
             {
@@ -933,6 +934,27 @@ namespace CoreJ2K
 
             // Create parameter list using defaults
             var pl = parameters ?? new ParameterList(defpl);
+
+            // **** Arbitrary Transformation Kernel (ATK, ISO/IEC 15444-2) setup ****
+            // The custom kernel replaces the Part 1 wavelet filter for all
+            // tile-components, so it cannot be combined with an explicit 'Ffilters'
+            // choice or the Part 1 inter-component transform (RCT/ICT).
+            if (atkKernel != null)
+            {
+                atkKernel.Validate();
+                if (pl.GetParameter("Ffilters") != null)
+                {
+                    throw new ArgumentException(
+                        "Cannot combine the 'Ffilters' option with a custom ATK wavelet kernel.");
+                }
+                var mctParam = pl.GetParameter("Mct");
+                if (mctParam != null && mctParam.Equals("on", StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new ArgumentException(
+                        "The Part 1 component transform ('Mct on') cannot be combined with a custom ATK wavelet kernel.");
+                }
+                pl["Mct"] = "off";
+            }
 
             var useFileFormat = false;
             var pphTile = false;
@@ -1184,6 +1206,26 @@ namespace CoreJ2K
             // **** Encoder specifications ****
             var encSpec = new EncoderSpecs(ntiles, ncomp, imgsrc, pl);
 
+            // **** ATK: substitute the custom kernel for the default wavelet filter ****
+            var hasAtk = atkKernel != null;
+            if (atkKernel != null)
+            {
+                var reversibleQuant = ((string)encSpec.qts.GetDefault()).Equals("reversible");
+                if (atkKernel.Reversible != reversibleQuant)
+                {
+                    throw new ArgumentException(atkKernel.Reversible
+                        ? "A reversible ATK kernel requires reversible quantization; enable the 'lossless' option or set 'Qtype reversible'."
+                        : "An irreversible ATK kernel cannot be used with reversible quantization; disable the 'lossless' option.");
+                }
+                j2k.wavelet.analysis.AnWTFilter atkFilter = atkKernel.Reversible
+                    ? new j2k.wavelet.analysis.AnWTFilterIntArbitrary(atkKernel)
+                    : (j2k.wavelet.analysis.AnWTFilter)new j2k.wavelet.analysis.AnWTFilterFloatArbitrary(atkKernel);
+                var atkFilters = new j2k.wavelet.analysis.AnWTFilter[2][];
+                atkFilters[0] = new[] { atkFilter };
+                atkFilters[1] = new[] { atkFilter };
+                encSpec.wfs.SetDefault(atkFilters);
+            }
+
             // **** Component transformation ****
             if (ppminput && pl.GetParameter("Mct") != null && pl.GetParameter("Mct").Equals("off"))
             {
@@ -1332,6 +1374,10 @@ namespace CoreJ2K
                 {
                     headenc.NLTSegments = nltSegments;
                 }
+                if (hasAtk)
+                {
+                    headenc.AtkSegment = atkKernel;
+                }
                 if (hasMct)
                 {
                     headenc.MctArrays = mctArraysToWrite;
@@ -1414,13 +1460,13 @@ namespace CoreJ2K
                 {
                     // Auto-generate Reader Requirements for JPX output when Part 2 features are active.
                     // The rreq box is required in every conformant JPX file (ISO/IEC 15444-2 §M.9.2).
-                    var isJpx = hasNlt || hasMct || hasDco
+                    var isJpx = hasNlt || hasMct || hasDco || hasAtk
                                 || (metadata?.HasJpxBoxes ?? false)
                                 || (metadata?.UseJpxBrand ?? false);
                     if (isJpx)
                     {
                         metadata ??= new j2k.fileformat.metadata.J2KMetadata();
-                        metadata.ReaderRequirements ??= j2k.fileformat.metadata.ReaderRequirementsBox.BuildForJpx(hasMct, hasNlt, hasDco);
+                        metadata.ReaderRequirements ??= j2k.fileformat.metadata.ReaderRequirementsBox.BuildForJpx(hasMct, hasNlt, hasDco, hasAtk);
                     }
 
                     try
@@ -1559,10 +1605,11 @@ namespace CoreJ2K
             j2k.fileformat.metadata.J2KMetadata? metadata, ParameterList? parameters,
             System.Collections.Generic.IList<j2k.codestream.NLTMarkerSegment>? nltSegments,
             System.Collections.Generic.IList<j2k.codestream.MctEncodeSpec>? mctSpecs = null,
-            j2k.codestream.DCOMarkerSegment? dcoSegment = null)
+            j2k.codestream.DCOMarkerSegment? dcoSegment = null,
+            j2k.codestream.AtkMarkerSegment? atkKernel = null)
         {
             if (output == null) throw new ArgumentNullException(nameof(output));
-            var data = ToBytes(imgsrc, metadata, parameters, nltSegments, mctSpecs, dcoSegment);
+            var data = ToBytes(imgsrc, metadata, parameters, nltSegments, mctSpecs, dcoSegment, atkKernel);
             output.Write(data, 0, data.Length);
         }
 

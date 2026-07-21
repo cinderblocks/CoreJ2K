@@ -96,6 +96,11 @@ namespace CoreJ2K.j2k.codestream
         /// multiple component transformation.
         /// </summary>
         public const short CBD = unchecked((short)0xff78);
+        /// <summary>Arbitrary transformation kernel marker (ATK): 0xFF79 (ISO/IEC 15444-2).
+        /// Defines a custom lifting-based wavelet kernel that COD/COC transformation
+        /// bytes can reference by index (values 2..127).
+        /// </summary>
+        public const short ATK = unchecked((short)0xff79);
         /// <summary>Component bitdepth bits in Ssiz field in SIZ marker: 7 </summary>
         public const int SSIZ_DEPTH_BITS = 7;
         /// <summary>The maximum number of component bitdepth </summary>

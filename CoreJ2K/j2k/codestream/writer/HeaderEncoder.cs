@@ -220,6 +220,14 @@ namespace CoreJ2K.j2k.codestream.writer
         /// <summary>Component Bit Depth (CBD) marker segment to emit (Part 2).</summary>
         public CbdMarkerSegment CbdSegment { get; set; }
 
+        /// <summary>
+        /// Arbitrary Transformation Kernel (ATK) marker segment to emit (Part 2). When
+        /// non-null, triggers Part 2 capability signaling; the COD/COC transformation
+        /// bytes reference the kernel through the custom analysis filters' FilterType.
+        /// Null for Part 1 output.
+        /// </summary>
+        public AtkMarkerSegment AtkSegment { get; set; }
+
         /// <summary> Initializes the header writer with the references to the coding chain.
         /// 
         /// </summary>
@@ -536,7 +544,8 @@ namespace CoreJ2K.j2k.codestream.writer
                          || (MccSegments != null && MccSegments.Count > 0)
                          || McoSegment != null;
             var hasDco = DcoSegment != null;
-            var hasPart2 = hasNlt || hasMct || hasDco;
+            var hasAtk = AtkSegment != null;
+            var hasPart2 = hasNlt || hasMct || hasDco || hasAtk;
             if (hasPart2)
             {
                 sizWriter.Rsiz = Markers.RSIZ_EXTENSIONS;
@@ -553,6 +562,15 @@ namespace CoreJ2K.j2k.codestream.writer
             if (hasPart2)
             {
                 writeCAP();
+            }
+
+            // +-------------------------------------------+
+            // |  Arbitrary Transformation Kernel (ATK)     |  (Part 2)
+            // +-------------------------------------------+
+            // Written before COD so the transformation byte's kernel reference resolves.
+            if (hasAtk)
+            {
+                AtkSegment.Write(hbuf);
             }
 
             // +-------------------------------------------+
