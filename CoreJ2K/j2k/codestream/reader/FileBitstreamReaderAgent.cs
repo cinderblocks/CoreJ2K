@@ -560,7 +560,7 @@ namespace CoreJ2K.j2k.codestream.reader
                 {
                     FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO, strInfo);
                 }
-                FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING, $"Codestream truncated in tile {t}");
+                FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO, $"Codestream truncated in tile {t}");
 
                 // Set specified rate to end of file if valid
                 var fileLen = inStream.length();
@@ -2166,7 +2166,7 @@ namespace CoreJ2K.j2k.codestream.reader
             }
             catch (System.IO.EndOfStreamException)
             {
-                FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING, $"Codestream truncated in tile {t}");
+                FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO, $"Codestream truncated in tile {t}");
                 return;
             }
 
@@ -2525,7 +2525,7 @@ namespace CoreJ2K.j2k.codestream.reader
                         }
                         catch (System.IO.EndOfStreamException)
                         {
-                            FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING, $"Codestream truncated in tile {t}");
+                            FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO, $"Codestream truncated in tile {t}");
                             return;
                         }
                         catch (System.IO.IOException e)
@@ -2610,7 +2610,7 @@ namespace CoreJ2K.j2k.codestream.reader
                 }
                 catch (System.IO.EndOfStreamException)
                 {
-                    FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING, $"Codestream truncated in tile {t}");
+                    FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO, $"Codestream truncated in tile {t}");
                     return;
                 }
                 catch (System.IO.IOException e)
