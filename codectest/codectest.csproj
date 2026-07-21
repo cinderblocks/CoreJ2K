@@ -6,6 +6,12 @@
     <AssemblyName>codectest</AssemblyName>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
+  <!-- Without an explicit PlatformTarget the SDK infers RuntimeIdentifier=win-x86 for
+       .NET Framework and flat-copies the 32-bit libSkiaSharp.dll next to an AnyCPU
+       (64-bit) exe, which kills the SkiaSharp type initializer. -->
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net481'">
+    <PlatformTarget>x64</PlatformTarget>
+  </PropertyGroup>
   <ItemGroup>
     <Content Include="samples\*.*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -14,9 +20,20 @@
   <ItemGroup>
     <ProjectReference Include="..\CoreJ2K.Skia\CoreJ2K.Skia.csproj" />
     <ProjectReference Include="..\CoreJ2K.Pfim\CoreJ2K.Pfim.csproj" />
+    <!-- Plain net8.0+ TFMs resolve the netstandard2.1 build (the net8+ builds are
+         -windows only), which also exercises disk-scan discovery of a plugin
+         assembly that has no [ModuleInitializer]. -->
+    <ProjectReference Include="..\CoreJ2K.Windows\CoreJ2K.Windows.csproj" />
     <ProjectReference Include="..\CoreJ2K\CoreJ2K.csproj" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'net8.0' Or '$(TargetFramework)' == 'net9.0' Or '$(TargetFramework)' == 'net10.0'">
+    <!-- Explicit reference: the transitive compile reference through CoreJ2K.Windows
+         (netstandard2.1) does not surface in Rider's ReSharper build, breaking the
+         System.Drawing type forwarders. -->
+    <PackageReference Include="System.Drawing.Common" />
+    <!-- Direct reference so the central pin governs; otherwise Avalonia.Skia's
+         floor (3.119.4-preview.1.1) decides the transitive SkiaSharp version. -->
+    <PackageReference Include="SkiaSharp" />
     <ProjectReference Include="..\CoreJ2K.ImageSharp\CoreJ2K.ImageSharp.csproj" />
     <PackageReference Include="SixLabors.ImageSharp" />
     <ProjectReference Include="..\CoreJ2K.Avalonia\CoreJ2K.Avalonia.csproj" />

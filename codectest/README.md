@@ -22,8 +22,13 @@ This is a demonstration program that showcases the **CoreJ2K modern configuratio
 ### 4. Integration Package Extensions
 - **SkiaSharp** - Direct file saving methods
 - **ImageSharp** - Modern .NET image processing (NET8.0+)
+- **Avalonia** - WriteableBitmap decoding (NET8.0+, headless)
 - **Pfim** - DDS/TGA game texture support
-- **Windows** - System.Drawing integration
+- **Windows** - System.Drawing integration (Windows only on NET8.0+)
+
+The Native Plugin Conversion demo decodes every JP2/J2K sample and converts it
+through each registered plugin (Skia PNG, System.Drawing PNG, ImageSharp PNG,
+Pfim TIFF), exercising `ImageFactory` plugin discovery on every target framework.
 
 ### 5. Decoding
 - Standard decoding
@@ -40,12 +45,22 @@ This is a demonstration program that showcases the **CoreJ2K modern configuratio
 # Build
 dotnet build codectest.csproj
 
-# Run with .NET 8.0 (includes ImageSharp)
-dotnet run --framework net8.0
+# Run with .NET 8.0/9.0/10.0 (includes ImageSharp and Avalonia demos)
+dotnet run --framework net10.0
 
 # Run with .NET Framework 4.8.1
 dotnet run --framework net481
 ```
+
+### .NET Framework notes
+
+Two settings in this project are load-bearing for the net481 build:
+
+- `PlatformTarget` is pinned to `x64` â€” without it the SDK infers
+  `RuntimeIdentifier=win-x86` and copies the 32-bit `libSkiaSharp.dll` next to the
+  (64-bit) AnyCPU exe, which breaks SkiaSharp at startup.
+- `app.config` carries an explicit binding redirect for
+  `System.Runtime.CompilerServices.Unsafe`, which MSBuild does not auto-generate.
 
 ## Sample Output
 
@@ -84,7 +99,7 @@ CoreJ2K Modern API Demo
   ? Pfim is for DDS/TGA game textures
   Usage:
     var dds = Dds.Create("texture.dds");
-    dds.SaveAsJ2KWeb("texture.jp2", "© 2025 Game Studio");
+    dds.SaveAsJ2KWeb("texture.jp2", "ï¿½ 2025 Game Studio");
   ? Pfim extension methods available
 
 ???  ImageSharp Integration
@@ -95,9 +110,9 @@ CoreJ2K Modern API Demo
 
 ?? Decoding Demo
 ----------------
-? Decoded: 1920×1080 pixels
-? Decoded at half resolution: 960×540 pixels
-? Decoded with extension method: 1920×1080 pixels
+? Decoded: 1920ï¿½1080 pixels
+? Decoded at half resolution: 960ï¿½540 pixels
+? Decoded with extension method: 1920ï¿½1080 pixels
 
 ? Performance Comparison
 ------------------------
@@ -108,7 +123,7 @@ Modern API (custom): 159ms ? 56,789 bytes
 ? All methods have similar performance
 ? Modern API adds zero overhead!
 
-Decoding: 45ms for 1920×1080 image
+Decoding: 45ms for 1920ï¿½1080 image
 
 ? All demonstrations complete!
 Check the 'output' directory for generated files.
@@ -116,13 +131,14 @@ Check the 'output' directory for generated files.
 
 ## Output Files
 
-The demo generates various JPEG 2000 files in the `output` directory:
+The demo generates various files in the `output` directory (git-ignored):
 
 - `traditional_*.jp2` - Traditional API examples
 - `preset_*.jp2` - Preset configuration examples
 - `custom_configured.jp2` - Custom configuration example
 - `skia_*.jp2` - SkiaSharp integration examples
 - `imagesharp_*.jp2` - ImageSharp integration examples (NET8.0+)
+- `*.skia.png` / `*.windows.png` / `*.imagesharp.png` / `*.pfim.tiff` - Native plugin conversions of the samples
 
 ## Code Examples
 
@@ -132,7 +148,7 @@ The demo generates various JPEG 2000 files in the `output` directory:
 bitmap.SaveAsJ2KLossless("output.jp2");
 
 // High quality with copyright
-bitmap.SaveAsJ2KHighQuality("output.jp2", "© 2025");
+bitmap.SaveAsJ2KHighQuality("output.jp2", "ï¿½ 2025");
 
 // Web optimized
 bitmap.SaveAsJ2KWeb("output.jp2");
@@ -144,7 +160,7 @@ var config = new CompleteEncoderConfigurationBuilder()
     .ForBalanced()
     .WithMetadata(m => m
         .WithComment("My image")
-        .WithCopyright("© 2025"));
+        .WithCopyright("ï¿½ 2025"));
 
 bitmap.SaveAsJ2K("output.jp2", config);
 ```
@@ -156,9 +172,9 @@ var data = bitmap.EncodeToJ2K(CompleteConfigurationPresets.Photography);
 
 ## Requirements
 
-- .NET 8.0 or .NET Framework 4.8.1
+- .NET 8.0/9.0/10.0 or .NET Framework 4.8.1
 - Sample images in `samples/` directory
-- CoreJ2K and integration packages
+- CoreJ2K and integration packages (Skia, Pfim, and Windows on all targets; ImageSharp and Avalonia on .NET 8.0+)
 
 ## See Also
 

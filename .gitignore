@@ -10,3 +10,8 @@
 /UpgradeLog.htm
 [Bb]ackup/
 /.idea/
+
+# Generated demo/test output (codectest writes to <cwd>/output;
+# anchored so CoreJ2K/j2k/image/output source dir is unaffected)
+/output/
+/codectest/output/

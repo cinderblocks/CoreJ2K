@@ -426,7 +426,7 @@ namespace CoreJ2K.Tests
 
                 Assert.True(reader.FileStructure.HasContiguousCodestreamBox);
                 Assert.True(reader.FirstCodeStreamPos > 0);
-                Assert.Equal(codestream.Length, reader.FirstCodeStreamLength - 8); // -8 for box header
+                Assert.Equal(codestream.Length, reader.FirstCodeStreamLength);
             }
         }
 

@@ -131,6 +131,11 @@ dotnet add package CoreJ2K.Windows
 dotnet add package CoreJ2K.Pfim
 ```
 
+Integration packages are discovered and registered automatically at runtime on JIT
+runtimes (.NET Framework and .NET 8+). NativeAOT or aggressively trimmed apps should
+register creators explicitly, e.g. `ImageFactory.Register(new SKBitmapImageCreator())` —
+see [Plugin Registration](docs/INTEGRATION_PACKAGES_GUIDE.md#plugin-registration).
+
 ### Quick Examples
 
 #### Basic Decoding

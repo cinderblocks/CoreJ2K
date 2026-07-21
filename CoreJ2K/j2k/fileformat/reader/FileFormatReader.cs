@@ -81,10 +81,11 @@ namespace CoreJ2K.j2k.fileformat.reader
 
         /// <summary> This method returns the length of the first contiguous codestreams in
         /// the file
-        /// 
+        ///
         /// </summary>
-        /// <returns> The length of the first contiguous codestream in the file
-        /// 
+        /// <returns> The length in bytes of the first contiguous codestream in the file
+        /// (the jp2c box payload, excluding the box header)
+        ///
         /// </returns>
         public virtual int FirstCodeStreamLength => codeStreamLength[0];
 
@@ -228,8 +229,10 @@ namespace CoreJ2K.j2k.fileformat.reader
                     box = inStream.readInt();
                     if (length == 0)
                     {
+                        // Box extends to end of file; reconstruct the total box length
+                        // (including the 8-byte header) so it matches sized boxes.
                         lastBoxFound = true;
-                        length = inStream.length() - inStream.Pos;
+                        length = inStream.length() - pos;
                     }
                     else if (length == 1)
                     {
@@ -838,10 +841,14 @@ namespace CoreJ2K.j2k.fileformat.reader
                 codeStreamPos = new List<int>(10);
             codeStreamPos.Add(ccpos);
 
-            // Add new codestream length to length vector
+            // Add new codestream length to length vector. 'length' is the total box
+            // length including the header, while ccpos points past the header, so
+            // subtract the header size to store the actual codestream byte count —
+            // otherwise consumers reading 'length' bytes from ccpos overrun the box
+            // (and the file, when jp2c is the last box).
             if (codeStreamLength == null)
                 codeStreamLength = new List<int>(10);
-            codeStreamLength.Add(length);
+            codeStreamLength.Add(length - (int)(ccpos - pos));
 
             return true;
         }

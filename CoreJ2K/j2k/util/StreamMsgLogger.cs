@@ -76,10 +76,13 @@ namespace CoreJ2K.j2k.util
         /// </param>
         protected StreamMsgLogger(Stream outstr, Stream errstr, int lw)
         {
-            var temp_writer = new StreamWriter(outstr, System.Text.Encoding.UTF8);
+            // BOM-less UTF-8: Encoding.UTF8 writes a byte-order mark on first use,
+            // which shows up as garbage (∩╗┐) when the stream is a console.
+            var utf8 = new System.Text.UTF8Encoding(false);
+            var temp_writer = new StreamWriter(outstr, utf8);
             temp_writer.AutoFlush = true;
             outStream = temp_writer;
-            var temp_writer2 = new StreamWriter(errstr, System.Text.Encoding.UTF8);
+            var temp_writer2 = new StreamWriter(errstr, utf8);
             temp_writer2.AutoFlush = true;
             err = temp_writer2;
             mp = new MsgPrinter(lw);

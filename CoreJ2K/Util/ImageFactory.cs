@@ -26,13 +26,37 @@ namespace CoreJ2K.Util
 
         static ImageFactory()
         {
-#if !NET8_0_OR_GREATER
+#if NET8_0_OR_GREATER
+            // On JIT runtimes, scan the application directory for CoreJ2K.*.dll plugin
+            // assemblies just like the .NET Framework path, so apps that never statically
+            // touch a plugin assembly (and therefore never trigger its [ModuleInitializer])
+            // still get its creators registered. On NativeAOT dynamic discovery is
+            // impossible; plugins register via [ModuleInitializer] or an explicit Register.
+            if (System.Runtime.CompilerServices.RuntimeFeature.IsDynamicCodeSupported)
+            {
+                AutoRegisterDiscoveredCodecs();
+            }
+#else
             foreach (var creator in J2kSetup.FindCodecInstances<IImageCreator>())
             {
                 Register(creator);
             }
 #endif
         }
+
+#if NET8_0_OR_GREATER
+        [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("Trimming", "IL2026",
+            Justification = "Best-effort fallback; trimmed apps keep plugin [ModuleInitializer] registration and can call Register explicitly.")]
+        [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("AOT", "IL3050",
+            Justification = "Guarded by RuntimeFeature.IsDynamicCodeSupported.")]
+        private static void AutoRegisterDiscoveredCodecs()
+        {
+            foreach (var creator in J2kSetup.FindCodecInstances<IImageCreator>())
+            {
+                Register(creator);
+            }
+        }
+#endif
 
         #endregion
 

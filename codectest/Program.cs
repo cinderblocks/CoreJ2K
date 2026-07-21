@@ -14,11 +14,6 @@ using CoreJ2K.Pfim;
 using SkiaSharp;
 using Pfim;
 
-#if NETFRAMEWORK
-using System.Drawing;
-using System.Drawing.Imaging;
-#endif
-
 #if NET8_0_OR_GREATER
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
@@ -41,8 +36,24 @@ namespace codectest
         /// <summary>Tracks results for the final summary report.</summary>
         private static readonly List<DemoResult> Results = new List<DemoResult>();
 
+        /// <summary>System.Drawing.Common only works on Windows on net8+.</summary>
+#if !NETFRAMEWORK
+        [System.Runtime.Versioning.SupportedOSPlatformGuard("windows6.1")]
+#endif
+        private static bool IsWindows =>
+#if NETFRAMEWORK
+            true;
+#else
+            OperatingSystem.IsWindowsVersionAtLeast(6, 1);
+#endif
+
         private static void Main(string[] args)
         {
+#if NETFRAMEWORK
+            // .NET Framework consoles default to the OEM codepage, which renders
+            // the emoji/box-drawing output as '?' garbage.
+            try { Console.OutputEncoding = System.Text.Encoding.UTF8; } catch { /* redirected or no console */ }
+#endif
             var runtimeVersion = RuntimeInformation.FrameworkDescription;
             var os = RuntimeInformation.OSDescription;
 
@@ -513,22 +524,27 @@ namespace codectest
                         Console.WriteLine($"    SKIA conversion failed: {ex.Message}");
                     }
 
-#if NETFRAMEWORK
-                    // System.Drawing (Windows) via Windows plugin
-                    try
+                    // System.Drawing via Windows plugin (Windows only on net8+)
+                    if (IsWindows)
                     {
-                        using (var win = img.As<System.Drawing.Image>())
+                        try
                         {
-                            var outFile = Path.Combine("output", name + ".windows.png");
-                            win.Save(outFile, System.Drawing.Imaging.ImageFormat.Png);
+                            using (var win = img.As<System.Drawing.Image>())
+                            {
+                                var outFile = Path.Combine("output", name + ".windows.png");
+                                win.Save(outFile, System.Drawing.Imaging.ImageFormat.Png);
+                            }
+                            Console.WriteLine("    -> System.Drawing PNG written");
                         }
-                        Console.WriteLine("    -> System.Drawing PNG written");
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"    System.Drawing conversion failed: {ex.Message}");
+                        }
                     }
-                    catch (Exception ex)
+                    else
                     {
-                        Console.WriteLine($"    System.Drawing conversion failed: {ex.Message}");
+                        Console.WriteLine("    System.Drawing skipped (Windows only)");
                     }
-#endif
 
 #if NET8_0_OR_GREATER
                     // ImageSharp
@@ -547,37 +563,29 @@ namespace codectest
                     }
 #endif
 
-#if NETFRAMEWORK
-                    // Pfim -> TIFF (Windows/System.Drawing)
+                    // Pfim -> TIFF via System.Drawing on Windows, raw data dump elsewhere
                     try
                     {
                         using (var pimg = img.As<Pfim.IImage>())
                         {
-                            var outFile = Path.Combine("output", name + ".pfim.tiff");
-                            SavePfimAsTiff(pimg, outFile);
+                            if (IsWindows)
+                            {
+                                var outFile = Path.Combine("output", name + ".pfim.tiff");
+                                SavePfimAsTiff(pimg, outFile);
+                                Console.WriteLine("    -> Pfim TIFF written");
+                            }
+                            else
+                            {
+                                var outFile = Path.Combine("output", name + ".pfim.raw");
+                                File.WriteAllBytes(outFile, pimg.Data);
+                                Console.WriteLine("    -> Pfim raw data written (fallback, TIFF requires Windows)");
+                            }
                         }
-                        Console.WriteLine("    -> Pfim TIFF written");
                     }
                     catch (Exception ex)
                     {
                         Console.WriteLine($"    Pfim conversion failed: {ex.Message}");
                     }
-#else
-                    // Pfim - save raw data as fallback when System.Drawing unavailable
-                    try
-                    {
-                        using (var pimg = img.As<Pfim.IImage>())
-                        {
-                            var outFile = Path.Combine("output", name + ".pfim.raw");
-                            File.WriteAllBytes(outFile, pimg.Data);
-                        }
-                        Console.WriteLine("    -> Pfim raw data written (fallback, TIFF not available on this target)");
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"    Pfim fallback write failed: {ex.Message}");
-                    }
-#endif
 
                     // If the decoded object implements IDisposable the 'using' above will dispose.
                 }
@@ -588,7 +596,9 @@ namespace codectest
             }
         }
 
-#if NETFRAMEWORK
+#if !NETFRAMEWORK
+        [System.Runtime.Versioning.SupportedOSPlatform("windows6.1")]
+#endif
         private static void SavePfimAsTiff(Pfim.IImage pimg, string outPath)
         {
             if (pimg == null) throw new ArgumentNullException(nameof(pimg));
@@ -600,9 +610,9 @@ namespace codectest
             var bytesPerPixel = Math.Max(1, bpp / 8);
 
             System.Drawing.Imaging.PixelFormat pf;
-            if (bytesPerPixel == 3) pf = PixelFormat.Format24bppRgb;
-            else if (bytesPerPixel >= 4) pf = PixelFormat.Format32bppArgb;
-            else pf = PixelFormat.Format8bppIndexed;
+            if (bytesPerPixel == 3) pf = System.Drawing.Imaging.PixelFormat.Format24bppRgb;
+            else if (bytesPerPixel >= 4) pf = System.Drawing.Imaging.PixelFormat.Format32bppArgb;
+            else pf = System.Drawing.Imaging.PixelFormat.Format8bppIndexed;
 
             using (var bmp = new System.Drawing.Bitmap(width, height, pf))
             {
@@ -628,7 +638,6 @@ namespace codectest
                 bmp.Save(outPath, System.Drawing.Imaging.ImageFormat.Tiff);
             }
         }
-#endif
 
         #endregion
 
@@ -644,13 +653,15 @@ namespace codectest
             var bitmap1 = image1.As<SKBitmap>();
             Console.WriteLine($"? Decoded: {bitmap1.Width}×{bitmap1.Height} pixels");
 
-            // Decoding with modern configuration
+            // Decoding with modern configuration. Resolution level 2 counts up from
+            // the lowest (level 0), so with the preset's 6 decomposition levels this
+            // yields a 1/16-scale thumbnail, not half size.
             var decoderConfig = new J2KDecoderConfiguration()
-                .WithResolutionLevel(2);  // Half resolution
+                .WithResolutionLevel(2);
 
             var image2 = J2kImage.FromFile(Path.Combine("output", "preset_highquality.jp2"), decoderConfig);
             var bitmap2 = image2.As<SKBitmap>();
-            Console.WriteLine($"? Decoded at half resolution: {bitmap2.Width}×{bitmap2.Height} pixels");
+            Console.WriteLine($"? Decoded at resolution level 2 (thumbnail): {bitmap2.Width}×{bitmap2.Height} pixels");
 
             // Using extension methods
             var bitmap3 = SKBitmapJ2kExtensions.FromJ2KFile(Path.Combine("output", "preset_photography.jp2"));

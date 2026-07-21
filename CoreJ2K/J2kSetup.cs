@@ -140,7 +140,14 @@ namespace CoreJ2K
                     Assembly? asm = null;
                     try
                     {
+#if NET8_0_OR_GREATER
+                        // Load into the default context so plugin types unify with the
+                        // app's own references; LoadFile would isolate them in a separate
+                        // AssemblyLoadContext and Register creators for foreign type ids.
+                        asm = System.Runtime.Loader.AssemblyLoadContext.Default.LoadFromAssemblyPath(dll);
+#else
                         asm = Assembly.LoadFile(dll);
+#endif
                     }
                     catch (Exception loadEx)
                     {
