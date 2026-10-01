@@ -54,7 +54,9 @@ jobs:
             TAG_NAME=${TAG_NAME#v}
             VERSION="${TAG_NAME}.${GITHUB_RUN_NUMBER}"
           else
-            VERSION="2.1.0.${GITHUB_RUN_NUMBER}"
+            # Non-tag builds: take major.minor.patch from Directory.Build.props so this never drifts
+            BASE=$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' Directory.Build.props | head -1)
+            VERSION="${BASE%.*}.${GITHUB_RUN_NUMBER}"
           fi
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
           echo "Building version $VERSION"

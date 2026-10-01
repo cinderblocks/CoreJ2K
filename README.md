@@ -87,7 +87,7 @@ CoreJ2K is a **pure C# implementation** of the JPEG 2000 image compression stand
 |---------|-------------|
 | **🏆 Standards Compliant** | 100% JPEG 2000 Part 1 (ISO/IEC 15444-1) • ~50% Part 2 extensions • 27 codestream markers • 22 JP2 boxes • Part 14 JPXML |
 | **⚡ Modern .NET** | .NET Standard 2.0/2.1 • .NET 8/9/10 • .NET Framework 4.8.1 (via netstandard2.0) • All platforms |
-| **🎯 Production Ready** | Lossless/Lossy • ROI • Files >4GB • Error resilience • 2500+ tests |
+| **🎯 Production Ready** | Lossless/Lossy • ROI • Files >4GB • Error resilience • 1,000+ tests |
 | **📦 Easy Integration** | NuGet packages • Simple API • SkiaSharp/ImageSharp/System.Drawing support |
 | **🆓 Open Source** | BSD-3-Clause • No fees • Active development • Community driven |
 
@@ -97,7 +97,7 @@ CoreJ2K is a **pure C# implementation** of the JPEG 2000 image compression stand
 |------------------------|----------------------|
 | Native C# (no P/Invoke) | Battle-tested & stable |
 | Memory safe (managed code) | Complete Part 1 compliance |
-| Thread-safe operations | Medical imaging (DICOM) ready |
+| Safe for concurrent independent calls | Medical imaging (DICOM) ready |
 | Familiar NuGet install | GIS/geospatial compatible |
 | Works with all image libraries | Interoperable with all decoders |
 
@@ -421,7 +421,7 @@ Common encoder parameters (case-sensitive):
 - **DecodeToImage\<T\>**: Memory-efficient decode that skips `InterleavedImage` entirely for 8-bit images (~4× less peak memory). Falls back to `FromStream + As<T>` automatically for >8-bit components.
 - **ParameterList**: Optional encoding parameters. Use indexer to set: `params["key"] = "value"`
 - **Image Sources**: Accepts SKBitmap, Bitmap, Image, or codec-specific formats (PGM/PPM/PGX streams)
-- **Thread Safety**: Decoding and encoding operations are thread-safe
+- **Thread Safety**: Independent decode and encode calls can run concurrently on separate threads. A single call runs on one thread; CoreJ2K does not parallelize inside a decode or encode.
 
 ### Fast Random Tile Access (TLM Markers)
 
@@ -430,7 +430,7 @@ Common encoder parameters (case-sensitive):
 - **GIS/Map Servers**: Sub-second tile delivery (~30s → ~0.03s)
 - **Medical Imaging**: Interactive whole-slide image viewing (~30s → ~0.05s)
 - **Satellite Imagery**: Efficient ROI extraction
-- **Parallel Processing**: Multi-threaded tile decoding
+- **Parallel Processing**: Callers can decode different tiles concurrently on their own threads
 
 #### Encoding with TLM
 
@@ -516,11 +516,11 @@ CoreJ2K implements the most commonly used JPEG 2000 Part 2 (ISO/IEC 15444-2) fea
 | **Multi-Component Transform** | MCT/MCC/MCO (0xFF74–77) | ✅ | ✅ | Matrix decorrelation, dependency lifting, 5/3 wavelet |
 | **Component Bit Depth** | CBD (0xFF78) | ✅ | ✅ | Per-component depth signaling |
 | **Arbitrary Decomposition** | DFS/ADS (0xFF72–73) | ❌ | ❌ | Non-standard wavelet tree shapes |
-| **Arbitrary Transform Kernels** | ATK (0xFF79) | ❌ | ❌ | Custom wavelet filter coefficients |
+| **Arbitrary Transform Kernels** | ATK (0xFF79) | ✅ | ✅ | Custom reversible/irreversible lifting kernels — see [ATK guide](docs/PART2_ATK_IMPLEMENTATION.md) |
 | **Trellis Coded Quantization** | — | ❌ | ❌ | Alternative entropy path |
 | **Single Sample Overlap** | — | ❌ | ❌ | Tie-in with DFS/ADS |
 
-**Coverage: ~50%** — all production-relevant per-sample and multi-component transforms are implemented. Remaining gaps are the wavelet-shape and custom-kernel features (ATK, DFS/ADS).
+**Coverage: ~50%** — all production-relevant per-sample and multi-component transforms, plus custom wavelet kernels (ATK), are implemented. Remaining gaps are the wavelet-shape features (DFS/ADS), trellis-coded quantization and single-sample overlap.
 
 > **API note:** Pass Part 2 parameters to `J2kImage.ToBytes`:
 > ```csharp
@@ -567,7 +567,7 @@ CoreJ2K supports multiple parts of ISO/IEC 15444:
 | Part | Name | Read | Write | Status |
 |------|------|------|-------|--------|
 | **Part 1** | Core Coding System | ✅ Full | ✅ Full | **100%** Complete |
-| **Part 2** | Extensions | ⚠️ Partial | ⚠️ Partial | **~50%** — JPX boxes, DCO, NLT, MCT family; ATK/DFS pending |
+| **Part 2** | Extensions | ⚠️ Partial | ⚠️ Partial | **~50%** — JPX boxes, DCO, NLT, MCT family, ATK; DFS/ADS pending |
 | **Part 4** | Conformance Testing | N/A | N/A | **100%** Complete |
 | **Part 14** | XML Representation (JPXML) | ✅ Full | ✅ Full | **100%** Complete |
 
@@ -700,7 +700,7 @@ Free to use in commercial and open-source projects. No licensing fees.
 | **Platform Support** | .NET all | All | All | JVM | All | All | Windows mainly |
 | **Cross-platform** | ✅ Full | ✅ Full | ✅ Full | ✅ Full | ✅ Full | ✅ Full | ⚠️ Limited |
 | **Memory Safety** | ✅ Managed | ⚠️ Manual | ⚠️ Manual | ✅ Managed | ⚠️ Manual | ✅ Managed | ⚠️ Manual |
-| **Multi-threading** | ✅ Safe | ✅ Yes | ✅ Yes | ⚠️ Limited | ⚠️ Limited | ✅ Yes | ✅ Yes |
+| **Multi-threading** | ⚠️ Per-call (none internal) | ✅ Yes | ✅ Yes | ⚠️ Limited | ⚠️ Limited | ✅ Yes | ✅ Yes |
 | **SIMD Optimization** | ✅ Yes (AVX/auto-vec) | ✅ Full | ✅ Full | ❌ No | ❌ No | ⚠️ Limited | ✅ Full |
 
 ### Performance and Quality
