@@ -205,6 +205,53 @@ var quickPreview = J2kImage.FromFile("large.jp2", config);
 .WithVerbose(false)
 ```
 
+### 8. Resource Limits
+
+A few kilobytes of JPEG 2000 can claim an image of billions of pixels. By default the decoder reads the header, works out how large
+the decoded image will be **at the requested resolution**, and refuses it with a `DecoderLimitException` *before it allocates any
+image-sized buffer* if it exceeds the limits. `DecoderLimitException` derives from `InvalidOperationException`, so existing handlers
+for malformed input keep working.
+
+| Limit | Default | Meaning |
+|-------|---------|---------|
+| `MaxPixels` | 1 Gpixel | Width x height of the decoded image at the requested resolution |
+| `MaxMemoryBytes` | 2 GiB | Estimated memory: the decoded image plus the working buffers for the largest tile |
+| `MaxTileComponents` | 4 Mi | Tiles x components declared by the codestream (sizes the decoder's per-tile tables) |
+
+Independently of these settings, tile and component counts above the maxima of ISO/IEC 15444-1 (65535 tiles, 16384 components) are
+always rejected; `DecoderLimits.None` does not relax them.
+
+```csharp
+// Strict limits for untrusted uploads (64 Mpixel, 512 MiB)
+var config = new J2KDecoderConfiguration().WithLimits(DecoderLimits.Strict);
+
+// Or tune individual limits
+var custom = new J2KDecoderConfiguration()
+    .WithLimits(DecoderLimits.Default.WithMaxPixels(100_000_000).WithMaxMemoryBytes(1L << 30));
+
+// Trusted input that really is huge: switch the configurable limits off
+var trusted = new J2KDecoderConfiguration().WithLimits(DecoderLimits.None);
+
+// Change the default for the whole process (set once at start-up)
+DecoderLimits.Default = DecoderLimits.Strict;
+
+try
+{
+    var image = J2kImage.FromBytes(data, config);
+}
+catch (DecoderLimitException e)
+{
+    Console.WriteLine($"{e.Limit}: asked for {e.Requested}, allowed {e.Allowed}");
+}
+```
+
+Limits apply to the image **as decoded**, so previews of very large images keep working: a 20000x20000 image rejected at full
+resolution decodes fine with `WithResolutionLevel(0)`. With the legacy `ParameterList` API use the `max_pixels`, `max_memory` and
+`max_tile_components` parameters.
+
+The memory figure is an approximate estimate (4 bytes per output sample for `InterleavedImage`, 1 for `DecodeToImage<T>`, plus 4 bytes
+per sample of the largest tile), not a cap on the process.
+
 ## Complete Examples
 
 ### Example 1: Thumbnail Generation
@@ -391,6 +438,7 @@ Main configuration class with fluent API for decoding.
 - `WithParsingMode(bool parsingMode)` - Use parsing vs truncate mode
 - `WithProgressiveDecoding()` - Enable progressive parsing mode
 - `WithVerbose(bool verbose)` - Control verbose output
+- `WithLimits(DecoderLimits limits)` - Resource limits for this decode (`DecoderLimits.Strict`, `None`, or a tuned copy)
 - `WithQuitConditions(Action<QuitConditions>)` - Configure early termination
 - `WithComponentTransform(Action<ComponentTransformSettings>)` - Configure component transform
 - `Validate()` - Returns list of validation errors
@@ -403,6 +451,7 @@ Main configuration class with fluent API for decoding.
 - `UseColorSpace` - Get/set color space usage
 - `ParsingMode` - Get/set parsing mode
 - `Verbose` - Get/set verbose output
+- `Limits` - Get/set resource limits (`null` = `DecoderLimits.Default`)
 - `QuitConditions` - Access quit conditions config
 - `ComponentTransform` - Access component transform settings
 - `IsValid` - Check if configuration is valid

@@ -295,6 +295,13 @@ namespace CoreJ2K
             var bitsUsed = new int[numComps];
             for (var j = 0; j < numComps; ++j) bitsUsed[j] = decodedImage.GetNomRangeBits(j);
 
+            // Refuse an image that would exceed the decoder limits before allocating the output buffer. This is checked
+
+            // on the final image: a palette or multiple-component transform can output more components than the codestream has.
+
+            EnforceDecoderLimits(pl, hi, invWT, decodedImage, 4);
+
+
             var dst = new InterleavedImage(imgWidth, decodedImage.ImgHeight, numComps, bitsUsed);
 
             var numTiles = decodedImage.GetNumTiles(null);
@@ -596,6 +603,13 @@ namespace CoreJ2K
 
             var bitsUsed = new int[numComps];
             for (var j = 0; j < numComps; ++j) bitsUsed[j] = decodedImage.GetNomRangeBits(j);
+
+            // Refuse an image that would exceed the decoder limits before allocating the output buffer. This is checked
+
+            // on the final image: a palette or multiple-component transform can output more components than the codestream has.
+
+            EnforceDecoderLimits(pl, hi, invWT, decodedImage, 4);
+
 
             var dst = new InterleavedImage(imgWidth, decodedImage.ImgHeight, numComps, bitsUsed);
 
@@ -1828,6 +1842,28 @@ namespace CoreJ2K
                         + " affects only the inverse wavelet transform and not the number "
                         + " of bytes read by the codestream parser: this number of bytes "
                         + "depends only on options '-nbytes' or '-rate'.",
+                        null
+                    },
+                new string?[]
+                    {
+                        "max_pixels", "<pixels>",
+                        "Maximum number of pixels (width x height) of the decoded image at the requested "
+                        + "resolution. Larger images are rejected with a DecoderLimitException before any image "
+                        + "buffer is allocated. Defaults to DecoderLimits.Default.",
+                        null
+                    },
+                new string?[]
+                    {
+                        "max_memory", "<bytes>",
+                        "Maximum estimated memory, in bytes, a decode may need (decoded image plus working "
+                        + "buffers for the largest tile). Defaults to DecoderLimits.Default.",
+                        null
+                    },
+                new string?[]
+                    {
+                        "max_tile_components", "<count>",
+                        "Maximum number of tiles x components the codestream may declare. Defaults to "
+                        + "DecoderLimits.Default.",
                         null
                     },
                 new string?[]

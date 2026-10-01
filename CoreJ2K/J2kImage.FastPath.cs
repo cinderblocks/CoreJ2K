@@ -84,6 +84,33 @@ namespace CoreJ2K
         #region Core decode
 
         /// <summary>
+        /// Applies the <see cref="DecoderLimits"/> to the image that is about to be produced, using its size at the requested
+        /// resolution. Runs before the output buffer is allocated; building the decoding chain beforehand allocates nothing
+        /// image-sized.
+        /// </summary>
+        /// <param name="invWT">The inverse wavelet transform, whose tile-components are the working buffers.</param>
+        /// <param name="decodedImage">The final image of the chain (after colour-space mapping), whose size and component count
+        /// are what the output buffer is sized from. A palette or multiple-component transform can give it more components than
+        /// the codestream has.</param>
+        /// <param name="bytesPerOutputSample">Bytes per sample the caller keeps for the output (4 for <see cref="InterleavedImage"/>, 1 for the fast path).</param>
+        private static void EnforceDecoderLimits(ParameterList pl, HeaderInfo hi, InverseWT invWT, BlkImgDataSrc decodedImage,
+            int bytesPerOutputSample)
+        {
+            var limits = DecoderLimits.FromParameters(pl);
+
+            long width = decodedImage.ImgWidth, height = decodedImage.ImgHeight;
+            var siz = hi.sizValue;
+            double fullWidth = Math.Max(1, (long)siz.xsiz - siz.x0siz), fullHeight = Math.Max(1, (long)siz.ysiz - siz.y0siz);
+
+            // Largest tile at the output resolution, scaled from the full-resolution tile size. The working buffers are the
+            // codestream's tile-components, so they use the codestream's component count rather than the output's.
+            var tileWidth = (long)Math.Ceiling(Math.Min(siz.xtsiz, fullWidth) * invWT.ImgWidth / fullWidth);
+            var tileHeight = (long)Math.Ceiling(Math.Min(siz.ytsiz, fullHeight) * invWT.ImgHeight / fullHeight);
+
+            limits.ValidateOutput(width, height, decodedImage.NumComps, tileWidth, tileHeight, invWT.NumComps, bytesPerOutputSample);
+        }
+
+        /// <summary>
         /// Core implementation of the 8-bit fast-path decode.
         /// </summary>
         /// <remarks>
@@ -257,6 +284,8 @@ namespace CoreJ2K
                 }
 
                 // **** 8-bit fast path: decode straight into a byte buffer ****
+                // Checked on the final image (a palette or MCT can output more components than the codestream has).
+                EnforceDecoderLimits(pl, hi, invWT!, decodedImage, 1);
                 var totalBytes = checked(imgWidth * imgHeight * numComps);
                 var pixelBytes = new byte[totalBytes];
 

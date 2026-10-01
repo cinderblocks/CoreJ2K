@@ -714,6 +714,9 @@ namespace CoreJ2K.j2k.codestream.reader
         /// encoded header stream
         /// 
         /// </exception>
+        /// <summary>Limits applied to the structure declared in the SIZ marker segment.</summary>
+        private readonly DecoderLimits limits;
+
         private void readSIZ(System.IO.BinaryReader ehs)
         {
             var ms = hi.NewSIZ;
@@ -789,6 +792,12 @@ namespace CoreJ2K.j2k.codestream.reader
 
             // Check marker length
             checkMarkerLength(ehs, "SIZ marker");
+
+            // Reject hostile tile/component counts before sizing any per-tile table. The tile count is
+            // computed in long: the int product used by NumTiles overflows for e.g. 65535x65535 with 1x1 tiles.
+            var tilesAcross = ((long)ms.xsiz - ms.xt0siz + ms.xtsiz - 1) / ms.xtsiz;
+            var tilesDown = ((long)ms.ysiz - ms.yt0siz + ms.ytsiz - 1) / ms.ytsiz;
+            limits.ValidateStructure(Math.Max(tilesAcross, 0) * Math.Max(tilesDown, 0), nComp);
 
             // Create needed ModuleSpec
             nTiles = ms.NumTiles;
@@ -3163,6 +3172,7 @@ namespace CoreJ2K.j2k.codestream.reader
         {
 
             this.hi = hi;
+            limits = DecoderLimits.FromParameters(pl);
             // CONVERSION PROBLEM?
             //this.verbose = verbose;
 

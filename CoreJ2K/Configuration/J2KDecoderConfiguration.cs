@@ -24,6 +24,7 @@ namespace CoreJ2K.Configuration
         private QuitConditions _quitConditions = new QuitConditions();
         private ComponentTransformSettings _componentTransform = new ComponentTransformSettings();
         private bool _verbose = true;
+        private DecoderLimits? _limits;
         
         /// <summary>
         /// Gets or sets the resolution level for decoding.
@@ -214,6 +215,27 @@ namespace CoreJ2K.Configuration
         }
         
         /// <summary>
+        /// Gets or sets the resource limits for this decode, or <c>null</c> (the default) to use
+        /// <see cref="DecoderLimits.Default"/>.
+        /// </summary>
+        public DecoderLimits? Limits
+        {
+            get => _limits;
+            set => _limits = value;
+        }
+
+        /// <summary>
+        /// Sets the resource limits for this decode.
+        /// </summary>
+        /// <param name="limits">The limits, e.g. <see cref="DecoderLimits.Strict"/> or <see cref="DecoderLimits.None"/>.</param>
+        /// <returns>This configuration instance for method chaining.</returns>
+        public J2KDecoderConfiguration WithLimits(DecoderLimits limits)
+        {
+            _limits = limits ?? throw new ArgumentNullException(nameof(limits));
+            return this;
+        }
+
+        /// <summary>
         /// Converts this configuration to a ParameterList for use with the decoder.
         /// </summary>
         /// <returns>ParameterList with all configured parameters.</returns>
@@ -249,6 +271,13 @@ namespace CoreJ2K.Configuration
             // Component transform
             _componentTransform.ApplyTo(pl);
             
+            // Resource limits (unset leaves the process-wide default in effect)
+            if (_limits != null)
+            {
+                pl["max_pixels"] = _limits.MaxPixels.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                pl["max_memory"] = _limits.MaxMemoryBytes.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                pl["max_tile_components"] = _limits.MaxTileComponents.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            }
             return pl;
         }
         

@@ -421,7 +421,18 @@ Common encoder parameters (case-sensitive):
 - **DecodeToImage\<T\>**: Memory-efficient decode that skips `InterleavedImage` entirely for 8-bit images (~4× less peak memory). Falls back to `FromStream + As<T>` automatically for >8-bit components.
 - **ParameterList**: Optional encoding parameters. Use indexer to set: `params["key"] = "value"`
 - **Image Sources**: Accepts SKBitmap, Bitmap, Image, or codec-specific formats (PGM/PPM/PGX streams)
-- **Thread Safety**: Independent decode and encode calls can run concurrently on separate threads. A single call runs on one thread; CoreJ2K does not parallelize inside a decode or encode.
+- **Thread Safety**: Independent decode and encode calls can run concurrently on separate threads.
+- **Decode Limits**: A decode is rejected with `DecoderLimitException` before any image-sized allocation if it would exceed the default 1 Gpixel / 2 GiB limits (at the requested resolution). Use `DecoderLimits.Strict` for untrusted input or `DecoderLimits.None` to opt out. See the [decoder guide](docs/DECODER_CONFIGURATION_GUIDE.md#8-resource-limits).
+
+### Upgrading to 2.4.0
+
+One default changed. It is one line to revert.
+
+- **Decode limits are on by default.** A decode whose estimated memory exceeds 2 GiB (or 1 Gpixel) at the requested resolution now throws
+  `DecoderLimitException` before allocating anything. A 16384x16384 RGB image (estimated about 3.2 GB) used to be attempted and is now
+  rejected. If you decode very large trusted images, such as GIS or whole-slide data, opt out once at start-up with
+  `DecoderLimits.Default = DecoderLimits.None;`, or raise the limit for specific calls with `.WithLimits(...)`. Reduced-resolution decodes
+  are measured at the reduced size, so previews of huge images are unaffected.
 
 ### Fast Random Tile Access (TLM Markers)
 
