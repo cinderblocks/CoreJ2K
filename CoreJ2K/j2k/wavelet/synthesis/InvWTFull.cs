@@ -327,6 +327,9 @@ namespace CoreJ2K.j2k.wavelet.synthesis
                         try
                         {
                             var rent = ArrayPool<float>.Shared.Rent((int)fBufferSize);
+                            // Rent() may hand back a buffer holding a previous decode's samples, and code-blocks
+                            // that are skipped or truncated never write their area, so start from zero.
+                            Array.Clear(rent, 0, (int)fBufferSize);
                             reconstructedComps[compIndex].Data = rent;
                             rentedFloatBuffers[compIndex] = rent;
                         }
@@ -370,6 +373,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
                         try
                         {
                             var irent = ArrayPool<int>.Shared.Rent((int)iBufferSize);
+                            Array.Clear(irent, 0, (int)iBufferSize);
                             reconstructedComps[compIndex].Data = irent;
                             rentedIntBuffers[compIndex] = irent;
                         }

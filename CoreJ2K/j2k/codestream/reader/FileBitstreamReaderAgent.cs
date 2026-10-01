@@ -2341,8 +2341,9 @@ namespace CoreJ2K.j2k.codestream.reader
                                         if (!reject)
                                         {
                                             // Rate is to low to allow reading of
-                                            // packet's head
-                                            if (nBytes[t] < pktHeadLen[cb.pktIdx[l]])
+                                            // packet's head. A packet whose head was cut short by a truncated
+                                            // codestream has no recorded head length at all.
+                                            if (cb.pktIdx[l] >= pktHeadLen.Length || nBytes[t] < pktHeadLen[cb.pktIdx[l]])
                                             {
                                                 // Stop parsing
                                                 stopCount = true;

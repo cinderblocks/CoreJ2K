@@ -15,7 +15,9 @@ namespace CoreJ2K.Tests
     /// when only <c>mdl</c> and <c>numPrec</c> matched, so partial-edge tiles inherited the full
     /// tile's (larger) code-block geometry and overflowed the tile buffer in
     /// <c>InvWTFull.waveletTreeReconstruction</c>. The reuse now also requires the tile-component
-    /// dimensions and the per-subband code-block grid to match.
+    /// dimensions and the per-subband code-block grid to match. A follow-up fix refreshes the
+    /// position and size of reused code-blocks, and makes the precinct-count comparison meaningful
+    /// (see <c>OpenJpegTiledInteropTests</c>).
     /// </remarks>
     public class MultiTileDecodeTests
     {
@@ -65,10 +67,10 @@ namespace CoreJ2K.Tests
             }
         }
 
-        // KNOWN LIMITATION: non-power-of-two tile sizes decode without crashing but are not yet
-        // bit-exact (a separate defect in the wavelet/precinct handling of non-dyadic tile sizes,
-        // exposed once the edge-tile geometry-reuse bug was fixed). Power-of-two tile sizes are exact.
-        [Fact(Skip = "Known limitation: non-power-of-two tile sizes decode but are not yet bit-exact.")]
+        // Tile origins (60, 120, 180) that are not multiples of 2^levels give identically sized tiles
+        // different subband extents at deeper resolution levels. PktDecoder used to keep the first
+        // tile's code-block sizes for the others, corrupting every tile after the first.
+        [Fact]
         public void NonPowerOfTwoTiles_RoundTripsExactly()
         {
             var (src, orig) = MakeImage(200, 200, 1);
