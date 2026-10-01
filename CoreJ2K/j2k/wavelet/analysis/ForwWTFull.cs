@@ -872,6 +872,105 @@ namespace CoreJ2K.j2k.wavelet.analysis
             }
         }
 
+        /// <summary>Number of adjacent columns the vertical pass processes together (16 four-byte samples fill a 64-byte cache line).</summary>
+        private const int ColumnBlock = 16;
+
+        /// <summary>
+        /// Vertical analysis of the <paramref name="w"/> columns and <paramref name="h"/> rows of a subband whose top-left sample is at
+        /// <paramref name="baseOffset"/> in <paramref name="data"/>. Gathering one column at a time touches a cache line per sample,
+        /// so columns are processed <see cref="ColumnBlock"/> at a time: one pass down the rows reads a block of adjacent columns
+        /// (a cache line per row), each column is analysed from a contiguous buffer into a second contiguous buffer, and one more
+        /// pass writes the block back. Low-pass samples come first in each column, then the high-pass samples.
+        /// </summary>
+        private void VerticalDecomposition(int[] data, AnWTFilter filter, bool evenStart, int baseOffset, int stride, int w, int h)
+        {
+            var blockIn = ArrayPool<int>.Shared.Rent(ColumnBlock * h);
+            var blockOut = ArrayPool<int>.Shared.Rent(ColumnBlock * h);
+            try
+            {
+                var lowCount = evenStart ? (h + 1) / 2 : h / 2;
+                for (var blockStart = 0; blockStart < w; blockStart += ColumnBlock)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    var width = Math.Min(ColumnBlock, w - blockStart);
+                    var rowBase = baseOffset + blockStart;
+
+                    for (var i = 0; i < h; i++)
+                    {
+                        var src = rowBase + i * stride;
+                        for (var cc = 0; cc < width; cc++)
+                            blockIn[cc * h + i] = data[src + cc];
+                    }
+
+                    for (var cc = 0; cc < width; cc++)
+                    {
+                        var column = cc * h;
+                        if (evenStart)
+                            filter.analyze_lpf(blockIn, column, h, 1, blockOut, column, 1, blockOut, column + lowCount, 1);
+                        else
+                            filter.analyze_hpf(blockIn, column, h, 1, blockOut, column, 1, blockOut, column + lowCount, 1);
+                    }
+
+                    for (var i = 0; i < h; i++)
+                    {
+                        var dst = rowBase + i * stride;
+                        for (var cc = 0; cc < width; cc++)
+                            data[dst + cc] = blockOut[cc * h + i];
+                    }
+                }
+            }
+            finally
+            {
+                try { ArrayPool<int>.Shared.Return(blockIn, clearArray: false); } catch { }
+                try { ArrayPool<int>.Shared.Return(blockOut, clearArray: false); } catch { }
+            }
+        }
+
+        /// <summary>The float version of <see cref="VerticalDecomposition(int[], AnWTFilter, bool, int, int, int, int)"/>.</summary>
+        private void VerticalDecomposition(float[] data, AnWTFilter filter, bool evenStart, int baseOffset, int stride, int w, int h)
+        {
+            var blockIn = ArrayPool<float>.Shared.Rent(ColumnBlock * h);
+            var blockOut = ArrayPool<float>.Shared.Rent(ColumnBlock * h);
+            try
+            {
+                var lowCount = evenStart ? (h + 1) / 2 : h / 2;
+                for (var blockStart = 0; blockStart < w; blockStart += ColumnBlock)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    var width = Math.Min(ColumnBlock, w - blockStart);
+                    var rowBase = baseOffset + blockStart;
+
+                    for (var i = 0; i < h; i++)
+                    {
+                        var src = rowBase + i * stride;
+                        for (var cc = 0; cc < width; cc++)
+                            blockIn[cc * h + i] = data[src + cc];
+                    }
+
+                    for (var cc = 0; cc < width; cc++)
+                    {
+                        var column = cc * h;
+                        if (evenStart)
+                            filter.analyze_lpf(blockIn, column, h, 1, blockOut, column, 1, blockOut, column + lowCount, 1);
+                        else
+                            filter.analyze_hpf(blockIn, column, h, 1, blockOut, column, 1, blockOut, column + lowCount, 1);
+                    }
+
+                    for (var i = 0; i < h; i++)
+                    {
+                        var dst = rowBase + i * stride;
+                        for (var cc = 0; cc < width; cc++)
+                            data[dst + cc] = blockOut[cc * h + i];
+                    }
+                }
+            }
+            finally
+            {
+                try { ArrayPool<float>.Shared.Return(blockIn, clearArray: false); } catch { }
+                try { ArrayPool<float>.Shared.Return(blockOut, clearArray: false); } catch { }
+            }
+        }
+
         /// <summary> Performs the 2D forward wavelet transform on a subband of the initial
         /// band. This method will successively perform 1D filtering steps on all
         /// lines and then all columns of the subband. In this class only filters
@@ -918,31 +1017,8 @@ namespace CoreJ2K.j2k.wavelet.analysis
                 {
                     var data = ((DataBlkInt)band!).DataInt!;
 
-                    //Perform the vertical decomposition
-                    if (subband.ulcy % 2 == 0)
-                    {
-                        // Even start index => use LPF
-                        for (j = 0; j < w; j++)
-                        {
-                            if ((j & 63) == 0) cancellationToken.ThrowIfCancellationRequested();
-                            offset = uly * band_w + ulx + j;
-                            for (i = 0; i < h; i++)
-                                tmpVector[i] = data[offset + (i * band_w)];
-                            subband.vFilter!.analyze_lpf(tmpVector, 0, h, 1, data, offset, band_w, data, offset + ((h + 1) / 2) * band_w, band_w);
-                        }
-                    }
-                    else
-                    {
-                        // Odd start index => use HPF
-                        for (j = 0; j < w; j++)
-                        {
-                            if ((j & 63) == 0) cancellationToken.ThrowIfCancellationRequested();
-                            offset = uly * band_w + ulx + j;
-                            for (i = 0; i < h; i++)
-                                tmpVector[i] = data[offset + (i * band_w)];
-                            subband.vFilter!.analyze_hpf(tmpVector, 0, h, 1, data, offset, band_w, data, offset + (h / 2) * band_w, band_w);
-                        }
-                    }
+                    // Perform the vertical decomposition, a block of adjacent columns at a time.
+                    VerticalDecomposition(data, subband.vFilter!, subband.ulcy % 2 == 0, uly * band_w + ulx, band_w, w, h);
 
                     //Perform the horizontal decomposition.
                     if (subband.ulcx % 2 == 0)
@@ -986,31 +1062,9 @@ namespace CoreJ2K.j2k.wavelet.analysis
                 {
                     var data = ((DataBlkFloat)band!).DataFloat!;
 
-                    //Perform the vertical decomposition.
-                    if (subband.ulcy % 2 == 0)
-                    {
-                        // Even start index => use LPF
-                        for (j = 0; j < w; j++)
-                        {
-                            if ((j & 63) == 0) cancellationToken.ThrowIfCancellationRequested();
-                            offset = uly * band_w + ulx + j;
-                            for (i = 0; i < h; i++)
-                                tmpVector[i] = data[offset + (i * band_w)];
-                            subband.vFilter!.analyze_lpf(tmpVector, 0, h, 1, data, offset, band_w, data, offset + ((h + 1) / 2) * band_w, band_w);
-                        }
-                    }
-                    else
-                    {
-                        // Odd start index => use HPF
-                        for (j = 0; j < w; j++)
-                        {
-                            if ((j & 63) == 0) cancellationToken.ThrowIfCancellationRequested();
-                            offset = uly * band_w + ulx + j;
-                            for (i = 0; i < h; i++)
-                                tmpVector[i] = data[offset + (i * band_w)];
-                            subband.vFilter!.analyze_hpf(tmpVector, 0, h, 1, data, offset, band_w, data, offset + (h / 2) * band_w, band_w);
-                        }
-                    }
+                    // Perform the vertical decomposition, a block of adjacent columns at a time.
+                    VerticalDecomposition(data, subband.vFilter!, subband.ulcy % 2 == 0, uly * band_w + ulx, band_w, w, h);
+
                     //Perform the horizontal decomposition.
                     if (subband.ulcx % 2 == 0)
                     {
