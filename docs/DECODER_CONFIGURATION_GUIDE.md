@@ -254,8 +254,9 @@ per sample of the largest tile), not a cap on the process.
 
 ### 9. Parallel Decoding
 
-Entropy decoding of code-blocks is the bulk of decode time, and every code-block is independent. CoreJ2K decodes the code-blocks of a
-tile-component on several threads and produces **exactly the same output** as a single-threaded decode, bit for bit.
+Two stages dominate decode time and both split into independent pieces. Entropy decoding works on code-blocks, and the inverse
+wavelet transform works on rows and then columns. CoreJ2K runs both on several threads and produces **exactly the same output** as a
+single-threaded decode, bit for bit.
 
 It is on by default and uses up to `Environment.ProcessorCount` threads for each decode.
 
@@ -267,18 +268,23 @@ var config = new J2KDecoderConfiguration().WithMaxDegreeOfParallelism(4);   // 1
 J2kImage.DefaultMaxDegreeOfParallelism = 1;
 ```
 
-With the legacy API use the `threads` parameter. Typical results on an 8-core machine, 4096x4096 RGB lossless:
+With the legacy API use the `threads` parameter. Typical results on an 8-core machine, 4096x4096 RGB, speed-up of 8 threads over 1:
 
-| Layout | Speed-up |
+| Stream | Speed-up |
 |--------|----------|
-| Single tile | about 3.3x |
-| 1024x1024 tiles | about 3.1x |
-| 128x128 tiles | about 2.1x |
-| Lossy 9/7, low bit rate | about 1.2x |
+| Lossless, single tile | about 4.6x |
+| Lossless, 1024x1024 tiles | about 4.1x |
+| Lossless, 128x128 tiles | about 2.2x |
+| Lossy 9/7, 3 bpp | about 3.6x |
+| Lossy 9/7, 1 bpp | about 2.7x |
 
-Gains are largest when most of the time is entropy decoding (lossless and high bit rates). At low lossy bit rates the serial inverse
-wavelet transform dominates, and very small tiles give each worker little to do. Tile-components with only a handful of code-blocks
-are decoded on the calling thread, so thumbnails pay nothing.
+Very small tiles give each worker little to do, and at low lossy bit rates the remaining serial steps (colour transform and copying
+the result out) take a larger share. Work below a size threshold stays on the calling thread, so thumbnails and small images pay
+nothing.
+
+The inverse wavelet transform also processes columns in cache-friendly blocks, which makes decoding faster even on one thread (a
+4096x4096 lossy decode at 1 bpp went from about 2.0 s to 1.1 s). The custom-kernel (ATK) and mixed-filter fallback paths of the transform
+still run on one thread.
 
 If your application already runs many decodes in parallel, set the default to 1 (or a small number) so they do not compete for cores.
 

@@ -570,6 +570,182 @@ namespace CoreJ2K.j2k.wavelet.synthesis
             return blk;
         }
 
+        /// <summary>
+        /// Tile-component passes with fewer samples than this run on the calling thread; splitting them costs more than it saves.
+        /// </summary>
+        internal static int MinParallelWaveletSamples = 1 << 17;
+
+        /// <summary>Number of adjacent columns the vertical passes process together (16 four-byte samples fill a 64-byte cache line).</summary>
+        private const int ColumnBlock = 16;
+
+        /// <summary>Overrides <see cref="MinParallelWaveletSamples"/> for decodes started on the current thread (tests only).</summary>
+        [ThreadStatic]
+        internal static int? MinParallelWaveletSamplesForCurrentThread;
+
+        /// <summary>
+        /// Runs one pass of the 2D inverse transform, either inline or split into chunks across threads. A pass is a set of
+        /// independent items (rows, then columns), each of <paramref name="itemLength"/> samples; <paramref name="body"/>
+        /// processes items [start, end) using a scratch line of <paramref name="scratchLength"/> samples. Each chunk gets its own
+        /// scratch line, and the 1D filters are stateless, so chunks do not interact.
+        /// </summary>
+        private void RunPass<T>(int count, int itemLength, int scratchLength, ref T[]? sequentialScratch, Action<int, int, T[]> body)
+        {
+            var minSamples = MinParallelWaveletSamplesForCurrentThread ?? MinParallelWaveletSamples;
+            if (parallelDegree <= 1 || count < 2 || (long)count * itemLength < minSamples)
+            {
+                if (sequentialScratch == null || sequentialScratch.Length < scratchLength)
+                    sequentialScratch = new T[scratchLength];
+                body(0, count, sequentialScratch);
+                return;
+            }
+
+            // A few chunks per thread keeps all threads busy when chunks take unequal time.
+            var chunkCount = Math.Min(count, parallelDegree * 4);
+            var chunkSize = (count + chunkCount - 1) / chunkCount;
+            chunkCount = (count + chunkSize - 1) / chunkSize;
+            var options = new ParallelOptions { MaxDegreeOfParallelism = parallelDegree, CancellationToken = cancellationToken };
+
+            try
+            {
+                Parallel.For(0, chunkCount, options,
+                    () => ArrayPool<T>.Shared.Rent(scratchLength),
+                    (chunk, _, scratch) =>
+                    {
+                        var start = chunk * chunkSize;
+                        body(start, Math.Min(count, start + chunkSize), scratch);
+                        return scratch;
+                    },
+                    scratch => ArrayPool<T>.Shared.Return(scratch));
+            }
+            catch (AggregateException e)
+            {
+                ExceptionDispatchInfo.Capture(e.Flatten().InnerExceptions[0]).Throw();
+                throw;
+            }
+        }
+
+        /// <summary>Horizontal 5x3 synthesis of rows [rowStart, rowEnd) of a subband whose first row starts at <paramref name="baseOffset"/>.</summary>
+        private void HorizontalPass5x3(int[] data, int[] buf, SynWTFilterIntLift5x3 filter, bool evenStart, int baseOffset, int stride,
+            int w, int rowStart, int rowEnd)
+        {
+            int wHalf = w / 2, wHalfCeil = (w + 1) / 2;
+            for (var i = rowStart; i < rowEnd; i++)
+            {
+                if ((i & 63) == 0) cancellationToken.ThrowIfCancellationRequested();
+                var offset = baseOffset + i * stride;
+                new ReadOnlySpan<int>(data, offset, w).CopyTo(buf);
+                if (evenStart)
+                    filter.synthetize_lpf(buf, 0, wHalfCeil, 1, buf, wHalfCeil, wHalf, 1, data, offset, 1);
+                else
+                    filter.synthetize_hpf(buf, 0, wHalf, 1, buf, wHalf, wHalfCeil, 1, data, offset, 1);
+            }
+        }
+
+        /// <summary>
+        /// Vertical 5x3 synthesis of columns [colStart, colEnd) of a subband whose first column starts at <paramref name="baseOffset"/>.
+        /// Columns are processed <see cref="ColumnBlock"/> at a time: gathering one column touches a cache line per sample, so
+        /// reading and writing a block of adjacent columns together uses each cache line fully. <paramref name="buf"/> must hold
+        /// 2 * <see cref="ColumnBlock"/> * <paramref name="h"/> samples (the gathered columns, then the synthesised ones).
+        /// </summary>
+        private void VerticalPass5x3(int[] data, int[] buf, SynWTFilterIntLift5x3 filter, bool evenStart, int baseOffset, int stride,
+            int h, int colStart, int colEnd)
+        {
+            int hHalf = h / 2, hHalfCeil = (h + 1) / 2;
+            var outBase = ColumnBlock * h;
+            for (var blockStart = colStart; blockStart < colEnd; blockStart += ColumnBlock)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                var width = Math.Min(ColumnBlock, colEnd - blockStart);
+                var rowBase = baseOffset + blockStart;
+
+                // Gather: one pass down the rows, reading 'width' adjacent samples (one cache line) per row.
+                for (var i = 0; i < h; i++)
+                {
+                    var src = rowBase + i * stride;
+                    for (var cc = 0; cc < width; cc++)
+                        buf[cc * h + i] = data[src + cc];
+                }
+
+                for (var cc = 0; cc < width; cc++)
+                {
+                    var inOff = cc * h;
+                    if (evenStart)
+                        filter.synthetize_lpf(buf, inOff, hHalfCeil, 1, buf, inOff + hHalfCeil, hHalf, 1, buf, outBase + inOff, 1);
+                    else
+                        filter.synthetize_hpf(buf, inOff, hHalf, 1, buf, inOff + hHalf, hHalfCeil, 1, buf, outBase + inOff, 1);
+                }
+
+                // Scatter the synthesised columns back, again a cache line per row.
+                for (var i = 0; i < h; i++)
+                {
+                    var dst = rowBase + i * stride;
+                    for (var cc = 0; cc < width; cc++)
+                        data[dst + cc] = buf[outBase + cc * h + i];
+                }
+            }
+        }
+
+        /// <summary>Horizontal 9x7 synthesis of rows [rowStart, rowEnd) of a subband whose first row starts at <paramref name="baseOffset"/>.</summary>
+        private void HorizontalPass9x7(float[] data, float[] buf, SynWTFilterFloatLift9x7 filter, bool evenStart, int baseOffset, int stride,
+            int w, int rowStart, int rowEnd)
+        {
+            int wHalf = w / 2, wHalfCeil = (w + 1) / 2;
+            for (var i = rowStart; i < rowEnd; i++)
+            {
+                if ((i & 63) == 0) cancellationToken.ThrowIfCancellationRequested();
+                var offset = baseOffset + i * stride;
+                new ReadOnlySpan<float>(data, offset, w).CopyTo(buf);
+                if (evenStart)
+                    filter.synthetize_lpf(buf, 0, wHalfCeil, 1, buf, wHalfCeil, wHalf, 1, data, offset, 1);
+                else
+                    filter.synthetize_hpf(buf, 0, wHalf, 1, buf, wHalf, wHalfCeil, 1, data, offset, 1);
+            }
+        }
+
+        /// <summary>
+        /// Vertical 9x7 synthesis of columns [colStart, colEnd) of a subband whose first column starts at <paramref name="baseOffset"/>.
+        /// Columns are processed <see cref="ColumnBlock"/> at a time: gathering one column touches a cache line per sample, so
+        /// reading and writing a block of adjacent columns together uses each cache line fully. <paramref name="buf"/> must hold
+        /// 2 * <see cref="ColumnBlock"/> * <paramref name="h"/> samples (the gathered columns, then the synthesised ones).
+        /// </summary>
+        private void VerticalPass9x7(float[] data, float[] buf, SynWTFilterFloatLift9x7 filter, bool evenStart, int baseOffset, int stride,
+            int h, int colStart, int colEnd)
+        {
+            int hHalf = h / 2, hHalfCeil = (h + 1) / 2;
+            var outBase = ColumnBlock * h;
+            for (var blockStart = colStart; blockStart < colEnd; blockStart += ColumnBlock)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                var width = Math.Min(ColumnBlock, colEnd - blockStart);
+                var rowBase = baseOffset + blockStart;
+
+                // Gather: one pass down the rows, reading 'width' adjacent samples (one cache line) per row.
+                for (var i = 0; i < h; i++)
+                {
+                    var src = rowBase + i * stride;
+                    for (var cc = 0; cc < width; cc++)
+                        buf[cc * h + i] = data[src + cc];
+                }
+
+                for (var cc = 0; cc < width; cc++)
+                {
+                    var inOff = cc * h;
+                    if (evenStart)
+                        filter.synthetize_lpf(buf, inOff, hHalfCeil, 1, buf, inOff + hHalfCeil, hHalf, 1, buf, outBase + inOff, 1);
+                    else
+                        filter.synthetize_hpf(buf, inOff, hHalf, 1, buf, inOff + hHalf, hHalfCeil, 1, buf, outBase + inOff, 1);
+                }
+
+                // Scatter the synthesised columns back, again a cache line per row.
+                for (var i = 0; i < h; i++)
+                {
+                    var dst = rowBase + i * stride;
+                    for (var cc = 0; cc < width; cc++)
+                        data[dst + cc] = buf[outBase + cc * h + i];
+                }
+            }
+        }
+
         /// <summary> Performs the 2D inverse wavelet transform on a subband of the image, on
         /// the specified component. This method will successively perform 1D
         /// filtering steps on all columns and then all lines of the subband.
@@ -607,126 +783,33 @@ namespace CoreJ2K.j2k.wavelet.synthesis
 
             buf = null; // To keep compiler happy
 
-            // Fast path: both filters are the concrete 5x3 int type – call typed methods
-            // directly to eliminate the object-typed virtual dispatch chain and the slower
-            // Array.Copy(Array,...) overload used in the generic fallback.
+            // Fast paths: both filters are the same concrete type (5x3 int or 9x7 float) – call the typed methods
+            // directly to eliminate the object-typed virtual dispatch chain and the slower Array.Copy(Array,...)
+            // overload used in the generic fallback. Rows (then columns) are independent, so each pass may be split
+            // across threads; see RunPass.
+            var baseOffset = (uly - db.uly) * db.w + ulx - db.ulx;
+            var stride = db.w;
+            var evenStartX = sb.ulcx % 2 == 0;
+            var evenStartY = sb.ulcy % 2 == 0;
+            var need = (w >= h) ? w : h;
+
             if (sb.hFilter is SynWTFilterIntLift5x3 hf5x3 && sb.vFilter is SynWTFilterIntLift5x3 vf5x3)
             {
-                int[] data_int5x3 = (int[])data!;
-                int need5x3 = (w >= h) ? w : h;
-                if (_waveletScratchInt == null || _waveletScratchInt.Length < need5x3)
-                    _waveletScratchInt = new int[need5x3];
-                int[] buf_int5x3 = _waveletScratchInt;
-                {
-                    // Hoist loop-invariant half-lengths
-                    int wHalf = w / 2, wHalfCeil = (w + 1) / 2;
-                    int hHalf = h / 2, hHalfCeil = (h + 1) / 2;
-
-                    // Horizontal reconstruction
-                    offset = (uly - db.uly) * db.w + ulx - db.ulx;
-                    if (sb.ulcx % 2 == 0)
-                    {
-                        for (i = 0; i < h; i++, offset += db.w)
-                        {
-                            if ((i & 63) == 0) cancellationToken.ThrowIfCancellationRequested();
-                            new ReadOnlySpan<int>(data_int5x3, offset, w).CopyTo(buf_int5x3);
-                            hf5x3.synthetize_lpf(buf_int5x3, 0, wHalfCeil, 1, buf_int5x3, wHalfCeil, wHalf, 1, data_int5x3!, offset, 1);
-                        }
-                    }
-                    else
-                    {
-                        for (i = 0; i < h; i++, offset += db.w)
-                        {
-                            if ((i & 63) == 0) cancellationToken.ThrowIfCancellationRequested();
-                            new ReadOnlySpan<int>(data_int5x3, offset, w).CopyTo(buf_int5x3);
-                            hf5x3.synthetize_hpf(buf_int5x3, 0, wHalf, 1, buf_int5x3, wHalf, wHalfCeil, 1, data_int5x3!, offset, 1);
-                        }
-                    }
-
-                    // Vertical reconstruction — forward gather for hardware-prefetch friendliness
-                    offset = (uly - db.uly) * db.w + ulx - db.ulx;
-                    if (sb.ulcy % 2 == 0)
-                    {
-                        for (j = 0; j < w; j++, offset++)
-                        {
-                            if ((j & 63) == 0) cancellationToken.ThrowIfCancellationRequested();
-                            for (i = 0, k = offset; i < h; i++, k += db.w)
-                                buf_int5x3[i] = data_int5x3[k];
-                            vf5x3.synthetize_lpf(buf_int5x3, 0, hHalfCeil, 1, buf_int5x3, hHalfCeil, hHalf, 1, data_int5x3!, offset, db.w);
-                        }
-                    }
-                    else
-                    {
-                        for (j = 0; j < w; j++, offset++)
-                        {
-                            if ((j & 63) == 0) cancellationToken.ThrowIfCancellationRequested();
-                            for (i = 0, k = offset; i < h; i++, k += db.w)
-                                buf_int5x3[i] = data_int5x3[k];
-                            vf5x3.synthetize_hpf(buf_int5x3, 0, hHalf, 1, buf_int5x3, hHalf, hHalfCeil, 1, data_int5x3!, offset, db.w);
-                        }
-                    }
-                }
+                var intData = (int[])data!;
+                RunPass(h, w, need, ref _waveletScratchInt,
+                    (rowStart, rowEnd, scratch) => HorizontalPass5x3(intData, scratch, hf5x3, evenStartX, baseOffset, stride, w, rowStart, rowEnd));
+                RunPass(w, h, Math.Max(need, 2 * ColumnBlock * h), ref _waveletScratchInt,
+                    (colStart, colEnd, scratch) => VerticalPass5x3(intData, scratch, vf5x3, evenStartY, baseOffset, stride, h, colStart, colEnd));
                 return;
             }
 
-            // Fast path: both filters are the concrete 9x7 float type – call typed sealed
-            // methods directly to eliminate the object-typed virtual dispatch chain.
             if (sb.hFilter is SynWTFilterFloatLift9x7 hf9x7 && sb.vFilter is SynWTFilterFloatLift9x7 vf9x7)
             {
-                float[] data_float = (float[])data!;
-                int need9x7 = (w >= h) ? w : h;
-                if (_waveletScratchFloat == null || _waveletScratchFloat.Length < need9x7)
-                    _waveletScratchFloat = new float[need9x7];
-                float[] buf_float = _waveletScratchFloat;
-                {
-                    // Hoist loop-invariant half-lengths
-                    int wHalf9 = w / 2, wHalfCeil9 = (w + 1) / 2;
-                    int hHalf9 = h / 2, hHalfCeil9 = (h + 1) / 2;
-
-                    // Horizontal reconstruction
-                    offset = (uly - db.uly) * db.w + ulx - db.ulx;
-                    if (sb.ulcx % 2 == 0)
-                    {
-                        for (i = 0; i < h; i++, offset += db.w)
-                        {
-                            if ((i & 63) == 0) cancellationToken.ThrowIfCancellationRequested();
-                            new ReadOnlySpan<float>(data_float, offset, w).CopyTo(buf_float);
-                            hf9x7.synthetize_lpf(buf_float, 0, wHalfCeil9, 1, buf_float, wHalfCeil9, wHalf9, 1, data_float, offset, 1);
-                        }
-                    }
-                    else
-                    {
-                        for (i = 0; i < h; i++, offset += db.w)
-                        {
-                            if ((i & 63) == 0) cancellationToken.ThrowIfCancellationRequested();
-                            new ReadOnlySpan<float>(data_float, offset, w).CopyTo(buf_float);
-                            hf9x7.synthetize_hpf(buf_float, 0, wHalf9, 1, buf_float, wHalf9, wHalfCeil9, 1, data_float, offset, 1);
-                        }
-                    }
-
-                    // Vertical reconstruction — forward gather for hardware-prefetch friendliness
-                    offset = (uly - db.uly) * db.w + ulx - db.ulx;
-                    if (sb.ulcy % 2 == 0)
-                    {
-                        for (j = 0; j < w; j++, offset++)
-                        {
-                            if ((j & 63) == 0) cancellationToken.ThrowIfCancellationRequested();
-                            for (i = 0, k = offset; i < h; i++, k += db.w)
-                                buf_float[i] = data_float[k];
-                            vf9x7.synthetize_lpf(buf_float, 0, hHalfCeil9, 1, buf_float, hHalfCeil9, hHalf9, 1, data_float, offset, db.w);
-                        }
-                    }
-                    else
-                    {
-                        for (j = 0; j < w; j++, offset++)
-                        {
-                            if ((j & 63) == 0) cancellationToken.ThrowIfCancellationRequested();
-                            for (i = 0, k = offset; i < h; i++, k += db.w)
-                                buf_float[i] = data_float[k];
-                            vf9x7.synthetize_hpf(buf_float, 0, hHalf9, 1, buf_float, hHalf9, hHalfCeil9, 1, data_float, offset, db.w);
-                        }
-                    }
-                }
+                var floatData = (float[])data!;
+                RunPass(h, w, need, ref _waveletScratchFloat,
+                    (rowStart, rowEnd, scratch) => HorizontalPass9x7(floatData, scratch, hf9x7, evenStartX, baseOffset, stride, w, rowStart, rowEnd));
+                RunPass(w, h, Math.Max(need, 2 * ColumnBlock * h), ref _waveletScratchFloat,
+                    (colStart, colEnd, scratch) => VerticalPass9x7(floatData, scratch, vf9x7, evenStartY, baseOffset, stride, h, colStart, colEnd));
                 return;
             }
 

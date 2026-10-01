@@ -25,6 +25,10 @@ namespace CoreJ2K.Tests
 
         /// <summary>A reproducible multi-component test image with smooth areas, edges and noise.</summary>
         private static InterleavedImageSource MakeImage(int width, int height, int components, int seed = 1)
+            => new InterleavedImageSource(width, height, components, 8, new bool[components], MakeComponents(width, height, components, seed));
+
+        /// <summary>The signed (DC-level-shifted) samples of the test image; add 128 to compare with decoded output.</summary>
+        private static int[][] MakeComponents(int width, int height, int components, int seed = 1)
         {
             var rnd = new Random(seed);
             var comps = new int[components][];
@@ -39,7 +43,7 @@ namespace CoreJ2K.Tests
                         comps[c][y * width + x] = Math.Clamp(v, 0, 255) - 128;
                     }
             }
-            return new InterleavedImageSource(width, height, components, 8, new bool[components], comps);
+            return comps;
         }
 
         private static byte[] Encode(InterleavedImageSource src, Action<ParameterList> configure)
@@ -51,15 +55,21 @@ namespace CoreJ2K.Tests
         }
 
         /// <summary>
-        /// Runs <paramref name="decode"/> with the parallel threshold lowered to zero for this thread only, so small test images
+        /// Runs <paramref name="decode"/> with the parallel thresholds (code-blocks and wavelet samples) lowered to zero for this thread only, so small test images
         /// really take the parallel path without affecting other tests running at the same time.
         /// </summary>
         private static T WithForcedParallelism<T>(Func<T> decode)
         {
-            var previous = InvWTFull.MinParallelBlocksForCurrentThread;
+            var previousBlocks = InvWTFull.MinParallelBlocksForCurrentThread;
+            var previousSamples = InvWTFull.MinParallelWaveletSamplesForCurrentThread;
             InvWTFull.MinParallelBlocksForCurrentThread = 0;
+            InvWTFull.MinParallelWaveletSamplesForCurrentThread = 0;
             try { return decode(); }
-            finally { InvWTFull.MinParallelBlocksForCurrentThread = previous; }
+            finally
+            {
+                InvWTFull.MinParallelBlocksForCurrentThread = previousBlocks;
+                InvWTFull.MinParallelWaveletSamplesForCurrentThread = previousSamples;
+            }
         }
 
         private static ParameterList DecoderParameters(int threads, string? res = null)
@@ -218,6 +228,46 @@ namespace CoreJ2K.Tests
 
             Assert.Equal(200 * 160 * 3, sequential.Length);
             Assert.True(sequential.AsSpan().SequenceEqual(parallel), $"{variant}: fast-path output differs with 8 threads");
+        }
+
+        // The inverse wavelet transform splits its row and column passes across threads and processes columns in blocks of 16.
+        // These shapes sit on both sides of those boundaries, including single rows/columns and odd sizes.
+        public static TheoryData<int, int> WaveletShapes() => new TheoryData<int, int>
+        {
+            { 16, 16 }, { 17, 33 }, { 15, 100 }, { 100, 15 }, { 1, 50 }, { 50, 1 }, { 2, 2 }, { 3, 77 }, { 203, 157 }, { 257, 5 }, { 5, 257 }, { 31, 32 }, { 64, 3 },
+        };
+
+        [Theory]
+        [MemberData(nameof(WaveletShapes))]
+        public void ParallelWaveletTransform_IsBitIdenticalToSequential_AndLosslessIsExact(int width, int height)
+        {
+            var image = MakeImage(width, height, 1);
+
+            var lossless = Encode(image, pl => { pl["lossless"] = "on"; pl["Wlev"] = "3"; });
+            AssertParallelMatchesSequential(lossless, $"{width}x{height} lossless");
+            var decoded = Decode(lossless, 8)[0];
+            var source = MakeComponents(width, height, 1)[0];
+            Assert.Equal(width * height, decoded.Length);
+            for (var i = 0; i < decoded.Length; i++)
+                Assert.True(decoded[i] == source[i] + 128, $"{width}x{height}: sample {i} differs from the source");
+
+            // The 9/7 float path: parallel must match sequential exactly (it uses the same arithmetic in the same order).
+            // A rate-limited codestream needs room for its own headers, so very small images are only tested lossless.
+            if (width * height < 256) return;
+            var lossy = Encode(MakeImage(width, height, 1), pl => { pl["lossless"] = "off"; pl["rate"] = "64.0"; pl["Wlev"] = "3"; }); // generous: tiny images cannot meet a low rate
+            AssertParallelMatchesSequential(lossy, $"{width}x{height} lossy");
+        }
+
+        [Theory]
+        [InlineData(5)]
+        [InlineData(2)]
+        [InlineData(0)]
+        public void ParallelWaveletTransform_HandlesAnyNumberOfDecompositionLevels(int levels)
+        {
+            var lossless = Encode(MakeImage(300, 220, 3), pl => { pl["lossless"] = "on"; pl["Wlev"] = levels.ToString(); });
+            AssertParallelMatchesSequential(lossless, $"{levels} levels lossless");
+            var lossy = Encode(MakeImage(300, 220, 3), pl => { pl["lossless"] = "off"; pl["rate"] = "2.0"; pl["Wlev"] = levels.ToString(); });
+            AssertParallelMatchesSequential(lossy, $"{levels} levels lossy");
         }
 
         [Fact]

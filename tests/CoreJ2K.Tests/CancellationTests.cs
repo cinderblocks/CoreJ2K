@@ -46,6 +46,26 @@ namespace CoreJ2K.Tests
             return J2kImage.ToBytes(new InterleavedImageSource(Size, Size, 3, 8, new bool[3], comps), null, pl)!;
         });
 
+        // A lossy stream at a low rate: entropy decoding is cheap, so the inverse wavelet transform dominates the decode.
+        private static readonly Lazy<byte[]> LossyStream = new Lazy<byte[]>(() =>
+        {
+            const int size = 1536;
+            var rnd = new Random(6);
+            var comps = new int[3][];
+            for (var c = 0; c < 3; c++)
+            {
+                comps[c] = new int[size * size];
+                for (var y = 0; y < size; y++)
+                    for (var x = 0; x < size; x++)
+                        comps[c][y * size + x] = Math.Clamp(128 + (int)(70 * Math.Sin(x / (13.0 + c)) * Math.Cos(y / 17.0)) + rnd.Next(-9, 10), 0, 255) - 128;
+            }
+            var pl = J2kImage.GetDefaultEncoderParameterList();
+            pl["file_format"] = "off";
+            pl["lossless"] = "off";
+            pl["rate"] = "1.0";
+            return J2kImage.ToBytes(new InterleavedImageSource(size, size, 3, 8, new bool[3], comps), null, pl)!;
+        });
+
         private static ParameterList Parameters(int threads)
         {
             var pl = new ParameterList(J2kImage.GetDefaultDecoderParameterList());
@@ -154,6 +174,16 @@ namespace CoreJ2K.Tests
             var data = LargeStream.Value;
             var pl = Parameters(threads);
             AssertCancelsPromptly(token => J2kImage.FromBytes(data, pl, token).Dispose(), $"{threads} thread(s)");
+        }
+
+        [Theory]
+        [InlineData(1)]
+        [InlineData(8)]
+        public void CancellingMidDecode_InTheWaveletTransform_StopsPromptly(int threads)
+        {
+            var data = LossyStream.Value;
+            var pl = Parameters(threads);
+            AssertCancelsPromptly(token => J2kImage.FromBytes(data, pl, token).Dispose(), $"lossy, {threads} thread(s)");
         }
 
         [Fact]
