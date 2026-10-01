@@ -2336,6 +2336,13 @@ namespace CoreJ2K.j2k.codestream.reader
                                         }
                                         cb = cbI[c][r][s][m][n];
 
+                                        // No packet was read for this code-block in this layer (the codestream was
+                                        // truncated before it), so there is no head or data to account for.
+                                        if (cb.pktIdx[l] < 0)
+                                        {
+                                            continue;
+                                        }
+
                                         // If no code-block has been refused until
                                         // now
                                         if (!reject)

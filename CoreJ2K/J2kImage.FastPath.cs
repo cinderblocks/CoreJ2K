@@ -180,8 +180,16 @@ namespace CoreJ2K
                     throw new InvalidOperationException("Cannot instantiate bit stream reader.", e);
                 }
 
+                // When several threads decode code-blocks they share one bitstream reader through a locking wrapper.
+
+                var parallelDegree = ResolveDegreeOfParallelism(pl);
+
+                var sharedSource = parallelDegree > 1 ? new SharedCodedBlockSource(breader) : null;
+
+                CodedCBlkDataSrcDec blockSource = sharedSource ?? (CodedCBlkDataSrcDec)breader;
+
                 EntropyDecoder entdec;
-                try { entdec = hd.createEntropyDecoder(breader, pl); }
+                try { entdec = hd.createEntropyDecoder(blockSource, pl); }
                 catch (ArgumentException e) { throw new InvalidOperationException("Cannot instantiate entropy decoder.", e); }
 
                 ROIDeScaler roids;
@@ -197,6 +205,7 @@ namespace CoreJ2K
 
                 var res = breader.ImgRes;
                 invWT.ImgResLevel = res;
+                EnableParallelDecoding(invWT, sharedSource, parallelDegree, hd, pl, decSpec, depth);
 
                 var converter = new ImgDataConverter(invWT, 0);
                 var ictransf = new InvCompTransf(converter, decSpec, depth, pl);

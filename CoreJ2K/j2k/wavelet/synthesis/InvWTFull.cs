@@ -40,6 +40,9 @@ using CoreJ2K.j2k.image;
 using System;
 using System.Collections.Generic;
 using System.Buffers;
+using System.Collections.Concurrent;
+using System.Runtime.ExceptionServices;
+using System.Threading.Tasks;
 
 namespace CoreJ2K.j2k.wavelet.synthesis
 {
@@ -109,6 +112,51 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// Recommended: true for sensitive images (medical, personal photos, etc.)
         /// </summary>
         public static bool ClearArrayPoolBuffersOnReturn { get; set; } = false;
+
+        // ---- Parallel code-block decoding -------------------------------------------------------------------
+        // The code-block stage (bitstream parse, entropy decode, dequantisation) dominates decode time and is
+        // independent per code-block, so the blocks of a tile-component are decoded together by a team of workers,
+        // each with its own entropy-decoder/ROI/dequantiser chain, and written straight into their own rectangle of
+        // the tile-component buffer. The wavelet recursion then runs unchanged on the filled buffer.
+
+        /// <summary>Tile-components with fewer code-blocks than this are decoded sequentially.</summary>
+        /// <remarks>Parallel set-up is wasted on thumbnails. Tests lower this to 0 to exercise the parallel path on small images.</remarks>
+        internal static int MinParallelBlocks = 16;
+
+        /// <summary>Overrides <see cref="MinParallelBlocks"/> for decodes started on the current thread (tests only).</summary>
+        [ThreadStatic]
+        internal static int? MinParallelBlocksForCurrentThread;
+
+        private sealed class BlockWorker
+        {
+            public CBlkWTDataSrcDec Chain = null!;
+            public DataBlk? Block;
+            public int Tile = -1;
+        }
+
+        private struct BlockJob
+        {
+            public SubbandSyn Subband;
+            public int M, N;
+        }
+
+        private int parallelDegree = 1;
+        private Func<CBlkWTDataSrcDec>? workerChainFactory;
+        private readonly ConcurrentBag<BlockWorker> idleWorkers = new ConcurrentBag<BlockWorker>();
+
+        /// <summary>
+        /// Allows this transform to decode the code-blocks of a tile-component on several threads.
+        /// </summary>
+        /// <param name="maxDegreeOfParallelism">Maximum number of threads; 1 or less keeps decoding sequential.</param>
+        /// <param name="chainFactory">
+        /// Creates an additional chain of code-block decoding stages that follows this transform's source. Each
+        /// worker thread uses its own chain, so the stages themselves need not be thread-safe.
+        /// </param>
+        internal void EnableParallelDecoding(int maxDegreeOfParallelism, Func<CBlkWTDataSrcDec> chainFactory)
+        {
+            parallelDegree = Math.Max(1, maxDegreeOfParallelism);
+            workerChainFactory = parallelDegree > 1 ? chainFactory : null;
+        }
 
         /// <summary> The reversible flag for each component in each tile. The first index is
         /// the tile index, the second one is the component index. The
@@ -385,7 +433,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
                         break;
                 }
                 //Reconstruct source image — reuse the synTree reference already fetched above
-                waveletTreeReconstruction(reconstructedComps[compIndex], synTree, compIndex);
+                ReconstructComponent(reconstructedComps[compIndex], synTree, compIndex);
             }
             else
             {
@@ -787,7 +835,120 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// <param name="c">The index of the component to reconstruct 
         /// 
         /// </param>
-        private void waveletTreeReconstruction(DataBlk img, SubbandSyn sb, int c)
+        /// <summary>
+        /// Fills the tile-component buffer from the code-blocks and performs the inverse wavelet transform on it.
+        /// </summary>
+        private void ReconstructComponent(DataBlk img, SubbandSyn root, int c)
+        {
+            if (workerChainFactory != null)
+            {
+                var jobs = new List<BlockJob>();
+                CollectCodeBlocks(root, c, jobs);
+                if (jobs.Count >= (MinParallelBlocksForCurrentThread ?? MinParallelBlocks))
+                {
+                    DecodeCodeBlocksInParallel(img, jobs, c);
+                    waveletTreeReconstruction(img, root, c, loadCodeBlocks: false);
+                    return;
+                }
+            }
+
+            waveletTreeReconstruction(img, root, c, loadCodeBlocks: true);
+        }
+
+        /// <summary>Lists the code-blocks <see cref="waveletTreeReconstruction"/> would read, in the same subband order.</summary>
+        private void CollectCodeBlocks(SubbandSyn sb, int c, List<BlockJob> jobs)
+        {
+            if (!sb.isNode)
+            {
+                if (sb.w == 0 || sb.h == 0) return;
+                var ncblks = sb.numCb;
+                for (var m = 0; m < ncblks.y; m++)
+                    for (var n = 0; n < ncblks.x; n++)
+                        jobs.Add(new BlockJob { Subband = sb, M = m, N = n });
+                return;
+            }
+
+            CollectCodeBlocks((SubbandSyn)sb.LL!, c, jobs);
+            if (sb.resLvl <= reslvl - maxImgRes + ndl[c])
+            {
+                CollectCodeBlocks((SubbandSyn)sb.HL, c, jobs);
+                CollectCodeBlocks((SubbandSyn)sb.LH, c, jobs);
+                CollectCodeBlocks((SubbandSyn)sb.HH, c, jobs);
+            }
+        }
+
+        private BlockWorker RentWorker(int tile)
+        {
+            if (!idleWorkers.TryTake(out var worker))
+            {
+                worker = new BlockWorker { Chain = workerChainFactory!() };
+            }
+
+            if (worker.Tile != tile)
+            {
+                // The primary chain has already moved the shared reader to this tile; bring this chain's view along.
+                var numTiles = src.GetNumTiles(null);
+                worker.Chain.SetTile(tile % numTiles.x, tile / numTiles.x);
+                worker.Tile = tile;
+            }
+
+            if (worker.Block == null || worker.Block.DataType != dtype)
+            {
+                worker.Block = dtype == DataBlk.TYPE_INT ? (DataBlk)new DataBlkInt() : new DataBlkFloat();
+            }
+            return worker;
+        }
+
+        private void DecodeCodeBlocksInParallel(DataBlk img, List<BlockJob> jobs, int c)
+        {
+            var tile = src.TileIdx;
+            var options = new ParallelOptions { MaxDegreeOfParallelism = parallelDegree };
+
+            try
+            {
+                Parallel.For(0, jobs.Count, options,
+                    () => RentWorker(tile),
+                    (i, _, worker) =>
+                    {
+                        var job = jobs[i];
+                        var blk = worker.Chain.GetInternCodeBlock(c, job.M, job.N, job.Subband, worker.Block!);
+                        worker.Block = blk;
+                        CopyCodeBlock(blk, img);
+                        return worker;
+                    },
+                    worker => idleWorkers.Add(worker));
+            }
+            catch (AggregateException e)
+            {
+                // Surface the original exception (e.g. a decoder limit or corrupt-codestream error) with its type intact.
+                ExceptionDispatchInfo.Capture(e.Flatten().InnerExceptions[0]).Throw();
+                throw;
+            }
+        }
+
+        /// <summary>Copies a decoded code-block into its (disjoint) rectangle of the tile-component buffer.</summary>
+        private static void CopyCodeBlock(DataBlk blk, DataBlk img)
+        {
+            var dstBase = blk.uly * img.w + blk.ulx;
+            if (blk.DataType == DataBlk.TYPE_INT)
+            {
+                var srcArr = (int[])blk.Data!;
+                var dstArr = (int[])img.Data!;
+                for (var i = blk.h - 1; i >= 0; i--)
+                    new ReadOnlySpan<int>(srcArr, blk.offset + i * blk.scanw, blk.w)
+                        .CopyTo(dstArr.AsSpan(dstBase + i * img.w, blk.w));
+            }
+            else
+            {
+                var srcArr = (float[])blk.Data!;
+                var dstArr = (float[])img.Data!;
+                for (var i = blk.h - 1; i >= 0; i--)
+                    new ReadOnlySpan<float>(srcArr, blk.offset + i * blk.scanw, blk.w)
+                        .CopyTo(dstArr.AsSpan(dstBase + i * img.w, blk.w));
+            }
+        }
+
+        private void waveletTreeReconstruction(DataBlk img, SubbandSyn sb, int c, bool loadCodeBlocks = true)
         {
 
             DataBlk subbData;
@@ -795,6 +956,8 @@ namespace CoreJ2K.j2k.wavelet.synthesis
             // If the current subband is a leaf then get the data from the source
             if (!sb.isNode)
             {
+                if (!loadCodeBlocks) return; // Already filled by DecodeCodeBlocksInParallel
+
                 int i, m, n;
                 Coord ncblks;
 
@@ -858,14 +1021,14 @@ namespace CoreJ2K.j2k.wavelet.synthesis
                 // is a node
 
                 //Perform the reconstruction of the LL subband
-                waveletTreeReconstruction(img, (SubbandSyn)sb.LL!, c);
+                waveletTreeReconstruction(img, (SubbandSyn)sb.LL!, c, loadCodeBlocks);
 
                 if (sb.resLvl <= reslvl - maxImgRes + ndl[c])
                 {
                     //Reconstruct the other subbands
-                    waveletTreeReconstruction(img, (SubbandSyn)sb.HL, c);
-                    waveletTreeReconstruction(img, (SubbandSyn)sb.LH, c);
-                    waveletTreeReconstruction(img, (SubbandSyn)sb.HH, c);
+                    waveletTreeReconstruction(img, (SubbandSyn)sb.HL, c, loadCodeBlocks);
+                    waveletTreeReconstruction(img, (SubbandSyn)sb.LH, c, loadCodeBlocks);
+                    waveletTreeReconstruction(img, (SubbandSyn)sb.HH, c, loadCodeBlocks);
 
                     //Perform the 2D wavelet decomposition of the current subband
                     wavelet2DReconstruction(img, sb, c);

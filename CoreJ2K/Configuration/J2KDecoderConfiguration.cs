@@ -25,6 +25,7 @@ namespace CoreJ2K.Configuration
         private ComponentTransformSettings _componentTransform = new ComponentTransformSettings();
         private bool _verbose = true;
         private DecoderLimits? _limits;
+        private int _maxDegreeOfParallelism;
         
         /// <summary>
         /// Gets or sets the resolution level for decoding.
@@ -225,6 +226,17 @@ namespace CoreJ2K.Configuration
         }
 
         /// <summary>
+        /// Gets or sets the maximum number of threads used to decode code-blocks in parallel. 1 decodes on the
+        /// calling thread only; 0 (the default) or a negative value uses
+        /// <see cref="J2kImage.DefaultMaxDegreeOfParallelism"/>. The decoded output is identical for every value.
+        /// </summary>
+        public int MaxDegreeOfParallelism
+        {
+            get => _maxDegreeOfParallelism;
+            set => _maxDegreeOfParallelism = value;
+        }
+
+        /// <summary>
         /// Sets the resource limits for this decode.
         /// </summary>
         /// <param name="limits">The limits, e.g. <see cref="DecoderLimits.Strict"/> or <see cref="DecoderLimits.None"/>.</param>
@@ -232,6 +244,17 @@ namespace CoreJ2K.Configuration
         public J2KDecoderConfiguration WithLimits(DecoderLimits limits)
         {
             _limits = limits ?? throw new ArgumentNullException(nameof(limits));
+            return this;
+        }
+
+        /// <summary>
+        /// Sets the maximum number of threads used to decode code-blocks in parallel.
+        /// </summary>
+        /// <param name="maxDegreeOfParallelism">1 for single-threaded; 0 or negative for the process-wide default.</param>
+        /// <returns>This configuration instance for method chaining.</returns>
+        public J2KDecoderConfiguration WithMaxDegreeOfParallelism(int maxDegreeOfParallelism)
+        {
+            _maxDegreeOfParallelism = maxDegreeOfParallelism;
             return this;
         }
 
@@ -271,13 +294,18 @@ namespace CoreJ2K.Configuration
             // Component transform
             _componentTransform.ApplyTo(pl);
             
-            // Resource limits (unset leaves the process-wide default in effect)
+            // Resource limits and parallelism (unset leaves the process-wide defaults in effect)
             if (_limits != null)
             {
                 pl["max_pixels"] = _limits.MaxPixels.ToString(System.Globalization.CultureInfo.InvariantCulture);
                 pl["max_memory"] = _limits.MaxMemoryBytes.ToString(System.Globalization.CultureInfo.InvariantCulture);
                 pl["max_tile_components"] = _limits.MaxTileComponents.ToString(System.Globalization.CultureInfo.InvariantCulture);
             }
+            if (_maxDegreeOfParallelism > 0)
+            {
+                pl["threads"] = _maxDegreeOfParallelism.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            }
+            
             return pl;
         }
         

@@ -252,6 +252,36 @@ resolution decodes fine with `WithResolutionLevel(0)`. With the legacy `Paramete
 The memory figure is an approximate estimate (4 bytes per output sample for `InterleavedImage`, 1 for `DecodeToImage<T>`, plus 4 bytes
 per sample of the largest tile), not a cap on the process.
 
+### 9. Parallel Decoding
+
+Entropy decoding of code-blocks is the bulk of decode time, and every code-block is independent. CoreJ2K decodes the code-blocks of a
+tile-component on several threads and produces **exactly the same output** as a single-threaded decode, bit for bit.
+
+It is on by default and uses up to `Environment.ProcessorCount` threads for each decode.
+
+```csharp
+// Per call
+var config = new J2KDecoderConfiguration().WithMaxDegreeOfParallelism(4);   // 1 = calling thread only
+
+// Process-wide default, e.g. a server that already decodes many images concurrently
+J2kImage.DefaultMaxDegreeOfParallelism = 1;
+```
+
+With the legacy API use the `threads` parameter. Typical results on an 8-core machine, 4096x4096 RGB lossless:
+
+| Layout | Speed-up |
+|--------|----------|
+| Single tile | about 3.3x |
+| 1024x1024 tiles | about 3.1x |
+| 128x128 tiles | about 2.1x |
+| Lossy 9/7, low bit rate | about 1.2x |
+
+Gains are largest when most of the time is entropy decoding (lossless and high bit rates). At low lossy bit rates the serial inverse
+wavelet transform dominates, and very small tiles give each worker little to do. Tile-components with only a handful of code-blocks
+are decoded on the calling thread, so thumbnails pay nothing.
+
+If your application already runs many decodes in parallel, set the default to 1 (or a small number) so they do not compete for cores.
+
 ## Complete Examples
 
 ### Example 1: Thumbnail Generation
@@ -439,6 +469,7 @@ Main configuration class with fluent API for decoding.
 - `WithProgressiveDecoding()` - Enable progressive parsing mode
 - `WithVerbose(bool verbose)` - Control verbose output
 - `WithLimits(DecoderLimits limits)` - Resource limits for this decode (`DecoderLimits.Strict`, `None`, or a tuned copy)
+- `WithMaxDegreeOfParallelism(int threads)` - Threads used to decode code-blocks (1 = single-threaded)
 - `WithQuitConditions(Action<QuitConditions>)` - Configure early termination
 - `WithComponentTransform(Action<ComponentTransformSettings>)` - Configure component transform
 - `Validate()` - Returns list of validation errors
@@ -452,6 +483,7 @@ Main configuration class with fluent API for decoding.
 - `ParsingMode` - Get/set parsing mode
 - `Verbose` - Get/set verbose output
 - `Limits` - Get/set resource limits (`null` = `DecoderLimits.Default`)
+- `MaxDegreeOfParallelism` - Get/set thread count (0 = `J2kImage.DefaultMaxDegreeOfParallelism`)
 - `QuitConditions` - Access quit conditions config
 - `ComponentTransform` - Access component transform settings
 - `IsValid` - Check if configuration is valid

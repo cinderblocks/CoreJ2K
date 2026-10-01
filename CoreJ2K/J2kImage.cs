@@ -179,10 +179,14 @@ namespace CoreJ2K
             }
 
             // **** Entropy decoder ****
+            // When several threads decode code-blocks they share one bitstream reader through a locking wrapper.
+            var parallelDegree = ResolveDegreeOfParallelism(pl);
+            var sharedSource = parallelDegree > 1 ? new SharedCodedBlockSource(breader) : null;
+            CodedCBlkDataSrcDec blockSource = sharedSource ?? (CodedCBlkDataSrcDec)breader;
             EntropyDecoder entdec;
             try
             {
-                entdec = hd.createEntropyDecoder(breader, pl);
+                entdec = hd.createEntropyDecoder(blockSource, pl);
             }
             catch (ArgumentException e)
             {
@@ -225,6 +229,7 @@ namespace CoreJ2K
 
             var res = breader.ImgRes;
             invWT.ImgResLevel = res;
+            EnableParallelDecoding(invWT, sharedSource, parallelDegree, hd, pl, decSpec, depth);
 
             // **** Data converter **** (after inverse transform module)
             var converter = new ImgDataConverter(invWT, 0);
@@ -488,10 +493,14 @@ namespace CoreJ2K
             }
 
             // **** Entropy decoder ****
+            // When several threads decode code-blocks they share one bitstream reader through a locking wrapper.
+            var parallelDegree = ResolveDegreeOfParallelism(pl);
+            var sharedSource = parallelDegree > 1 ? new SharedCodedBlockSource(breader) : null;
+            CodedCBlkDataSrcDec blockSource = sharedSource ?? (CodedCBlkDataSrcDec)breader;
             EntropyDecoder entdec;
             try
             {
-                entdec = hd.createEntropyDecoder(breader, pl);
+                entdec = hd.createEntropyDecoder(blockSource, pl);
             }
             catch (ArgumentException e)
             {
@@ -534,6 +543,7 @@ namespace CoreJ2K
 
             var res = breader.ImgRes;
             invWT.ImgResLevel = res;
+            EnableParallelDecoding(invWT, sharedSource, parallelDegree, hd, pl, decSpec, depth);
 
             // **** Data converter **** (after inverse transform module)
             var converter = new ImgDataConverter(invWT, 0);
@@ -1864,6 +1874,14 @@ namespace CoreJ2K
                         "max_tile_components", "<count>",
                         "Maximum number of tiles x components the codestream may declare. Defaults to "
                         + "DecoderLimits.Default.",
+                        null
+                    },
+                new string?[]
+                    {
+                        "threads", "<count>",
+                        "Maximum number of threads used to decode code-blocks in parallel. 1 decodes on the "
+                        + "calling thread only; 0 or unset uses J2kImage.DefaultMaxDegreeOfParallelism "
+                        + "(all processors unless changed). Output is identical for every value.",
                         null
                     },
                 new string?[]
