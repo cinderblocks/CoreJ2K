@@ -217,6 +217,44 @@ var config = new J2KEncoderConfiguration()
     .WithROI(roiConfig);
 ```
 
+### 10. Cancellation
+
+An encode can be cancelled part-way through. Cancellation is cooperative: the encoder checks the token for every code-block it
+transforms and codes, every packet it writes, every few rows of the wavelet transform, and during the rate-allocation search, so a
+cancelled encode stops within a few milliseconds, even for a very large image, and throws `OperationCanceledException`. Cancelling
+leaves nothing behind that could affect the next encode, and nothing is written to the output stream.
+
+```csharp
+using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+
+// Overloads that take a token
+byte[] data = J2kImage.ToBytes(imageSource, parameters: null, cts.Token);
+J2kImage.WriteTo(outputStream, imageSource, parameters: null, cts.Token);
+
+// Or carry the token in the configuration; every method that takes a configuration then observes it
+var config = new J2KEncoderConfiguration()
+    .WithQuality(0.8)
+    .WithCancellationToken(cts.Token);
+byte[] viaConfig = J2kImage.ToBytes(imageSource, config);
+
+// The builder takes a token per call and/or from WithCancellationToken
+var builder = new CompleteEncoderConfigurationBuilder().ForWeb();
+byte[] built = builder.Encode(imageSource, cts.Token);
+
+// Async methods observe their token for the whole encode, not only before it starts
+try
+{
+    byte[] asyncData = await J2kImage.ToBytesAsync(imageSource, config, cts.Token);
+}
+catch (OperationCanceledException)
+{
+    // the task is in the Canceled state
+}
+```
+
+If a configuration (or builder) carries a token *and* an async method is given one, cancelling either stops the encode. As with any
+other failure, a cancelled encode leaves the image source open; the encoder only closes it after a successful encode.
+
 ## Complete Examples
 
 ### Example 1: High-Quality Lossy
@@ -406,6 +444,7 @@ Main configuration class with fluent API.
 - `WithEntropyCoding(Action<EntropyCodingConfiguration>)` - Configure entropy coding
 - `WithErrorResilience(Action<ErrorResilienceConfiguration>)` - Configure error resilience
 - `WithROI(ROIConfiguration)` - Configure region of interest
+- `WithCancellationToken(CancellationToken)` - Cancels encodes started with this configuration
 - `Validate()` - Returns list of validation errors
 - `ToParameterList()` - Converts to legacy ParameterList (for internal use)
 
@@ -413,6 +452,7 @@ Main configuration class with fluent API.
 - `TargetBitrate` - Get/set target bitrate
 - `Lossless` - Get/set lossless mode
 - `UseFileFormat` - Get/set file format usage
+- `CancellationToken` - Get/set the cancellation token (default `CancellationToken.None`)
 - `Tiles` - Access tile configuration
 - `Wavelet` - Access wavelet configuration
 - `Quantization` - Access quantization configuration

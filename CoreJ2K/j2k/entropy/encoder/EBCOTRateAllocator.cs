@@ -733,6 +733,7 @@ namespace CoreJ2K.j2k.entropy.encoder
                     //Get next coded code-block coordinates
                     while ((ccb = src.GetNextCodeBlock(c, ccb)) != null)
                     {
+                        CancellationToken.ThrowIfCancellationRequested();
 #if DO_TIMING
 						stime = (System.DateTime.Now.Ticks - 621355968000000000) / 10000;
 #endif
@@ -776,7 +777,8 @@ namespace CoreJ2K.j2k.entropy.encoder
                     }
                 }
 
-                //Goto next tile
+                CancellationToken.ThrowIfCancellationRequested();
+            //Goto next tile
                 if (t < numTiles - 1)
                     //not at last tile
                     src.NextTile();
@@ -837,6 +839,7 @@ namespace CoreJ2K.j2k.entropy.encoder
             for (var l = 0; l < num_Layers; l++)
             {
                 //loop on layers
+                CancellationToken.ThrowIfCancellationRequested();
 
                 maxBytes = layers[l].maxBytes;
                 if (layers[l].optimize)
@@ -891,6 +894,8 @@ namespace CoreJ2K.j2k.entropy.encoder
                                 // loop on precincts
 
                                 findTruncIndices(l, c, r, t, sb, rdThreshold, p);
+
+                                CancellationToken.ThrowIfCancellationRequested();
 
                                 hBuff = pktEnc.encodePacket(l + 1, c, r, t, cblks[t][c][r], truncIdxs[t][l][c][r], hBuff, bBuff, p);
                                 if (pktEnc.PacketWritable)
@@ -1115,6 +1120,8 @@ namespace CoreJ2K.j2k.entropy.encoder
                             threshold = layers[l].rdThreshold;
                             findTruncIndices(l, c, r, t, sb, threshold, p);
 
+                            CancellationToken.ThrowIfCancellationRequested();
+
                             hBuff = pktEnc.encodePacket(l + 1, c, r, t, cblks[t][c][r], truncIdxs[t][l][c][r], hBuff, bBuff, p);
 
                             if (pktEnc.PacketWritable)
@@ -1213,6 +1220,8 @@ namespace CoreJ2K.j2k.entropy.encoder
 
                             threshold = layers[l].rdThreshold;
                             findTruncIndices(l, c, r, t, sb, threshold, p);
+
+                            CancellationToken.ThrowIfCancellationRequested();
 
                             hBuff = pktEnc.encodePacket(l + 1, c, r, t, cblks[t][c][r], truncIdxs[t][l][c][r], hBuff, bBuff, p);
 
@@ -1397,6 +1406,8 @@ namespace CoreJ2K.j2k.entropy.encoder
 
                                 threshold = layers[l].rdThreshold;
                                 findTruncIndices(l, c, r, t, sb, threshold, nextPrec[c][r]);
+
+                                CancellationToken.ThrowIfCancellationRequested();
 
                                 hBuff = pktEnc.encodePacket(l + 1, c, r, t, cblks[t][c][r], truncIdxs[t][l][c][r], hBuff, bBuff, nextPrec[c][r]);
 
@@ -1619,6 +1630,8 @@ namespace CoreJ2K.j2k.entropy.encoder
                                 threshold = layers[l].rdThreshold;
                                 findTruncIndices(l, c, r, t, sb, threshold, nextPrec[c][r]);
 
+                                CancellationToken.ThrowIfCancellationRequested();
+
                                 hBuff = pktEnc.encodePacket(l + 1, c, r, t, cblks[t][c][r], truncIdxs[t][l][c][r], hBuff, bBuff, nextPrec[c][r]);
 
                                 if (pktEnc.PacketWritable)
@@ -1837,6 +1850,8 @@ namespace CoreJ2K.j2k.entropy.encoder
                                 threshold = layers[l].rdThreshold;
                                 findTruncIndices(l, c, r, t, sb, threshold, nextPrec[c][r]);
 
+                                CancellationToken.ThrowIfCancellationRequested();
+
                                 hBuff = pktEnc.encodePacket(l + 1, c, r, t, cblks[t][c][r], truncIdxs[t][l][c][r], hBuff, bBuff, nextPrec[c][r]);
 
                                 if (pktEnc.PacketWritable)
@@ -2014,6 +2029,7 @@ namespace CoreJ2K.j2k.entropy.encoder
                             {
 
                                 findTruncIndices(layerIdx, c, r, t, sb, ft, p);
+                                CancellationToken.ThrowIfCancellationRequested();
                                 hBuff = pktEnc.encodePacket(layerIdx + 1, c, r, t, cblks[t][c][r], truncIdxs[t][layerIdx][c][r], hBuff, bBuff, p);
 
                                 if (pktEnc.PacketWritable)
@@ -2255,6 +2271,7 @@ namespace CoreJ2K.j2k.entropy.encoder
         /// </param>
         private void findTruncIndices(int layerIdx, int compIdx, int lvlIdx, int tileIdx, SubbandAn? subb, float fthresh, int precinctIdx)
         {
+            CancellationToken.ThrowIfCancellationRequested();
             int minsbi, maxsbi, b, n; // bIdx removed
                                       //Coord ncblks = null;
             SubbandAn? sb;

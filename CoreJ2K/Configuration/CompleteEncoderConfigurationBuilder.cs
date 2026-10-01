@@ -520,17 +520,23 @@ namespace CoreJ2K.Configuration
         /// <param name="imgsrc">The image source to encode.</param>
         /// <param name="output">The stream to write the encoded data to.</param>
         public void WriteTo(j2k.image.BlkImgDataSrc imgsrc, System.IO.Stream output)
+            => WriteTo(imgsrc, output, CancellationToken.None);
+
+        /// <summary>
+        /// Encodes an image using this configuration and writes the result to <paramref name="output"/>, stopping if
+        /// <paramref name="cancellationToken"/> or the configuration's own token is cancelled.
+        /// </summary>
+        /// <param name="imgsrc">The image source to encode.</param>
+        /// <param name="output">The stream to write the encoded data to.</param>
+        /// <param name="cancellationToken">Cancels the encode.</param>
+        /// <exception cref="OperationCanceledException">A token was cancelled; nothing has been written to <paramref name="output"/>.</exception>
+        public void WriteTo(j2k.image.BlkImgDataSrc imgsrc, System.IO.Stream output, CancellationToken cancellationToken)
         {
             if (output == null) throw new System.ArgumentNullException(nameof(output));
-            var config = Build();
-            var metadata = GetMetadata();
-            var pl = config.ToParameterList();
-            RemoveFilterOptionsForAtk(pl);
-            J2kImage.WriteTo(output, imgsrc, metadata, pl,
-                _nlts is { Count: > 0 } ? _nlts : null,
-                _mcts is { Count: > 0 } ? _mcts : null,
-                _dco,
-                _atk);
+            using var linked = J2kImage.LinkTokens(_encoderConfig.CancellationToken, cancellationToken, out var token);
+            var data = EncodeCore(imgsrc, token);
+            token.ThrowIfCancellationRequested();
+            output.Write(data, 0, data.Length);
         }
 
         /// <summary>
@@ -540,7 +546,36 @@ namespace CoreJ2K.Configuration
         /// <param name="imgsrc">The image source to encode.</param>
         /// <returns>The encoded JPEG 2000 data.</returns>
         public byte[] Encode(j2k.image.BlkImgDataSrc imgsrc)
+            => Encode(imgsrc, CancellationToken.None);
+
+        /// <summary>
+        /// Encodes an image using this configuration, stopping if <paramref name="cancellationToken"/> or the configuration's own
+        /// token is cancelled.
+        /// </summary>
+        /// <param name="imgsrc">The image source to encode.</param>
+        /// <param name="cancellationToken">Cancels the encode.</param>
+        /// <returns>The encoded JPEG 2000 data.</returns>
+        /// <exception cref="OperationCanceledException">A token was cancelled.</exception>
+        public byte[] Encode(j2k.image.BlkImgDataSrc imgsrc, CancellationToken cancellationToken)
         {
+            using var linked = J2kImage.LinkTokens(_encoderConfig.CancellationToken, cancellationToken, out var token);
+            return EncodeCore(imgsrc, token);
+        }
+
+        /// <summary>
+        /// Sets a token that cancels encodes started with this builder.
+        /// </summary>
+        /// <param name="cancellationToken">The token to observe.</param>
+        /// <returns>This builder for method chaining.</returns>
+        public CompleteEncoderConfigurationBuilder WithCancellationToken(CancellationToken cancellationToken)
+        {
+            _encoderConfig.CancellationToken = cancellationToken;
+            return this;
+        }
+
+        private byte[] EncodeCore(j2k.image.BlkImgDataSrc imgsrc, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
             var config = Build();
             var metadata = GetMetadata();
             var pl = config.ToParameterList();
@@ -550,7 +585,8 @@ namespace CoreJ2K.Configuration
                 _nlts is { Count: > 0 } ? _nlts : null,
                 _mcts is { Count: > 0 } ? _mcts : null,
                 _dco,
-                _atk)!;
+                _atk,
+                cancellationToken)!;
         }
         
         // The ATK kernel replaces the wavelet filter, so any Ffilters value emitted by
@@ -572,6 +608,11 @@ namespace CoreJ2K.Configuration
             return Encode(imgsrc);
         }
 
+        /// <summary>Encodes an image object, stopping if <paramref name="cancellationToken"/> or the configuration's own token is cancelled.</summary>
+        /// <exception cref="OperationCanceledException">A token was cancelled.</exception>
+        public byte[] Encode(object imageObject, CancellationToken cancellationToken)
+            => Encode(ImageFactory.ToPortableImageSource(imageObject), cancellationToken);
+
         /// <summary>
         /// Encodes an image and writes the result to <paramref name="output"/>.
         /// The object is converted to an encodable source via <see cref="ImageFactory"/>.
@@ -583,19 +624,32 @@ namespace CoreJ2K.Configuration
         }
 
         /// <summary>Encodes an image asynchronously and returns the encoded bytes.</summary>
-        public Task<byte[]> EncodeAsync(j2k.image.BlkImgDataSrc imgsrc,
+        public async Task<byte[]> EncodeAsync(j2k.image.BlkImgDataSrc imgsrc,
             CancellationToken cancellationToken = default)
-            => Task.Run(() => Encode(imgsrc), cancellationToken);
+        {
+            // Link once, so a cancelled encode ends the task in the Canceled state rather than Faulted.
+            using var linked = J2kImage.LinkTokens(_encoderConfig.CancellationToken, cancellationToken, out var token);
+            return await Task.Run(() => EncodeCore(imgsrc, token), token).ConfigureAwait(false);
+        }
 
         /// <summary>Encodes an image object asynchronously and returns the encoded bytes.</summary>
         public Task<byte[]> EncodeAsync(object imageObject,
             CancellationToken cancellationToken = default)
-            => Task.Run(() => Encode(imageObject), cancellationToken);
+            => EncodeAsync(ImageFactory.ToPortableImageSource(imageObject), cancellationToken);
 
         /// <summary>Encodes an image asynchronously and writes the result to <paramref name="output"/>.</summary>
-        public Task WriteToAsync(j2k.image.BlkImgDataSrc imgsrc, Stream output,
+        public async Task WriteToAsync(j2k.image.BlkImgDataSrc imgsrc, Stream output,
             CancellationToken cancellationToken = default)
-            => Task.Run(() => WriteTo(imgsrc, output), cancellationToken);
+        {
+            if (output == null) throw new System.ArgumentNullException(nameof(output));
+            using var linked = J2kImage.LinkTokens(_encoderConfig.CancellationToken, cancellationToken, out var token);
+            await Task.Run(() =>
+            {
+                var data = EncodeCore(imgsrc, token);
+                token.ThrowIfCancellationRequested();
+                output.Write(data, 0, data.Length);
+            }, token).ConfigureAwait(false);
+        }
 
         #endregion
 

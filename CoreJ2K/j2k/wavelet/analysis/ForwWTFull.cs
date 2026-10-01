@@ -48,6 +48,15 @@ namespace CoreJ2K.j2k.wavelet.analysis
     /// <seealso cref="ForwardWT" />
     public class ForwWTFull : ForwardWT
     {
+        // Observed while a tile is read and decomposed, which is a long uninterrupted stretch for a large tile.
+        private System.Threading.CancellationToken cancellationToken;
+
+        /// <summary>
+        /// Makes reading and decomposing a tile observe <paramref name="token"/>; once cancelled they throw
+        /// <see cref="OperationCanceledException"/> within about 64 rows or columns.
+        /// </summary>
+        internal void SetCancellationToken(System.Threading.CancellationToken token) => cancellationToken = token;
+
         /// <summary> Returns the horizontal offset of the code-block partition. Allowable
         /// values are 0 and 1, nothing else.
         /// 
@@ -428,6 +437,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
                 var kk = GetCompULY(c);
                 for (k = 0; k < h; k++, kk++)
                 {
+                    if ((k & 15) == 0) cancellationToken.ThrowIfCancellationRequested();
                     bufblk.uly = kk;
                     bufblk.ulx = lstart;
                     bufblk = src.GetInternCompData(bufblk, c);
@@ -850,6 +860,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
             }
             else
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 //Perform the 2D wavelet decomposition of the current subband
                 wavelet2DDecomposition(band, subband, c);
 
@@ -913,6 +924,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
                         // Even start index => use LPF
                         for (j = 0; j < w; j++)
                         {
+                            if ((j & 63) == 0) cancellationToken.ThrowIfCancellationRequested();
                             offset = uly * band_w + ulx + j;
                             for (i = 0; i < h; i++)
                                 tmpVector[i] = data[offset + (i * band_w)];
@@ -924,6 +936,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
                         // Odd start index => use HPF
                         for (j = 0; j < w; j++)
                         {
+                            if ((j & 63) == 0) cancellationToken.ThrowIfCancellationRequested();
                             offset = uly * band_w + ulx + j;
                             for (i = 0; i < h; i++)
                                 tmpVector[i] = data[offset + (i * band_w)];
@@ -937,6 +950,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
                         // Even start index => use LPF
                         for (i = 0; i < h; i++)
                         {
+                            if ((i & 63) == 0) cancellationToken.ThrowIfCancellationRequested();
                             offset = (uly + i) * band_w + ulx;
                             for (j = 0; j < w; j++)
                                 tmpVector[j] = data[offset + j];
@@ -948,6 +962,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
                         // Odd start index => use HPF
                         for (i = 0; i < h; i++)
                         {
+                            if ((i & 63) == 0) cancellationToken.ThrowIfCancellationRequested();
                             offset = (uly + i) * band_w + ulx;
                             for (j = 0; j < w; j++)
                                 tmpVector[j] = data[offset + j];
@@ -977,6 +992,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
                         // Even start index => use LPF
                         for (j = 0; j < w; j++)
                         {
+                            if ((j & 63) == 0) cancellationToken.ThrowIfCancellationRequested();
                             offset = uly * band_w + ulx + j;
                             for (i = 0; i < h; i++)
                                 tmpVector[i] = data[offset + (i * band_w)];
@@ -988,6 +1004,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
                         // Odd start index => use HPF
                         for (j = 0; j < w; j++)
                         {
+                            if ((j & 63) == 0) cancellationToken.ThrowIfCancellationRequested();
                             offset = uly * band_w + ulx + j;
                             for (i = 0; i < h; i++)
                                 tmpVector[i] = data[offset + (i * band_w)];
@@ -1000,6 +1017,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
                         // Even start index => use LPF
                         for (i = 0; i < h; i++)
                         {
+                            if ((i & 63) == 0) cancellationToken.ThrowIfCancellationRequested();
                             offset = (uly + i) * band_w + ulx;
                             for (j = 0; j < w; j++)
                                 tmpVector[j] = data[offset + j];
@@ -1011,6 +1029,7 @@ namespace CoreJ2K.j2k.wavelet.analysis
                         // Odd start index => use HPF
                         for (i = 0; i < h; i++)
                         {
+                            if ((i & 63) == 0) cancellationToken.ThrowIfCancellationRequested();
                             offset = (uly + i) * band_w + ulx;
                             for (j = 0; j < w; j++)
                                 tmpVector[j] = data[offset + j];

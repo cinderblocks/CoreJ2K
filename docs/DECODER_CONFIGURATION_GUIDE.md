@@ -316,7 +316,7 @@ catch (OperationCanceledException)
 If a configuration carries a token *and* an async method is given one, cancelling either stops the decode. Cancelling mid-decode does not
 corrupt shared state: the next decode, on the same or another thread, produces the same output as if it had never happened.
 
-Encoding is not cancellable mid-encode yet; the encoder's async methods only observe their token before they start.
+Encoding is cancellable too; see the [encoder guide](ENCODER_CONFIGURATION_GUIDE.md#10-cancellation).
 
 ## Complete Examples
 

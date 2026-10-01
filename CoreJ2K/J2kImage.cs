@@ -874,7 +874,7 @@ namespace CoreJ2K
             return new J2kDecodeResult(image, metadata);
         }
 
-        private static CancellationTokenSource? LinkTokens(CancellationToken first, CancellationToken second, out CancellationToken combined)
+        internal static CancellationTokenSource? LinkTokens(CancellationToken first, CancellationToken second, out CancellationToken combined)
         {
             if (!first.CanBeCanceled) { combined = second; return null; }
             if (!second.CanBeCanceled || first.Equals(second)) { combined = first; return null; }
@@ -955,6 +955,25 @@ namespace CoreJ2K
             using var linked = LinkTokens(configuration.CancellationToken, cancellationToken, out var token);
             var pl = configuration.ToParameterList();
             return await Task.Run(() => decode(pl, token), token).ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Runs a configured encode on the thread pool. As for decoding, the configuration's token and the call's token are linked
+        /// exactly once and the combined token is both observed by the encoder and given to <c>Task.Run</c>, so a cancelled encode
+        /// ends the task in the Canceled state rather than Faulted.
+        /// </summary>
+        private static async Task<byte[]> EncodeConfiguredAsync(Configuration.J2KEncoderConfiguration configuration,
+            CancellationToken cancellationToken, Func<ParameterList, CancellationToken, byte[]> encode)
+        {
+            if (configuration == null)
+                throw new ArgumentNullException(nameof(configuration));
+
+            if (!configuration.IsValid)
+                throw new ArgumentException($"Invalid configuration: {string.Join(", ", configuration.Validate())}");
+
+            using var linked = LinkTokens(configuration.CancellationToken, cancellationToken, out var token);
+            var pl = configuration.ToParameterList();
+            return await Task.Run(() => encode(pl, token), token).ConfigureAwait(false);
         }
 
         private static MemoryStream MemoryStreamFromMemory(ReadOnlyMemory<byte> data)
@@ -1063,7 +1082,46 @@ namespace CoreJ2K
             System.Collections.Generic.IList<j2k.codestream.MctEncodeSpec>? mctSpecs = null,
             j2k.codestream.DCOMarkerSegment? dcoSegment = null,
             j2k.codestream.AtkMarkerSegment? atkKernel = null)
+            => ToBytesCore(imgsrc, metadata, parameters, nltSegments, mctSpecs, dcoSegment, atkKernel, CancellationToken.None);
+
+        /// <summary>
+        /// Encodes an image source to JPEG 2000 with Part 2 extensions, stopping if <paramref name="cancellationToken"/> is cancelled.
+        /// See the overload without a token for the other parameters.
+        /// </summary>
+        /// <param name="cancellationToken">Cancels the encode. Cancellation is cooperative: the encoder stops within about one code-block, packet or few rows of the transform.</param>
+        /// <exception cref="OperationCanceledException">The token was cancelled. The image source is left open, as for any other failure.</exception>
+        public static byte[] ToBytes(BlkImgDataSrc imgsrc, j2k.fileformat.metadata.J2KMetadata? metadata, ParameterList? parameters,
+            System.Collections.Generic.IList<j2k.codestream.NLTMarkerSegment>? nltSegments,
+            System.Collections.Generic.IList<j2k.codestream.MctEncodeSpec>? mctSpecs,
+            j2k.codestream.DCOMarkerSegment? dcoSegment,
+            j2k.codestream.AtkMarkerSegment? atkKernel,
+            CancellationToken cancellationToken)
+            => ToBytesCore(imgsrc, metadata, parameters, nltSegments, mctSpecs, dcoSegment, atkKernel, cancellationToken);
+
+        /// <summary>Encodes an image object, stopping if <paramref name="cancellationToken"/> is cancelled.</summary>
+        /// <exception cref="OperationCanceledException">The token was cancelled.</exception>
+        public static byte[] ToBytes(object imageObject, ParameterList? parameters, CancellationToken cancellationToken)
+            => ToBytesCore(ImageFactory.ToPortableImageSource(imageObject), null, parameters, null, null, null, null, cancellationToken);
+
+        /// <summary>Encodes an image source, stopping if <paramref name="cancellationToken"/> is cancelled.</summary>
+        /// <exception cref="OperationCanceledException">The token was cancelled.</exception>
+        public static byte[] ToBytes(BlkImgDataSrc imgsrc, ParameterList? parameters, CancellationToken cancellationToken)
+            => ToBytesCore(imgsrc, null, parameters, null, null, null, null, cancellationToken);
+
+        /// <summary>Encodes an image source with metadata, stopping if <paramref name="cancellationToken"/> is cancelled.</summary>
+        /// <exception cref="OperationCanceledException">The token was cancelled.</exception>
+        public static byte[] ToBytes(BlkImgDataSrc imgsrc, j2k.fileformat.metadata.J2KMetadata? metadata, ParameterList? parameters,
+            CancellationToken cancellationToken)
+            => ToBytesCore(imgsrc, metadata, parameters, null, null, null, null, cancellationToken);
+
+        private static byte[] ToBytesCore(BlkImgDataSrc imgsrc, j2k.fileformat.metadata.J2KMetadata? metadata, ParameterList? parameters,
+            System.Collections.Generic.IList<j2k.codestream.NLTMarkerSegment>? nltSegments,
+            System.Collections.Generic.IList<j2k.codestream.MctEncodeSpec>? mctSpecs,
+            j2k.codestream.DCOMarkerSegment? dcoSegment,
+            j2k.codestream.AtkMarkerSegment? atkKernel,
+            CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             if (imgsrc == null)
             {
                 throw new ArgumentNullException(nameof(imgsrc), "Image source cannot be null. Use ImageFactory.ToPortableImageSource(image) to convert image objects to a portable source.");
@@ -1534,12 +1592,17 @@ namespace CoreJ2K
                 }
                 ralloc.HeaderEncoder = headenc;
 
+                // The rate allocator pulls every code-block through the wavelet transform and entropy coder, then writes the packets.
+                ralloc.CancellationToken = cancellationToken;
+                (dwt as ForwWTFull)?.SetCancellationToken(cancellationToken);
+
                 // **** Write header to be able to estimate header overhead ****
                 headenc.encodeMainHeader();
 
                 // **** Initialize rate allocator, with proper header
                 // overhead. This will also encode all the data ****
                 ralloc.initialize();
+                cancellationToken.ThrowIfCancellationRequested();
 
                 // **** Write header (final) ****
                 headenc.reset();
@@ -1552,6 +1615,7 @@ namespace CoreJ2K
                 ralloc.runAndWrite();
 
                 // **** Done ****
+                cancellationToken.ThrowIfCancellationRequested();
                 bwriter.Close();
 
                 // **** Calculate file length ****
@@ -1642,7 +1706,7 @@ namespace CoreJ2K
                 }
 
                 // **** Close image readers ***
-
+                cancellationToken.ThrowIfCancellationRequested();
                 imgsrc.Close();
 
                 return outStream.ToArray();
@@ -1688,7 +1752,7 @@ namespace CoreJ2K
             j2k.fileformat.metadata.J2KMetadata? metadata = null;
             // Note: ROI is handled through ParameterList in the existing encoding pipeline
             
-            return ToBytes(imgsrc, metadata, pl);
+            return ToBytesCore(imgsrc, metadata, pl, null, null, null, null, configuration.CancellationToken);
         }
         
         /// <summary>
@@ -1709,7 +1773,7 @@ namespace CoreJ2K
             // Convert modern configuration to ParameterList
             var pl = configuration.ToParameterList();
             
-            return ToBytes(imgsrc, metadata, pl);
+            return ToBytesCore(imgsrc, metadata, pl, null, null, null, null, configuration.CancellationToken);
         }
 
         #endregion
@@ -1732,6 +1796,22 @@ namespace CoreJ2K
         }
 
         /// <summary>Encodes with metadata and writes to <paramref name="output"/>.</summary>
+        /// <summary>Encodes an image source and writes the result to <paramref name="output"/>, stopping if <paramref name="cancellationToken"/> is cancelled.</summary>
+        /// <exception cref="OperationCanceledException">The token was cancelled; nothing has been written to <paramref name="output"/>.</exception>
+        public static void WriteTo(Stream output, BlkImgDataSrc imgsrc, ParameterList? parameters, CancellationToken cancellationToken)
+            => WriteTo(output, imgsrc, null, parameters, cancellationToken);
+
+        /// <summary>Encodes an image source with metadata and writes the result to <paramref name="output"/>, stopping if <paramref name="cancellationToken"/> is cancelled.</summary>
+        /// <exception cref="OperationCanceledException">The token was cancelled; nothing has been written to <paramref name="output"/>.</exception>
+        public static void WriteTo(Stream output, BlkImgDataSrc imgsrc,
+            j2k.fileformat.metadata.J2KMetadata? metadata, ParameterList? parameters, CancellationToken cancellationToken)
+        {
+            if (output == null) throw new ArgumentNullException(nameof(output));
+            var data = ToBytesCore(imgsrc, metadata, parameters, null, null, null, null, cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+            output.Write(data, 0, data.Length);
+        }
+
         public static void WriteTo(Stream output, BlkImgDataSrc imgsrc,
             j2k.fileformat.metadata.J2KMetadata? metadata, ParameterList? parameters = null)
         {
@@ -1812,24 +1892,31 @@ namespace CoreJ2K
         /// <summary>Encodes an image source asynchronously and returns the encoded bytes.</summary>
         public static Task<byte[]> ToBytesAsync(BlkImgDataSrc imgsrc,
             ParameterList? parameters = null, CancellationToken cancellationToken = default)
-            => Task.Run(() => ToBytes(imgsrc, parameters), cancellationToken);
+            => Task.Run(() => ToBytes(imgsrc, parameters, cancellationToken), cancellationToken);
 
         /// <summary>Encodes an image source asynchronously using modern configuration.</summary>
         public static Task<byte[]> ToBytesAsync(BlkImgDataSrc imgsrc,
             Configuration.J2KEncoderConfiguration configuration,
             CancellationToken cancellationToken = default)
-            => Task.Run(() => ToBytes(imgsrc, configuration), cancellationToken);
+            => EncodeConfiguredAsync(configuration, cancellationToken, (pl, token) => ToBytesCore(imgsrc, null, pl, null, null, null, null, token));
 
         /// <summary>Encodes an image source asynchronously and writes the result to <paramref name="output"/>.</summary>
         public static Task WriteToAsync(Stream output, BlkImgDataSrc imgsrc,
             ParameterList? parameters = null, CancellationToken cancellationToken = default)
-            => Task.Run(() => WriteTo(output, imgsrc, parameters), cancellationToken);
+            => Task.Run(() => WriteTo(output, imgsrc, parameters, cancellationToken), cancellationToken);
 
         /// <summary>Encodes an image source asynchronously using modern configuration and writes to <paramref name="output"/>.</summary>
         public static Task WriteToAsync(Stream output, BlkImgDataSrc imgsrc,
             Configuration.J2KEncoderConfiguration configuration,
             CancellationToken cancellationToken = default)
-            => Task.Run(() => WriteTo(output, imgsrc, configuration), cancellationToken);
+            => EncodeConfiguredAsync(configuration, cancellationToken, (pl, token) =>
+            {
+                if (output == null) throw new ArgumentNullException(nameof(output));
+                var data = ToBytesCore(imgsrc, null, pl, null, null, null, null, token);
+                token.ThrowIfCancellationRequested();
+                output.Write(data, 0, data.Length);
+                return data;
+            });
 
         #endregion
 

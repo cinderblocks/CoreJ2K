@@ -58,6 +58,12 @@ namespace CoreJ2K.j2k.entropy.encoder
     /// <seealso cref="j2k.codestream.writer.CodestreamWriter" />
     public abstract class PostCompRateAllocator : ImgDataAdapter
     {
+        /// <summary>
+        /// Token observed while the allocator codes code-blocks, searches truncation points and writes packets. Once cancelled,
+        /// the work stops with <see cref="System.OperationCanceledException"/> before the next block or packet.
+        /// </summary>
+        internal System.Threading.CancellationToken CancellationToken { get; set; }
+
         /// <summary> Keep a reference to the header encoder.</summary>
         public virtual HeaderEncoder HeaderEncoder
         {

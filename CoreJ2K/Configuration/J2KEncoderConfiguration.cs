@@ -25,7 +25,30 @@ namespace CoreJ2K.Configuration
         private EntropyCodingConfiguration _entropyConfig = new EntropyCodingConfiguration();
         private ErrorResilienceConfiguration _resilienceConfig = new ErrorResilienceConfiguration();
         private ROIConfiguration? _roiConfig = null;
+        private System.Threading.CancellationToken _cancellationToken;
         
+        /// <summary>
+        /// Gets or sets a token that cancels encodes started with this configuration. Cancellation is cooperative: the encoder
+        /// stops within about one code-block, packet or few rows of the wavelet transform and throws
+        /// <see cref="System.OperationCanceledException"/>. Defaults to <see cref="System.Threading.CancellationToken.None"/>.
+        /// </summary>
+        public System.Threading.CancellationToken CancellationToken
+        {
+            get => _cancellationToken;
+            set => _cancellationToken = value;
+        }
+
+        /// <summary>
+        /// Sets a token that cancels encodes started with this configuration.
+        /// </summary>
+        /// <param name="cancellationToken">The token to observe.</param>
+        /// <returns>This configuration instance for method chaining.</returns>
+        public J2KEncoderConfiguration WithCancellationToken(System.Threading.CancellationToken cancellationToken)
+        {
+            _cancellationToken = cancellationToken;
+            return this;
+        }
+
         /// <summary>
         /// Gets or sets the target bitrate in bits per pixel.
         /// -1 means no rate limit (lossless if using reversible transform).
