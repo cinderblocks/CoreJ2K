@@ -42,6 +42,7 @@ using System.Collections.Generic;
 using System.Buffers;
 using System.Collections.Concurrent;
 using System.Runtime.ExceptionServices;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace CoreJ2K.j2k.wavelet.synthesis
@@ -141,6 +142,15 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         }
 
         private int parallelDegree = 1;
+
+        // Observed between code-blocks and between wavelet levels so a cancelled decode stops within about one code-block.
+        private CancellationToken cancellationToken;
+
+        /// <summary>
+        /// Makes the reconstruction cooperative: once <paramref name="token"/> is cancelled, it throws
+        /// <see cref="OperationCanceledException"/> before decoding the next code-block or wavelet level.
+        /// </summary>
+        internal void SetCancellationToken(CancellationToken token) => cancellationToken = token;
         private Func<CBlkWTDataSrcDec>? workerChainFactory;
         private readonly ConcurrentBag<BlockWorker> idleWorkers = new ConcurrentBag<BlockWorker>();
 
@@ -618,6 +628,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
                     {
                         for (i = 0; i < h; i++, offset += db.w)
                         {
+                            if ((i & 63) == 0) cancellationToken.ThrowIfCancellationRequested();
                             new ReadOnlySpan<int>(data_int5x3, offset, w).CopyTo(buf_int5x3);
                             hf5x3.synthetize_lpf(buf_int5x3, 0, wHalfCeil, 1, buf_int5x3, wHalfCeil, wHalf, 1, data_int5x3!, offset, 1);
                         }
@@ -626,6 +637,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
                     {
                         for (i = 0; i < h; i++, offset += db.w)
                         {
+                            if ((i & 63) == 0) cancellationToken.ThrowIfCancellationRequested();
                             new ReadOnlySpan<int>(data_int5x3, offset, w).CopyTo(buf_int5x3);
                             hf5x3.synthetize_hpf(buf_int5x3, 0, wHalf, 1, buf_int5x3, wHalf, wHalfCeil, 1, data_int5x3!, offset, 1);
                         }
@@ -637,6 +649,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
                     {
                         for (j = 0; j < w; j++, offset++)
                         {
+                            if ((j & 63) == 0) cancellationToken.ThrowIfCancellationRequested();
                             for (i = 0, k = offset; i < h; i++, k += db.w)
                                 buf_int5x3[i] = data_int5x3[k];
                             vf5x3.synthetize_lpf(buf_int5x3, 0, hHalfCeil, 1, buf_int5x3, hHalfCeil, hHalf, 1, data_int5x3!, offset, db.w);
@@ -646,6 +659,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
                     {
                         for (j = 0; j < w; j++, offset++)
                         {
+                            if ((j & 63) == 0) cancellationToken.ThrowIfCancellationRequested();
                             for (i = 0, k = offset; i < h; i++, k += db.w)
                                 buf_int5x3[i] = data_int5x3[k];
                             vf5x3.synthetize_hpf(buf_int5x3, 0, hHalf, 1, buf_int5x3, hHalf, hHalfCeil, 1, data_int5x3!, offset, db.w);
@@ -675,6 +689,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
                     {
                         for (i = 0; i < h; i++, offset += db.w)
                         {
+                            if ((i & 63) == 0) cancellationToken.ThrowIfCancellationRequested();
                             new ReadOnlySpan<float>(data_float, offset, w).CopyTo(buf_float);
                             hf9x7.synthetize_lpf(buf_float, 0, wHalfCeil9, 1, buf_float, wHalfCeil9, wHalf9, 1, data_float, offset, 1);
                         }
@@ -683,6 +698,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
                     {
                         for (i = 0; i < h; i++, offset += db.w)
                         {
+                            if ((i & 63) == 0) cancellationToken.ThrowIfCancellationRequested();
                             new ReadOnlySpan<float>(data_float, offset, w).CopyTo(buf_float);
                             hf9x7.synthetize_hpf(buf_float, 0, wHalf9, 1, buf_float, wHalf9, wHalfCeil9, 1, data_float, offset, 1);
                         }
@@ -694,6 +710,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
                     {
                         for (j = 0; j < w; j++, offset++)
                         {
+                            if ((j & 63) == 0) cancellationToken.ThrowIfCancellationRequested();
                             for (i = 0, k = offset; i < h; i++, k += db.w)
                                 buf_float[i] = data_float[k];
                             vf9x7.synthetize_lpf(buf_float, 0, hHalfCeil9, 1, buf_float, hHalfCeil9, hHalf9, 1, data_float, offset, db.w);
@@ -703,6 +720,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
                     {
                         for (j = 0; j < w; j++, offset++)
                         {
+                            if ((j & 63) == 0) cancellationToken.ThrowIfCancellationRequested();
                             for (i = 0, k = offset; i < h; i++, k += db.w)
                                 buf_float[i] = data_float[k];
                             vf9x7.synthetize_hpf(buf_float, 0, hHalf9, 1, buf_float, hHalf9, hHalfCeil9, 1, data_float, offset, db.w);
@@ -741,6 +759,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
                     // start index is even => use LPF
                     for (i = 0; i < h; i++, offset += db.w)
                     {
+                        if ((i & 63) == 0) cancellationToken.ThrowIfCancellationRequested();
                         Array.Copy((Array)data!, offset, (Array)buf!, 0, w);
                         sb.hFilter!.synthetize_lpf(buf, 0, wHalfCeilG, 1, buf, wHalfCeilG, wHalfG, 1, data, offset, 1);
                     }
@@ -750,6 +769,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
                     // start index is odd => use HPF
                     for (i = 0; i < h; i++, offset += db.w)
                     {
+                        if ((i & 63) == 0) cancellationToken.ThrowIfCancellationRequested();
                         Array.Copy((Array)data!, offset, (Array)buf!, 0, w);
                         sb.hFilter!.synthetize_hpf(buf, 0, wHalfG, 1, buf, wHalfG, wHalfCeilG, 1, data, offset, 1);
                     }
@@ -769,6 +789,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
                             // start index is even => use LPF
                             for (j = 0; j < w; j++, offset++)
                             {
+                                if ((j & 63) == 0) cancellationToken.ThrowIfCancellationRequested();
                                 for (i = 0, k = offset; i < h; i++, k += db.w)
                                     buf_int[i] = data_int[k];
                                 sb.vFilter!.synthetize_lpf(buf, 0, hHalfCeilG, 1, buf, hHalfCeilG, hHalfG, 1, data, offset, db.w);
@@ -779,6 +800,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
                             // start index is odd => use HPF
                             for (j = 0; j < w; j++, offset++)
                             {
+                                if ((j & 63) == 0) cancellationToken.ThrowIfCancellationRequested();
                                 for (i = 0, k = offset; i < h; i++, k += db.w)
                                     buf_int[i] = data_int[k];
                                 sb.vFilter!.synthetize_hpf(buf, 0, hHalfG, 1, buf, hHalfG, hHalfCeilG, 1, data, offset, db.w);
@@ -795,6 +817,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
                             // start index is even => use LPF
                             for (j = 0; j < w; j++, offset++)
                             {
+                                if ((j & 63) == 0) cancellationToken.ThrowIfCancellationRequested();
                                 for (i = 0, k = offset; i < h; i++, k += db.w)
                                     buf_float2[i] = data_float2[k];
                                 sb.vFilter!.synthetize_lpf(buf, 0, hHalfCeilG, 1, buf, hHalfCeilG, hHalfG, 1, data, offset, db.w);
@@ -805,6 +828,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
                             // start index is odd => use HPF
                             for (j = 0; j < w; j++, offset++)
                             {
+                                if ((j & 63) == 0) cancellationToken.ThrowIfCancellationRequested();
                                 for (i = 0, k = offset; i < h; i++, k += db.w)
                                     buf_float2[i] = data_float2[k];
                                 sb.vFilter!.synthetize_hpf(buf, 0, hHalfG, 1, buf, hHalfG, hHalfCeilG, 1, data, offset, db.w);
@@ -840,6 +864,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// </summary>
         private void ReconstructComponent(DataBlk img, SubbandSyn root, int c)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             if (workerChainFactory != null)
             {
                 var jobs = new List<BlockJob>();
@@ -902,7 +927,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         private void DecodeCodeBlocksInParallel(DataBlk img, List<BlockJob> jobs, int c)
         {
             var tile = src.TileIdx;
-            var options = new ParallelOptions { MaxDegreeOfParallelism = parallelDegree };
+            var options = new ParallelOptions { MaxDegreeOfParallelism = parallelDegree, CancellationToken = cancellationToken };
 
             try
             {
@@ -910,6 +935,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
                     () => RentWorker(tile),
                     (i, _, worker) =>
                     {
+                        cancellationToken.ThrowIfCancellationRequested();
                         var job = jobs[i];
                         var blk = worker.Chain.GetInternCodeBlock(c, job.M, job.N, job.Subband, worker.Block!);
                         worker.Block = blk;
@@ -985,6 +1011,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
                     {
                         for (n = 0; n < ncblks.x; n++)
                         {
+                            cancellationToken.ThrowIfCancellationRequested();
                             subbData = src.GetInternCodeBlock(c, m, n, sb, subbData);
                             int[] srcArr = (int[])subbData.Data!;
                             int dstBase = subbData.uly * img.w + subbData.ulx;
@@ -1003,6 +1030,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
                     {
                         for (n = 0; n < ncblks.x; n++)
                         {
+                            cancellationToken.ThrowIfCancellationRequested();
                             subbData = src.GetInternCodeBlock(c, m, n, sb, subbData);
                             float[] srcArr = (float[])subbData.Data!;
                             int dstBase = subbData.uly * img.w + subbData.ulx;
@@ -1031,6 +1059,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
                     waveletTreeReconstruction(img, (SubbandSyn)sb.HH, c, loadCodeBlocks);
 
                     //Perform the 2D wavelet decomposition of the current subband
+                    cancellationToken.ThrowIfCancellationRequested();
                     wavelet2DReconstruction(img, sb, c);
                 }
             }

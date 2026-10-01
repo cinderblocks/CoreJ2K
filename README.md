@@ -423,6 +423,7 @@ Common encoder parameters (case-sensitive):
 - **Image Sources**: Accepts SKBitmap, Bitmap, Image, or codec-specific formats (PGM/PPM/PGX streams)
 - **Thread Safety**: Independent decode and encode calls can run concurrently on separate threads.
 - **Parallel Decoding**: Code-blocks are decoded on up to all cores by default (about 3x faster on 8 cores for lossless), with bit-identical output. Tune with `WithMaxDegreeOfParallelism(n)` or `J2kImage.DefaultMaxDegreeOfParallelism`.
+- **Cancellation**: Decodes observe a `CancellationToken` and stop within milliseconds with `OperationCanceledException`, including the `*Async` methods. Pass a token to `FromBytes`/`DecodeBytes`/`DecodeToImage<T>`, or set it with `J2KDecoderConfiguration.WithCancellationToken`.
 - **Decode Limits**: A decode is rejected with `DecoderLimitException` before any image-sized allocation if it would exceed the default 1 Gpixel / 2 GiB limits (at the requested resolution). Use `DecoderLimits.Strict` for untrusted input or `DecoderLimits.None` to opt out. See the [decoder guide](docs/DECODER_CONFIGURATION_GUIDE.md#8-resource-limits).
 
 ### Upgrading to 2.4.0

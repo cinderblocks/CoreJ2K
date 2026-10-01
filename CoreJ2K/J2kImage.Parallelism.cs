@@ -3,6 +3,7 @@
 
 using System;
 using System.Globalization;
+using System.Threading;
 using CoreJ2K.j2k.codestream.reader;
 using CoreJ2K.j2k.decoder;
 using CoreJ2K.j2k.quantization.dequantizer;
@@ -46,13 +47,17 @@ namespace CoreJ2K
         }
 
         /// <summary>
-        /// Lets the inverse wavelet transform decode code-blocks on several threads, giving each worker its own chain of
+        /// Prepares the inverse wavelet transform for decoding: makes it observe <paramref name="cancellationToken"/> and, when
+        /// several threads are allowed, lets it decode code-blocks in parallel, giving each worker its own chain of
         /// entropy-decoder, ROI and dequantiser stages over the shared bitstream reader.
         /// </summary>
-        private static void EnableParallelDecoding(InverseWT invWT, SharedCodedBlockSource? sharedSource, int degree,
-            HeaderDecoder hd, ParameterList pl, DecoderSpecs decSpec, int[] depth)
+        private static void ConfigureInverseTransform(InverseWT invWT, SharedCodedBlockSource? sharedSource, int degree,
+            HeaderDecoder hd, ParameterList pl, DecoderSpecs decSpec, int[] depth, CancellationToken cancellationToken)
         {
-            if (sharedSource == null || !(invWT is InvWTFull full)) return;
+            if (!(invWT is InvWTFull full)) return;
+
+            full.SetCancellationToken(cancellationToken);
+            if (sharedSource == null) return;
 
             full.EnableParallelDecoding(degree, () =>
             {

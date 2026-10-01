@@ -40,6 +40,7 @@ using CoreJ2K.j2k.util;
 using CoreJ2K.j2k.wavelet.synthesis;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 
 namespace CoreJ2K.j2k.codestream.reader
 {
@@ -261,6 +262,13 @@ namespace CoreJ2K.j2k.codestream.reader
 
             return usedFastPath;
         }
+
+        // Observed once per packet while a tile's packet headers are parsed, which for a large tile is a noticeable
+        // stretch of work before the first code-block is decoded.
+        private CancellationToken cancellationToken;
+
+        /// <summary>Makes packet parsing observe <paramref name="token"/>; it throws <see cref="OperationCanceledException"/> once cancelled.</summary>
+        internal void SetCancellationToken(CancellationToken token) => cancellationToken = token;
 
         /// <summary> Reads all tiles headers and keep offset of their first
         /// packet. Finally, it calls the rate allocation method.
@@ -1084,6 +1092,7 @@ namespace CoreJ2K.j2k.codestream.reader
                         for (var p = 0; p < nPrec; p++)
                         {
                             // loop on precincts
+                            cancellationToken.ThrowIfCancellationRequested();
                             start = inStream.Pos;
 
                             // If packed packet headers are used, there is no need
@@ -1240,6 +1249,7 @@ namespace CoreJ2K.j2k.codestream.reader
                         for (var p = 0; p < nPrec; p++)
                         {
                             // loop on precincts
+                            cancellationToken.ThrowIfCancellationRequested();
                             start = inStream.Pos;
 
                             // If packed packet headers are used, there is no need
@@ -1476,6 +1486,8 @@ namespace CoreJ2K.j2k.codestream.reader
                                     continue;
                                 if (l < lys[c][r] || l >= numLayers)
                                     continue;
+
+                                cancellationToken.ThrowIfCancellationRequested();
 
                                 start = inStream.Pos;
 
@@ -1728,6 +1740,8 @@ namespace CoreJ2K.j2k.codestream.reader
                                     continue;
                                 if (l < lys[c][r] || l >= numLayers)
                                     continue;
+
+                                cancellationToken.ThrowIfCancellationRequested();
 
                                 start = inStream.Pos;
 
@@ -1982,6 +1996,8 @@ namespace CoreJ2K.j2k.codestream.reader
                                     continue;
                                 if (l < lys[c][r])
                                     continue;
+
+                                cancellationToken.ThrowIfCancellationRequested();
 
                                 start = inStream.Pos;
 

@@ -114,7 +114,21 @@ namespace CoreJ2K
         }
 
         public static InterleavedImage FromStream(Stream stream, ParameterList? parameters = null)
+            => FromStreamCore(stream, parameters, CancellationToken.None);
+
+        /// <summary>
+        /// Decodes a JPEG 2000 stream, stopping if <paramref name="cancellationToken"/> is cancelled.
+        /// </summary>
+        /// <param name="stream">The stream containing JPEG 2000 data.</param>
+        /// <param name="parameters">Optional decoder parameters.</param>
+        /// <param name="cancellationToken">Cancels the decode. Cancellation is cooperative: the decode stops within about one code-block.</param>
+        /// <exception cref="OperationCanceledException">The token was cancelled.</exception>
+        public static InterleavedImage FromStream(Stream stream, ParameterList? parameters, CancellationToken cancellationToken)
+            => FromStreamCore(stream, parameters, cancellationToken);
+
+        private static InterleavedImage FromStreamCore(Stream stream, ParameterList? parameters, CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             RandomAccessIO? in_stream = null;
             InverseWT? invWT = null;
 
@@ -179,6 +193,7 @@ namespace CoreJ2K
             }
 
             // **** Entropy decoder ****
+            (breader as FileBitstreamReaderAgent)?.SetCancellationToken(cancellationToken);
             // When several threads decode code-blocks they share one bitstream reader through a locking wrapper.
             var parallelDegree = ResolveDegreeOfParallelism(pl);
             var sharedSource = parallelDegree > 1 ? new SharedCodedBlockSource(breader) : null;
@@ -229,7 +244,7 @@ namespace CoreJ2K
 
             var res = breader.ImgRes;
             invWT.ImgResLevel = res;
-            EnableParallelDecoding(invWT, sharedSource, parallelDegree, hd, pl, decSpec, depth);
+            ConfigureInverseTransform(invWT, sharedSource, parallelDegree, hd, pl, decSpec, depth, cancellationToken);
 
             // **** Data converter **** (after inverse transform module)
             var converter = new ImgDataConverter(invWT, 0);
@@ -301,11 +316,8 @@ namespace CoreJ2K
             for (var j = 0; j < numComps; ++j) bitsUsed[j] = decodedImage.GetNomRangeBits(j);
 
             // Refuse an image that would exceed the decoder limits before allocating the output buffer. This is checked
-
             // on the final image: a palette or multiple-component transform can output more components than the codestream has.
-
             EnforceDecoderLimits(pl, hi, invWT, decodedImage, 4);
-
 
             var dst = new InterleavedImage(imgWidth, decodedImage.ImgHeight, numComps, bitsUsed);
 
@@ -318,6 +330,7 @@ namespace CoreJ2K
                 // Loop on horizontal tiles
                 for (var x = 0; x < numTiles.x; x++, tIdx++)
                 {
+                    cancellationToken.ThrowIfCancellationRequested();
                     decodedImage.SetTile(x, y);
 
                     var height = decodedImage.GetTileCompHeight(tIdx, 0);
@@ -363,6 +376,7 @@ namespace CoreJ2K
 
                     for (var l = 0; l < height; l++)
                     {
+                        if ((l & 15) == 0) cancellationToken.ThrowIfCancellationRequested();
                         // Map tile-local row 'l' to destination image line
                         var destLine = tOffy + l;
                         // Skip rows that end up above the destination image
@@ -432,7 +446,25 @@ namespace CoreJ2K
         /// <param name="parameters">Optional decoder parameters.</param>
         /// <returns>The decoded image.</returns>
         public static InterleavedImage FromStream(Stream stream, out j2k.fileformat.metadata.J2KMetadata metadata, ParameterList? parameters = null)
+            => FromStreamCore(stream, out metadata, parameters, CancellationToken.None);
+
+        /// <summary>
+        /// Decodes a JPEG2000 stream and returns both the image and any metadata found, stopping if
+        /// <paramref name="cancellationToken"/> is cancelled.
+        /// </summary>
+        /// <param name="stream">The stream containing JPEG2000 data.</param>
+        /// <param name="metadata">Output parameter that receives the metadata (comments, XML, UUIDs).</param>
+        /// <param name="parameters">Optional decoder parameters.</param>
+        /// <param name="cancellationToken">Cancels the decode. Cancellation is cooperative: the decode stops within about one code-block.</param>
+        /// <exception cref="OperationCanceledException">The token was cancelled.</exception>
+        public static InterleavedImage FromStream(Stream stream, out j2k.fileformat.metadata.J2KMetadata metadata,
+            ParameterList? parameters, CancellationToken cancellationToken)
+            => FromStreamCore(stream, out metadata, parameters, cancellationToken);
+
+        private static InterleavedImage FromStreamCore(Stream stream, out j2k.fileformat.metadata.J2KMetadata metadata,
+            ParameterList? parameters, CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             RandomAccessIO? in_stream = null;
             InverseWT? invWT = null;
 
@@ -493,6 +525,7 @@ namespace CoreJ2K
             }
 
             // **** Entropy decoder ****
+            (breader as FileBitstreamReaderAgent)?.SetCancellationToken(cancellationToken);
             // When several threads decode code-blocks they share one bitstream reader through a locking wrapper.
             var parallelDegree = ResolveDegreeOfParallelism(pl);
             var sharedSource = parallelDegree > 1 ? new SharedCodedBlockSource(breader) : null;
@@ -543,7 +576,7 @@ namespace CoreJ2K
 
             var res = breader.ImgRes;
             invWT.ImgResLevel = res;
-            EnableParallelDecoding(invWT, sharedSource, parallelDegree, hd, pl, decSpec, depth);
+            ConfigureInverseTransform(invWT, sharedSource, parallelDegree, hd, pl, decSpec, depth, cancellationToken);
 
             // **** Data converter **** (after inverse transform module)
             var converter = new ImgDataConverter(invWT, 0);
@@ -615,11 +648,8 @@ namespace CoreJ2K
             for (var j = 0; j < numComps; ++j) bitsUsed[j] = decodedImage.GetNomRangeBits(j);
 
             // Refuse an image that would exceed the decoder limits before allocating the output buffer. This is checked
-
             // on the final image: a palette or multiple-component transform can output more components than the codestream has.
-
             EnforceDecoderLimits(pl, hi, invWT, decodedImage, 4);
-
 
             var dst = new InterleavedImage(imgWidth, decodedImage.ImgHeight, numComps, bitsUsed);
 
@@ -632,6 +662,7 @@ namespace CoreJ2K
                 // Loop on horizontal tiles
                 for (var x = 0; x < numTiles.x; x++, tIdx++)
                 {
+                    cancellationToken.ThrowIfCancellationRequested();
                     decodedImage.SetTile(x, y);
 
                     var height = decodedImage.GetTileCompHeight(tIdx, 0);
@@ -677,6 +708,7 @@ namespace CoreJ2K
 
                     for (var l = 0; l < height; l++)
                     {
+                        if ((l & 15) == 0) cancellationToken.ThrowIfCancellationRequested();
                         // Map tile-local row 'l' to destination image line
                         var destLine = tOffy + l;
                         // Skip rows that end up above the destination image
@@ -755,7 +787,7 @@ namespace CoreJ2K
             // Convert modern configuration to ParameterList
             var pl = configuration.ToParameterList();
             
-            return FromStream(stream, pl);
+            return FromStreamCore(stream, pl, configuration.CancellationToken);
         }
 
         /// <summary>
@@ -776,7 +808,7 @@ namespace CoreJ2K
             // Convert modern configuration to ParameterList
             var pl = configuration.ToParameterList();
             
-            return FromStream(stream, out metadata, pl);
+            return FromStreamCore(stream, out metadata, pl, configuration.CancellationToken);
         }
 
         #endregion
@@ -829,9 +861,74 @@ namespace CoreJ2K
 
         /// <summary>Decodes a JPEG 2000 stream and returns both the image and any file-format metadata.</summary>
         public static J2kDecodeResult DecodeStream(Stream stream, ParameterList? parameters = null)
+            => DecodeStreamCore(stream, parameters, CancellationToken.None);
+
+        /// <summary>Decodes a JPEG 2000 stream, stopping if <paramref name="cancellationToken"/> is cancelled.</summary>
+        /// <exception cref="OperationCanceledException">The token was cancelled.</exception>
+        public static J2kDecodeResult DecodeStream(Stream stream, ParameterList? parameters, CancellationToken cancellationToken)
+            => DecodeStreamCore(stream, parameters, cancellationToken);
+
+        private static J2kDecodeResult DecodeStreamCore(Stream stream, ParameterList? parameters, CancellationToken cancellationToken)
         {
-            var image = FromStream(stream, out var metadata, parameters);
+            var image = FromStreamCore(stream, out var metadata, parameters, cancellationToken);
             return new J2kDecodeResult(image, metadata);
+        }
+
+        private static CancellationTokenSource? LinkTokens(CancellationToken first, CancellationToken second, out CancellationToken combined)
+        {
+            if (!first.CanBeCanceled) { combined = second; return null; }
+            if (!second.CanBeCanceled || first.Equals(second)) { combined = first; return null; }
+            var source = CancellationTokenSource.CreateLinkedTokenSource(first, second);
+            combined = source.Token;
+            return source;
+        }
+
+        /// <summary>Decodes a JPEG 2000 file, stopping if <paramref name="cancellationToken"/> is cancelled.</summary>
+        /// <exception cref="OperationCanceledException">The token was cancelled.</exception>
+        public static J2kDecodeResult DecodeFile(string filename, ParameterList? parameters, CancellationToken cancellationToken)
+        {
+            using var stream = FileStreamFactory.New(filename, "r");
+            return DecodeStreamCore(stream, parameters, cancellationToken);
+        }
+
+        /// <summary>Decodes JPEG 2000 data from a byte array, stopping if <paramref name="cancellationToken"/> is cancelled.</summary>
+        /// <exception cref="OperationCanceledException">The token was cancelled.</exception>
+        public static J2kDecodeResult DecodeBytes(byte[] data, ParameterList? parameters, CancellationToken cancellationToken)
+        {
+            using var stream = new MemoryStream(data);
+            return DecodeStreamCore(stream, parameters, cancellationToken);
+        }
+
+        /// <summary>Decodes JPEG 2000 data from a buffer, stopping if <paramref name="cancellationToken"/> is cancelled.</summary>
+        /// <exception cref="OperationCanceledException">The token was cancelled.</exception>
+        public static J2kDecodeResult DecodeBytes(ReadOnlyMemory<byte> data, ParameterList? parameters, CancellationToken cancellationToken)
+        {
+            using var stream = MemoryStreamFromMemory(data);
+            return DecodeStreamCore(stream, parameters, cancellationToken);
+        }
+
+        /// <summary>Decodes a JPEG 2000 file to an image, stopping if <paramref name="cancellationToken"/> is cancelled.</summary>
+        /// <exception cref="OperationCanceledException">The token was cancelled.</exception>
+        public static InterleavedImage FromFile(string filename, ParameterList? parameters, CancellationToken cancellationToken)
+        {
+            using var stream = FileStreamFactory.New(filename, "r");
+            return FromStreamCore(stream, parameters, cancellationToken);
+        }
+
+        /// <summary>Decodes JPEG 2000 data from a byte array to an image, stopping if <paramref name="cancellationToken"/> is cancelled.</summary>
+        /// <exception cref="OperationCanceledException">The token was cancelled.</exception>
+        public static InterleavedImage FromBytes(byte[] j2kdata, ParameterList? parameters, CancellationToken cancellationToken)
+        {
+            using var stream = new MemoryStream(j2kdata);
+            return FromStreamCore(stream, parameters, cancellationToken);
+        }
+
+        /// <summary>Decodes JPEG 2000 data from a buffer to an image, stopping if <paramref name="cancellationToken"/> is cancelled.</summary>
+        /// <exception cref="OperationCanceledException">The token was cancelled.</exception>
+        public static InterleavedImage FromBytes(ReadOnlyMemory<byte> data, ParameterList? parameters, CancellationToken cancellationToken)
+        {
+            using var stream = MemoryStreamFromMemory(data);
+            return FromStreamCore(stream, parameters, cancellationToken);
         }
 
         /// <summary>Decodes a JPEG 2000 stream using modern configuration and returns image and metadata.</summary>
@@ -839,6 +936,25 @@ namespace CoreJ2K
         {
             var image = FromStream(stream, out var metadata, configuration);
             return new J2kDecodeResult(image, metadata);
+        }
+
+        /// <summary>
+        /// Runs a configured decode on the thread pool. The configuration's token and the call's token are linked exactly once,
+        /// and the combined token is both observed by the decoder and given to <see cref="Task.Run(Func{TResult}, CancellationToken)"/>,
+        /// so a cancelled decode ends the task in the Canceled state rather than Faulted.
+        /// </summary>
+        private static async Task<J2kDecodeResult> DecodeConfiguredAsync(Configuration.J2KDecoderConfiguration configuration,
+            CancellationToken cancellationToken, Func<ParameterList, CancellationToken, J2kDecodeResult> decode)
+        {
+            if (configuration == null)
+                throw new ArgumentNullException(nameof(configuration));
+
+            if (!configuration.IsValid)
+                throw new ArgumentException($"Invalid configuration: {string.Join(", ", configuration.Validate())}");
+
+            using var linked = LinkTokens(configuration.CancellationToken, cancellationToken, out var token);
+            var pl = configuration.ToParameterList();
+            return await Task.Run(() => decode(pl, token), token).ConfigureAwait(false);
         }
 
         private static MemoryStream MemoryStreamFromMemory(ReadOnlyMemory<byte> data)
@@ -1663,35 +1779,35 @@ namespace CoreJ2K
         /// <summary>Decodes a JPEG 2000 stream asynchronously and returns image and metadata.</summary>
         public static Task<J2kDecodeResult> DecodeStreamAsync(Stream stream,
             ParameterList? parameters = null, CancellationToken cancellationToken = default)
-            => Task.Run(() => DecodeStream(stream, parameters), cancellationToken);
+            => Task.Run(() => DecodeStreamCore(stream, parameters, cancellationToken), cancellationToken);
 
         /// <summary>Decodes a JPEG 2000 stream asynchronously using modern configuration.</summary>
         public static Task<J2kDecodeResult> DecodeStreamAsync(Stream stream,
             Configuration.J2KDecoderConfiguration configuration,
             CancellationToken cancellationToken = default)
-            => Task.Run(() => DecodeStream(stream, configuration), cancellationToken);
+            => DecodeConfiguredAsync(configuration, cancellationToken, (pl, token) => DecodeStreamCore(stream, pl, token));
 
         /// <summary>Decodes JPEG 2000 data from a byte array asynchronously.</summary>
         public static Task<J2kDecodeResult> DecodeBytesAsync(byte[] data,
             ParameterList? parameters = null, CancellationToken cancellationToken = default)
-            => Task.Run(() => DecodeBytes(data, parameters), cancellationToken);
+            => Task.Run(() => DecodeBytes(data, parameters, cancellationToken), cancellationToken);
 
         /// <summary>Decodes JPEG 2000 data from a byte array asynchronously using modern configuration.</summary>
         public static Task<J2kDecodeResult> DecodeBytesAsync(byte[] data,
             Configuration.J2KDecoderConfiguration configuration,
             CancellationToken cancellationToken = default)
-            => Task.Run(() => DecodeBytes(data, configuration), cancellationToken);
+            => DecodeConfiguredAsync(configuration, cancellationToken, (pl, token) => DecodeBytes(data, pl, token));
 
         /// <summary>Decodes JPEG 2000 data from a <see cref="ReadOnlyMemory{T}"/> buffer asynchronously.</summary>
         public static Task<J2kDecodeResult> DecodeBytesAsync(ReadOnlyMemory<byte> data,
             ParameterList? parameters = null, CancellationToken cancellationToken = default)
-            => Task.Run(() => DecodeBytes(data, parameters), cancellationToken);
+            => Task.Run(() => DecodeBytes(data, parameters, cancellationToken), cancellationToken);
 
         /// <summary>Decodes JPEG 2000 data from a <see cref="ReadOnlyMemory{T}"/> buffer asynchronously using modern configuration.</summary>
         public static Task<J2kDecodeResult> DecodeBytesAsync(ReadOnlyMemory<byte> data,
             Configuration.J2KDecoderConfiguration configuration,
             CancellationToken cancellationToken = default)
-            => Task.Run(() => DecodeBytes(data, configuration), cancellationToken);
+            => DecodeConfiguredAsync(configuration, cancellationToken, (pl, token) => DecodeBytes(data, pl, token));
 
         /// <summary>Encodes an image source asynchronously and returns the encoded bytes.</summary>
         public static Task<byte[]> ToBytesAsync(BlkImgDataSrc imgsrc,

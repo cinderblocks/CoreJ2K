@@ -17,6 +17,7 @@ namespace CoreJ2K
     using j2k.roi;
     using j2k.util;
     using j2k.wavelet.synthesis;
+    using System.Threading;
     using Color;
     using System;
     using System.IO;
@@ -42,7 +43,7 @@ namespace CoreJ2K
         public static T DecodeToImage<T>(Stream stream, ParameterList? parameters = null)
         {
             if (stream == null) throw new ArgumentNullException(nameof(stream));
-            return DecodeToImageCore<T>(stream, parameters);
+            return DecodeToImageCore<T>(stream, parameters, CancellationToken.None);
         }
 
         /// <summary>
@@ -76,6 +77,45 @@ namespace CoreJ2K
             using (var stream = FileStreamFactory.New(filename, "r"))
             {
                 return DecodeToImage<T>(stream, parameters);
+            }
+        }
+
+        /// <summary>
+        /// Decodes a JPEG 2000 stream straight into the platform image <typeparamref name="T"/>, stopping if
+        /// <paramref name="cancellationToken"/> is cancelled. See <see cref="DecodeToImage{T}(Stream, ParameterList?)"/>.
+        /// </summary>
+        /// <exception cref="OperationCanceledException">The token was cancelled.</exception>
+        public static T DecodeToImage<T>(Stream stream, ParameterList? parameters, CancellationToken cancellationToken)
+        {
+            if (stream == null) throw new ArgumentNullException(nameof(stream));
+            return DecodeToImageCore<T>(stream, parameters, cancellationToken);
+        }
+
+        /// <summary>
+        /// Decodes JPEG 2000 data straight into the platform image <typeparamref name="T"/>, stopping if
+        /// <paramref name="cancellationToken"/> is cancelled.
+        /// </summary>
+        /// <exception cref="OperationCanceledException">The token was cancelled.</exception>
+        public static T DecodeToImage<T>(byte[] j2kdata, ParameterList? parameters, CancellationToken cancellationToken)
+        {
+            if (j2kdata == null) throw new ArgumentNullException(nameof(j2kdata));
+            using (var ms = new MemoryStream(j2kdata))
+            {
+                return DecodeToImageCore<T>(ms, parameters, cancellationToken);
+            }
+        }
+
+        /// <summary>
+        /// Decodes a JPEG 2000 file straight into the platform image <typeparamref name="T"/>, stopping if
+        /// <paramref name="cancellationToken"/> is cancelled.
+        /// </summary>
+        /// <exception cref="OperationCanceledException">The token was cancelled.</exception>
+        public static T DecodeFileToImage<T>(string filename, ParameterList? parameters, CancellationToken cancellationToken)
+        {
+            if (filename == null) throw new ArgumentNullException(nameof(filename));
+            using (var stream = FileStreamFactory.New(filename, "r"))
+            {
+                return DecodeToImageCore<T>(stream, parameters, cancellationToken);
             }
         }
 
@@ -131,8 +171,9 @@ namespace CoreJ2K
         /// silently truncated.  The source stream must be seekable in that case.
         /// </para>
         /// </remarks>
-        private static T DecodeToImageCore<T>(Stream stream, ParameterList? parameters)
+        private static T DecodeToImageCore<T>(Stream stream, ParameterList? parameters, CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             InverseWT? invWT = null;
             try
             {
@@ -180,6 +221,8 @@ namespace CoreJ2K
                     throw new InvalidOperationException("Cannot instantiate bit stream reader.", e);
                 }
 
+                (breader as FileBitstreamReaderAgent)?.SetCancellationToken(cancellationToken);
+
                 // When several threads decode code-blocks they share one bitstream reader through a locking wrapper.
 
                 var parallelDegree = ResolveDegreeOfParallelism(pl);
@@ -205,7 +248,7 @@ namespace CoreJ2K
 
                 var res = breader.ImgRes;
                 invWT.ImgResLevel = res;
-                EnableParallelDecoding(invWT, sharedSource, parallelDegree, hd, pl, decSpec, depth);
+                ConfigureInverseTransform(invWT, sharedSource, parallelDegree, hd, pl, decSpec, depth, cancellationToken);
 
                 var converter = new ImgDataConverter(invWT, 0);
                 var ictransf = new InvCompTransf(converter, decSpec, depth, pl);
@@ -286,7 +329,7 @@ namespace CoreJ2K
                     try { invWT.Close(); } catch { /* ignore */ }
                     invWT = null;
                     stream.Position = 0;
-                    using (var img = FromStream(stream, parameters))
+                    using (var img = FromStreamCore(stream, parameters, cancellationToken))
                     {
                         return img.As<T>();
                     }
@@ -304,6 +347,7 @@ namespace CoreJ2K
                 {
                     for (var x = 0; x < numTiles.x; x++, tIdx++)
                     {
+                        cancellationToken.ThrowIfCancellationRequested();
                         decodedImage.SetTile(x, y);
 
                         var tileHeight = decodedImage.GetTileCompHeight(tIdx, 0);
@@ -333,6 +377,7 @@ namespace CoreJ2K
 
                         for (var l = 0; l < tileHeight; l++)
                         {
+                            if ((l & 15) == 0) cancellationToken.ThrowIfCancellationRequested();
                             var destLine = tOffy + l;
                             if (destLine < 0) continue;
                             if (destLine >= imgHeight) break;

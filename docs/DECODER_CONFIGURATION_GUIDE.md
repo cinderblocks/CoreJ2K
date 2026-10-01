@@ -282,6 +282,42 @@ are decoded on the calling thread, so thumbnails pay nothing.
 
 If your application already runs many decodes in parallel, set the default to 1 (or a small number) so they do not compete for cores.
 
+### 10. Cancellation
+
+A decode can be cancelled part-way through. Cancellation is cooperative: the decoder checks the token for every packet, code-block,
+wavelet level, tile and every few rows of output, so once decoding is under way a cancelled decode stops within a few milliseconds, even
+on a very large image, and throws `OperationCanceledException`. The one stretch without a check is the very start: copying the input and
+reading the headers, which takes tens of milliseconds for a file of tens of megabytes. Cancelling leaves nothing behind that could affect
+the next decode.
+
+```csharp
+using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+
+// Synchronous overloads that take a token
+var image = J2kImage.FromBytes(data, parameters: null, cts.Token);
+var result = J2kImage.DecodeBytes(data, parameters: null, cts.Token);
+var bitmap = J2kImage.DecodeToImage<SKBitmap>(data, parameters: null, cts.Token);
+
+// Or carry the token in the configuration; every decode method that takes a configuration then observes it
+var config = new J2KDecoderConfiguration().WithCancellationToken(cts.Token);
+var decoded = J2kImage.DecodeBytes(data, config);
+
+// Async methods observe their own token for the whole decode, not only before it starts
+try
+{
+    var asyncResult = await J2kImage.DecodeBytesAsync(data, config, cts.Token);
+}
+catch (OperationCanceledException)
+{
+    // the task is in the Canceled state
+}
+```
+
+If a configuration carries a token *and* an async method is given one, cancelling either stops the decode. Cancelling mid-decode does not
+corrupt shared state: the next decode, on the same or another thread, produces the same output as if it had never happened.
+
+Encoding is not cancellable mid-encode yet; the encoder's async methods only observe their token before they start.
+
 ## Complete Examples
 
 ### Example 1: Thumbnail Generation
@@ -468,6 +504,7 @@ Main configuration class with fluent API for decoding.
 - `WithParsingMode(bool parsingMode)` - Use parsing vs truncate mode
 - `WithProgressiveDecoding()` - Enable progressive parsing mode
 - `WithVerbose(bool verbose)` - Control verbose output
+- `WithCancellationToken(CancellationToken token)` - Cancels decodes started with this configuration
 - `WithLimits(DecoderLimits limits)` - Resource limits for this decode (`DecoderLimits.Strict`, `None`, or a tuned copy)
 - `WithMaxDegreeOfParallelism(int threads)` - Threads used to decode code-blocks (1 = single-threaded)
 - `WithQuitConditions(Action<QuitConditions>)` - Configure early termination
@@ -482,6 +519,7 @@ Main configuration class with fluent API for decoding.
 - `UseColorSpace` - Get/set color space usage
 - `ParsingMode` - Get/set parsing mode
 - `Verbose` - Get/set verbose output
+- `CancellationToken` - Get/set the cancellation token (default `CancellationToken.None`)
 - `Limits` - Get/set resource limits (`null` = `DecoderLimits.Default`)
 - `MaxDegreeOfParallelism` - Get/set thread count (0 = `J2kImage.DefaultMaxDegreeOfParallelism`)
 - `QuitConditions` - Access quit conditions config

@@ -25,6 +25,7 @@ namespace CoreJ2K.Configuration
         private ComponentTransformSettings _componentTransform = new ComponentTransformSettings();
         private bool _verbose = true;
         private DecoderLimits? _limits;
+        private CancellationToken _cancellationToken;
         private int _maxDegreeOfParallelism;
         
         /// <summary>
@@ -234,6 +235,28 @@ namespace CoreJ2K.Configuration
         {
             get => _maxDegreeOfParallelism;
             set => _maxDegreeOfParallelism = value;
+        }
+
+        /// <summary>
+        /// Gets or sets a token that cancels decodes started with this configuration. Cancellation is cooperative: the decode
+        /// stops within about one code-block and throws <see cref="OperationCanceledException"/>. Defaults to
+        /// <see cref="CancellationToken.None"/>.
+        /// </summary>
+        public CancellationToken CancellationToken
+        {
+            get => _cancellationToken;
+            set => _cancellationToken = value;
+        }
+
+        /// <summary>
+        /// Sets a token that cancels decodes started with this configuration.
+        /// </summary>
+        /// <param name="cancellationToken">The token to observe.</param>
+        /// <returns>This configuration instance for method chaining.</returns>
+        public J2KDecoderConfiguration WithCancellationToken(CancellationToken cancellationToken)
+        {
+            _cancellationToken = cancellationToken;
+            return this;
         }
 
         /// <summary>
