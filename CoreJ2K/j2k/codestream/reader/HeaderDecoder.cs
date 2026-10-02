@@ -2103,13 +2103,13 @@ namespace CoreJ2K.j2k.codestream.reader
                 int stlm = ehs.ReadByte();
                 dataLength--;
                 
-                // Parse Stlm field
-                // Bits 6-7: Size of Ttlm field (tile index)
-                int ttlmSize = (stlm >> 6) & 0x03;
+                // Parse Stlm field (ISO/IEC 15444-1, A.7.1)
+                // Bits 4-5 (ST): Size of Ttlm field (tile index): 0, 1 or 2 bytes
+                int ttlmSize = (stlm >> 4) & 0x03;
                 
-                // Bits 4-5: Size of Ptlm field (tile-part length)
-                // 00 = 16 bits (2 bytes), 01 = 32 bits (4 bytes)
-                int ptlmSize = ((stlm >> 4) & 0x03) == 0 ? 2 : 4;
+                // Bit 6 (SP): Size of Ptlm field (tile-part length)
+                // 0 = 16 bits (2 bytes), 1 = 32 bits (4 bytes)
+                int ptlmSize = ((stlm >> 6) & 0x01) == 0 ? 2 : 4;
                 
                 // Validate field sizes
                 if (ttlmSize == 3)
@@ -2119,12 +2119,6 @@ namespace CoreJ2K.j2k.codestream.reader
                     return null;
                 }
                 
-                if (((stlm >> 4) & 0x03) > 1)
-                {
-                    FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING,
-                        "Invalid TLM marker: reserved Ptlm size value");
-                    return null;
-                }
                 
                 // Calculate entry size and number of entries
                 int entrySize = ttlmSize + ptlmSize;

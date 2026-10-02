@@ -1564,6 +1564,12 @@ namespace CoreJ2K
                 // **** HeaderEncoder ****
                 var imsigned = Enumerable.Repeat(false, ncomp).ToArray();   // TODO Consider supporting signed components.
                 var headenc = new HeaderEncoder(imgsrc, imsigned, dwt, imgtiler, encSpec, rois, ralloc, pl);
+                if (headenc.IsTLMEnabled && (pktspertp > 0 || pphTile || pphMain))
+                {
+                    // The tile-parts are rewritten after the codestream is written, so the lengths recorded in the TLM would be wrong.
+                    warning("TLM markers (Htlm) cannot be written together with tile_parts or packed packet headers; they are left out.");
+                    headenc.DisableTLM();
+                }
                 if (hasDco)
                 {
                     headenc.DcoSegment = dcoSegment;

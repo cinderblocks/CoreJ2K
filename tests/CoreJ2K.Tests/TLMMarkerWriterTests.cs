@@ -148,7 +148,7 @@ namespace CoreJ2K.Tests
             
             // Check Stlm field (byte 5)
             int stlm = bytes[5];
-            int ptlmSizeIndicator = (stlm >> 4) & 0x03;
+            int ptlmSizeIndicator = (stlm >> 6) & 0x01; // SP, bit 6
             Assert.Equal(0, ptlmSizeIndicator); // 0 = 16-bit length
         }
         
@@ -171,7 +171,7 @@ namespace CoreJ2K.Tests
             
             // Check Stlm field (byte 5)
             int stlm = bytes[5];
-            int ptlmSizeIndicator = (stlm >> 4) & 0x03;
+            int ptlmSizeIndicator = (stlm >> 6) & 0x01; // SP, bit 6
             Assert.Equal(1, ptlmSizeIndicator); // 1 = 32-bit length
         }
         
@@ -196,7 +196,7 @@ namespace CoreJ2K.Tests
             
             // Check Stlm field (byte 5)
             int stlm = bytes[5];
-            int ttlmSize = (stlm >> 6) & 0x03;
+            int ttlmSize = (stlm >> 4) & 0x03; // ST, bits 4-5
             // Note: Actual implementation might use explicit or implicit
             // This just verifies Stlm is valid
             Assert.True(ttlmSize >= 0 && ttlmSize <= 2);
@@ -249,7 +249,7 @@ namespace CoreJ2K.Tests
             
             // Check Stlm field (byte 5)
             int stlm = bytes[5];
-            int ttlmSize = (stlm >> 6) & 0x03;
+            int ttlmSize = (stlm >> 4) & 0x03; // ST, bits 4-5
             Assert.Equal(2, ttlmSize); // 2 = 16-bit tile index
         }
         
@@ -349,16 +349,16 @@ namespace CoreJ2K.Tests
             // Stlm is at byte 5
             int stlm = bytes[5];
             
-            // Bits 6-7: Ttlm size (0-2, not 3)
-            int ttlmSize = (stlm >> 6) & 0x03;
+            // Bits 4-5 (ST): Ttlm size (0-2, not 3), ISO/IEC 15444-1 A.7.1
+            int ttlmSize = (stlm >> 4) & 0x03;
             Assert.True(ttlmSize >= 0 && ttlmSize <= 2);
             
-            // Bits 4-5: Ptlm size indicator (0-1, not 2-3)
-            int ptlmIndicator = (stlm >> 4) & 0x03;
-            Assert.True(ptlmIndicator >= 0 && ptlmIndicator <= 1);
+            // Bit 6 (SP): Ptlm size, 0 = 16 bits, 1 = 32 bits. A one-bit field, so it is always valid.
+            int ptlmIndicator = (stlm >> 6) & 0x01;
+            Assert.True(ptlmIndicator == 0 || ptlmIndicator == 1);
             
-            // Bits 0-3: Should be 0 (reserved)
-            int reserved = stlm & 0x0F;
+            // Bit 7 and bits 0-3: Should be 0 (reserved)
+            int reserved = stlm & 0x8F;
             Assert.Equal(0, reserved);
         }
         

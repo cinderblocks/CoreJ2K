@@ -49,10 +49,10 @@ namespace CoreJ2K.j2k.codestream.writer
                 // Determine Ptlm size (2 or 4 bytes)
                 int ptlmSize = (maxLength <= 65535) ? 2 : 4;
                 
-                // Calculate Stlm field
-                // Bits 6-7: Ttlm size (00=0, 01=1 byte, 10=2 bytes)
-                // Bits 4-5: Ptlm size (00=2 bytes, 01=4 bytes)
-                int stlm = (ttlmSize << 6) | ((ptlmSize == 4 ? 1 : 0) << 4);
+                // Calculate Stlm field (ISO/IEC 15444-1, A.7.1)
+                // Bits 4-5 (ST): Ttlm size (00=0, 01=1 byte, 10=2 bytes)
+                // Bit 6 (SP): Ptlm size (0=2 bytes, 1=4 bytes)
+                int stlm = (ttlmSize << 4) | ((ptlmSize == 4 ? 1 : 0) << 6);
                 
                 // Calculate entry size and max entries per marker
                 int entrySize = ttlmSize + ptlmSize;

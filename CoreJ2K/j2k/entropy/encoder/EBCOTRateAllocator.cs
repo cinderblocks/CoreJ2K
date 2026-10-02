@@ -430,7 +430,7 @@ namespace CoreJ2K.j2k.entropy.encoder
         public override void runAndWrite()
         {
             //Now, run the rate allocation
-            buildAndWriteLayers();
+            WriteLayers();
         }
 
         // ---- Parallel packet passes ---------------------------------------------------------------------------------------
@@ -1001,6 +1001,10 @@ namespace CoreJ2K.j2k.entropy.encoder
                 }
             } // End loop on tiles
 
+            // The layers are built, and the length of every tile-part found, here and not when the packets are written, because the
+            // codestream's main header (TLM) and the tile-part headers (SOT) have to be known before anything is written.
+            BuildLayers();
+
 #if DO_TIMING
 			initTime += (System.DateTime.Now.Ticks - 621355968000000000) / 10000 - stime;
 #endif
@@ -1136,11 +1140,10 @@ namespace CoreJ2K.j2k.entropy.encoder
         /// writes the layer bit streams according to the progressive type.
         /// 
         /// </summary>
-        private void buildAndWriteLayers()
+        private void BuildLayers()
         {
             int maxBytes, actualBytes;
             float rdThreshold;
-            int[] tileLengths; // Length of each tile
             var nc = src.NumComps;
             var nt = src.GetNumTiles();
 #if DO_TIMING
@@ -1159,7 +1162,7 @@ namespace CoreJ2K.j2k.entropy.encoder
             }
 
             // PLT SUPPORT: Initialize PLT data collection if enabled
-            codestream.metadata.PacketLengthsData? pltData = null;
+            pltData = null;
             if (headEnc!.IsPLTEnabled)
             {
                 pltData = new codestream.metadata.PacketLengthsData();
@@ -1223,16 +1226,13 @@ namespace CoreJ2K.j2k.entropy.encoder
                 layers[l].actualBytes = actualBytes;
             } // end loop on layers
 
-            // PLT SUPPORT: Pass collected PLT data to header encoder
+            // The tile-part headers measured while building the layers had no PLT marker yet, but the ones written do, and the
+            // tile-part length in SOT (and TLM) must count every byte of the tile-part.
             if (pltData != null)
             {
-                headEnc.SetPLTData(pltData);
-
-                // The tile-part headers measured while building the layers had no PLT marker yet, but the ones written do, and the
-                // tile-part length in SOT (and TLM) must count every byte of the tile-part.
                 for (var t = 0; t < nt; t++)
                 {
-                    tileLengths[t] += headEnc.GetPLTLength(t);
+                    tileLengths[t] += HeaderEncoder.GetPLTLength(pltData, t);
                 }
             }
 
@@ -1243,12 +1243,42 @@ namespace CoreJ2K.j2k.entropy.encoder
                     // tileLengths[t] includes the complete tile-part length
                     tlmData.AddTilePart(t, 0, tileLengths[t]);
                 }
+
+                // TLM SUPPORT: Pass collected TLM data to header encoder, which writes it in the main header
+                headEnc.SetTLMData(tlmData);
             }
 
 #if DO_TIMING
 			buildTime += (System.DateTime.Now.Ticks - 621355968000000000) / 10000 - stime;
+#endif
+        }
+
+        /// <summary>The length of the tile-part of each tile, found by <see cref="BuildLayers"/>.</summary>
+        private int[]? tileLengths;
+
+        /// <summary>The lengths of the packets of each tile, found by <see cref="BuildLayers"/> when PLT markers are written.</summary>
+        private codestream.metadata.PacketLengthsData? pltData;
+
+        /// <summary> Writes the tiles' tile-part headers and packets to the bit stream, according to their progression orders. The main
+        /// header must have been written already.
+        /// 
+        /// </summary>
+        private void WriteLayers()
+        {
+            var nc = src.NumComps;
+            var nt = src.GetNumTiles();
+            var tileLengths = this.tileLengths!;
+#if DO_TIMING
+			long stime = 0L;
 			stime = (System.DateTime.Now.Ticks - 621355968000000000) / 10000;
 #endif
+            // PLT SUPPORT: Pass collected PLT data to header encoder. It goes in the tile-part headers; if it was set earlier, the
+            // main header would carry it too.
+            if (pltData != null)
+            {
+                headEnc!.SetPLTData(pltData);
+            }
+
             // +--------------------------------------------------+
             // | Write tiles according to their Progression order |
             // +--------------------------------------------------+
@@ -1337,11 +1367,8 @@ namespace CoreJ2K.j2k.entropy.encoder
 #endif
             pendingPackets = null;
             layerPacketSizes = null;
-            // TLM SUPPORT: Pass collected TLM data to header encoder
-            if (tlmData != null)
-            {
-                headEnc.SetTLMData(tlmData);
-            }
+            this.tileLengths = null;
+            pltData = null;
 
         }
 

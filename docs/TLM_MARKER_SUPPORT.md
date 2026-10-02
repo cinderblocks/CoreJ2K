@@ -34,22 +34,34 @@ TLM Marker Segment:
   Ltlm (2 bytes) - Length of marker segment
   Ztlm (1 byte) - Index of this TLM marker (for multiple TLM markers)
   Stlm (1 byte) - Size parameters:
-    Bits 6-7: Size of Ttlm field
+    Bits 4-5 (ST): Size of Ttlm field
       00 = 0 bytes (Ttlm implicit, sequential)
       01 = 1 byte
       10 = 2 bytes
       11 = reserved
-    Bits 4-5: Size of Ptlm field
-      00 = 16 bits
-      01 = 32 bits
-      10 = reserved
-      11 = reserved
-    Bits 0-3: reserved
+    Bit 6 (SP): Size of Ptlm field
+      0 = 16 bits
+      1 = 32 bits
+    Bit 7 and bits 0-3: reserved
       
   [For each tile-part:]
     Ttlm (0, 1, or 2 bytes) - Tile index
     Ptlm (2 or 4 bytes) - Tile-part length
 ```
+
+### Writing TLM (`Htlm`)
+
+Set `Htlm` to `on` to write a TLM marker in the main header. It lists the length of every tile-part (the same number as the `Psot`
+field of its SOT marker) in tile order, which lets a reader find any tile without parsing the ones before it.
+
+- The lengths are only known once the layers have been built, so the encoder builds the layers before it writes the main header.
+- The marker counts against the rate target: a rate-limited stream has slightly less room for packets with `Htlm` than without. The
+  header used to measure the overhead assumes 32-bit lengths, so a stream can come out up to 2 bytes per tile under its target.
+- Tile indices take one byte for fewer than 256 tiles and two bytes otherwise. Lengths take 16 bits unless a tile-part is longer than
+  65535 bytes, when every entry takes 32 bits.
+- `Htlm` is ignored, with a warning, together with `tile_parts` or packed packet headers: those rewrite the tile-parts after the
+  codestream is written, which would leave the lengths wrong.
+- The decoder reads TLM markers with the layout above and, when present, finds tiles by their lengths.
 
 ### Key Features
 

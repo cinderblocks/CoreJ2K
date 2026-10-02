@@ -175,7 +175,7 @@ namespace CoreJ2K.j2k.codestream.writer
         private metadata.TilePartLengthsData tlmData;
 
         /// <summary>Whether or not to write TLM markers</summary>
-        private readonly bool useTLM;
+        private bool useTLM;
 
         /// <summary>PLT data collected during encoding for writing PLT markers</summary>
         private metadata.PacketLengthsData pltData;
@@ -401,6 +401,9 @@ namespace CoreJ2K.j2k.codestream.writer
         /// </summary>
         public virtual bool IsTLMEnabled => useTLM;
 
+        /// <summary>Stops TLM markers being written, whatever the <c>Htlm</c> option says.</summary>
+        internal void DisableTLM() => useTLM = false;
+
         /// <summary>
         /// Sets the TLM data to be written in the main header.
         /// This should be called after all tiles have been encoded.
@@ -427,14 +430,28 @@ namespace CoreJ2K.j2k.codestream.writer
         }
 
         /// <summary>
-        /// Gets the number of bytes the PLT marker segment adds to the header of the tile-part of a tile, from the PLT data set
-        /// with <see cref="SetPLTData"/>; 0 if there is none.
+        /// Gets the number of bytes the PLT marker segment adds to the header of the tile-part of a tile; 0 if the tile has no
+        /// packet lengths.
         /// </summary>
+        /// <param name="plt">The collected packet length data.</param>
         /// <param name="tileIdx">The tile index.</param>
-        internal virtual int GetPLTLength(int tileIdx)
-            => pltData != null && pltData.GetPacketCount(tileIdx) > 0
-                ? PLTMarkerWriter.WritePLT(System.IO.Stream.Null, pltData, tileIdx, 0)
-                : 0;
+        internal static int GetPLTLength(metadata.PacketLengthsData plt, int tileIdx)
+            => plt.GetPacketCount(tileIdx) > 0 ? PLTMarkerWriter.WritePLT(System.IO.Stream.Null, plt, tileIdx, 0) : 0;
+
+        /// <summary>
+        /// Creates TLM data with one tile-part per tile and a length that needs the widest length field, which makes a TLM marker at
+        /// least as long as the final one will be.
+        /// </summary>
+        private metadata.TilePartLengthsData CreateTLMSizingData()
+        {
+            var numTiles = ralloc.GetNumTiles(null);
+            var sizing = new metadata.TilePartLengthsData();
+            for (var t = 0; t < numTiles.x * numTiles.y; t++)
+            {
+                sizing.AddTilePart(t, 0, int.MaxValue);
+            }
+            return sizing;
+        }
 
         /// <summary>
         /// Gets whether PPM markers should be written.
@@ -640,9 +657,11 @@ namespace CoreJ2K.j2k.codestream.writer
             // +--------------------------+
             // |    TLM marker segment    |
             // +--------------------------+
-            if (tlmData != null && tlmData.HasTilePartLengths)
+            if (useTLM)
             {
-                writeTLM(tlmData);
+                // The lengths are only known once the layers are built. The header written to measure its size has to be as long as
+                // the final one, so it carries entries of the right number and the widest length field instead.
+                writeTLM(tlmData != null && tlmData.HasTilePartLengths ? tlmData : CreateTLMSizingData());
             }
 
             // +--------------------------+

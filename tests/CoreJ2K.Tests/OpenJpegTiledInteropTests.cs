@@ -40,6 +40,7 @@ namespace CoreJ2K.Tests
         [InlineData("gray250x170_tile100x70_rpcl_prec64.j2k", 250, 170, 1)] // custom precincts, RPCL, partial edge tiles
         [InlineData("rgb160x140_tile60_cprl_prec32.j2k", 160, 140, 3)]      // 3 components, CPRL, 32x32 precincts, RCT
         [InlineData("gray250x170_tile96_7res_origin.j2k", 250, 170, 1)]     // 6 decomposition levels + image/tile-grid offsets
+        [InlineData("gray250x170_tile100x70_tlm.j2k", 250, 170, 1)]         // TLM marker in the main header: tiles are located from it
         public void OpenJpegTiledLossless_DecodesExactly(string file, int width, int height, int components)
         {
             var image = J2kImage.FromBytes(File.ReadAllBytes(Path.Combine(FixtureDir, file)));
@@ -66,6 +67,35 @@ namespace CoreJ2K.Tests
                 }
                 Assert.True(mismatches == 0, $"{file}: {mismatches} mismatching samples in component {c}; {first}");
             }
+        }
+
+        [Fact]
+        public void OpenJpegTlm_IsReadAsWritten()
+        {
+            // OpenJPEG writes a TLM marker with 8-bit tile indices and 32-bit tile-part lengths. Each entry must be the Psot of the
+            // tile-part it describes, which is read here straight from the SOT markers.
+            var data = File.ReadAllBytes(Path.Combine(FixtureDir, "gray250x170_tile100x70_tlm.j2k"));
+
+            int U16(int at) => (data[at] << 8) | data[at + 1];
+            int U32(int at) => (data[at] << 24) | (data[at + 1] << 16) | (data[at + 2] << 8) | data[at + 3];
+            var pos = 2;
+            while (U16(pos) != 0xFF90) pos += 2 + U16(pos + 2);
+            var expected = new System.Collections.Generic.List<(int Tile, int Length)>();
+            while (U16(pos) == 0xFF90)
+            {
+                expected.Add((U16(pos + 4), U32(pos + 6)));
+                pos += U32(pos + 6);
+            }
+            Assert.Equal(9, expected.Count);
+
+            using var stream = new MemoryStream(data);
+            var decoder = new CoreJ2K.j2k.codestream.reader.HeaderDecoder(
+                new ISRandomAccessIO(stream), J2kImage.GetDefaultDecoderParameterList(), new CoreJ2K.j2k.codestream.HeaderInfo());
+            var tlm = decoder.GetTLMData();
+
+            Assert.NotNull(tlm);
+            var actual = tlm!.TilePartEntries.Select(entry => (entry.TileIndex, entry.TilePartLength)).ToList();
+            Assert.Equal(expected, actual);
         }
 
         private static int[][] Decode(byte[] data, string? res = null)
