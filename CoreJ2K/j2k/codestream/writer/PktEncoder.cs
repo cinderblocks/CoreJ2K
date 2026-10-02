@@ -277,6 +277,31 @@ namespace CoreJ2K.j2k.codestream.writer
         /// <summary>Whether or not the current packet is writable </summary>
         private bool packetWritable;
 
+        /// <summary>The buffers <see cref="encodePacket"/> encodes into on behalf of its callers.</summary>
+        private PacketBuffers? legacyBuffers;
+
+        /// <summary>The buffers and result of one <see cref="EncodePacket"/> call. Each thread encoding packets needs its own.</summary>
+        internal sealed class PacketBuffers
+        {
+            /// <summary>The packet header; reused between calls (null on the first one).</summary>
+            internal BitOutputBuffer? Head;
+
+            /// <summary>The packet body, at least <see cref="BodyLength"/> bytes long; not filled in by a simulation.</summary>
+            internal byte[]? Body;
+
+            /// <summary>The length of the packet body in bytes.</summary>
+            internal int BodyLength;
+
+            /// <summary>Whether the packet should be written.</summary>
+            internal bool Writable;
+
+            /// <summary>Whether the packet holds new ROI information.</summary>
+            internal bool RoiInPacket;
+
+            /// <summary>The length to read of the packet body to get all the ROI information.</summary>
+            internal int RoiLength;
+        }
+
         /// <summary> Creates a new packet encoder object, using the information from the
         /// 'infoSrc' object. 
         /// 
@@ -799,6 +824,40 @@ namespace CoreJ2K.j2k.codestream.writer
         /// </returns>
         public virtual BitOutputBuffer encodePacket(int ly, int c, int r, int t, CBlkRateDistStats[][] cbs, int[][] tIndx, BitOutputBuffer? hbuf, byte[]? bbuf, int pIdx)
         {
+            var buffers = legacyBuffers ??= new PacketBuffers();
+            buffers.Head = hbuf;
+            buffers.Body = bbuf;
+            EncodePacket(buffers, infoSrc.GetAnSubbandTree(t, c), ly, c, r, t, cbs, tIndx, pIdx, false);
+
+            roiInPkt = buffers.RoiInPacket;
+            roiLen = buffers.RoiLength;
+            packetWritable = buffers.Writable;
+            if (buffers.Writable)
+            {
+                lbbuf = buffers.Body;
+                lblen = buffers.BodyLength;
+            }
+            return buffers.Head!;
+        }
+
+        /// <summary>
+        /// Encodes one packet into <paramref name="buffers"/> without touching the state shared by the "last packet" accessors, so
+        /// packets of different precincts can be encoded at the same time. Packets of one precinct must still be encoded one at a
+        /// time, in layer order.
+        /// </summary>
+        /// <param name="buffers">Holds the header and body buffers to reuse, and receives the result.</param>
+        /// <param name="root">The subband tree of tile <paramref name="t"/>, component <paramref name="c"/>; it is read once on the
+        /// calling thread because asking the source for it is not thread-safe.</param>
+        /// <param name="simulate">Only works out the packet's length and updates the encoder state: the body is neither allocated
+        /// nor copied, since the caller only needs its size.</param>
+        /// <remarks>The parameters are those of <see cref="encodePacket"/>.</remarks>
+        internal void EncodePacket(PacketBuffers buffers, SubbandAn root, int ly, int c, int r, int t, CBlkRateDistStats[][] cbs, int[][] tIndx, int pIdx, bool simulate)
+        {
+            var hbuf = buffers.Head;
+            var bbuf = buffers.Body;
+            var roiInPkt = false;
+            var roiLen = 0;
+            var lblen = 0;
             int b, i, maxi;
             int ncb;
             int thmax;
@@ -813,18 +872,17 @@ namespace CoreJ2K.j2k.codestream.writer
             var minsb = (r == 0) ? 0 : 1;
             var maxsb = (r == 0) ? 1 : 4;
             Coord? cbCoord = null;
-            var root = infoSrc.GetAnSubbandTree(t, c);
             SubbandAn sb;
-            roiInPkt = false;
-            roiLen = 0;
             int mend, nend;
 
             // Checks if a precinct with such an index exists in this resolution
             // level
             if (pIdx >= ppinfo[t][c][r].Length)
             {
-                packetWritable = false;
-                return hbuf;
+                buffers.Writable = false;
+                buffers.RoiInPacket = false;
+                buffers.RoiLength = 0;
+                return;
             }
             var prec = ppinfo[t][c][r][pIdx];
 
@@ -850,7 +908,6 @@ namespace CoreJ2K.j2k.codestream.writer
 
             if (isPrecVoid)
             {
-                packetWritable = true;
 
                 if (hbuf == null)
                 {
@@ -860,14 +917,15 @@ namespace CoreJ2K.j2k.codestream.writer
                 {
                     hbuf!.reset();
                 }
-                if (bbuf == null)
-                {
-                    lbbuf = bbuf = Array.Empty<byte>();
-                }
                 hbuf!.writeBit(0);
-                lblen = 0;
 
-                return hbuf;
+                buffers.Head = hbuf;
+                buffers.Body = bbuf ?? Array.Empty<byte>();
+                buffers.BodyLength = 0;
+                buffers.Writable = true;
+                buffers.RoiInPacket = false;
+                buffers.RoiLength = 0;
+                return;
             }
 
             if (hbuf == null)
@@ -878,10 +936,6 @@ namespace CoreJ2K.j2k.codestream.writer
             {
                 hbuf!.reset();
             }
-
-            // Invalidate last body buffer
-            lbbuf = null;
-            lblen = 0;
 
             // Signal that packet is present
             hbuf!.writeBit(1);
@@ -1124,8 +1178,8 @@ namespace CoreJ2K.j2k.codestream.writer
 
             // -> Copy the data to the body buffer
 
-            // Ensure size for body data
-            if (bbuf == null || bbuf.Length < lblen)
+            // Ensure size for body data (a simulation only needs the length)
+            if (!simulate && (bbuf == null || bbuf.Length < lblen))
             {
                 if (lblen == 0)
                 {
@@ -1136,7 +1190,6 @@ namespace CoreJ2K.j2k.codestream.writer
                     bbuf = new byte[lblen];
                 }
             }
-            lbbuf = bbuf;
             lblen = 0;
 
             for (var s = minsb; s < maxsb; s++)
@@ -1168,12 +1221,12 @@ namespace CoreJ2K.j2k.codestream.writer
                             if (cur_prevtIdxs[b] < 0)
                             {
                                 cblen = cur_cbs[b].truncRates![cur_cbs[b].truncIdxs![cur_tIndx[b]]];
-                                Array.Copy(cur_cbs[b].data!, 0, lbbuf, lblen, cblen);
+                                if (!simulate) Array.Copy(cur_cbs[b].data!, 0, bbuf!, lblen, cblen);
                             }
                             else
                             {
                                 cblen = cur_cbs[b].truncRates![cur_cbs[b].truncIdxs![cur_tIndx[b]]] - cur_cbs[b].truncRates![cur_cbs[b].truncIdxs![cur_prevtIdxs[b]]];
-                                Array.Copy(cur_cbs[b].data!, cur_cbs[b].truncRates![cur_cbs[b].truncIdxs![cur_prevtIdxs[b]]], lbbuf, lblen, cblen);
+                                if (!simulate) Array.Copy(cur_cbs[b].data!, cur_cbs[b].truncRates![cur_cbs[b].truncIdxs![cur_prevtIdxs[b]]], bbuf!, lblen, cblen);
                             }
                             lblen += cblen;
 
@@ -1192,15 +1245,18 @@ namespace CoreJ2K.j2k.codestream.writer
                 } // End loop on vertical code-blocks
             } // End loop on subbands
 
-            packetWritable = true;
-
             // Must never happen
             if (hbuf.Length == 0)
             {
                 throw new InvalidOperationException("You have found a bug in PktEncoder, method:" + " encodePacket");
             }
 
-            return hbuf;
+            buffers.Head = hbuf;
+            buffers.Body = bbuf;
+            buffers.BodyLength = lblen;
+            buffers.Writable = true;
+            buffers.RoiInPacket = roiInPkt;
+            buffers.RoiLength = roiLen;
         }
 
         /// <summary> Saves the current state of this object. The last saved state
@@ -1208,7 +1264,10 @@ namespace CoreJ2K.j2k.codestream.writer
         /// 
         /// </summary>
         /// <seealso cref="restore" />
-        public virtual void save()
+        public virtual void save() => Save(1);
+
+        /// <summary>Saves the state, using up to <paramref name="degree"/> threads: each resolution level of each tile-component is independent.</summary>
+        internal void Save(int degree)
         {
             int maxsbi, minsbi;
 
@@ -1243,63 +1302,74 @@ namespace CoreJ2K.j2k.codestream.writer
             }
 
             //-- Save the data
-
-            // Use reference caches to minimize array access overhead
-            TagTreeEncoder[][][] ttIncl_t_c, ttMaxBP_t_c;
-            TagTreeEncoder[][] ttIncl_t_c_r, ttMaxBP_t_c_r;
-            int[][][] lblock_t_c, bak_lblock_t_c;
-            int[][] prevtIdxs_t_c_r, bak_prevtIdxs_t_c_r;
-
-            // Loop on tiles
-            for (var t = ttIncl.Length - 1; t >= 0; t--)
-            {
-                // Loop on components
-                for (var c = ttIncl[t].Length - 1; c >= 0; c--)
-                {
-                    // Initialize reference caches
-                    lblock_t_c = lblock[t][c];
-                    bak_lblock_t_c = bak_lblock[t][c];
-                    ttIncl_t_c = ttIncl[t][c];
-                    ttMaxBP_t_c = ttMaxBP[t][c];
-                    // Loop on resolution levels
-                    for (var r = lblock_t_c.Length - 1; r >= 0; r--)
-                    {
-                        // Initialize reference caches
-                        ttIncl_t_c_r = ttIncl_t_c[r];
-                        ttMaxBP_t_c_r = ttMaxBP_t_c[r];
-                        prevtIdxs_t_c_r = prevtIdxs[t][c][r];
-                        bak_prevtIdxs_t_c_r = bak_prevtIdxs[t][c][r];
-
-                        // Loop on subbands
-                        minsbi = (r == 0) ? 0 : 1;
-                        maxsbi = (r == 0) ? 1 : 4;
-                        for (var s = minsbi; s < maxsbi; s++)
-                        {
-                            // Save 'lblock'
-                            Array.Copy(lblock_t_c[r][s], 0, bak_lblock_t_c[r][s], 0, lblock_t_c[r][s].Length);
-                            // Save 'prevtIdxs'
-                            Array.Copy(prevtIdxs_t_c_r[s], 0, bak_prevtIdxs_t_c_r[s], 0, prevtIdxs_t_c_r[s].Length);
-                        } // End loop on subbands
-
-                        // Loop on precincts
-                        for (var p = ppinfo[t][c][r].Length - 1; p >= 0; p--)
-                        {
-                            if (p < ttIncl_t_c_r.Length)
-                            {
-                                // Loop on subbands
-                                for (var s = minsbi; s < maxsbi; s++)
-                                {
-                                    ttIncl_t_c_r[p][s].save();
-                                    ttMaxBP_t_c_r[p][s].save();
-                                } // End loop on subbands
-                            }
-                        } // End loop on precincts
-                    } // End loop on resolutions
-                } // End loop on components
-            } // End loop on tiles
+            ForEachResolution(degree, SaveResolution);
 
             // Set the saved state
             saved = true;
+        }
+
+        private void SaveResolution(int t, int c, int r)
+        {
+            var minsbi = (r == 0) ? 0 : 1;
+            var maxsbi = (r == 0) ? 1 : 4;
+
+            // Use reference caches to minimize array access overhead
+            var lblock_t_c_r = lblock[t][c][r];
+            var bak_lblock_t_c_r = bak_lblock[t][c][r];
+            var ttIncl_t_c_r = ttIncl[t][c][r];
+            var ttMaxBP_t_c_r = ttMaxBP[t][c][r];
+            var prevtIdxs_t_c_r = prevtIdxs[t][c][r];
+            var bak_prevtIdxs_t_c_r = bak_prevtIdxs[t][c][r];
+
+            // Loop on subbands
+            for (var s = minsbi; s < maxsbi; s++)
+            {
+                // Save 'lblock'
+                Array.Copy(lblock_t_c_r[s], 0, bak_lblock_t_c_r[s], 0, lblock_t_c_r[s].Length);
+                // Save 'prevtIdxs'
+                Array.Copy(prevtIdxs_t_c_r[s], 0, bak_prevtIdxs_t_c_r[s], 0, prevtIdxs_t_c_r[s].Length);
+            } // End loop on subbands
+
+            // Loop on precincts
+            for (var p = ppinfo[t][c][r].Length - 1; p >= 0; p--)
+            {
+                if (p < ttIncl_t_c_r.Length)
+                {
+                    // Loop on subbands
+                    for (var s = minsbi; s < maxsbi; s++)
+                    {
+                        ttIncl_t_c_r[p][s].save();
+                        ttMaxBP_t_c_r[p][s].save();
+                    } // End loop on subbands
+                }
+            } // End loop on precincts
+        }
+
+        /// <summary>The tile, component and resolution level of each independently saved or restored part of the state.</summary>
+        private (int T, int C, int R)[]? resolutionUnits;
+
+        /// <summary>Runs <paramref name="body"/> for every resolution level of every tile-component, in parallel if <paramref name="degree"/> allows.</summary>
+        private void ForEachResolution(int degree, Action<int, int, int> body)
+        {
+            var units = resolutionUnits;
+            if (units == null)
+            {
+                var list = new System.Collections.Generic.List<(int, int, int)>();
+                for (var t = 0; t < ttIncl.Length; t++)
+                    for (var c = 0; c < ttIncl[t].Length; c++)
+                        for (var r = 0; r < lblock[t][c].Length; r++)
+                            list.Add((t, c, r));
+                resolutionUnits = units = list.ToArray();
+            }
+
+            if (degree < 2 || units.Length < 4)
+            {
+                foreach (var unit in units) body(unit.T, unit.C, unit.R);
+                return;
+            }
+
+            System.Threading.Tasks.Parallel.For(0, units.Length, new System.Threading.Tasks.ParallelOptions { MaxDegreeOfParallelism = degree },
+                i => body(units[i].T, units[i].C, units[i].R));
         }
 
         /// <summary> Restores the last saved state of this object. An
@@ -1307,10 +1377,11 @@ namespace CoreJ2K.j2k.codestream.writer
         /// 
         /// </summary>
         /// <seealso cref="save" />
-        public virtual void restore()
-        {
-            int maxsbi, minsbi;
+        public virtual void restore() => Restore(1);
 
+        /// <summary>Restores the state, using up to <paramref name="degree"/> threads.</summary>
+        internal void Restore(int degree)
+        {
             if (!saved)
             {
                 throw new ArgumentException();
@@ -1320,60 +1391,44 @@ namespace CoreJ2K.j2k.codestream.writer
             lbbuf = null;
 
             //-- Restore tha data
+            ForEachResolution(degree, RestoreResolution);
+        }
+
+        private void RestoreResolution(int t, int c, int r)
+        {
+            var minsbi = (r == 0) ? 0 : 1;
+            var maxsbi = (r == 0) ? 1 : 4;
 
             // Use reference caches to minimize array access overhead
-            TagTreeEncoder[][][] ttIncl_t_c, ttMaxBP_t_c;
-            TagTreeEncoder[][] ttIncl_t_c_r, ttMaxBP_t_c_r;
-            int[][][] lblock_t_c, bak_lblock_t_c;
-            int[][] prevtIdxs_t_c_r, bak_prevtIdxs_t_c_r;
+            var lblock_t_c_r = lblock[t][c][r];
+            var bak_lblock_t_c_r = bak_lblock[t][c][r];
+            var ttIncl_t_c_r = ttIncl[t][c][r];
+            var ttMaxBP_t_c_r = ttMaxBP[t][c][r];
+            var prevtIdxs_t_c_r = prevtIdxs[t][c][r];
+            var bak_prevtIdxs_t_c_r = bak_prevtIdxs[t][c][r];
 
-            // Loop on tiles
-            for (var t = ttIncl.Length - 1; t >= 0; t--)
+            // Loop on subbands
+            for (var s = minsbi; s < maxsbi; s++)
             {
-                // Loop on components
-                for (var c = ttIncl[t].Length - 1; c >= 0; c--)
+                // Restore 'lblock'
+                Array.Copy(bak_lblock_t_c_r[s], 0, lblock_t_c_r[s], 0, lblock_t_c_r[s].Length);
+                // Restore 'prevtIdxs'
+                Array.Copy(bak_prevtIdxs_t_c_r[s], 0, prevtIdxs_t_c_r[s], 0, prevtIdxs_t_c_r[s].Length);
+            } // End loop on subbands
+
+            // Loop on precincts
+            for (var p = ppinfo[t][c][r].Length - 1; p >= 0; p--)
+            {
+                if (p < ttIncl_t_c_r.Length)
                 {
-                    // Initialize reference caches
-                    lblock_t_c = lblock[t][c];
-                    bak_lblock_t_c = bak_lblock[t][c];
-                    ttIncl_t_c = ttIncl[t][c];
-                    ttMaxBP_t_c = ttMaxBP[t][c];
-                    // Loop on resolution levels
-                    for (var r = lblock_t_c.Length - 1; r >= 0; r--)
+                    // Loop on subbands
+                    for (var s = minsbi; s < maxsbi; s++)
                     {
-                        // Initialize reference caches
-                        ttIncl_t_c_r = ttIncl_t_c[r];
-                        ttMaxBP_t_c_r = ttMaxBP_t_c[r];
-                        prevtIdxs_t_c_r = prevtIdxs[t][c][r];
-                        bak_prevtIdxs_t_c_r = bak_prevtIdxs[t][c][r];
-
-                        // Loop on subbands
-                        minsbi = (r == 0) ? 0 : 1;
-                        maxsbi = (r == 0) ? 1 : 4;
-                        for (var s = minsbi; s < maxsbi; s++)
-                        {
-                            // Restore 'lblock'
-                            Array.Copy(bak_lblock_t_c[r][s], 0, lblock_t_c[r][s], 0, lblock_t_c[r][s].Length);
-                            // Restore 'prevtIdxs'
-                            Array.Copy(bak_prevtIdxs_t_c_r[s], 0, prevtIdxs_t_c_r[s], 0, prevtIdxs_t_c_r[s].Length);
-                        } // End loop on subbands
-
-                        // Loop on precincts
-                        for (var p = ppinfo[t][c][r].Length - 1; p >= 0; p--)
-                        {
-                            if (p < ttIncl_t_c_r.Length)
-                            {
-                                // Loop on subbands
-                                for (var s = minsbi; s < maxsbi; s++)
-                                {
-                                    ttIncl_t_c_r[p][s].restore();
-                                    ttMaxBP_t_c_r[p][s].restore();
-                                } // End loop on subbands
-                            }
-                        } // End loop on precincts
-                    } // End loop on resolution levels
-                } // End loop on components
-            } // End loop on tiles
+                        ttIncl_t_c_r[p][s].restore();
+                        ttMaxBP_t_c_r[p][s].restore();
+                    } // End loop on subbands
+                }
+            } // End loop on precincts
         }
 
         /// <summary> Resets the state of the object to the initial state, as if the object

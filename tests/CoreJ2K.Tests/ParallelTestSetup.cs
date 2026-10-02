@@ -26,6 +26,7 @@ namespace CoreJ2K.Tests
                 ForwWTFull.MinParallelSamples = 0;
                 StdEntropyCoder.MinParallelBlocks = 0;
                 StdEntropyCoder.MinPipelineBlocks = 0;
+                EBCOTRateAllocator.MinParallelBlocks = 0;
             }
         }
     }

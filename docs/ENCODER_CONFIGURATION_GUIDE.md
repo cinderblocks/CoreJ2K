@@ -260,8 +260,9 @@ other failure, a cancelled encode leaves the image source open; the encoder only
 Most of an encode is coding code-blocks: the MQ coding passes and rate-distortion statistics for every block, and every block is
 independent. CoreJ2K codes batches of code-blocks on several threads, while a producer thread reads the source and pulls the next
 batch ahead, so reading rows, the wavelet transform and quantisation overlap with the coding. The forward wavelet transform also
-splits its row and column passes across threads and processes columns in cache-friendly blocks. All of this leaves the encoded bytes **exactly the same** as a
-single-threaded encode, whatever the thread count.
+splits its row and column passes across threads and processes columns in cache-friendly blocks. Rate allocation then builds the
+packets of each layer on several threads, one precinct per task, and the final packets are built ahead in the same way and written in order.
+All of this leaves the encoded bytes **exactly the same** as a single-threaded encode, whatever the thread count.
 
 It is on by default and uses up to `Environment.ProcessorCount` threads. Work below a size threshold stays on the calling thread, so
 thumbnails and small images pay nothing.
@@ -280,15 +281,18 @@ With the legacy API use the `threads` parameter.
 
 | Encode | Speed-up |
 |--------|----------|
-| Lossless, single tile | about 4.4x |
-| Lossless, 1024x1024 tiles | about 4.1x |
-| Lossless, 128x128 tiles | about 2.0x |
-| Lossy 9/7, 1 bpp or 3 bpp | about 4.4x |
+| Lossless, single tile | about 4.5x |
+| Lossless, 1024x1024 tiles | about 4.2x |
+| Lossless, 128x128 tiles | about 2.4x |
+| Lossy 9/7, 1 bpp or 3 bpp | about 4.4x to 4.5x |
 | 1024x1024 image | about 4.3x |
 | 256x256 image | about 3.5x |
 
-Small tiles give each batch little work. Rate allocation and packet writing still run on one thread (about 10% of a lossless encode,
-under 5% of a lossy one), which together with the serial reading of the source keeps the ratio below the core count. Decoding is parallel in the same way; see the [decoder guide](DECODER_CONFIGURATION_GUIDE.md#9-parallel-decoding).
+Small tiles give each batch little work. Rate allocation and packet writing together were about 10% of a lossless encode (under 5% of a
+lossy one). Building packets in parallel, and no longer copying packet bodies just to measure them, cuts that to about a quarter
+(single-threaded the saving is about half; the rest comes from the extra threads). Two things limit it: a packet is built by one thread, so an
+image with a few very large packets (no precincts) gains less than one with many, and the encoded bytes are still written to the
+output by one thread. Together with the serial reading of the source that keeps the ratio below the core count. Decoding is parallel in the same way; see the [decoder guide](DECODER_CONFIGURATION_GUIDE.md#9-parallel-decoding).
 
 ## Complete Examples
 

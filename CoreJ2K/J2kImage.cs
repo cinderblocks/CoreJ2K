@@ -1605,6 +1605,10 @@ namespace CoreJ2K
                     blockCoder.SetCancellationToken(cancellationToken);
                     blockCoder.SetMaxDegreeOfParallelism(encodeThreads);
                 }
+                if (ralloc is EBCOTRateAllocator packetBuilder)
+                {
+                    packetBuilder.SetMaxDegreeOfParallelism(encodeThreads);
+                }
 
                 // **** Write header to be able to estimate header overhead ****
                 headenc.encodeMainHeader();

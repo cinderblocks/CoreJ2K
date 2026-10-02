@@ -44,16 +44,19 @@ namespace CoreJ2K.Tests
         private static InterleavedImageSource Source(int[][] comps, int width, int height)
             => new InterleavedImageSource(width, height, comps.Length, 8, new bool[comps.Length], comps);
 
-        private static byte[] Encode(int[][] comps, int width, int height, int threads, Action<ParameterList> configure, AtkMarkerSegment? atk = null)
+        private static byte[] Encode(int[][] comps, int width, int height, int threads, Action<ParameterList> configure, AtkMarkerSegment? atk = null,
+            int packetPassMinBlocks = 0)
         {
             var previousSamples = ForwWTFull.MinParallelSamplesForCurrentThread;
             var previousBlocks = StdEntropyCoder.MinParallelBlocksForCurrentThread;
             var previousPipeline = StdEntropyCoder.MinPipelineBlocksForCurrentThread;
-            // This thread only: tiny images must still split their wavelet passes and code-block batches across threads, and
-            // pull their blocks on the producer thread.
+            var previousPackets = EBCOTRateAllocator.MinParallelBlocksForCurrentThread;
+            // This thread only: tiny images must still split their wavelet passes, code-block batches and packet passes across
+            // threads, and pull their blocks on the producer thread.
             ForwWTFull.MinParallelSamplesForCurrentThread = 0;
             StdEntropyCoder.MinParallelBlocksForCurrentThread = 0;
             StdEntropyCoder.MinPipelineBlocksForCurrentThread = 0;
+            EBCOTRateAllocator.MinParallelBlocksForCurrentThread = packetPassMinBlocks;
             try
             {
                 var pl = J2kImage.GetDefaultEncoderParameterList();
@@ -67,6 +70,7 @@ namespace CoreJ2K.Tests
                 ForwWTFull.MinParallelSamplesForCurrentThread = previousSamples;
                 StdEntropyCoder.MinParallelBlocksForCurrentThread = previousBlocks;
                 StdEntropyCoder.MinPipelineBlocksForCurrentThread = previousPipeline;
+                EBCOTRateAllocator.MinParallelBlocksForCurrentThread = previousPackets;
             }
         }
 
@@ -86,6 +90,9 @@ namespace CoreJ2K.Tests
             "precincts-rpcl", "roi", "mct-off", "small-codeblocks",
             // Code-block coding modes: each changes how a block's passes are coded, and so what a worker must reproduce.
             "bypass", "term-each-pass", "reset-mq", "segmentation-symbols", "causal", "sop-eph", "predictable-termination", "predictable-termination-bypass", "all-modes",
+            // Packet building and writing: what is recorded per packet (lengths, markers), and the order packets are written in.
+            "plt-tlm", "sop-eph-layers", "packed-headers-main", "packed-headers-tile", "poc", "roi-layers-tiles", "many-layers-precincts",
+            "precincts-layers-layer", "precincts-layers-res", "precincts-layers-res-pos", "precincts-layers-pos-comp", "precincts-layers-comp-pos",
         };
 
         private static void Configure(string variant, ParameterList pl)
@@ -114,6 +121,25 @@ namespace CoreJ2K.Tests
                 case "predictable-termination": pl["lossless"] = "on"; pl["Cterm_type"] = "predict"; pl["Cterminate"] = "on"; break;
                 // 'predict' enables the predictable-termination option; it only reaches the raw (bypass) coding passes in bypass mode.
                 case "predictable-termination-bypass": pl["lossless"] = "on"; pl["Cterm_type"] = "predict"; pl["Cbypass"] = "on"; pl["Cterminate"] = "on"; break;
+                case "plt-tlm": pl["lossless"] = "off"; pl["rate"] = "2.5"; pl["Alayers"] = "0.1 +4 2.5"; pl["tiles"] = "100 100"; pl["Hplt"] = "on"; pl["Htlm"] = "on"; break;
+                case "sop-eph-layers": pl["lossless"] = "off"; pl["rate"] = "2.5"; pl["Alayers"] = "0.1 +4 2.5"; pl["tiles"] = "100 100"; pl["Psop"] = "on"; pl["Peph"] = "on"; break;
+                case "packed-headers-main": pl["lossless"] = "off"; pl["rate"] = "2.5"; pl["Alayers"] = "0.1 +4 2.5"; pl["Hppm"] = "on"; break;
+                case "packed-headers-tile": pl["lossless"] = "off"; pl["rate"] = "2.5"; pl["Alayers"] = "0.1 +4 2.5"; pl["tiles"] = "100 100"; pl["Hppt"] = "on"; break;
+                case "poc":
+                    pl["lossless"] = "off"; pl["rate"] = "2.5"; pl["Alayers"] = "0.1 +4 2.5"; pl["Cpp"] = "64 64"; pl["tiles"] = "120 100";
+                    pl["Aptype"] = "res 0 0 2 6 3 res-pos 0 0 5 6 3 pos-comp";
+                    break;
+                case "roi-layers-tiles": pl["lossless"] = "off"; pl["rate"] = "2.5"; pl["Alayers"] = "0.1 +4 2.5"; pl["tiles"] = "100 80"; pl["Rroi"] = "R 20 20 60 50"; break;
+                case "many-layers-precincts": pl["lossless"] = "off"; pl["rate"] = "4.0"; pl["Cpp"] = "32 32"; pl["Alayers"] = "0.02 +12 0.5 +10 4.0"; break;
+                case "precincts-layers-layer":
+                case "precincts-layers-res":
+                case "precincts-layers-res-pos":
+                case "precincts-layers-pos-comp":
+                case "precincts-layers-comp-pos":
+                    // The progression is the end of the variant's name: every order visits a precinct's layers, in order, in a different way.
+                    pl["lossless"] = "off"; pl["rate"] = "2.5"; pl["Alayers"] = "0.1 +4 2.5"; pl["Cpp"] = "32 32"; pl["tiles"] = "120 100";
+                    pl["Aptype"] = variant.Substring("precincts-layers-".Length);
+                    break;
                 case "all-modes":
                     pl["lossless"] = "off"; pl["rate"] = "2.0"; pl["Cbypass"] = "on"; pl["Cterminate"] = "on"; pl["CresetMQ"] = "on";
                     pl["Cseg_symbol"] = "on"; pl["Ccausal"] = "on"; pl["tiles"] = "64 64";
@@ -170,6 +196,123 @@ namespace CoreJ2K.Tests
             var comps = MakeComponents(200, 150, 1);
             AssertSameBytes(comps, 200, 150, pl => pl["lossless"] = "on", "ATK 5/3", AtkMarkerSegment.CreateW5x3Equivalent(2));
             AssertSameBytes(comps, 200, 150, pl => { pl["lossless"] = "off"; pl["rate"] = "3.0"; }, "ATK 9/7", AtkMarkerSegment.CreateW9x7Equivalent(3));
+        }
+
+        [Fact]
+        public void ParallelEncode_IsByteIdentical_WhetherOrNotThePacketPassesAreParallel()
+        {
+            // Rate allocation builds each layer's packets on several threads above a size threshold, and writes them from a queue.
+            // With the threshold out of reach the same encode runs one packet at a time on the calling thread.
+            var comps = MakeComponents(300, 200, 3);
+            foreach (var variant in new[] { "layers", "plt-tlm", "precincts-layers-res-pos", "tiled-aligned" })
+            {
+                var serialPackets = Encode(comps, 300, 200, 4, pl => Configure(variant, pl), packetPassMinBlocks: int.MaxValue);
+                var parallelPackets = Encode(comps, 300, 200, 4, pl => Configure(variant, pl));
+                Assert.True(serialPackets.AsSpan().SequenceEqual(parallelPackets), $"{variant}: parallel packet passes changed the bytes");
+            }
+        }
+
+        /// <summary>
+        /// Reads each tile-part of a codestream: the packet lengths its PLT markers declare, and the lengths the packets really have,
+        /// found from the SOP marker in front of each. Independent of the encoder code that produced either.
+        /// </summary>
+        private static System.Collections.Generic.List<(int[] Declared, int[] Actual)> ReadTileParts(byte[] data)
+        {
+            int U16(int at) => (data[at] << 8) | data[at + 1];
+
+            var result = new System.Collections.Generic.List<(int[], int[])>();
+            var pos = 2; // after SOC
+            while (U16(pos) != 0xFF90) pos += 2 + U16(pos + 2); // main header marker segments, up to the first SOT
+
+            while (pos + 12 <= data.Length && U16(pos) == 0xFF90)
+            {
+                // The tile-part ends where the next SOT marker starts (or at the EOC marker). Psot is not used: when PLT markers are
+                // written it does not count them. 0xFF90 cannot occur inside packet data.
+                var start = pos;
+                var end = data.Length - 2;
+                for (var at = start + 12; at + 3 < data.Length; at++)
+                    if (data[at] == 0xFF && data[at + 1] == 0x90 && data[at + 2] == 0 && data[at + 3] == 10) { end = at; break; }
+                pos += 12;
+
+                var declared = new System.Collections.Generic.List<int>();
+                while (U16(pos) != 0xFF93) // until SOD
+                {
+                    var segmentEnd = pos + 2 + U16(pos + 2);
+                    if (U16(pos) == 0xFF58)
+                    {
+                        // Zplt, then 7-bit values whose high bit means "more follows"
+                        for (int at = pos + 5, value = 0; at < segmentEnd; at++)
+                        {
+                            value = (value << 7) | (data[at] & 0x7F);
+                            if ((data[at] & 0x80) == 0) { declared.Add(value); value = 0; }
+                        }
+                    }
+                    pos = segmentEnd;
+                }
+                pos += 2;
+
+                // A body byte after 0xFF is always below 0x90, so 0xFF91 only ever starts a packet's SOP marker.
+                var starts = new System.Collections.Generic.List<int>();
+                for (var at = pos; at + 3 < end; at++)
+                    if (data[at] == 0xFF && data[at + 1] == 0x91 && data[at + 2] == 0 && data[at + 3] == 4) starts.Add(at);
+                var actual = starts.Select((first, i) => (i + 1 < starts.Count ? starts[i + 1] : end) - first).ToArray();
+
+                result.Add((declared.ToArray(), actual));
+                pos = end;
+            }
+            return result;
+        }
+
+        [Fact]
+        public void PacketLengthMarkers_ListThePacketsAtTheirRealLengths_WhateverTheThreadCount()
+        {
+            // PLT entries are recorded in the order rate allocation simulates packets (layer, component, resolution, precinct), which
+            // is the order they are written in for a layer-progressive stream of one component. Each entry must then equal the length of
+            // the packet it describes, however many threads built the packets.
+            var comps = MakeComponents(260, 200, 1);
+            foreach (var threads in new[] { 1, 4 })
+            {
+                var data = Encode(comps, 260, 200, threads, pl =>
+                {
+                    pl["lossless"] = "off"; pl["rate"] = "2.5"; pl["Alayers"] = "0.1 +4 2.5"; pl["tiles"] = "100 90"; pl["Cpp"] = "64 64";
+                    pl["Hplt"] = "on"; pl["Psop"] = "on"; pl["Peph"] = "on"; pl["Aptype"] = "layer";
+                });
+
+                var tileParts = ReadTileParts(data);
+                Assert.Equal(9, tileParts.Count);
+                for (var i = 0; i < tileParts.Count; i++)
+                {
+                    Assert.NotEmpty(tileParts[i].Actual);
+                    Assert.True(tileParts[i].Declared.SequenceEqual(tileParts[i].Actual), $"tile-part {i}, {threads} thread(s): PLT lengths differ from the real packet lengths");
+                }
+            }
+        }
+
+        [Fact]
+        public void ParallelEncode_IsByteIdentical_WhenThePacketQueueFlushesMidProgression()
+        {
+            // The queue of packets waiting to be built holds at most 16384 packets. 4x4 code-blocks with 16x16 precincts and several
+            // layers make far more packets than that in one progression, so it must write what it has and carry on mid-stream.
+            var comps = MakeComponents(640, 640, 1);
+            void Configure(ParameterList pl)
+            {
+                pl["lossless"] = "off"; pl["rate"] = "6.0"; pl["Cblksiz"] = "4 4"; pl["Cpp"] = "16 16"; pl["Alayers"] = "0.5 +6 6.0"; pl["Aptype"] = "res-pos";
+            }
+            AssertSameBytes(comps, 640, 640, Configure, "packet queue flush");
+
+            // One tile with one progression is one write pass unless the queue filled up part-way.
+            var writePasses = 0;
+            var previous = EBCOTRateAllocator.BeforePacketPassForCurrentThread;
+            EBCOTRateAllocator.BeforePacketPassForCurrentThread = name => { if (name == "write") writePasses++; };
+            try
+            {
+                Encode(comps, 640, 640, 4, Configure);
+            }
+            finally
+            {
+                EBCOTRateAllocator.BeforePacketPassForCurrentThread = previous;
+            }
+            Assert.True(writePasses >= 2, $"the packet queue never flushed part-way through the progression ({writePasses} write pass)");
         }
 
         [Fact]

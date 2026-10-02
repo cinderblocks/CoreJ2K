@@ -195,6 +195,98 @@ namespace CoreJ2K.Tests
             Assert.True(expected.AsSpan().SequenceEqual(after), "an encode after cancelled encodes produced different bytes");
         }
 
+        [Theory]
+        [InlineData("simulate", 1)]
+        [InlineData("simulate", 6)]
+        [InlineData("write", 1)]
+        public void CancellingWhenAPacketPassStarts_StopsRateAllocationWithCancellation(string stage, int occurrence)
+        {
+            // Rate allocation spreads its passes over the packets across threads; a token cancelled as a pass starts must surface as
+            // OperationCanceledException, not as an AggregateException from the parallel loop, and must leave nothing behind.
+            var expected = J2kImage.ToBytes(NewSource(), LossyLayers());
+
+            var previousPackets = EBCOTRateAllocator.MinParallelBlocksForCurrentThread;
+            var previousHook = EBCOTRateAllocator.BeforePacketPassForCurrentThread;
+            EBCOTRateAllocator.MinParallelBlocksForCurrentThread = 0;
+            try
+            {
+                using var source = new CancellationTokenSource();
+                var seen = 0;
+                EBCOTRateAllocator.BeforePacketPassForCurrentThread = name =>
+                {
+                    if (name == stage && ++seen == occurrence) source.Cancel();
+                };
+
+                var pl = LossyLayers();
+                pl["threads"] = "4";
+                Assert.ThrowsAny<OperationCanceledException>(() => J2kImage.ToBytes(NewSource(), pl, source.Token));
+                Assert.True(seen >= occurrence, $"the {stage} pass started {seen} times, so it never reached occurrence {occurrence}");
+
+                // Nothing the cancelled encode did may affect the next one.
+                EBCOTRateAllocator.BeforePacketPassForCurrentThread = null;
+                var after = J2kImage.ToBytes(NewSource(), LossyLayers());
+                Assert.True(expected.AsSpan().SequenceEqual(after), "an encode after a cancelled rate allocation produced different bytes");
+            }
+            finally
+            {
+                EBCOTRateAllocator.MinParallelBlocksForCurrentThread = previousPackets;
+                EBCOTRateAllocator.BeforePacketPassForCurrentThread = previousHook;
+            }
+        }
+
+        [Fact]
+        public void AFailureInAPacketPass_SurfacesWithItsOwnType()
+        {
+            var previousPackets = EBCOTRateAllocator.MinParallelBlocksForCurrentThread;
+            var previousHook = EBCOTRateAllocator.BeforePacketPassForCurrentThread;
+            EBCOTRateAllocator.MinParallelBlocksForCurrentThread = 0;
+            try
+            {
+                EBCOTRateAllocator.BeforePacketPassForCurrentThread = name =>
+                {
+                    if (name == "write") throw new InvalidOperationException("packet pass failed");
+                };
+                var pl = LossyLayers();
+                pl["threads"] = "4";
+                var exception = Assert.Throws<InvalidOperationException>(() => J2kImage.ToBytes(NewSource(), pl));
+                Assert.Contains("packet pass failed", exception.Message);
+            }
+            finally
+            {
+                EBCOTRateAllocator.MinParallelBlocksForCurrentThread = previousPackets;
+                EBCOTRateAllocator.BeforePacketPassForCurrentThread = previousHook;
+            }
+        }
+
+        [Fact]
+        public void CancellingAtAnyPointOfAnEncode_OnlyEverThrowsCancellation()
+        {
+            // Many small tiles make rate allocation a good share of the encode. Whichever stage a cancellation lands in, the encode must
+            // end with OperationCanceledException (or finish first): no AggregateException, no index error from half-built packets.
+            var previousPackets = EBCOTRateAllocator.MinParallelBlocksForCurrentThread;
+            EBCOTRateAllocator.MinParallelBlocksForCurrentThread = 0;
+            try
+            {
+                var pl = Lossless("64 64");
+                pl["threads"] = "4";
+                var watch = Stopwatch.StartNew();
+                J2kImage.ToBytes(NewSource(), pl);
+                var full = watch.Elapsed;
+
+                for (var step = 1; step <= 24; step++)
+                {
+                    using var source = new CancellationTokenSource();
+                    CancelOnThread(source, TimeSpan.FromTicks(full.Ticks * step / 26));
+                    try { J2kImage.ToBytes(NewSource(), pl, source.Token); }
+                    catch (OperationCanceledException) { }
+                }
+            }
+            finally
+            {
+                EBCOTRateAllocator.MinParallelBlocksForCurrentThread = previousPackets;
+            }
+        }
+
         [Fact]
         public void UncancelledToken_ChangesNothing()
         {
