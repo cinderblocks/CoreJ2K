@@ -2,6 +2,7 @@
 // Licensed under the BSD 3-Clause License.
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using CoreJ2K.Configuration;
@@ -287,6 +288,61 @@ namespace CoreJ2K.Tests
                     Assert.True(tileParts[i].Declared.SequenceEqual(tileParts[i].Actual), $"tile-part {i}, {threads} thread(s): PLT lengths differ from the real packet lengths");
                 }
             }
+        }
+
+        private static int U16(byte[] data, int at) => (data[at] << 8) | data[at + 1];
+
+        [Theory]
+        [InlineData(1)]
+        [InlineData(4)]
+        public void PacketLengthMarkers_ListEveryPacketOfATileWithMoreThanOneMarkerHolds(int threads)
+        {
+            // 8x8 precincts and 4x4 code-blocks give one 640x640 tile tens of thousands of packets per layer. Their lengths take well
+            // over the 65532 bytes one PLT marker can hold, so they must be spread over several markers, none of them cut short.
+            var comps = MakeComponents(640, 640, 1);
+            byte[] Lossy(bool plt) => Encode(comps, 640, 640, threads, pl =>
+            {
+                pl["lossless"] = "off"; pl["rate"] = "6.0"; pl["Alayers"] = "0.5 +6 6.0"; pl["Cblksiz"] = "4 4"; pl["Cpp"] = "8 8";
+                pl["Aptype"] = "layer"; pl["Psop"] = "on";
+                if (plt) pl["Hplt"] = "on";
+            });
+            var data = Lossy(true);
+
+            var tilePart = Assert.Single(ReadTileParts(data));
+            Assert.True(tilePart.Actual.Length > 40000, $"only {tilePart.Actual.Length} packets: not enough to need a second marker");
+            Assert.True(tilePart.Declared.SequenceEqual(tilePart.Actual), "the PLT lengths are not the lengths of the packets");
+            Assert.Equal(tilePart.Length, tilePart.Psot);
+
+            // The lengths are spread over consecutive markers, numbered from 0, each within 16 bits.
+            var zplts = new List<int>();
+            for (var pos = 2; ; pos += 2 + U16(data, pos + 2))
+            {
+                if (U16(data, pos) == 0xFF93) break; // SOD
+                if (U16(data, pos) != 0xFF58) continue;
+                zplts.Add(data[pos + 4]);
+                Assert.True(U16(data, pos + 2) <= 65535);
+            }
+            Assert.True(zplts.Count >= 2, "the lengths fit in one PLT marker");
+            Assert.Equal(Enumerable.Range(0, zplts.Count), zplts);
+
+            // The decoder collects the lengths of every marker, not only the last one.
+            using (var stream = new System.IO.MemoryStream(data))
+            {
+                var raf = new CoreJ2K.j2k.util.ISRandomAccessIO(stream);
+                var info = new CoreJ2K.j2k.codestream.HeaderInfo();
+                var decoderParameters = new ParameterList(J2kImage.GetDefaultDecoderParameterList());
+                var headerDecoder = new CoreJ2K.j2k.codestream.reader.HeaderDecoder(raf, decoderParameters, info);
+                var reader = CoreJ2K.j2k.codestream.reader.BitstreamReaderAgent.createInstance(raf, headerDecoder, decoderParameters, headerDecoder.DecoderSpecs, false, info);
+                reader.SetTile(0, 0);
+
+                var collected = headerDecoder.GetPLTData().GetPacketEntries(0).Select(entry => entry.PacketLength).ToArray();
+                Assert.True(tilePart.Declared.SequenceEqual(collected), $"the decoder collected {collected.Length} packet lengths, the stream lists {tilePart.Declared.Length}");
+            }
+
+            // The markers are an index only: the image is the one a stream without them holds.
+            var withPlt = J2kImage.FromBytes(data);
+            var without = J2kImage.FromBytes(Lossy(false));
+            Assert.True(withPlt.GetComponent(0).SequenceEqual(without.GetComponent(0)), "a stream with PLT markers decodes differently from one without");
         }
 
         [Theory]

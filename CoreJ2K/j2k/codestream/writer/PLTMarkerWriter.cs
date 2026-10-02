@@ -21,13 +21,20 @@ namespace CoreJ2K.j2k.codestream.writer
         public const int MAX_PLT_LENGTH = 65535;
 
         /// <summary>
-        /// Writes a PLT marker segment for the specified tile and PLT index.
+        /// Most bytes of packet lengths (Iplt) a PLT marker segment can hold: its length field, which counts itself and Zplt, is 16 bits.
         /// </summary>
-        /// <param name="out">The output stream to write to.</param>
+        private const int MaxIpltBytes = MAX_PLT_LENGTH - 3;
+
+        /// <summary>
+        /// Writes the PLT marker segment(s) listing the lengths of a tile-part's packets. The lengths go into as many marker segments as
+        /// they need, numbered from <paramref name="zplt"/>; a packet length is never split between two segments.
+        /// </summary>
+        /// <param name="out_stream">The output stream to write to.</param>
         /// <param name="pltData">The packet length data.</param>
         /// <param name="tileIdx">The tile index.</param>
-        /// <param name="zplt">The PLT marker index (0-255).</param>
-        /// <returns>The number of bytes written.</returns>
+        /// <param name="zplt">The index (Zplt, 0-255) of the first PLT marker segment.</param>
+        /// <returns>The number of bytes written, 0 if the tile has no packets.</returns>
+        /// <exception cref="InvalidOperationException">If the lengths need more segments than there are indices left (256 in all).</exception>
         public static int WritePLT(Stream out_stream, PacketLengthsData pltData, int tileIdx, byte zplt)
         {
             if (out_stream == null)
@@ -35,70 +42,57 @@ namespace CoreJ2K.j2k.codestream.writer
             if (pltData == null)
                 throw new ArgumentNullException(nameof(pltData));
 
-            var packetLengths = pltData.GetPacketEntries(tileIdx).GetEnumerator();
-            if (!packetLengths.MoveNext())
-                return 0; // No packets for this tile
+            var bytesWritten = 0;
+            var nextZplt = (int)zplt;
+            byte[]? segment = null; // the Iplt bytes of the segment being filled
+            var used = 0;
+            var scratch = new byte[5]; // max 5 bytes for a 32-bit VLI
 
-            // Calculate how many packet lengths we can fit in one marker
-            var tempList = new List<PacketLengthEntry>();
             foreach (var entry in pltData.GetPacketEntries(tileIdx))
             {
-                tempList.Add(entry);
+                var n = WriteVariableLengthIntToBuffer(entry.PacketLength, scratch);
+                segment ??= new byte[MaxIpltBytes];
+                if (used + n > MaxIpltBytes)
+                {
+                    bytesWritten += WritePLTSegment(out_stream, segment, used, nextZplt++);
+                    used = 0;
+                }
+                Buffer.BlockCopy(scratch, 0, segment, used, n);
+                used += n;
             }
 
-            if (tempList.Count == 0)
-                return 0;
-
-            // Calculate encoded size for this set of packets
-            var ipltSize = 0;
-            foreach (var entry in tempList)
+            if (used > 0)
             {
-                ipltSize += GetEncodedSize(entry.PacketLength);
+                bytesWritten += WritePLTSegment(out_stream, segment!, used, nextZplt);
             }
-
-            // Check if we need to split across multiple PLT markers
-            var maxDataSize = MAX_PLT_LENGTH - 3; // -3 for Lplt (2) and Zplt (1)
-            if (ipltSize > maxDataSize)
-            {
-                // For now, just write what fits (TODO: implement multi-marker support)
-                return WritePLTSegment(out_stream, tempList, maxDataSize, zplt);
-            }
-
-            return WritePLTSegment(out_stream, tempList, ipltSize, zplt);
+            return bytesWritten;
         }
 
         /// <summary>
-        /// Writes a single PLT marker segment.
+        /// Writes a single PLT marker segment holding <paramref name="dataSize"/> bytes of packet lengths.
         /// </summary>
-        private static int WritePLTSegment(Stream out_stream, List<PacketLengthEntry> packets, int dataSize, byte zplt)
+        private static int WritePLTSegment(Stream out_stream, byte[] iplt, int dataSize, int zplt)
         {
-            var bytesWritten = 0;
+            if (zplt > 255)
+                throw new InvalidOperationException("Too many PLT markers required (max 256)");
+
             var lplt = (ushort)(dataSize + 3); // +3 for Lplt itself (2 bytes) and Zplt (1 byte)
 
             // Write PLT marker (0xFF58)
             out_stream.WriteByte(0xFF);
             out_stream.WriteByte(0x58);
-            bytesWritten += 2;
 
             // Write Lplt (marker segment length)
             out_stream.WriteByte((byte)(lplt >> 8));
             out_stream.WriteByte((byte)(lplt & 0xFF));
-            bytesWritten += 2;
 
             // Write Zplt (PLT index)
-            out_stream.WriteByte(zplt);
-            bytesWritten++;
+            out_stream.WriteByte((byte)zplt);
 
-            // Write Iplt (packet lengths in variable-length format) directly — no per-packet allocation.
-            var scratch = new byte[5]; // max 5 bytes for a 32-bit VLI
-            foreach (var entry in packets)
-            {
-                int n = WriteVariableLengthIntToBuffer(entry.PacketLength, scratch);
-                out_stream.Write(scratch, 0, n);
-                bytesWritten += n;
-            }
+            // Write Iplt (packet lengths in variable-length format)
+            out_stream.Write(iplt, 0, dataSize);
 
-            return bytesWritten;
+            return dataSize + 5; // marker (2) + Lplt (2) + Zplt (1)
         }
 
         /// <summary>

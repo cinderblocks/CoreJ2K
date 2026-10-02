@@ -280,6 +280,9 @@ namespace CoreJ2K.j2k.codestream.reader
         /// <summary>Counts number of QCC markers found in the header </summary>
         private int nQCCMarkSeg = 0;
 
+        /// <summary>Counts number of PLT marker segments found in the tile-part header </summary>
+        private int nPLTMarkSeg = 0;
+
         /// <summary>Counts number of COM markers found in the header </summary>
         private int nCOMMarkSeg = 0;
 
@@ -2800,7 +2803,7 @@ namespace CoreJ2K.j2k.codestream.reader
                         throw new CorruptedCodestreamException("PLT marker found even though PLM marker found in main header");
                     }
                     nfMarkSeg |= PLT_FOUND;
-                    htKey = "PLT";
+                    htKey = $"PLT{(nPLTMarkSeg++)}";
                     break;
 
                 default:
@@ -3127,10 +3130,15 @@ namespace CoreJ2K.j2k.codestream.reader
             }
 
             // PLT marker segment
+            // A tile-part header has several PLT marker segments when its packet lengths do not fit in one; they follow each other in
+            // the order of their lengths.
             if ((nfMarkSeg & PLT_FOUND) != 0)
             {
-                bais = new System.IO.MemoryStream(ht["PLT"]);
-                readPLTFields(new Util.EndianBinaryReader(bais, true));
+                for (var i = 0; i < nPLTMarkSeg; i++)
+                {
+                    bais = new System.IO.MemoryStream(ht[$"PLT{i}"]);
+                    readPLTFields(new Util.EndianBinaryReader(bais, true));
+                }
             }
 
             // Reset ht
@@ -3353,6 +3361,7 @@ namespace CoreJ2K.j2k.codestream.reader
             nQCCMarkSeg = 0;
             nCOMMarkSeg = 0;
             nRGNMarkSeg = 0;
+            nPLTMarkSeg = 0;
         }
 
         /// <summary> Print information about the current header.

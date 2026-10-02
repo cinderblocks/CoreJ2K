@@ -1613,11 +1613,12 @@ namespace CoreJ2K.j2k.codestream.reader
             val <<= 8;
             val |= (sopArray[5] & 0xff);
 
-            if (!pph && val != pktIdx)
+            // The sequence number is 16 bits and wraps back to 0 after 65535, so it is compared with the packet index modulo 65536.
+            if (!pph && val != (pktIdx & 0xFFFF))
             {
                 throw new InvalidOperationException("Corrupted Bitstream: SOP marker out of " + "sequence !");
             }
-            if (pph && val != pktIdx - 1)
+            if (pph && val != ((pktIdx - 1) & 0xFFFF))
             {
                 // if packed packet headers are used, packet header was read
                 // before SOP marker segment
