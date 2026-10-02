@@ -873,6 +873,8 @@ namespace CoreJ2K.j2k.entropy.encoder
 
         private void ResetBatchState()
         {
+            StopProducer();
+            tileMode = TileMode.Undecided;
             if (pendingResults != null)
             {
                 for (var c = 0; c < pendingResults.Length; c++)
@@ -903,6 +905,39 @@ namespace CoreJ2K.j2k.entropy.encoder
             };
         }
 
+        // ---- Overlapping the source with the coding -----------------------------------------------------------------------
+        // Pulling blocks from the source (reading rows, the wavelet transform, quantising, copying) is serial and takes a good
+        // part of the time the parallel coding saves. For a tile with enough blocks, one producer thread therefore pulls batches
+        // ahead while the calling thread codes the previous batch on all cores. The producer is the only thread that ever touches
+        // the source chain, so the stages need no thread-safety of their own, and it may run ahead into the next component of the
+        // same tile (the rate allocator asks for components in order), which also hides that component's row reading and transform.
+
+        /// <summary>Tiles with fewer code-blocks than this are pulled and coded on the calling thread, without a producer thread.</summary>
+        internal static int MinPipelineBlocks = 32;
+
+        /// <summary>Overrides <see cref="MinPipelineBlocks"/> for encodes started on the current thread (tests only).</summary>
+        [ThreadStatic]
+        internal static int? MinPipelineBlocksForCurrentThread;
+
+        // Batches the producer may hold ready, each up to the batch limits above.
+        private const int PulledBatchCapacity = 2;
+
+        private enum TileMode { Undecided, Inline, Pipelined }
+
+        /// <summary>A batch of quantised blocks pulled from the source, ready to be coded.</summary>
+        private sealed class PulledBatch
+        {
+            public int Component;
+            public List<BlockJob> Jobs = new List<BlockJob>();
+            public bool EndOfComponent;
+            public ExceptionDispatchInfo? Error;
+        }
+
+        private TileMode tileMode = TileMode.Undecided;
+        private BlockingCollection<PulledBatch>? pulledBatches;
+        private CancellationTokenSource? producerCancellation;
+        private Task? producer;
+
         private CBlkRateDistStats GetNextCodeBlockBatched(int c)
         {
             if (pendingResults == null)
@@ -914,41 +949,74 @@ namespace CoreJ2K.j2k.entropy.encoder
             }
 
             var queue = pendingResults[c];
-            if (queue.Count == 0)
+            while (queue.Count == 0)
             {
                 if (sourceExhausted![c]) return null!;
-                FillAndCodeBatch(c, queue);
-                if (queue.Count == 0) return null!;
+
+                if (tileMode == TileMode.Undecided)
+                {
+                    tileMode = CountBlocksInTile() >= (MinPipelineBlocksForCurrentThread ?? MinPipelineBlocks)
+                        ? TileMode.Pipelined
+                        : TileMode.Inline;
+                    if (tileMode == TileMode.Pipelined) StartProducer();
+                }
+
+                var batch = tileMode == TileMode.Pipelined ? TakePulledBatch(c) : PullBatch(c, cancellationToken);
+                CodeAndQueue(c, batch, queue);
+                if (batch.EndOfComponent) sourceExhausted[c] = true;
             }
             return queue.Dequeue();
         }
 
-        /// <summary>Pulls the next batch of quantised blocks of component <paramref name="c"/>, codes it, and queues the results in order.</summary>
-        private void FillAndCodeBatch(int c, Queue<CBlkRateDistStats> results)
+        /// <summary>The number of code-blocks in the current tile, counted over all components as the rate allocator counts them.</summary>
+        private int CountBlocksInTile()
         {
-            var jobs = new List<BlockJob>();
+            long blocks = 0;
+            for (var component = 0; component < src.NumComps; component++)
+            {
+                var root = GetAnSubbandTree(tIdx, component);
+                for (var r = 0; r <= root.resLvl; r++)
+                {
+                    var firstBand = r == 0 ? 0 : 1;
+                    var lastBand = r == 0 ? 0 : 3;
+                    for (var band = firstBand; band <= lastBand; band++)
+                    {
+                        if (root.GetSubbandByIdx(r, band) is SubbandAn subband)
+                            blocks += (long)subband.numCb.x * subband.numCb.y;
+                    }
+                }
+            }
+            return (int)Math.Min(blocks, int.MaxValue);
+        }
+
+        /// <summary>
+        /// Pulls the next batch of quantised blocks of component <paramref name="c"/> from the source and copies them out, since the
+        /// source reuses its own buffer for the next block. Marks the batch as ending the component when the source has no more.
+        /// </summary>
+        private PulledBatch PullBatch(int c, CancellationToken token)
+        {
+            var batch = new PulledBatch { Component = c };
             long samples = 0;
             try
             {
-                while (jobs.Count < MaxBatchBlocks && samples < BatchSampleBudget)
+                while (batch.Jobs.Count < MaxBatchBlocks && samples < BatchSampleBudget)
                 {
-                    cancellationToken.ThrowIfCancellationRequested();
+                    token.ThrowIfCancellationRequested();
                     srcblkT[0] = src.GetNextInternCodeBlock(c, srcblkT[0]);
                     var block = srcblkT[0];
                     if (block == null)
                     {
-                        sourceExhausted![c] = true;
+                        batch.EndOfComponent = true;
                         break;
                     }
 
-                    // The source hands back its own working buffer, so take a compact copy of the quantised samples.
                     var source = (CBlkWTDataInt)block;
                     var count = source.w * source.h;
                     var rented = ArrayPool<int>.Shared.Rent(Math.Max(count, 1));
                     for (var row = 0; row < source.h; row++)
                         Array.Copy(source.data_array!, source.offset + row * source.scanw, rented, row * source.w, source.w);
 
-                    jobs.Add(new BlockJob
+                    batch.Jobs.Add(new BlockJob
                     {
                         Rented = rented,
                         Block = new CBlkWTDataInt
@@ -962,22 +1030,143 @@ namespace CoreJ2K.j2k.entropy.encoder
                     });
                     samples += count;
                 }
+                return batch;
+            }
+            catch
+            {
+                ReturnRented(batch);
+                throw;
+            }
+        }
 
-                if (jobs.Count == 0) return;
+        private static void ReturnRented(PulledBatch batch)
+        {
+            foreach (var job in batch.Jobs)
+                ArrayPool<int>.Shared.Return(job.Rented);
+            batch.Jobs.Clear();
+        }
 
-                var coded = new CBlkRateDistStats[jobs.Count];
-                CodeBatch(c, jobs, coded);
+        /// <summary>Codes a pulled batch and queues the results; the batch's copies of the quantised data are returned either way.</summary>
+        private void CodeAndQueue(int c, PulledBatch batch, Queue<CBlkRateDistStats> results)
+        {
+            try
+            {
+                if (batch.Jobs.Count == 0) return;
+                var coded = new CBlkRateDistStats[batch.Jobs.Count];
+                CodeBatch(c, batch.Jobs, coded);
                 foreach (var block in coded) results.Enqueue(block);
             }
             finally
             {
-                foreach (var job in jobs)
-                    ArrayPool<int>.Shared.Return(job.Rented);
+                ReturnRented(batch);
             }
         }
 
+        private void StartProducer()
+        {
+            var components = src.NumComps;
+            var forwardOverride = ForwWTFull.MinParallelSamplesForCurrentThread; // a test-only thread-static the producer must share
+            producerCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            var token = producerCancellation.Token;
+            var batches = pulledBatches = new BlockingCollection<PulledBatch>(PulledBatchCapacity);
+
+            producer = Task.Factory.StartNew(() =>
+            {
+                ForwWTFull.MinParallelSamplesForCurrentThread = forwardOverride;
+                try
+                {
+                    for (var component = 0; component < components; component++)
+                    {
+                        PulledBatch batch;
+                        do
+                        {
+                            batch = PullBatch(component, token);
+                            try
+                            {
+                                batches.Add(batch, token);
+                            }
+                            catch
+                            {
+                                ReturnRented(batch);
+                                throw;
+                            }
+                        }
+                        while (!batch.EndOfComponent);
+                    }
+                }
+                catch (OperationCanceledException) when (token.IsCancellationRequested)
+                {
+                    // Cancelled by the encoder's token (the consumer observes that itself) or because the tile was abandoned.
+                }
+                catch (Exception e)
+                {
+                    // Hand the failure to the consumer, in order, so it surfaces from GetNextCodeBlock with its own type.
+                    try { batches.Add(new PulledBatch { Error = ExceptionDispatchInfo.Capture(e) }, CancellationToken.None); }
+                    catch (InvalidOperationException) { }
+                }
+                finally
+                {
+                    batches.CompleteAdding();
+                }
+            }, CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
+        }
+
+        private PulledBatch TakePulledBatch(int c)
+        {
+            PulledBatch batch;
+            try
+            {
+                batch = pulledBatches!.Take(cancellationToken);
+            }
+            catch (InvalidOperationException)
+            {
+                throw new InvalidOperationException("The code-block producer ended before every component was pulled.");
+            }
+
+            batch.Error?.Throw();
+            if (batch.Component != c)
+                throw new InvalidOperationException($"Expected a batch of component {c} but the producer delivered component {batch.Component}.");
+            return batch;
+        }
+
+        /// <summary>
+        /// Stops the producer thread, if one is running, and releases anything it had pulled ahead. The encoder calls this when the
+        /// block coding has finished or failed, so an abandoned encode cannot leave a producer waiting.
+        /// </summary>
+        internal void StopProducer()
+        {
+            if (producer == null) return;
+
+            producerCancellation!.Cancel();
+            try
+            {
+                // The producer completes the collection when it exits, which ends this enumeration.
+                foreach (var batch in pulledBatches!.GetConsumingEnumerable())
+                    ReturnRented(batch);
+                producer.Wait();
+            }
+            catch (AggregateException)
+            {
+                // Its failure, if any, was or would have been delivered through the collection.
+            }
+            finally
+            {
+                pulledBatches!.Dispose();
+                producerCancellation.Dispose();
+                pulledBatches = null;
+                producerCancellation = null;
+                producer = null;
+            }
+        }
+
+        /// <summary>Called on the coding thread before each batch is coded, for the current thread only (tests inject failures here).</summary>
+        [ThreadStatic]
+        internal static Action<int>? BeforeCodeBatchForCurrentThread;
+
         private void CodeBatch(int c, List<BlockJob> jobs, CBlkRateDistStats[] coded)
         {
+            BeforeCodeBatchForCurrentThread?.Invoke(c);
+
             // Everything that depends on the tile-component is read once, here, on the calling thread.
             var options = opts[tIdx][c];
             var reversible = IsReversible(tIdx, c);

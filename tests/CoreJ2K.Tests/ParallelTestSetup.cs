@@ -25,6 +25,7 @@ namespace CoreJ2K.Tests
                 InvWTFull.MinParallelWaveletSamples = 0;
                 ForwWTFull.MinParallelSamples = 0;
                 StdEntropyCoder.MinParallelBlocks = 0;
+                StdEntropyCoder.MinPipelineBlocks = 0;
             }
         }
     }

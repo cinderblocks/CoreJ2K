@@ -258,8 +258,9 @@ other failure, a cancelled encode leaves the image source open; the encoder only
 ### 11. Parallel Encoding
 
 Most of an encode is coding code-blocks: the MQ coding passes and rate-distortion statistics for every block, and every block is
-independent. CoreJ2K codes batches of code-blocks on several threads. The forward wavelet transform also splits its row and column
-passes across threads and processes columns in cache-friendly blocks. All of this leaves the encoded bytes **exactly the same** as a
+independent. CoreJ2K codes batches of code-blocks on several threads, while a producer thread reads the source and pulls the next
+batch ahead, so reading rows, the wavelet transform and quantisation overlap with the coding. The forward wavelet transform also
+splits its row and column passes across threads and processes columns in cache-friendly blocks. All of this leaves the encoded bytes **exactly the same** as a
 single-threaded encode, whatever the thread count.
 
 It is on by default and uses up to `Environment.ProcessorCount` threads. Work below a size threshold stays on the calling thread, so
@@ -279,15 +280,15 @@ With the legacy API use the `threads` parameter.
 
 | Encode | Speed-up |
 |--------|----------|
-| Lossless, single tile | about 4.2x |
-| Lossless, 1024x1024 tiles | about 3.8x |
+| Lossless, single tile | about 4.4x |
+| Lossless, 1024x1024 tiles | about 4.1x |
 | Lossless, 128x128 tiles | about 2.0x |
-| Lossy 9/7, 1 bpp or 3 bpp | about 3.7x |
-| 1024x1024 image | about 3.5-3.9x |
-| 256x256 image | about 3x |
+| Lossy 9/7, 1 bpp or 3 bpp | about 4.4x |
+| 1024x1024 image | about 4.3x |
+| 256x256 image | about 3.5x |
 
-Small tiles give each batch little work, and rate allocation and packet writing still run on one thread, which is why the ratio stays
-below the core count. Decoding is parallel in the same way; see the [decoder guide](DECODER_CONFIGURATION_GUIDE.md#9-parallel-decoding).
+Small tiles give each batch little work. Rate allocation and packet writing still run on one thread (about 10% of a lossless encode,
+under 5% of a lossy one), which together with the serial reading of the source keeps the ratio below the core count. Decoding is parallel in the same way; see the [decoder guide](DECODER_CONFIGURATION_GUIDE.md#9-parallel-decoding).
 
 ## Complete Examples
 

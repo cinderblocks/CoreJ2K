@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using CoreJ2K.Configuration;
 using CoreJ2K.j2k.codestream;
 using CoreJ2K.j2k.entropy.encoder;
+using CoreJ2K.j2k.image;
 using CoreJ2K.j2k.util;
 using CoreJ2K.j2k.wavelet.analysis;
 using CoreJ2K.Util;
@@ -47,9 +48,12 @@ namespace CoreJ2K.Tests
         {
             var previousSamples = ForwWTFull.MinParallelSamplesForCurrentThread;
             var previousBlocks = StdEntropyCoder.MinParallelBlocksForCurrentThread;
-            // This thread only: tiny images must still split their wavelet passes and code-block batches across threads.
+            var previousPipeline = StdEntropyCoder.MinPipelineBlocksForCurrentThread;
+            // This thread only: tiny images must still split their wavelet passes and code-block batches across threads, and
+            // pull their blocks on the producer thread.
             ForwWTFull.MinParallelSamplesForCurrentThread = 0;
             StdEntropyCoder.MinParallelBlocksForCurrentThread = 0;
+            StdEntropyCoder.MinPipelineBlocksForCurrentThread = 0;
             try
             {
                 var pl = J2kImage.GetDefaultEncoderParameterList();
@@ -62,6 +66,7 @@ namespace CoreJ2K.Tests
             {
                 ForwWTFull.MinParallelSamplesForCurrentThread = previousSamples;
                 StdEntropyCoder.MinParallelBlocksForCurrentThread = previousBlocks;
+                StdEntropyCoder.MinPipelineBlocksForCurrentThread = previousPipeline;
             }
         }
 
@@ -168,6 +173,59 @@ namespace CoreJ2K.Tests
         }
 
         [Fact]
+        public void ParallelEncode_IsByteIdentical_WhetherOrNotTheSourceIsPulledAhead()
+        {
+            // Below the pipeline threshold a tile is pulled and coded on the calling thread; above it a producer thread pulls ahead
+            // (even into the next component). Both must produce the same bytes as each other and as one thread.
+            var comps = MakeComponents(300, 200, 3);
+            var sequential = Encode(comps, 300, 200, 1, pl => pl["lossless"] = "on");
+
+            var previous = StdEntropyCoder.MinPipelineBlocks;
+            try
+            {
+                StdEntropyCoder.MinPipelineBlocks = int.MaxValue; // never pipeline
+                var inline = Encode(comps, 300, 200, 4, pl => pl["lossless"] = "on");
+                Assert.True(sequential.AsSpan().SequenceEqual(inline), "non-pipelined parallel encode differs from the single-threaded encode");
+            }
+            finally
+            {
+                StdEntropyCoder.MinPipelineBlocks = previous;
+            }
+
+            var pipelined = Encode(comps, 300, 200, 4, pl => pl["lossless"] = "on"); // Encode() forces the pipeline for this thread
+            Assert.True(sequential.AsSpan().SequenceEqual(pipelined), "pipelined encode differs from the single-threaded encode");
+        }
+
+        [Fact]
+        public void ASourceFailure_OnTheProducerThread_SurfacesWithItsOwnType()
+        {
+            var comps = MakeComponents(512, 512, 3);
+
+            foreach (var threads in new[] { 1, 8 })
+            {
+                var previous = StdEntropyCoder.MinPipelineBlocksForCurrentThread;
+                StdEntropyCoder.MinPipelineBlocksForCurrentThread = 0;
+                try
+                {
+                    var pl = J2kImage.GetDefaultEncoderParameterList();
+                    pl["file_format"] = "off";
+                    pl["lossless"] = "on";
+                    pl["threads"] = threads.ToString();
+
+                    // The source starts failing part-way through reading the first component, which the producer thread is doing
+                    // when more than one thread is allowed.
+                    var failing = new FailingImageSource(Source(comps, 512, 512), failAfterCalls: 200);
+                    var exception = Assert.Throws<InvalidOperationException>(() => J2kImage.ToBytes(failing, null, pl));
+                    Assert.Contains("source failed", exception.Message);
+                }
+                finally
+                {
+                    StdEntropyCoder.MinPipelineBlocksForCurrentThread = previous;
+                }
+            }
+        }
+
+        [Fact]
         public void ConcurrentEncodes_EachUsingParallelPasses_AllMatch()
         {
             var comps = MakeComponents(300, 220, 3);
@@ -209,5 +267,42 @@ namespace CoreJ2K.Tests
                 ForwWTFull.MinParallelSamplesForCurrentThread = previous;
             }
         }
+    }
+    /// <summary>An image source that reads normally for a while and then throws, to exercise the encoder's failure paths.</summary>
+    internal sealed class FailingImageSource : ImgDataAdapter, BlkImgDataSrc
+    {
+        private readonly BlkImgDataSrc _inner;
+        private readonly int _failAfterCalls;
+        private int _calls;
+
+        public FailingImageSource(BlkImgDataSrc inner, int failAfterCalls) : base(inner)
+        {
+            _inner = inner;
+            _failAfterCalls = failAfterCalls;
+        }
+
+        private void MaybeFail()
+        {
+            if (System.Threading.Interlocked.Increment(ref _calls) > _failAfterCalls)
+                throw new InvalidOperationException("source failed");
+        }
+
+        public int GetFixedPoint(int compIndex) => _inner.GetFixedPoint(compIndex);
+
+        public DataBlk GetInternCompData(DataBlk blk, int compIndex)
+        {
+            MaybeFail();
+            return _inner.GetInternCompData(blk, compIndex);
+        }
+
+        public DataBlk GetCompData(DataBlk blk, int c)
+        {
+            MaybeFail();
+            return _inner.GetCompData(blk, c);
+        }
+
+        public void Close() => _inner.Close();
+
+        public bool IsOrigSigned(int compIndex) => _inner.IsOrigSigned(compIndex);
     }
 }

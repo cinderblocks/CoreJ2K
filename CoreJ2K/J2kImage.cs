@@ -1611,7 +1611,15 @@ namespace CoreJ2K
 
                 // **** Initialize rate allocator, with proper header
                 // overhead. This will also encode all the data ****
-                ralloc.initialize();
+                try
+                {
+                    ralloc.initialize();
+                }
+                finally
+                {
+                    // initialize() codes every block. If it failed or was cancelled, make sure no producer thread is left waiting.
+                    (ecoder as StdEntropyCoder)?.StopProducer();
+                }
                 cancellationToken.ThrowIfCancellationRequested();
 
                 // **** Write header (final) ****

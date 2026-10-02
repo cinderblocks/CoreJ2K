@@ -85,7 +85,14 @@ namespace CoreJ2K.Tests
             var thread = new Thread(() =>
             {
                 Thread.Sleep(delay);
-                source.Cancel();
+                try
+                {
+                    source.Cancel();
+                }
+                catch (ObjectDisposedException)
+                {
+                    // The operation finished first and its test disposed the source; nothing left to cancel.
+                }
             }) { IsBackground = true };
             thread.Start();
         }

@@ -8,6 +8,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using CoreJ2K.Configuration;
+using CoreJ2K.j2k.entropy.encoder;
 using CoreJ2K.j2k.image;
 using CoreJ2K.j2k.util;
 using CoreJ2K.Util;
@@ -42,6 +43,9 @@ namespace CoreJ2K.Tests
 
         private static InterleavedImageSource NewSource() => new InterleavedImageSource(Size, Size, 3, 8, new bool[3], Samples.Value);
 
+        private static InterleavedImageSource SmallBlocksSource()
+            => new InterleavedImageSource(512, 512, 1, 8, new[] { false }, new[] { Samples.Value[0].Take(512 * 512).ToArray() });
+
         private static ParameterList Lossless(string? tiles = null)
         {
             var pl = J2kImage.GetDefaultEncoderParameterList();
@@ -66,7 +70,14 @@ namespace CoreJ2K.Tests
             var thread = new Thread(() =>
             {
                 Thread.Sleep(delay);
-                source.Cancel();
+                try
+                {
+                    source.Cancel();
+                }
+                catch (ObjectDisposedException)
+                {
+                    // The operation finished first and its test disposed the source; nothing left to cancel.
+                }
             }) { IsBackground = true };
             thread.Start();
         }
@@ -196,6 +207,55 @@ namespace CoreJ2K.Tests
 
             Assert.True(expected.AsSpan().SequenceEqual(withToken), "a live token changed the output");
             Assert.True(viaConfig.Length > 0 && viaBuilder.Length > 0);
+        }
+
+        [Fact]
+        public void AbandonedEncodes_LeaveNoProducerThreadsBehind()
+        {
+            // With several threads the encoder pulls blocks ahead on a dedicated producer thread. Encodes that are cancelled or fail
+            // part-way must release it: a leaked producer would sit blocked forever, one thread per abandoned encode.
+            Process Current() => Process.GetCurrentProcess();
+            void Settle() { GC.Collect(); GC.WaitForPendingFinalizers(); Thread.Sleep(300); }
+
+            // One of each first, so lazily created thread-pool and runtime threads are already counted in the baseline.
+            RunAbandonedEncodes(1);
+            Settle();
+            var before = Current().Threads.Count;
+
+            RunAbandonedEncodes(12);
+            Settle();
+            var after = Current().Threads.Count;
+
+            Assert.True(after - before <= 6, $"thread count grew from {before} to {after} over 36 abandoned encodes");
+
+            void RunAbandonedEncodes(int count)
+            {
+                for (var i = 0; i < count; i++)
+                {
+                    using var source = new CancellationTokenSource();
+                    CancelOnThread(source, TimeSpan.FromMilliseconds(20 + 5 * (i % 6)));
+                    try { J2kImage.ToBytes(NewSource(), Lossless(), source.Token); }
+                    catch (OperationCanceledException) { }
+
+                    try { J2kImage.ToBytes(new FailingImageSource(NewSource(), failAfterCalls: 40 + 10 * (i % 5)), Lossless()); }
+                    catch (InvalidOperationException) { }
+
+                    // The case that actually needs the encoder's cleanup: the coding side fails while the producer is healthy and
+                    // blocked on a full queue. 4x4 code-blocks give a component more batches than the queue holds.
+                    var previous = StdEntropyCoder.BeforeCodeBatchForCurrentThread;
+                    StdEntropyCoder.BeforeCodeBatchForCurrentThread = _ => throw new InvalidOperationException("coding failed");
+                    try
+                    {
+                        var pl = Lossless();
+                        pl["Cblksiz"] = "4 4";
+                        Assert.Throws<InvalidOperationException>(() => J2kImage.ToBytes(SmallBlocksSource(), pl));
+                    }
+                    finally
+                    {
+                        StdEntropyCoder.BeforeCodeBatchForCurrentThread = previous;
+                    }
+                }
+            }
         }
 
         [Fact]
