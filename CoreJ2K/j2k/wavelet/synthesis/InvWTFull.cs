@@ -37,6 +37,7 @@
 * */
 using CoreJ2K.j2k.decoder;
 using CoreJ2K.j2k.image;
+using CoreJ2K.j2k.wavelet;
 using System;
 using System.Collections.Generic;
 using System.Buffers;
@@ -583,46 +584,12 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         internal static int? MinParallelWaveletSamplesForCurrentThread;
 
         /// <summary>
-        /// Runs one pass of the 2D inverse transform, either inline or split into chunks across threads. A pass is a set of
-        /// independent items (rows, then columns), each of <paramref name="itemLength"/> samples; <paramref name="body"/>
-        /// processes items [start, end) using a scratch line of <paramref name="scratchLength"/> samples. Each chunk gets its own
-        /// scratch line, and the 1D filters are stateless, so chunks do not interact.
+        /// Runs one pass of the 2D inverse transform (all rows, or all columns), inline or split across threads; see
+        /// <see cref="WaveletPass.Run{T}"/>.
         /// </summary>
         private void RunPass<T>(int count, int itemLength, int scratchLength, ref T[]? sequentialScratch, Action<int, int, T[]> body)
-        {
-            var minSamples = MinParallelWaveletSamplesForCurrentThread ?? MinParallelWaveletSamples;
-            if (parallelDegree <= 1 || count < 2 || (long)count * itemLength < minSamples)
-            {
-                if (sequentialScratch == null || sequentialScratch.Length < scratchLength)
-                    sequentialScratch = new T[scratchLength];
-                body(0, count, sequentialScratch);
-                return;
-            }
-
-            // A few chunks per thread keeps all threads busy when chunks take unequal time.
-            var chunkCount = Math.Min(count, parallelDegree * 4);
-            var chunkSize = (count + chunkCount - 1) / chunkCount;
-            chunkCount = (count + chunkSize - 1) / chunkSize;
-            var options = new ParallelOptions { MaxDegreeOfParallelism = parallelDegree, CancellationToken = cancellationToken };
-
-            try
-            {
-                Parallel.For(0, chunkCount, options,
-                    () => ArrayPool<T>.Shared.Rent(scratchLength),
-                    (chunk, _, scratch) =>
-                    {
-                        var start = chunk * chunkSize;
-                        body(start, Math.Min(count, start + chunkSize), scratch);
-                        return scratch;
-                    },
-                    scratch => ArrayPool<T>.Shared.Return(scratch));
-            }
-            catch (AggregateException e)
-            {
-                ExceptionDispatchInfo.Capture(e.Flatten().InnerExceptions[0]).Throw();
-                throw;
-            }
-        }
+            => WaveletPass.Run(count, itemLength, scratchLength, ref sequentialScratch, parallelDegree,
+                MinParallelWaveletSamplesForCurrentThread ?? MinParallelWaveletSamples, cancellationToken, body);
 
         /// <summary>Horizontal 5x3 synthesis of rows [rowStart, rowEnd) of a subband whose first row starts at <paramref name="baseOffset"/>.</summary>
         private void HorizontalPass5x3(int[] data, int[] buf, SynWTFilterIntLift5x3 filter, bool evenStart, int baseOffset, int stride,

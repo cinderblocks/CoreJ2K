@@ -17,13 +17,15 @@ namespace CoreJ2K
         private static int _defaultMaxDegreeOfParallelism = Math.Max(1, Environment.ProcessorCount);
 
         /// <summary>
-        /// Gets or sets the maximum number of threads a single decode uses to decode code-blocks in parallel when the
-        /// caller does not say otherwise. The initial value is <see cref="Environment.ProcessorCount"/>.
+        /// Gets or sets the maximum number of threads a single decode (code-blocks and the inverse wavelet transform) or encode
+        /// (the forward wavelet transform) uses when the caller does not say otherwise. The initial value is
+        /// <see cref="Environment.ProcessorCount"/>.
         /// </summary>
         /// <remarks>
-        /// Decoded output is identical for every value. Applications that already decode many images concurrently
+        /// Output is identical for every value. Applications that already decode or encode many images concurrently
         /// can set this to 1 once at start-up to avoid oversubscribing the machine; a single call can also override it
-        /// with the <c>threads</c> parameter or <c>J2KDecoderConfiguration.MaxDegreeOfParallelism</c>.
+        /// with the <c>threads</c> parameter, <c>J2KDecoderConfiguration.MaxDegreeOfParallelism</c> or
+        /// <c>J2KEncoderConfiguration.MaxDegreeOfParallelism</c>.
         /// </remarks>
         public static int DefaultMaxDegreeOfParallelism
         {

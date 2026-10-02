@@ -3,6 +3,7 @@
 
 using System;
 using System.Runtime.CompilerServices;
+using CoreJ2K.j2k.wavelet.analysis;
 using CoreJ2K.j2k.wavelet.synthesis;
 
 namespace CoreJ2K.Tests
@@ -21,6 +22,7 @@ namespace CoreJ2K.Tests
             {
                 InvWTFull.MinParallelBlocks = 0;
                 InvWTFull.MinParallelWaveletSamples = 0;
+                ForwWTFull.MinParallelSamples = 0;
             }
         }
     }

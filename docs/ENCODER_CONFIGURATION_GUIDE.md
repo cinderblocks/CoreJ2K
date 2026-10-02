@@ -255,6 +255,29 @@ catch (OperationCanceledException)
 If a configuration (or builder) carries a token *and* an async method is given one, cancelling either stops the encode. As with any
 other failure, a cancelled encode leaves the image source open; the encoder only closes it after a successful encode.
 
+### 11. Parallel Encoding
+
+The forward wavelet transform splits its row and column passes across threads, and the transform also processes columns in
+cache-friendly blocks. Both leave the encoded bytes **exactly the same** as a single-threaded encode, whatever the thread count.
+
+It is on by default and uses up to `Environment.ProcessorCount` threads. Passes below a size threshold stay on the calling thread, so
+thumbnails and small images pay nothing.
+
+```csharp
+// Per call
+var config = new J2KEncoderConfiguration().WithQuality(0.8).WithMaxDegreeOfParallelism(4);   // 1 = calling thread only
+
+// Process-wide default (shared with decoding), e.g. a server that already encodes many images concurrently
+J2kImage.DefaultMaxDegreeOfParallelism = 1;
+```
+
+With the legacy API use the `threads` parameter.
+
+**What to expect.** Most of an encode is entropy coding, rate allocation and packet writing, which still run on one thread. The
+transform is only about 6-10% of a 4096x4096 RGB encode, so parallelising it saves roughly 10% on lossy encodes (about 7.4 s to 6.7 s)
+and about 3% on lossless ones. Decoding benefits far more because its transform and entropy decoding are both parallel; see the
+[decoder guide](DECODER_CONFIGURATION_GUIDE.md#9-parallel-decoding).
+
 ## Complete Examples
 
 ### Example 1: High-Quality Lossy
@@ -445,6 +468,7 @@ Main configuration class with fluent API.
 - `WithErrorResilience(Action<ErrorResilienceConfiguration>)` - Configure error resilience
 - `WithROI(ROIConfiguration)` - Configure region of interest
 - `WithCancellationToken(CancellationToken)` - Cancels encodes started with this configuration
+- `WithMaxDegreeOfParallelism(int threads)` - Threads used for the forward wavelet transform (1 = single-threaded)
 - `Validate()` - Returns list of validation errors
 - `ToParameterList()` - Converts to legacy ParameterList (for internal use)
 
@@ -453,6 +477,7 @@ Main configuration class with fluent API.
 - `Lossless` - Get/set lossless mode
 - `UseFileFormat` - Get/set file format usage
 - `CancellationToken` - Get/set the cancellation token (default `CancellationToken.None`)
+- `MaxDegreeOfParallelism` - Get/set thread count (0 = `J2kImage.DefaultMaxDegreeOfParallelism`)
 - `Tiles` - Access tile configuration
 - `Wavelet` - Access wavelet configuration
 - `Quantization` - Access quantization configuration

@@ -26,6 +26,7 @@ namespace CoreJ2K.Configuration
         private ErrorResilienceConfiguration _resilienceConfig = new ErrorResilienceConfiguration();
         private ROIConfiguration? _roiConfig = null;
         private System.Threading.CancellationToken _cancellationToken;
+        private int _maxDegreeOfParallelism;
         
         /// <summary>
         /// Gets or sets a token that cancels encodes started with this configuration. Cancellation is cooperative: the encoder
@@ -36,6 +37,28 @@ namespace CoreJ2K.Configuration
         {
             get => _cancellationToken;
             set => _cancellationToken = value;
+        }
+
+        /// <summary>
+        /// Gets or sets the maximum number of threads used for the forward wavelet transform. 1 keeps it on the calling thread; 0 (the
+        /// default) or a negative value uses <see cref="J2kImage.DefaultMaxDegreeOfParallelism"/>. The encoded output is identical
+        /// for every value.
+        /// </summary>
+        public int MaxDegreeOfParallelism
+        {
+            get => _maxDegreeOfParallelism;
+            set => _maxDegreeOfParallelism = value;
+        }
+
+        /// <summary>
+        /// Sets the maximum number of threads used for the forward wavelet transform.
+        /// </summary>
+        /// <param name="maxDegreeOfParallelism">1 for single-threaded; 0 or negative for the process-wide default.</param>
+        /// <returns>This configuration instance for method chaining.</returns>
+        public J2KEncoderConfiguration WithMaxDegreeOfParallelism(int maxDegreeOfParallelism)
+        {
+            _maxDegreeOfParallelism = maxDegreeOfParallelism;
+            return this;
         }
 
         /// <summary>
@@ -312,6 +335,12 @@ namespace CoreJ2K.Configuration
             // Error resilience
             _resilienceConfig.ApplyTo(pl);
             
+            // Parallelism (unset leaves the process-wide default in effect)
+            if (_maxDegreeOfParallelism > 0)
+            {
+                pl["threads"] = _maxDegreeOfParallelism.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            }
+
             // ROI (handled separately in encoding pipeline)
             
             return pl;

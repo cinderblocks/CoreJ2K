@@ -563,6 +563,17 @@ namespace CoreJ2K.Configuration
         }
 
         /// <summary>
+        /// Sets the maximum number of threads used for the forward wavelet transform.
+        /// </summary>
+        /// <param name="maxDegreeOfParallelism">1 for single-threaded; 0 or negative for the process-wide default.</param>
+        /// <returns>This builder for method chaining.</returns>
+        public CompleteEncoderConfigurationBuilder WithMaxDegreeOfParallelism(int maxDegreeOfParallelism)
+        {
+            _encoderConfig.MaxDegreeOfParallelism = maxDegreeOfParallelism;
+            return this;
+        }
+
+        /// <summary>
         /// Sets a token that cancels encodes started with this builder.
         /// </summary>
         /// <param name="cancellationToken">The token to observe.</param>
