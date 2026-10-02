@@ -427,6 +427,16 @@ namespace CoreJ2K.j2k.codestream.writer
         }
 
         /// <summary>
+        /// Gets the number of bytes the PLT marker segment adds to the header of the tile-part of a tile, from the PLT data set
+        /// with <see cref="SetPLTData"/>; 0 if there is none.
+        /// </summary>
+        /// <param name="tileIdx">The tile index.</param>
+        internal virtual int GetPLTLength(int tileIdx)
+            => pltData != null && pltData.GetPacketCount(tileIdx) > 0
+                ? PLTMarkerWriter.WritePLT(System.IO.Stream.Null, pltData, tileIdx, 0)
+                : 0;
+
+        /// <summary>
         /// Gets whether PPM markers should be written.
         /// </summary>
         public virtual bool IsPPMEnabled => usePPM;

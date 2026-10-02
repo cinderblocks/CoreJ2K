@@ -216,19 +216,20 @@ namespace CoreJ2K.Tests
         /// Reads each tile-part of a codestream: the packet lengths its PLT markers declare, and the lengths the packets really have,
         /// found from the SOP marker in front of each. Independent of the encoder code that produced either.
         /// </summary>
-        private static System.Collections.Generic.List<(int[] Declared, int[] Actual)> ReadTileParts(byte[] data)
+        private static System.Collections.Generic.List<(int[] Declared, int[] Actual, int Psot, int Length)> ReadTileParts(byte[] data)
         {
             int U16(int at) => (data[at] << 8) | data[at + 1];
+            int U32(int at) => (data[at] << 24) | (data[at + 1] << 16) | (data[at + 2] << 8) | data[at + 3];
 
-            var result = new System.Collections.Generic.List<(int[], int[])>();
+            var result = new System.Collections.Generic.List<(int[], int[], int, int)>();
             var pos = 2; // after SOC
             while (U16(pos) != 0xFF90) pos += 2 + U16(pos + 2); // main header marker segments, up to the first SOT
 
             while (pos + 12 <= data.Length && U16(pos) == 0xFF90)
             {
-                // The tile-part ends where the next SOT marker starts (or at the EOC marker). Psot is not used: when PLT markers are
-                // written it does not count them. 0xFF90 cannot occur inside packet data.
+                // The tile-part ends where the next SOT marker starts (or at the EOC marker); 0xFF90 cannot occur inside packet data.
                 var start = pos;
+                var psot = U32(pos + 6);
                 var end = data.Length - 2;
                 for (var at = start + 12; at + 3 < data.Length; at++)
                     if (data[at] == 0xFF && data[at + 1] == 0x90 && data[at + 2] == 0 && data[at + 3] == 10) { end = at; break; }
@@ -257,7 +258,7 @@ namespace CoreJ2K.Tests
                     if (data[at] == 0xFF && data[at + 1] == 0x91 && data[at + 2] == 0 && data[at + 3] == 4) starts.Add(at);
                 var actual = starts.Select((first, i) => (i + 1 < starts.Count ? starts[i + 1] : end) - first).ToArray();
 
-                result.Add((declared.ToArray(), actual));
+                result.Add((declared.ToArray(), actual, psot, end - start));
                 pos = end;
             }
             return result;
@@ -285,6 +286,32 @@ namespace CoreJ2K.Tests
                     Assert.NotEmpty(tileParts[i].Actual);
                     Assert.True(tileParts[i].Declared.SequenceEqual(tileParts[i].Actual), $"tile-part {i}, {threads} thread(s): PLT lengths differ from the real packet lengths");
                 }
+            }
+        }
+
+        [Theory]
+        [InlineData(1, 1, true)]
+        [InlineData(3, 1, true)]
+        [InlineData(3, 4, true)]
+        [InlineData(3, 4, false)]
+        public void TilePartLength_CountsEveryByteOfTheTilePart(int components, int threads, bool plt)
+        {
+            // Psot (and the TLM entry, which is the same number) is the length of the whole tile-part, header included. The PLT
+            // marker is part of that header, but it can only be sized once the packets are built.
+            var comps = MakeComponents(260, 200, components);
+            var data = Encode(comps, 260, 200, threads, pl =>
+            {
+                pl["lossless"] = "off"; pl["rate"] = "2.5"; pl["Alayers"] = "0.1 +4 2.5"; pl["tiles"] = "100 90"; pl["Cpp"] = "64 64";
+                pl["Psop"] = "on";
+                if (plt) pl["Hplt"] = "on";
+            });
+
+            var tileParts = ReadTileParts(data);
+            Assert.Equal(9, tileParts.Count);
+            for (var i = 0; i < tileParts.Count; i++)
+            {
+                Assert.True(tileParts[i].Psot == tileParts[i].Length, $"tile-part {i}: Psot is {tileParts[i].Psot} but the tile-part is {tileParts[i].Length} bytes long");
+                if (plt) Assert.NotEmpty(tileParts[i].Declared);
             }
         }
 

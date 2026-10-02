@@ -1223,6 +1223,19 @@ namespace CoreJ2K.j2k.entropy.encoder
                 layers[l].actualBytes = actualBytes;
             } // end loop on layers
 
+            // PLT SUPPORT: Pass collected PLT data to header encoder
+            if (pltData != null)
+            {
+                headEnc.SetPLTData(pltData);
+
+                // The tile-part headers measured while building the layers had no PLT marker yet, but the ones written do, and the
+                // tile-part length in SOT (and TLM) must count every byte of the tile-part.
+                for (var t = 0; t < nt; t++)
+                {
+                    tileLengths[t] += headEnc.GetPLTLength(t);
+                }
+            }
+
             if (tlmData != null)
             {
                 for (var t = 0; t < nt; t++)
@@ -1230,12 +1243,6 @@ namespace CoreJ2K.j2k.entropy.encoder
                     // tileLengths[t] includes the complete tile-part length
                     tlmData.AddTilePart(t, 0, tileLengths[t]);
                 }
-            }
-
-            // PLT SUPPORT: Pass collected PLT data to header encoder
-            if (pltData != null)
-            {
-                headEnc.SetPLTData(pltData);
             }
 
 #if DO_TIMING
