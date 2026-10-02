@@ -257,10 +257,12 @@ other failure, a cancelled encode leaves the image source open; the encoder only
 
 ### 11. Parallel Encoding
 
-The forward wavelet transform splits its row and column passes across threads, and the transform also processes columns in
-cache-friendly blocks. Both leave the encoded bytes **exactly the same** as a single-threaded encode, whatever the thread count.
+Most of an encode is coding code-blocks: the MQ coding passes and rate-distortion statistics for every block, and every block is
+independent. CoreJ2K codes batches of code-blocks on several threads. The forward wavelet transform also splits its row and column
+passes across threads and processes columns in cache-friendly blocks. All of this leaves the encoded bytes **exactly the same** as a
+single-threaded encode, whatever the thread count.
 
-It is on by default and uses up to `Environment.ProcessorCount` threads. Passes below a size threshold stay on the calling thread, so
+It is on by default and uses up to `Environment.ProcessorCount` threads. Work below a size threshold stays on the calling thread, so
 thumbnails and small images pay nothing.
 
 ```csharp
@@ -273,10 +275,19 @@ J2kImage.DefaultMaxDegreeOfParallelism = 1;
 
 With the legacy API use the `threads` parameter.
 
-**What to expect.** Most of an encode is entropy coding, rate allocation and packet writing, which still run on one thread. The
-transform is only about 6-10% of a 4096x4096 RGB encode, so parallelising it saves roughly 10% on lossy encodes (about 7.4 s to 6.7 s)
-and about 3% on lossless ones. Decoding benefits far more because its transform and entropy decoding are both parallel; see the
-[decoder guide](DECODER_CONFIGURATION_GUIDE.md#9-parallel-decoding).
+**What to expect.** Typical results on an 8-core machine, 4096x4096 RGB, speed-up of 8 threads over 1:
+
+| Encode | Speed-up |
+|--------|----------|
+| Lossless, single tile | about 4.2x |
+| Lossless, 1024x1024 tiles | about 3.8x |
+| Lossless, 128x128 tiles | about 2.0x |
+| Lossy 9/7, 1 bpp or 3 bpp | about 3.7x |
+| 1024x1024 image | about 3.5-3.9x |
+| 256x256 image | about 3x |
+
+Small tiles give each batch little work, and rate allocation and packet writing still run on one thread, which is why the ratio stays
+below the core count. Decoding is parallel in the same way; see the [decoder guide](DECODER_CONFIGURATION_GUIDE.md#9-parallel-decoding).
 
 ## Complete Examples
 
@@ -468,7 +479,7 @@ Main configuration class with fluent API.
 - `WithErrorResilience(Action<ErrorResilienceConfiguration>)` - Configure error resilience
 - `WithROI(ROIConfiguration)` - Configure region of interest
 - `WithCancellationToken(CancellationToken)` - Cancels encodes started with this configuration
-- `WithMaxDegreeOfParallelism(int threads)` - Threads used for the forward wavelet transform (1 = single-threaded)
+- `WithMaxDegreeOfParallelism(int threads)` - Threads used to encode (1 = single-threaded)
 - `Validate()` - Returns list of validation errors
 - `ToParameterList()` - Converts to legacy ParameterList (for internal use)
 

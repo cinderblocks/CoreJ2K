@@ -1594,10 +1594,16 @@ namespace CoreJ2K
 
                 // The rate allocator pulls every code-block through the wavelet transform and entropy coder, then writes the packets.
                 ralloc.CancellationToken = cancellationToken;
+                var encodeThreads = ResolveDegreeOfParallelism(pl);
                 if (dwt is ForwWTFull forwardTransform)
                 {
                     forwardTransform.SetCancellationToken(cancellationToken);
-                    forwardTransform.SetMaxDegreeOfParallelism(ResolveDegreeOfParallelism(pl));
+                    forwardTransform.SetMaxDegreeOfParallelism(encodeThreads);
+                }
+                if (ecoder is StdEntropyCoder blockCoder)
+                {
+                    blockCoder.SetCancellationToken(cancellationToken);
+                    blockCoder.SetMaxDegreeOfParallelism(encodeThreads);
                 }
 
                 // **** Write header to be able to estimate header overhead ****
@@ -2237,9 +2243,10 @@ namespace CoreJ2K
                 new string?[]
                     {
                         "threads", "<count>",
-                        "Maximum number of threads used for the forward wavelet transform. 1 keeps it on the calling "
-                        + "thread; 0 or unset uses J2kImage.DefaultMaxDegreeOfParallelism (all processors unless "
-                        + "changed). The encoded output is identical for every value.",
+                        "Maximum number of threads used to encode: the forward wavelet transform and the entropy coding "
+                        + "of code-blocks. 1 keeps everything on the calling thread; 0 or unset uses "
+                        + "J2kImage.DefaultMaxDegreeOfParallelism (all processors unless changed). The encoded output "
+                        + "is identical for every value.",
                         null
                     },
                 new string?[]

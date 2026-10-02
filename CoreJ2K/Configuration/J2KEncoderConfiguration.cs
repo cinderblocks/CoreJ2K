@@ -40,8 +40,8 @@ namespace CoreJ2K.Configuration
         }
 
         /// <summary>
-        /// Gets or sets the maximum number of threads used for the forward wavelet transform. 1 keeps it on the calling thread; 0 (the
-        /// default) or a negative value uses <see cref="J2kImage.DefaultMaxDegreeOfParallelism"/>. The encoded output is identical
+        /// Gets or sets the maximum number of threads used to encode (the forward wavelet transform and the coding of code-blocks).
+        /// 1 keeps everything on the calling thread; 0 (the default) or a negative value uses <see cref="J2kImage.DefaultMaxDegreeOfParallelism"/>. The encoded output is identical
         /// for every value.
         /// </summary>
         public int MaxDegreeOfParallelism
@@ -51,7 +51,7 @@ namespace CoreJ2K.Configuration
         }
 
         /// <summary>
-        /// Sets the maximum number of threads used for the forward wavelet transform.
+        /// Sets the maximum number of threads used to encode.
         /// </summary>
         /// <param name="maxDegreeOfParallelism">1 for single-threaded; 0 or negative for the process-wide default.</param>
         /// <returns>This configuration instance for method chaining.</returns>

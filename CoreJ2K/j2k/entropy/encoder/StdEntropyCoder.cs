@@ -35,6 +35,12 @@
 //#define DO_TIMING
 
 using System;
+using System.Buffers;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Runtime.ExceptionServices;
+using System.Threading;
+using System.Threading.Tasks;
 using CoreJ2K.j2k.image;
 using CoreJ2K.j2k.quantization.quantizer;
 using CoreJ2K.j2k.util;
@@ -765,6 +771,11 @@ namespace CoreJ2K.j2k.entropy.encoder
         /// <seealso cref="CBlkRateDistStats" />
         public override CBlkRateDistStats GetNextCodeBlock(int c, CBlkRateDistStats? ccb)
         {
+            if (parallelDegree > 1)
+            {
+                return GetNextCodeBlockBatched(c);
+            }
+
 #if DO_TIMING
 			var stime = 0L; // Start time for timed sections
 #endif
@@ -802,6 +813,220 @@ namespace CoreJ2K.j2k.entropy.encoder
             return ccb;
         }
 
+        // ---- Parallel code-block coding ---------------------------------------------------------------------------------
+        // Coding a code-block (the MQ coding passes and rate-distortion statistics) dominates encoding time and is independent
+        // per code-block: compressCodeBlock is static and takes every buffer it uses as a parameter. When more than one thread is
+        // allowed, GetNextCodeBlock pulls a batch of quantised blocks from the source (cheap, and it must stay in order on one
+        // thread), copies them, codes the batch on several threads with one set of buffers per thread, and then hands the results
+        // back one at a time in the original order. The rate allocator therefore sees exactly the sequence it always did.
+
+        /// <summary>Batches with fewer code-blocks than this are coded on the calling thread.</summary>
+        /// <remarks>Parallel set-up is wasted on a handful of blocks. Tests lower this to 0 to exercise the parallel path on small images.</remarks>
+        internal static int MinParallelBlocks = 8;
+
+        /// <summary>Overrides <see cref="MinParallelBlocks"/> for encodes started on the current thread (tests only).</summary>
+        [ThreadStatic]
+        internal static int? MinParallelBlocksForCurrentThread;
+
+        // A batch ends at this many blocks or samples, bounding the transient copies of quantised data.
+        private const int MaxBatchBlocks = 4096;
+        private const long BatchSampleBudget = 1 << 21;
+
+        private int parallelDegree = 1;
+        private CancellationToken cancellationToken;
+
+        // Per component: coded blocks waiting to be returned, and whether the source has no more blocks for this tile-component.
+        private Queue<CBlkRateDistStats>[]? pendingResults;
+        private bool[]? sourceExhausted;
+
+        private readonly ConcurrentBag<CoderWorker> idleWorkers = new ConcurrentBag<CoderWorker>();
+
+        /// <summary>The buffers one thread needs to code code-blocks, the same set the single-threaded path keeps in slot 0.</summary>
+        private sealed class CoderWorker
+        {
+            public ByteOutputBuffer Output = null!;
+            public MQCoder Mq = null!;
+            public BitToByteOutput? Bout;
+            public int[] State = null!;
+            public int[] SymBuf = null!;
+            public int[] CtxtBuf = null!;
+            public double[] DistBuf = null!;
+            public int[] RateBuf = null!;
+            public bool[] IsTermBuf = null!;
+        }
+
+        /// <summary>A quantised code-block copied out of the source, which reuses its own buffer for the next block.</summary>
+        private sealed class BlockJob
+        {
+            public CBlkWTDataInt Block = null!;
+            public int[] Rented = null!;
+        }
+
+        /// <summary>
+        /// Allows code-blocks to be coded on up to <paramref name="maxDegreeOfParallelism"/> threads. The coded output is identical
+        /// for every value.
+        /// </summary>
+        internal void SetMaxDegreeOfParallelism(int maxDegreeOfParallelism) => parallelDegree = Math.Max(1, maxDegreeOfParallelism);
+
+        /// <summary>Makes block coding observe <paramref name="token"/>; once cancelled it throws <see cref="OperationCanceledException"/>.</summary>
+        internal void SetCancellationToken(CancellationToken token) => cancellationToken = token;
+
+        private void ResetBatchState()
+        {
+            if (pendingResults != null)
+            {
+                for (var c = 0; c < pendingResults.Length; c++)
+                {
+                    pendingResults[c].Clear();
+                    sourceExhausted![c] = false;
+                }
+            }
+        }
+
+        private CoderWorker RentWorker()
+        {
+            if (idleWorkers.TryTake(out var worker)) return worker;
+
+            var maxWidth = cblks.MaxCBlkWidth;
+            var maxHeight = cblks.MaxCBlkHeight;
+            var output = new ByteOutputBuffer();
+            return new CoderWorker
+            {
+                Output = output,
+                Mq = new MQCoder(output, NUM_CTXTS, MQ_INIT),
+                State = new int[(maxWidth + 2) * ((maxHeight + 1) / 2 + 2)],
+                SymBuf = new int[maxWidth * (StdEntropyCoderOptions.STRIPE_HEIGHT * 2 + 2)],
+                CtxtBuf = new int[maxWidth * (StdEntropyCoderOptions.STRIPE_HEIGHT * 2 + 2)],
+                DistBuf = new double[32 * StdEntropyCoderOptions.NUM_PASSES],
+                RateBuf = new int[32 * StdEntropyCoderOptions.NUM_PASSES],
+                IsTermBuf = new bool[32 * StdEntropyCoderOptions.NUM_PASSES],
+            };
+        }
+
+        private CBlkRateDistStats GetNextCodeBlockBatched(int c)
+        {
+            if (pendingResults == null)
+            {
+                var nc = src.NumComps;
+                pendingResults = new Queue<CBlkRateDistStats>[nc];
+                for (var i = 0; i < nc; i++) pendingResults[i] = new Queue<CBlkRateDistStats>();
+                sourceExhausted = new bool[nc];
+            }
+
+            var queue = pendingResults[c];
+            if (queue.Count == 0)
+            {
+                if (sourceExhausted![c]) return null!;
+                FillAndCodeBatch(c, queue);
+                if (queue.Count == 0) return null!;
+            }
+            return queue.Dequeue();
+        }
+
+        /// <summary>Pulls the next batch of quantised blocks of component <paramref name="c"/>, codes it, and queues the results in order.</summary>
+        private void FillAndCodeBatch(int c, Queue<CBlkRateDistStats> results)
+        {
+            var jobs = new List<BlockJob>();
+            long samples = 0;
+            try
+            {
+                while (jobs.Count < MaxBatchBlocks && samples < BatchSampleBudget)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    srcblkT[0] = src.GetNextInternCodeBlock(c, srcblkT[0]);
+                    var block = srcblkT[0];
+                    if (block == null)
+                    {
+                        sourceExhausted![c] = true;
+                        break;
+                    }
+
+                    // The source hands back its own working buffer, so take a compact copy of the quantised samples.
+                    var source = (CBlkWTDataInt)block;
+                    var count = source.w * source.h;
+                    var rented = ArrayPool<int>.Shared.Rent(Math.Max(count, 1));
+                    for (var row = 0; row < source.h; row++)
+                        Array.Copy(source.data_array!, source.offset + row * source.scanw, rented, row * source.w, source.w);
+
+                    jobs.Add(new BlockJob
+                    {
+                        Rented = rented,
+                        Block = new CBlkWTDataInt
+                        {
+                            ulx = source.ulx, uly = source.uly, n = source.n, m = source.m, sb = source.sb,
+                            w = source.w, h = source.h, offset = 0, scanw = source.w,
+                            magbits = source.magbits, wmseScaling = source.wmseScaling, convertFactor = source.convertFactor,
+                            stepSize = source.stepSize, nROIcoeff = source.nROIcoeff, nROIbp = source.nROIbp,
+                            data_array = rented,
+                        },
+                    });
+                    samples += count;
+                }
+
+                if (jobs.Count == 0) return;
+
+                var coded = new CBlkRateDistStats[jobs.Count];
+                CodeBatch(c, jobs, coded);
+                foreach (var block in coded) results.Enqueue(block);
+            }
+            finally
+            {
+                foreach (var job in jobs)
+                    ArrayPool<int>.Shared.Return(job.Rented);
+            }
+        }
+
+        private void CodeBatch(int c, List<BlockJob> jobs, CBlkRateDistStats[] coded)
+        {
+            // Everything that depends on the tile-component is read once, here, on the calling thread.
+            var options = opts[tIdx][c];
+            var reversible = IsReversible(tIdx, c);
+            var lengthCalc = lenCalc[tIdx][c];
+            var termination = tType[tIdx][c];
+
+            CoderWorker Code(CoderWorker worker, int index)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                if ((options & StdEntropyCoderOptions.OPT_BYPASS) != 0 && worker.Bout == null)
+                    worker.Bout = new BitToByteOutput(worker.Output);
+
+                var result = new CBlkRateDistStats();
+                compressCodeBlock(c, result, jobs[index].Block, worker.Mq, worker.Bout!, worker.Output, worker.State, worker.DistBuf,
+                    worker.RateBuf, worker.IsTermBuf, worker.SymBuf, worker.CtxtBuf, options, reversible, lengthCalc, termination);
+                coded[index] = result;
+                return worker;
+            }
+
+            if (jobs.Count < (MinParallelBlocksForCurrentThread ?? MinParallelBlocks))
+            {
+                var worker = RentWorker();
+                try
+                {
+                    for (var i = 0; i < jobs.Count; i++) Code(worker, i);
+                }
+                finally
+                {
+                    idleWorkers.Add(worker);
+                }
+                return;
+            }
+
+            try
+            {
+                Parallel.For(0, jobs.Count,
+                    new ParallelOptions { MaxDegreeOfParallelism = parallelDegree, CancellationToken = cancellationToken },
+                    RentWorker,
+                    (i, _, worker) => Code(worker, i),
+                    worker => idleWorkers.Add(worker));
+            }
+            catch (AggregateException e)
+            {
+                // Surface the original exception (a configuration error, or cancellation) with its type intact.
+                ExceptionDispatchInfo.Capture(e.Flatten().InnerExceptions[0]).Throw();
+                throw;
+            }
+        }
+
         /// <summary> Changes the current tile, given the new indexes. An
         /// IllegalArgumentException is thrown if the indexes do not correspond to
         /// a valid tile.
@@ -818,6 +1043,7 @@ namespace CoreJ2K.j2k.entropy.encoder
         public override void SetTile(int x, int y)
         {
             base.SetTile(x, y);
+            ResetBatchState();
             // Reset the tile specific variables
             if (finishedTileComponent != null)
             {
@@ -838,6 +1064,7 @@ namespace CoreJ2K.j2k.entropy.encoder
         /// </summary>
         public override void NextTile()
         {
+            ResetBatchState();
             // Reset the tilespecific variables
             if (finishedTileComponent != null)
             {

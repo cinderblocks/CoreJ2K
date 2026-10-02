@@ -422,21 +422,24 @@ Common encoder parameters (case-sensitive):
 - **ParameterList**: Optional encoding parameters. Use indexer to set: `params["key"] = "value"`
 - **Image Sources**: Accepts SKBitmap, Bitmap, Image, or codec-specific formats (PGM/PPM/PGX streams)
 - **Thread Safety**: Independent decode and encode calls can run concurrently on separate threads.
-- **Parallel Decoding**: Code-block decoding and the inverse wavelet transform use up to all cores by default (about 4x faster on 8 cores for lossless, 3x for lossy), with bit-identical output. Tune with `WithMaxDegreeOfParallelism(n)` or `J2kImage.DefaultMaxDegreeOfParallelism`. The encoder's forward wavelet transform is parallel too, with a smaller gain (about 10% on lossy encodes), because most encode time is entropy coding.
+- **Parallel Decoding**: Code-block decoding and the inverse wavelet transform use up to all cores by default (about 4x faster on 8 cores for lossless, 3x for lossy), with bit-identical output. Tune with `WithMaxDegreeOfParallelism(n)` or `J2kImage.DefaultMaxDegreeOfParallelism`. Encoding is parallel too (code-block coding and the forward wavelet transform): about 4x faster on 8 cores, again with identical output.
 - **Cancellation**: Decodes and encodes observe a `CancellationToken` and stop within milliseconds with `OperationCanceledException`, including the `*Async` methods. Pass a token to `FromBytes`/`DecodeBytes`/`DecodeToImage<T>`/`ToBytes`/`WriteTo`, or set it with `J2KDecoderConfiguration.WithCancellationToken` / `J2KEncoderConfiguration.WithCancellationToken`.
 - **Decode Limits**: A decode is rejected with `DecoderLimitException` before any image-sized allocation if it would exceed the default 1 Gpixel / 2 GiB limits (at the requested resolution). Use `DecoderLimits.Strict` for untrusted input or `DecoderLimits.None` to opt out. See the [decoder guide](docs/DECODER_CONFIGURATION_GUIDE.md#8-resource-limits).
 
 ### Upgrading to 2.4.0
 
-Two defaults changed. Both are one line to revert.
+Two defaults changed. Each is one line to revert.
 
 - **Decode limits are on by default.** A decode whose estimated memory exceeds 2 GiB (or 1 Gpixel) at the requested resolution now throws
   `DecoderLimitException` before allocating anything. A 16384x16384 RGB image (estimated about 3.2 GB) used to be attempted and is now
   rejected. If you decode very large trusted images, such as GIS or whole-slide data, opt out once at start-up with
   `DecoderLimits.Default = DecoderLimits.None;`, or raise the limit for specific calls with `.WithLimits(...)`. Reduced-resolution decodes
   are measured at the reduced size, so previews of huge images are unaffected.
-- **Decoding is parallel by default.** Each decode uses up to all processors for code-block decoding, with bit-identical output. If your
-  application already decodes many images concurrently, set `J2kImage.DefaultMaxDegreeOfParallelism = 1;` once at start-up.
+- **Decoding and encoding are parallel by default.** Each decode uses up to all processors for code-block decoding and the inverse wavelet
+  transform, and each encode uses up to all processors for code-block coding and the forward wavelet transform. Output is bit-identical
+  to a single-threaded run. If your application already decodes or encodes many images concurrently (a server, for example), set
+  `J2kImage.DefaultMaxDegreeOfParallelism = 1;` once at start-up to opt out of both, or pass `WithMaxDegreeOfParallelism(1)` to a
+  single call.
 
 ### Fast Random Tile Access (TLM Markers)
 
@@ -715,7 +718,7 @@ Free to use in commercial and open-source projects. No licensing fees.
 | **Platform Support** | .NET all | All | All | JVM | All | All | Windows mainly |
 | **Cross-platform** | ✅ Full | ✅ Full | ✅ Full | ✅ Full | ✅ Full | ✅ Full | ⚠️ Limited |
 | **Memory Safety** | ✅ Managed | ⚠️ Manual | ⚠️ Manual | ✅ Managed | ⚠️ Manual | ✅ Managed | ⚠️ Manual |
-| **Multi-threading** | ✅ Parallel code-block decode | ✅ Yes | ✅ Yes | ⚠️ Limited | ⚠️ Limited | ✅ Yes | ✅ Yes |
+| **Multi-threading** | ✅ Parallel decode and encode | ✅ Yes | ✅ Yes | ⚠️ Limited | ⚠️ Limited | ✅ Yes | ✅ Yes |
 | **SIMD Optimization** | ✅ Yes (AVX/auto-vec) | ✅ Full | ✅ Full | ❌ No | ❌ No | ⚠️ Limited | ✅ Full |
 
 ### Performance and Quality

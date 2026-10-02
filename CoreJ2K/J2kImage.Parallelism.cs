@@ -18,7 +18,7 @@ namespace CoreJ2K
 
         /// <summary>
         /// Gets or sets the maximum number of threads a single decode (code-blocks and the inverse wavelet transform) or encode
-        /// (the forward wavelet transform) uses when the caller does not say otherwise. The initial value is
+        /// (code-block coding and the forward wavelet transform) uses when the caller does not say otherwise. The initial value is
         /// <see cref="Environment.ProcessorCount"/>.
         /// </summary>
         /// <remarks>

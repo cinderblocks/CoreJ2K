@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using CoreJ2K.Configuration;
 using CoreJ2K.j2k.codestream;
+using CoreJ2K.j2k.entropy.encoder;
 using CoreJ2K.j2k.util;
 using CoreJ2K.j2k.wavelet.analysis;
 using CoreJ2K.Util;
@@ -14,9 +15,9 @@ using Xunit;
 namespace CoreJ2K.Tests
 {
     /// <summary>
-    /// The forward wavelet transform splits its row and column passes across threads. That must be invisible: the encoded bytes are
-    /// identical for every thread count, for every kind of stream. These tests lower the size threshold so small images really run
-    /// their passes on several threads.
+    /// The forward wavelet transform splits its row and column passes across threads, and the entropy coder codes batches of
+    /// code-blocks on several threads. That must be invisible: the encoded bytes are identical for every thread count, for every kind
+    /// of stream. These tests lower the size thresholds so small images really run on several threads.
     /// </summary>
     public class ParallelEncodeTests
     {
@@ -44,8 +45,11 @@ namespace CoreJ2K.Tests
 
         private static byte[] Encode(int[][] comps, int width, int height, int threads, Action<ParameterList> configure, AtkMarkerSegment? atk = null)
         {
-            var previous = ForwWTFull.MinParallelSamplesForCurrentThread;
-            ForwWTFull.MinParallelSamplesForCurrentThread = 0; // this thread only: tiny images must still split their passes
+            var previousSamples = ForwWTFull.MinParallelSamplesForCurrentThread;
+            var previousBlocks = StdEntropyCoder.MinParallelBlocksForCurrentThread;
+            // This thread only: tiny images must still split their wavelet passes and code-block batches across threads.
+            ForwWTFull.MinParallelSamplesForCurrentThread = 0;
+            StdEntropyCoder.MinParallelBlocksForCurrentThread = 0;
             try
             {
                 var pl = J2kImage.GetDefaultEncoderParameterList();
@@ -56,7 +60,8 @@ namespace CoreJ2K.Tests
             }
             finally
             {
-                ForwWTFull.MinParallelSamplesForCurrentThread = previous;
+                ForwWTFull.MinParallelSamplesForCurrentThread = previousSamples;
+                StdEntropyCoder.MinParallelBlocksForCurrentThread = previousBlocks;
             }
         }
 
@@ -74,6 +79,8 @@ namespace CoreJ2K.Tests
         {
             "lossless", "lossy-9x7", "lossy-low-rate", "tiled-aligned", "tiled-unaligned-origin", "layers", "levels-0", "levels-1", "levels-5",
             "precincts-rpcl", "roi", "mct-off", "small-codeblocks",
+            // Code-block coding modes: each changes how a block's passes are coded, and so what a worker must reproduce.
+            "bypass", "term-each-pass", "reset-mq", "segmentation-symbols", "causal", "sop-eph", "predictable-termination", "predictable-termination-bypass", "all-modes",
         };
 
         private static void Configure(string variant, ParameterList pl)
@@ -93,6 +100,19 @@ namespace CoreJ2K.Tests
                 case "roi": pl["lossless"] = "on"; pl["Rroi"] = "R 20 20 60 50"; break;
                 case "mct-off": pl["lossless"] = "off"; pl["rate"] = "2.0"; pl["Mct"] = "off"; break;
                 case "small-codeblocks": pl["lossless"] = "on"; pl["Cblksiz"] = "16 16"; break;
+                case "bypass": pl["lossless"] = "on"; pl["Cbypass"] = "on"; break;
+                case "term-each-pass": pl["lossless"] = "on"; pl["Cterminate"] = "on"; break;
+                case "reset-mq": pl["lossless"] = "on"; pl["CresetMQ"] = "on"; break;
+                case "segmentation-symbols": pl["lossless"] = "on"; pl["Cseg_symbol"] = "on"; break;
+                case "causal": pl["lossless"] = "on"; pl["Ccausal"] = "on"; break;
+                case "sop-eph": pl["lossless"] = "on"; pl["Psop"] = "on"; pl["Peph"] = "on"; break;
+                case "predictable-termination": pl["lossless"] = "on"; pl["Cterm_type"] = "predict"; pl["Cterminate"] = "on"; break;
+                // 'predict' enables the predictable-termination option; it only reaches the raw (bypass) coding passes in bypass mode.
+                case "predictable-termination-bypass": pl["lossless"] = "on"; pl["Cterm_type"] = "predict"; pl["Cbypass"] = "on"; pl["Cterminate"] = "on"; break;
+                case "all-modes":
+                    pl["lossless"] = "off"; pl["rate"] = "2.0"; pl["Cbypass"] = "on"; pl["Cterminate"] = "on"; pl["CresetMQ"] = "on";
+                    pl["Cseg_symbol"] = "on"; pl["Ccausal"] = "on"; pl["tiles"] = "64 64";
+                    break;
             }
         }
 
@@ -119,6 +139,23 @@ namespace CoreJ2K.Tests
             // A rate-limited codestream needs room for its own headers, so very small images are only tested lossless.
             if (width * height >= 256)
                 AssertSameBytes(comps, width, height, pl => { pl["lossless"] = "off"; pl["rate"] = "64.0"; pl["Wlev"] = "3"; }, $"{width}x{height} lossy");
+        }
+
+        [Fact]
+        public void ParallelEncode_IsByteIdentical_WhenManyBatchesAreNeeded()
+        {
+            // A batch ends at 4096 blocks or about 2M samples. 4x4 code-blocks in a 700x700 component are about 30,000 blocks, so the
+            // coder pulls, codes and drains several batches per component, and the batch boundaries must not change the output.
+            var comps = MakeComponents(700, 700, 1);
+            AssertSameBytes(comps, 700, 700, pl => { pl["lossless"] = "on"; pl["Cblksiz"] = "4 4"; pl["Wlev"] = "2"; }, "4x4 code-blocks");
+        }
+
+        [Fact]
+        public void ParallelEncode_IsByteIdentical_AcrossManyTilesAndComponents()
+        {
+            // The coder's per-component queues and "source exhausted" flags must reset at every tile.
+            var comps = MakeComponents(480, 330, 3);
+            AssertSameBytes(comps, 480, 330, pl => { pl["lossless"] = "off"; pl["rate"] = "2.0"; pl["tiles"] = "40 40"; }, "many small tiles");
         }
 
         [Fact]
