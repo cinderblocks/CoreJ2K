@@ -635,6 +635,9 @@ namespace CoreJ2K.j2k.entropy.encoder
 
         private PktEncoder.PacketBuffers? serialBuffers;
 
+        /// <summary>Whether <see cref="EmitPacket"/> only records the packets' lengths in the PLT data, in the order they will be written.</summary>
+        private bool recordingPacketOrder;
+
         /// <summary>Whether a pass over every packet is worth spreading over several threads.</summary>
         private bool ShouldBuildPacketsInParallel()
             => parallelDegree >= 2 && GetPacketJobs().Length >= 2 && packetJobBlocks >= (MinParallelBlocksForCurrentThread ?? MinParallelBlocks);
@@ -645,6 +648,18 @@ namespace CoreJ2K.j2k.entropy.encoder
         /// <summary>Called by the progression writers for each packet, in writing order. Either writes it, or queues it.</summary>
         private void EmitPacket(int l, int c, int r, int t, int p, bool sop, bool eph)
         {
+            if (recordingPacketOrder)
+            {
+                // Nothing is written: the packet's simulated length goes into the PLT data, at the place in the tile-part the
+                // progression puts the packet. A position that has no packet is not written later either.
+                if (p < numPrec[t][c][r].x * numPrec[t][c][r].y)
+                {
+                    var size = layerPacketSizes![l][packetJobBase![t][c][r] + p];
+                    if (size != NoPacket) pltData!.AddPacket(t, size);
+                }
+                return;
+            }
+
             if (pendingPackets != null)
             {
                 var first = packetJobBase![t][c][r];
@@ -1206,8 +1221,7 @@ namespace CoreJ2K.j2k.entropy.encoder
                     }
                 }
 
-                // The layer's packets are built in parallel, but their sizes are added up in the order the layer is simulated, since the
-                // PLT markers list them in that order.
+                // The layer's packets are built in parallel, but their sizes are added up in the order the layer is simulated.
                 var jobs = GetPacketJobs();
                 var sizes = new int[jobs.Length];
                 SimulateLayer(l, rdThreshold, sizes);
@@ -1218,18 +1232,33 @@ namespace CoreJ2K.j2k.entropy.encoder
 
                     actualBytes += sizes[j];
                     tileLengths[jobs[j].Tile] += sizes[j];
-
-                    // PLT SUPPORT: Record packet length (header + body)
-                    pltData?.AddPacket(jobs[j].Tile, sizes[j]);
                 }
                 layers[l].rdThreshold = rdThreshold;
                 layers[l].actualBytes = actualBytes;
             } // end loop on layers
 
-            // The tile-part headers measured while building the layers had no PLT marker yet, but the ones written do, and the
-            // tile-part length in SOT (and TLM) must count every byte of the tile-part.
+            // PLT SUPPORT: The PLT markers list the packets of a tile-part in the order they are written, which is the order of the
+            // tile's progression and not the one the layers were simulated in. Walk the progression without writing, to record them.
             if (pltData != null)
             {
+                recordingPacketOrder = true;
+                try
+                {
+                    // The position-based progressions read the geometry of the current tile, which writing a tile-part header sets.
+                    var numTiles = GetNumTiles(null);
+                    for (var t = 0; t < nt; t++)
+                    {
+                        SetTile(t % numTiles.x, t / numTiles.x);
+                        WriteTileProgressions(t);
+                    }
+                }
+                finally
+                {
+                    recordingPacketOrder = false;
+                }
+
+                // The tile-part headers measured while building the layers had no PLT marker yet, but the ones written do, and the
+                // tile-part length in SOT (and TLM) must count every byte of the tile-part.
                 for (var t = 0; t < nt; t++)
                 {
                     tileLengths[t] += HeaderEncoder.GetPLTLength(pltData, t);
@@ -1259,6 +1288,83 @@ namespace CoreJ2K.j2k.entropy.encoder
         /// <summary>The lengths of the packets of each tile, found by <see cref="BuildLayers"/> when PLT markers are written.</summary>
         private codestream.metadata.PacketLengthsData? pltData;
 
+        /// <summary>
+        /// Walks the packets of a tile in the order of its progression(s), handing each to <see cref="EmitPacket"/>: written, queued to be
+        /// built in parallel and written, or only recorded, according to the state the allocator is in.
+        /// </summary>
+        private void WriteTileProgressions(int t)
+        {
+            var nc = src.NumComps;
+            Progression[] prog; // Progression(s) in each tile
+            int cs, ce, rs, re, lye;
+
+            var mrlc = new int[nc];
+            //int[][] lysA; // layer index start for each component and
+            // resolution level
+            var lys = new int[nc][];
+            for (var c = 0; c < nc; c++)
+            {
+                mrlc[c] = src.GetAnSubbandTree(t, c).resLvl;
+                lys[c] = new int[mrlc[c] + 1];
+            }
+
+            prog = (Progression[])encSpec.pocs.GetTileDef(t);
+
+            foreach (var p in prog)
+            {
+                // Loop on progression
+                lye = p.lye;
+                cs = p.cs;
+                ce = p.ce;
+                rs = p.rs;
+                re = p.re;
+
+                switch (p.type)
+                {
+
+                    case ProgressionType.RES_LY_COMP_POS_PROG:
+                        writeResLyCompPos(t, rs, re, cs, ce, lys, lye);
+                        break;
+
+                    case ProgressionType.LY_RES_COMP_POS_PROG:
+                        writeLyResCompPos(t, rs, re, cs, ce, lys, lye);
+                        break;
+
+                    case ProgressionType.POS_COMP_RES_LY_PROG:
+                        writePosCompResLy(t, rs, re, cs, ce, lys, lye);
+                        break;
+
+                    case ProgressionType.COMP_POS_RES_LY_PROG:
+                        writeCompPosResLy(t, rs, re, cs, ce, lys, lye);
+                        break;
+
+                    case ProgressionType.RES_POS_COMP_LY_PROG:
+                        writeResPosCompLy(t, rs, re, cs, ce, lys, lye);
+                        break;
+
+                    default:
+                        throw new InvalidOperationException("Unsupported bit stream progression type");
+
+                } // switch on progression
+
+                // Packets of the progression that were queued to be built in parallel must be written before its layer indices
+                // move on, and before the next tile's header.
+                if (pendingPackets != null)
+                {
+                    WritePendingPackets();
+                }
+
+                // Update next first layer index 
+                for (var c = cs; c < ce; c++)
+                    for (var r = rs; r < re; r++)
+                    {
+                        if (r > mrlc[c])
+                            continue;
+                        lys[c][r] = lye;
+                    }
+            }
+        }
+
         /// <summary> Writes the tiles' tile-part headers and packets to the bit stream, according to their progression orders. The main
         /// header must have been written already.
         /// 
@@ -1285,81 +1391,14 @@ namespace CoreJ2K.j2k.entropy.encoder
             // Reset the packet encoder before writing all packets
             pktEnc.reset();
             pendingPackets = ShouldBuildPacketsInParallel() ? new List<PendingPacket>() : null;
-            Progression[] prog; // Progression(s) in each tile
-            int cs, ce, rs, re, lye;
-
-            var mrlc = new int[nc];
             for (var t = 0; t < nt; t++)
             {
-                //loop on tiles
-                //int[][] lysA; // layer index start for each component and
-                // resolution level
-                var lys = new int[nc][];
-                for (var c = 0; c < nc; c++)
-                {
-                    mrlc[c] = src.GetAnSubbandTree(t, c).resLvl;
-                    lys[c] = new int[mrlc[c] + 1];
-                }
-
                 // Tile header
                 headEnc.reset();
                 headEnc.encodeTilePartHeader(tileLengths[t], t);
                 bsWriter.commitBitstreamHeader(headEnc);
-                prog = (Progression[])encSpec.pocs.GetTileDef(t);
 
-                foreach (var p in prog)
-                {
-                    // Loop on progression
-                    lye = p.lye;
-                    cs = p.cs;
-                    ce = p.ce;
-                    rs = p.rs;
-                    re = p.re;
-
-                    switch (p.type)
-                    {
-
-                        case ProgressionType.RES_LY_COMP_POS_PROG:
-                            writeResLyCompPos(t, rs, re, cs, ce, lys, lye);
-                            break;
-
-                        case ProgressionType.LY_RES_COMP_POS_PROG:
-                            writeLyResCompPos(t, rs, re, cs, ce, lys, lye);
-                            break;
-
-                        case ProgressionType.POS_COMP_RES_LY_PROG:
-                            writePosCompResLy(t, rs, re, cs, ce, lys, lye);
-                            break;
-
-                        case ProgressionType.COMP_POS_RES_LY_PROG:
-                            writeCompPosResLy(t, rs, re, cs, ce, lys, lye);
-                            break;
-
-                        case ProgressionType.RES_POS_COMP_LY_PROG:
-                            writeResPosCompLy(t, rs, re, cs, ce, lys, lye);
-                            break;
-
-                        default:
-                            throw new InvalidOperationException("Unsupported bit stream progression type");
-
-                    } // switch on progression
-
-                    // Packets of the progression that were queued to be built in parallel must be written before its layer indices
-                    // move on, and before the next tile's header.
-                    if (pendingPackets != null)
-                    {
-                        WritePendingPackets();
-                    }
-
-                    // Update next first layer index 
-                    for (var c = cs; c < ce; c++)
-                        for (var r = rs; r < re; r++)
-                        {
-                            if (r > mrlc[c])
-                                continue;
-                            lys[c][r] = lye;
-                        }
-                }
+                WriteTileProgressions(t);
             } // End loop on tiles
 
 #if DO_TIMING

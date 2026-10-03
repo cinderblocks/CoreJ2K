@@ -265,28 +265,41 @@ namespace CoreJ2K.Tests
             return result;
         }
 
-        [Fact]
-        public void PacketLengthMarkers_ListThePacketsAtTheirRealLengths_WhateverTheThreadCount()
-        {
-            // PLT entries are recorded in the order rate allocation simulates packets (layer, component, resolution, precinct), which
-            // is the order they are written in for a layer-progressive stream of one component. Each entry must then equal the length of
-            // the packet it describes, however many threads built the packets.
-            var comps = MakeComponents(260, 200, 1);
-            foreach (var threads in new[] { 1, 4 })
-            {
-                var data = Encode(comps, 260, 200, threads, pl =>
-                {
-                    pl["lossless"] = "off"; pl["rate"] = "2.5"; pl["Alayers"] = "0.1 +4 2.5"; pl["tiles"] = "100 90"; pl["Cpp"] = "64 64";
-                    pl["Hplt"] = "on"; pl["Psop"] = "on"; pl["Peph"] = "on"; pl["Aptype"] = "layer";
-                });
+        public static TheoryData<string, int, int> PacketOrders() => TheoryDataFor(
+            new[] { "layer", "res", "res-pos", "pos-comp", "comp-pos", "res 0 0 2 6 3 res-pos 0 0 5 6 3 pos-comp" }, new[] { 1, 3 }, new[] { 1, 4 });
 
-                var tileParts = ReadTileParts(data);
-                Assert.Equal(9, tileParts.Count);
-                for (var i = 0; i < tileParts.Count; i++)
-                {
-                    Assert.NotEmpty(tileParts[i].Actual);
-                    Assert.True(tileParts[i].Declared.SequenceEqual(tileParts[i].Actual), $"tile-part {i}, {threads} thread(s): PLT lengths differ from the real packet lengths");
-                }
+        private static TheoryData<string, int, int> TheoryDataFor(string[] progressions, int[] components, int[] threads)
+        {
+            var data = new TheoryData<string, int, int>();
+            foreach (var progression in progressions)
+                foreach (var componentCount in components)
+                    foreach (var threadCount in threads)
+                        data.Add(progression, componentCount, threadCount);
+            return data;
+        }
+
+        [Theory]
+        [MemberData(nameof(PacketOrders))]
+        public void PacketLengthMarkers_ListThePacketsInTheOrderTheyAreWritten(string progression, int components, int threads)
+        {
+            // The markers are in front of the packets they describe, so their lengths are worked out before anything is written; they
+            // still have to come in the order the tile's progression writes the packets (which differs from the order rate allocation
+            // simulates them in), so that each entry equals the length of the packet it describes, however many threads built them.
+            var comps = MakeComponents(260, 200, components);
+            var data = Encode(comps, 260, 200, threads, pl =>
+            {
+                pl["lossless"] = "off"; pl["rate"] = "2.5"; pl["Alayers"] = "0.1 +4 2.5"; pl["tiles"] = "100 90"; pl["Cpp"] = "64 64";
+                pl["Hplt"] = "on"; pl["Psop"] = "on"; pl["Peph"] = "on"; pl["Aptype"] = progression;
+            });
+
+            var tileParts = ReadTileParts(data);
+            Assert.Equal(9, tileParts.Count);
+            for (var i = 0; i < tileParts.Count; i++)
+            {
+                Assert.NotEmpty(tileParts[i].Actual);
+                Assert.True(tileParts[i].Declared.SequenceEqual(tileParts[i].Actual),
+                    $"tile-part {i}, '{progression}', {components} component(s), {threads} thread(s): PLT lengths differ from the real packet lengths");
+                Assert.Equal(tileParts[i].Length, tileParts[i].Psot);
             }
         }
 
