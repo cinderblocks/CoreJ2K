@@ -56,12 +56,15 @@ field of its SOT marker) in tile order, which lets a reader find any tile withou
 
 - The lengths are only known once the layers have been built, so the encoder builds the layers before it writes the main header.
 - The marker counts against the rate target: a rate-limited stream has slightly less room for packets with `Htlm` than without. The
-  header used to measure the overhead assumes 32-bit lengths, so a stream can come out up to 2 bytes per tile under its target.
-- Tile indices take one byte for fewer than 256 tiles and two bytes otherwise. Lengths take 16 bits unless a tile-part is longer than
-  65535 bytes, when every entry takes 32 bits.
+  header used to measure the overhead is exactly as long as the final one, because the length fields have a fixed size.
+- Tile indices take one byte for fewer than 256 tiles and two bytes otherwise. Lengths always take 32 bits (as OpenJPEG writes
+  them), which is what lets the marker be measured before the lengths are known. More tile-parts than one marker segment holds (10922
+  with 2-byte tile indices) go into further TLM segments, numbered by Ztlm.
 - `Htlm` is ignored, with a warning, together with `tile_parts` or packed packet headers: those rewrite the tile-parts after the
   codestream is written, which would leave the lengths wrong.
-- The decoder reads TLM markers with the layout above and, when present, finds tiles by their lengths.
+- The decoder reads TLM markers with the layout above, whatever field sizes they use. A header can have several TLM segments, which
+  are read in the order of their Ztlm; when Ttlm is absent (ST = 0) the tile-parts are those of tiles 0, 1, 2, ... in turn. When TLM is
+  present it finds each tile from the lengths, working out every tile's offset once.
 
 ### Key Features
 

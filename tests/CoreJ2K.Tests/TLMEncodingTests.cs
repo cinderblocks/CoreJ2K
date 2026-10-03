@@ -124,9 +124,11 @@ namespace CoreJ2K.Tests
         }
 
         [Fact]
-        public void Htlm_UsesWideLengthsOnlyWhenATilePartNeedsThem()
+        public void Htlm_AlwaysWrites32BitLengths_SoTheMarkerHasAFixedSize()
         {
-            // Ptlm is 16 bits unless some tile-part is longer than 65535 bytes, when every entry becomes 32 bits (Stlm bit 6).
+            // The marker is written once to measure the main header, before any length is known, and again with the lengths; they
+            // have to be the same size, which they only are if Ptlm does not depend on the lengths. So Ptlm is 32 bits (Stlm bit 6)
+            // even when every tile-part is short, as OpenJPEG writes it.
             var small = Encode(MakeComponents(Width, Height, 1), Width, Height, pl => { pl["lossless"] = "on"; pl["tiles"] = "100 90"; pl["Htlm"] = "on"; });
             var big = Encode(MakeComponents(300, 300, 1, noise: true), 300, 300, pl => { pl["lossless"] = "on"; pl["Htlm"] = "on"; });
 
@@ -134,7 +136,7 @@ namespace CoreJ2K.Tests
             var bigTlm = ReadTlm(big)!.Value;
 
             Assert.True(smallTlm.Entries.All(entry => entry.Length <= 65535));
-            Assert.Equal(0, (smallTlm.Stlm >> 6) & 1);
+            Assert.Equal(1, (smallTlm.Stlm >> 6) & 1);
             Assert.Equal(ReadTileParts(small), smallTlm.Entries);
 
             Assert.True(bigTlm.Entries.Single().Length > 65535);
@@ -204,35 +206,32 @@ namespace CoreJ2K.Tests
         [Fact]
         public void TheDecoder_ReadsTheTlmThatWasWritten()
         {
-            // The decoder's own parser, over every combination of field sizes the encoder writes: 16- and 32-bit lengths, with one-
-            // and two-byte tile indices.
+            // The decoder's own parser, over every combination of field sizes the encoder writes: 32-bit lengths with one- and
+            // two-byte tile indices.
             var cases = new (int[][] Comps, int W, int H, string Tiles)[]
             {
-                (MakeComponents(Width, Height, 1), Width, Height, "100 90"),                // Ttlm 1 byte, Ptlm 2 bytes
-                (MakeComponents(300, 300, 1, noise: true), 300, 300, "300 300"),            // Ttlm 1 byte, Ptlm 4 bytes
-                (MakeComponents(400, 400, 1), 400, 400, "20 20"),                           // Ttlm 2 bytes, Ptlm 2 bytes
+                (MakeComponents(Width, Height, 1), Width, Height, "100 90"),                // Ttlm 1 byte
+                (MakeComponents(300, 300, 1, noise: true), 300, 300, "300 300"),            // Ttlm 1 byte, a tile-part over 65535 bytes
+                (MakeComponents(400, 400, 1), 400, 400, "20 20"),                           // Ttlm 2 bytes
             };
 
             foreach (var (comps, w, h, tiles) in cases)
             {
                 var data = Encode(comps, w, h, pl => { pl["lossless"] = "on"; pl["tiles"] = tiles; pl["Htlm"] = "on"; });
 
-                using var stream = new MemoryStream(data);
-                var decoder = new HeaderDecoder(new ISRandomAccessIO(stream), J2kImage.GetDefaultDecoderParameterList(), new HeaderInfo());
-                var tlm = decoder.GetTLMData();
+                var read = ReadWithDecoder(data);
 
-                Assert.NotNull(tlm);
-                var read = tlm!.TilePartEntries.Select(entry => (entry.TileIndex, entry.TilePartLength)).ToList();
-                Assert.True(ReadTileParts(data).SequenceEqual(read), $"{w}x{h} tiles {tiles}: the decoder read different tile-part lengths than the encoder wrote");
+                Assert.NotNull(read);
+                Assert.True(ReadTileParts(data).SequenceEqual(read!), $"{w}x{h} tiles {tiles}: the decoder read different tile-part lengths than the encoder wrote");
             }
         }
 
         public static TheoryData<int, int, string, bool> DecodeCases() => new TheoryData<int, int, string, bool>
         {
             // width, height, tile size, noise: each has a different Ttlm/Ptlm width in the TLM marker
-            { Width, Height, "100 90", false },   // 9 tiles, one-byte tile indices, 16-bit lengths
-            { 400, 400, "20 20", false },         // 400 tiles, two-byte tile indices, 16-bit lengths
-            { 600, 300, "300 300", true },        // 2 tiles of over 65535 bytes each, one-byte tile indices, 32-bit lengths
+            { Width, Height, "100 90", false },   // 9 tiles, one-byte tile indices
+            { 400, 400, "20 20", false },         // 400 tiles, two-byte tile indices
+            { 600, 300, "300 300", true },        // 2 tiles of over 65535 bytes each, one-byte tile indices
         };
 
         [Theory]
@@ -247,6 +246,100 @@ namespace CoreJ2K.Tests
             Assert.Equal(ReadTileParts(data), ReadTlm(data)!.Value.Entries);
             var image = J2kImage.FromBytes(data);
             Assert.True(image.GetComponent(0).Select(v => v - 128).SequenceEqual(comps[0]), $"{width}x{height} tiles {tiles}: the decoded image is not the encoded one");
+        }
+
+        /// <summary>Reads the tile-part lengths the decoder's own parser finds in the main header.</summary>
+        private static List<(int Tile, int Length)>? ReadWithDecoder(byte[] data)
+        {
+            using var stream = new MemoryStream(data);
+            var decoder = new HeaderDecoder(new ISRandomAccessIO(stream), J2kImage.GetDefaultDecoderParameterList(), new HeaderInfo());
+            return decoder.GetTLMData()?.TilePartEntries.Select(entry => (entry.TileIndex, entry.TilePartLength)).ToList();
+        }
+
+        /// <summary>Builds one TLM marker segment with the given Ztlm and field sizes (ST: bytes of Ttlm; SP: 0 for 16-bit, 1 for 32-bit Ptlm).</summary>
+        private static byte[] TlmSegment(int ztlm, int st, int sp, IEnumerable<(int Tile, int Length)> entries)
+        {
+            var body = new List<byte> { (byte)ztlm, (byte)((st << 4) | (sp << 6)) };
+            foreach (var (tile, length) in entries)
+            {
+                if (st == 1) body.Add((byte)tile);
+                if (st == 2) { body.Add((byte)(tile >> 8)); body.Add((byte)tile); }
+                if (sp == 1) { body.Add((byte)(length >> 24)); body.Add((byte)(length >> 16)); }
+                body.Add((byte)(length >> 8)); body.Add((byte)length);
+            }
+            var ltlm = body.Count + 2;
+            return new byte[] { 0xFF, 0x55, (byte)(ltlm >> 8), (byte)ltlm }.Concat(body).ToArray();
+        }
+
+        /// <summary>Replaces the TLM marker segment of the main header with the given segments, which are written as they are.</summary>
+        private static byte[] ReplaceTlm(byte[] data, params byte[][] segments)
+        {
+            var pos = 2;
+            while (U16(data, pos) != 0xFF55) pos += 2 + U16(data, pos + 2);
+            var end = pos + 2 + U16(data, pos + 2);
+            return data.Take(pos).Concat(segments.SelectMany(segment => segment)).Concat(data.Skip(end)).ToArray();
+        }
+
+        [Fact]
+        public void TheDecoder_ReadsTlmMarkersOfEveryLayout()
+        {
+            // The encoder writes one layout; other encoders write others, and a header can carry several TLM segments, in any order
+            // (Ztlm says which comes first). The same codestream is given each layout in turn and read by the decoder, which must find
+            // the tile-part lengths and still decode the image.
+            var comps = MakeComponents(Width, Height, 1);
+            var original = Encode(comps, Width, Height, pl => { pl["lossless"] = "on"; pl["tiles"] = "100 90"; pl["Htlm"] = "on"; });
+            var parts = ReadTileParts(original);
+            Assert.Equal(9, parts.Count);
+
+            var layouts = new (string Name, byte[][] Segments)[]
+            {
+                ("16-bit lengths, 1-byte tile indices", new[] { TlmSegment(0, 1, 0, parts) }),
+                ("32-bit lengths, 2-byte tile indices", new[] { TlmSegment(0, 2, 1, parts) }),
+                ("two segments, the second first", new[] { TlmSegment(1, 1, 1, parts.Skip(5)), TlmSegment(0, 1, 1, parts.Take(5)) }),
+                ("two segments splitting a tile's neighbours", new[] { TlmSegment(0, 1, 0, parts.Take(4)), TlmSegment(1, 1, 0, parts.Skip(4)) }),
+                ("no tile indices, 16-bit lengths", new[] { TlmSegment(0, 0, 0, parts) }),
+                ("no tile indices, 32-bit lengths, two segments", new[] { TlmSegment(0, 0, 1, parts.Take(4)), TlmSegment(1, 0, 1, parts.Skip(4)) }),
+            };
+
+            foreach (var (name, segments) in layouts)
+            {
+                var data = ReplaceTlm(original, segments);
+
+                var read = ReadWithDecoder(data);
+                Assert.NotNull(read);
+                Assert.True(parts.SequenceEqual(read!), $"{name}: the decoder read different tile-part lengths than the stream holds");
+
+                var image = J2kImage.FromBytes(data);
+                Assert.True(image.GetComponent(0).Select(v => v - 128).SequenceEqual(comps[0]), $"{name}: the stream does not decode to the encoded image");
+            }
+        }
+
+        [Fact]
+        public void Htlm_UsesSeveralMarkers_ForMoreTileParts_ThanOneMarkerHolds()
+        {
+            // A TLM segment is at most 65535 bytes; with 2-byte tile indices and 32-bit lengths that is 10922 entries. 11000 tiles need a
+            // second segment, which the decoder has to read as the continuation of the first. (Finding tile 10999 from the TLM lengths
+            // must not take time that grows with the cube of the number of tiles.)
+            const int width = 880, height = 800;
+            var comps = MakeComponents(width, height, 1);
+            var data = Encode(comps, width, height, pl => { pl["lossless"] = "on"; pl["tiles"] = "8 8"; pl["Htlm"] = "on"; });
+
+            var ztlms = new List<int>();
+            for (var pos = 2; U16(data, pos) != 0xFF90; pos += 2 + U16(data, pos + 2))
+            {
+                if (U16(data, pos) != 0xFF55) continue;
+                ztlms.Add(data[pos + 4]);
+                Assert.True(U16(data, pos + 2) <= 65535);
+            }
+            Assert.Equal(new[] { 0, 1 }, ztlms);
+
+            var parts = ReadTileParts(data);
+            Assert.Equal(11000, parts.Count);
+            Assert.Equal(parts, ReadTlm(data)!.Value.Entries);
+            Assert.True(parts.SequenceEqual(ReadWithDecoder(data)!), "the decoder read different tile-part lengths than the stream holds");
+
+            var image = J2kImage.FromBytes(data);
+            Assert.True(image.GetComponent(0).Select(v => v - 128).SequenceEqual(comps[0]), "the stream does not decode to the encoded image");
         }
 
         [Fact]
@@ -281,8 +374,8 @@ namespace CoreJ2K.Tests
         public void TheTlmMarkerIsCountedInTheRateTarget()
         {
             // The marker is part of the main header, so a rate-limited stream with it has less room for packets instead of coming out
-            // longer than one without it. The header used to measure the overhead can be a couple of bytes per tile longer than the final
-            // one (it assumes 32-bit lengths), but not shorter.
+            // longer than one without it. The header used to measure the overhead is exactly as long as the final one, so the two
+            // streams are within the few bytes a packet's size can move the cut.
             var comps = MakeComponents(Width, Height, 3);
             byte[] Lossy(bool tlm) => Encode(comps, Width, Height, pl =>
             {
@@ -293,7 +386,7 @@ namespace CoreJ2K.Tests
             var with = Lossy(true);
             var without = Lossy(false);
             Assert.True(with.Length <= without.Length, $"the stream with TLM is {with.Length} bytes, longer than {without.Length} without");
-            Assert.True(without.Length - with.Length <= 2 * 9 + 16, $"the stream with TLM is {with.Length} bytes, {without.Length - with.Length} fewer than without");
+            Assert.True(without.Length - with.Length <= 16, $"the stream with TLM is {with.Length} bytes, {without.Length - with.Length} fewer than without");
         }
 
         [Fact]

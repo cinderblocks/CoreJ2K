@@ -217,20 +217,38 @@ namespace CoreJ2K.j2k.codestream.reader
                 return -1; // TLM not available, use slow path
             }
 
-            if (tileIdx < 0 || tileIdx > tlmData.MaxTileIndex)
+            // Calculate offset: main header + sum of all previous tiles. Every tile's offset comes from one pass over the entries, the
+            // first time one is needed; asking the data for each previous tile's length for every tile would take time that grows with
+            // the cube of the number of tiles.
+            tlmTileOffsets ??= BuildTlmTileOffsets(tlmData);
+
+            if (tileIdx < 0 || tileIdx >= tlmTileOffsets.Length)
             {
                 return -1; // Invalid tile index
             }
 
-            // Calculate offset: main header + sum of all previous tiles
-            long offset = mainHeadLen;
+            return tlmTileOffsets[tileIdx];
+        }
 
-            for (var t = 0; t < tileIdx; t++)
+        /// <summary>The offset of each tile from the start of the codestream, found from the TLM data; null until needed.</summary>
+        private long[]? tlmTileOffsets;
+
+        private long[] BuildTlmTileOffsets(codestream.metadata.TilePartLengthsData tlmData)
+        {
+            var lengths = new long[tlmData.MaxTileIndex + 1];
+            foreach (var entry in tlmData.TilePartEntries)
             {
-                offset += tlmData.GetTotalTileLength(t);
+                lengths[entry.TileIndex] += entry.TilePartLength;
             }
 
-            return offset;
+            var offsets = new long[lengths.Length];
+            var offset = (long)mainHeadLen;
+            for (var t = 0; t < lengths.Length; t++)
+            {
+                offsets[t] = offset;
+                offset += lengths[t];
+            }
+            return offsets;
         }
 
         /// <summary>

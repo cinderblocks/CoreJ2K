@@ -19,7 +19,9 @@ namespace CoreJ2K.j2k.codestream.writer
         /// </summary>
         /// <param name="writer">The BinaryWriter to write to</param>
         /// <param name="tlm">The tile-part length data to write</param>
-        public static void WriteTLM(BinaryWriter writer, metadata.TilePartLengthsData tlm)
+        /// <param name="wideLengths">Always write 32-bit tile-part lengths (Ptlm). Otherwise they are 16 bits when every tile-part is
+        /// shorter than 65536 bytes, which makes the marker's size depend on the lengths.</param>
+        public static void WriteTLM(BinaryWriter writer, metadata.TilePartLengthsData tlm, bool wideLengths = false)
         {
             if (writer == null)
                 throw new ArgumentNullException(nameof(writer));
@@ -47,7 +49,7 @@ namespace CoreJ2K.j2k.codestream.writer
                     ttlmSize = 2;
                 
                 // Determine Ptlm size (2 or 4 bytes)
-                int ptlmSize = (maxLength <= 65535) ? 2 : 4;
+                int ptlmSize = (!wideLengths && maxLength <= 65535) ? 2 : 4;
                 
                 // Calculate Stlm field (ISO/IEC 15444-1, A.7.1)
                 // Bits 4-5 (ST): Ttlm size (00=0, 01=1 byte, 10=2 bytes)
@@ -69,6 +71,9 @@ namespace CoreJ2K.j2k.codestream.writer
                     int entriesInThisMarker = System.Math.Min(maxEntries, totalEntries - entryIndex);
                     int ltlm = 4 + (entriesInThisMarker * entrySize);
                     
+                    if (ztlm > 255)
+                        throw new InvalidOperationException("Too many TLM markers required (max 256)");
+
                     // Write TLM marker (big-endian)
                     WriteBigEndianShort(writer, Markers.TLM);
                     

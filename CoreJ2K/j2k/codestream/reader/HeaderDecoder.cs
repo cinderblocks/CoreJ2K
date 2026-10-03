@@ -283,6 +283,9 @@ namespace CoreJ2K.j2k.codestream.reader
         /// <summary>Counts number of PLT marker segments found in the tile-part header </summary>
         private int nPLTMarkSeg = 0;
 
+        /// <summary>Counts number of TLM marker segments found in the main header </summary>
+        private int nTLMMarkSeg = 0;
+
         /// <summary>Counts number of COM markers found in the header </summary>
         private int nCOMMarkSeg = 0;
 
@@ -2081,19 +2084,16 @@ namespace CoreJ2K.j2k.codestream.reader
         /// <param name="ehs">The encoded header stream.
         /// 
         /// </param>
-        /// <returns>TilePartLengthsData containing the parsed TLM information, or null if parsing fails
-        /// 
-        /// </returns>
-        /// <exception cref="IOException">If an I/O error occurs while reading from the
-        /// encoder header stream
-        /// 
-        /// </exception>
-        private codestream.metadata.TilePartLengthsData readTLM(System.IO.BinaryReader ehs)
+        /// <param name="tlm">Receives the tile-part lengths read; a header can have several TLM marker segments, which are read in turn.</param>
+        /// <param name="tileOrdinal">The number of tile-part entries read so far, in all TLM marker segments.</param>
+        /// <param name="currentTileIndex">The tile of the last entry read.</param>
+        /// <param name="tilePartIndex">The number of the next tile-part of that tile.</param>
+        /// <returns>True if the marker segment was valid; false (with a warning) if it was not</returns>
+        private bool readTLM(System.IO.BinaryReader ehs, codestream.metadata.TilePartLengthsData tlm, ref int tileOrdinal,
+            ref int currentTileIndex, ref int tilePartIndex)
         {
             try
             {
-                var tlm = new codestream.metadata.TilePartLengthsData();
-                
                 // Ltlm (marker segment length)
                 int ltlm = ehs.ReadUInt16();
                 int dataLength = ltlm - 2; // Remaining bytes after Ltlm
@@ -2119,24 +2119,12 @@ namespace CoreJ2K.j2k.codestream.reader
                 {
                     FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING,
                         "Invalid TLM marker: reserved Ttlm size value (3)");
-                    return null;
+                    return false;
                 }
-                
                 
                 // Calculate entry size and number of entries
                 int entrySize = ttlmSize + ptlmSize;
-                if (entrySize == 0)
-                {
-                    FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING,
-                        "Invalid TLM marker: entry size is zero");
-                    return null;
-                }
-                
                 int numEntries = dataLength / entrySize;
-                
-                // Track current tile index for implicit tile indexing
-                int currentTileIndex = 0;
-                int tilePartIndex = 0;
                 
                 // Read tile-part entries
                 for (int i = 0; i < numEntries; i++)
@@ -2146,30 +2134,27 @@ namespace CoreJ2K.j2k.codestream.reader
                     // Read Ttlm (tile index) - size depends on ttlmSize
                     if (ttlmSize == 0)
                     {
-                        // Implicit: tiles in sequential order
-                        tileIndex = currentTileIndex;
+                        // Absent: the tile-parts are those of tiles 0, 1, 2, ... in turn, one for each, so the tile is the entry's
+                        // position among all the entries of all the TLM marker segments.
+                        tileIndex = tileOrdinal;
                     }
                     else if (ttlmSize == 1)
                     {
                         // 1 byte tile index
                         tileIndex = ehs.ReadByte();
-                        if (tileIndex != currentTileIndex)
-                        {
-                            // New tile, reset part index
-                            tilePartIndex = 0;
-                            currentTileIndex = tileIndex;
-                        }
                     }
                     else // ttlmSize == 2
                     {
                         // 2 byte tile index
                         tileIndex = ehs.ReadUInt16();
-                        if (tileIndex != currentTileIndex)
-                        {
-                            // New tile, reset part index
-                            tilePartIndex = 0;
-                            currentTileIndex = tileIndex;
-                        }
+                    }
+
+                    // The tile-part number counts the tile-parts of one tile in the order they are listed; it starts again at 0 for the
+                    // next tile, which may be listed in a later TLM marker segment.
+                    if (tileIndex != currentTileIndex)
+                    {
+                        tilePartIndex = 0;
+                        currentTileIndex = tileIndex;
                     }
                     
                     // Read Ptlm (tile-part length)
@@ -2187,37 +2172,23 @@ namespace CoreJ2K.j2k.codestream.reader
                     
                     // Add to TLM data
                     tlm.AddTilePart(tileIndex, tilePartIndex, tilePartLength);
-                    
-                    // Increment part index
-                    if (ttlmSize == 0)
-                    {
-                        // For implicit tiles, increment both indices
-                        tilePartIndex++;
-                        if (tilePartLength == 0)
-                        {
-                            // End of current tile, move to next
-                            currentTileIndex++;
-                            tilePartIndex = 0;
-                        }
-                    }
-                    else
-                    {
-                        tilePartIndex++;
-                    }
+                    tilePartIndex++;
+                    tileOrdinal++;
                 }
                 
                 FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.INFO,
                     $"TLM marker parsed: {numEntries} tile-part entries (Ztlm={ztlm})");
                 
-                return tlm;
+                return true;
             }
             catch (Exception e)
             {
                 FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING,
                     $"Error parsing TLM marker: {e.Message}");
-                return null;
+                return false;
             }
         }
+
         /// <summary> Reads PLM marker segment and realigns the codestream where the next
         /// marker should be found. Informations stored in these fields are
         /// currently not taken into account.
@@ -2570,12 +2541,9 @@ namespace CoreJ2K.j2k.codestream.reader
                     break;
 
                 case Markers.TLM:
-                    if ((nfMarkSeg & TLM_FOUND) != 0)
-                    {
-                        throw new CorruptedCodestreamException("More than one TLM " + "marker " + "found in main header");
-                    }
+                    // Several TLM marker segments are allowed, indexed by their Ztlm: one holds only so many tile-parts.
                     nfMarkSeg |= TLM_FOUND;
-                    htKey = "TLM";
+                    htKey = $"TLM{(nTLMMarkSeg++)}";
                     break;
 
                 case Markers.PLM:
@@ -2877,8 +2845,19 @@ namespace CoreJ2K.j2k.codestream.reader
             // TLM marker segment
             if ((nfMarkSeg & TLM_FOUND) != 0)
             {
-                bais = new System.IO.MemoryStream(ht["TLM"]);
-                hi.tlmValue = readTLM(new Util.EndianBinaryReader(bais, true));
+                // The marker segments are read in the order of their Ztlm (the third byte of a segment, after Ltlm).
+                var order = System.Linq.Enumerable.ToList(System.Linq.Enumerable.OrderBy(System.Linq.Enumerable.Range(0, nTLMMarkSeg),
+                    i => ht[$"TLM{i}"].Length > 2 ? ht[$"TLM{i}"][2] : 0));
+
+                var tlm = new codestream.metadata.TilePartLengthsData();
+                int tileOrdinal = 0, currentTileIndex = -1, tilePartIndex = 0;
+                var valid = true;
+                foreach (var i in order)
+                {
+                    bais = new System.IO.MemoryStream(ht[$"TLM{i}"]);
+                    valid &= readTLM(new Util.EndianBinaryReader(bais, true), tlm, ref tileOrdinal, ref currentTileIndex, ref tilePartIndex);
+                }
+                hi.tlmValue = valid ? tlm : null;
             }
 
             // COM marker segments

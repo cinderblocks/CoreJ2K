@@ -378,7 +378,9 @@ namespace CoreJ2K.j2k.codestream.writer
         /// </param>
         protected internal virtual void writeTLM(CoreJ2K.j2k.codestream.metadata.TilePartLengthsData tlm)
         {
-            TLMMarkerWriter.WriteTLM(hbuf, tlm);
+            // 32-bit lengths whatever the lengths are, as OpenJPEG writes them: the marker is written once to measure the header before
+            // any length is known, and its size must not change when the lengths are filled in.
+            TLMMarkerWriter.WriteTLM(hbuf, tlm, wideLengths: true);
         }
 
         /// <summary> Writes PLM marker segment(s) in the main header.
@@ -439,8 +441,8 @@ namespace CoreJ2K.j2k.codestream.writer
             => plt.GetPacketCount(tileIdx) > 0 ? PLTMarkerWriter.WritePLT(System.IO.Stream.Null, plt, tileIdx, 0) : 0;
 
         /// <summary>
-        /// Creates TLM data with one tile-part per tile and a length that needs the widest length field, which makes a TLM marker at
-        /// least as long as the final one will be.
+        /// Creates TLM data with one tile-part per tile, which makes a TLM marker exactly as long as the final one will be (its length
+        /// fields have a fixed size, see <see cref="writeTLM"/>).
         /// </summary>
         private metadata.TilePartLengthsData CreateTLMSizingData()
         {
@@ -448,7 +450,7 @@ namespace CoreJ2K.j2k.codestream.writer
             var sizing = new metadata.TilePartLengthsData();
             for (var t = 0; t < numTiles.x * numTiles.y; t++)
             {
-                sizing.AddTilePart(t, 0, int.MaxValue);
+                sizing.AddTilePart(t, 0, 0);
             }
             return sizing;
         }
@@ -660,7 +662,7 @@ namespace CoreJ2K.j2k.codestream.writer
             if (useTLM)
             {
                 // The lengths are only known once the layers are built. The header written to measure its size has to be as long as
-                // the final one, so it carries entries of the right number and the widest length field instead.
+                // the final one, so it carries entries of the right number, with lengths to be filled in.
                 writeTLM(tlmData != null && tlmData.HasTilePartLengths ? tlmData : CreateTLMSizingData());
             }
 

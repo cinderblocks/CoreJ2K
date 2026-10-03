@@ -153,6 +153,37 @@ namespace CoreJ2K.Tests
         }
         
         [Fact]
+        public void TLMMarkerWriter_WideLengths_Uses32BitLengthEvenForSmallTileParts()
+        {
+            // The encoder writes the marker once to measure the header and again with the lengths, so its size must not depend on them.
+            var tlm = new TilePartLengthsData();
+            tlm.AddTilePart(0, 0, 30000);
+            tlm.AddTilePart(1, 0, 40000);
+
+            byte[] Write(bool wide)
+            {
+                var ms = new MemoryStream();
+                TLMMarkerWriter.WriteTLM(new BinaryWriter(ms), tlm, wide);
+                return ms.ToArray();
+            }
+
+            var narrow = Write(false);
+            var wide = Write(true);
+
+            Assert.Equal(0, (narrow[5] >> 6) & 1);
+            Assert.Equal(1, (wide[5] >> 6) & 1);
+            Assert.Equal(narrow.Length + 2 * 2, wide.Length); // two more bytes for each of the two entries
+
+            // Same size whatever the lengths: this is what the encoder relies on.
+            var other = new TilePartLengthsData();
+            other.AddTilePart(0, 0, 0);
+            other.AddTilePart(1, 0, 0);
+            var ms2 = new MemoryStream();
+            TLMMarkerWriter.WriteTLM(new BinaryWriter(ms2), other, true);
+            Assert.Equal(wide.Length, ms2.Length);
+        }
+
+        [Fact]
         public void TLMMarkerWriter_LargeTileParts_Uses32BitLength()
         {
             // Arrange
