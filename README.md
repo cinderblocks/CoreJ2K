@@ -183,50 +183,12 @@ SKBitmap bitmap3 = J2kImage.DecodeFileToImage<SKBitmap>("image.jp2");
 | `DecodeToImage<T>` | ~1 B/sample | Display / encode pipeline |
 | `FromStream().As<T>()` | ~5 B/sample | Sample inspection / editing |
 
-#### Fast Random Tile Access (with TLM markers)
+#### Tile Access with TLM Markers
 
-```csharp
-// For large tiled images with TLM markers
-var image = J2kImage.FromStream(File.OpenRead("large_tiled.jp2"));
+If a codestream has a TLM (tile-part lengths) marker, the decoder uses it to locate each tile without reading the packets of the tiles
+before it. Nothing needs to be enabled for decoding; it applies to streams from CoreJ2K and from other encoders. To write one, see
+[Encoding with TLM and PLT markers](#encoding-with-tlm-and-plt-markers).
 
-// Check if fast tile access is available
-if (decoder.SupportsFastTileAccess())
-{
-    Console.WriteLine("✓ TLM markers present - instant tile access!");
-    
-    // Jump directly to tile 500 (out of 1000) - O(1) operation!
-    bool usedFast = decoder.SeekToTile(500); // Instant!
-    
-    // Or access by coordinates
-    decoder.SetTile(x, y); // Also uses TLM fast path internally
-}
-else
-{
-    Console.WriteLine("⚠ No TLM - sequential access only");
-
-    // Falls back to O(n) sequential parsing
-    decoder.SetTile(x, y); // Must parse all previous tiles
-}
-
-// Performance improvements with TLM:
-// - Access tile 100 (of 1000): 1000x faster
-// - GIS map server: ~30s → ~0.03s
-// - Medical imaging: ~30s → ~0.05s
-```
-
-**Creating images with TLM markers:**
-
-```csharp
-// Enable TLM markers for fast random access
-var config = new CompleteEncoderConfigurationBuilder()
-    .ForGeospatial()  // Or any preset
-    .WithTiles(t => t.SetSize(512, 512))
-    .WithPointerMarkers(p => p.UseTLM(true))  // Enable TLM!
-    .Build();
-
-byte[] data = J2kImage.ToBytes(bitmap, config);
-// Decoder can now seek to any tile instantly!
-```
 ### Basic Encoding
 ```csharp
 // Default (high quality)
@@ -422,7 +384,7 @@ Common encoder parameters (case-sensitive):
 - **ParameterList**: Optional encoding parameters. Use indexer to set: `params["key"] = "value"`
 - **Image Sources**: Accepts SKBitmap, Bitmap, Image, or codec-specific formats (PGM/PPM/PGX streams)
 - **Thread Safety**: Independent decode and encode calls can run concurrently on separate threads.
-- **Parallel Decoding**: Code-block decoding and the inverse wavelet transform use up to all cores by default (about 4x faster on 8 cores for lossless, 3x for lossy), with bit-identical output. Tune with `WithMaxDegreeOfParallelism(n)` or `J2kImage.DefaultMaxDegreeOfParallelism`. Encoding is parallel too (code-block coding and the forward wavelet transform): about 4x faster on 8 cores, again with identical output.
+- **Parallel Decoding**: Code-block decoding and the inverse wavelet transform use up to all cores by default (about 4x faster on 8 cores for lossless, 3x for lossy), with bit-identical output. Tune with `WithMaxDegreeOfParallelism(n)` or `J2kImage.DefaultMaxDegreeOfParallelism`. Encoding is parallel too (code-block coding, the forward wavelet transform, rate allocation and packet writing): about 4x faster on 8 cores, again with identical output.
 - **Cancellation**: Decodes and encodes observe a `CancellationToken` and stop within milliseconds with `OperationCanceledException`, including the `*Async` methods. Pass a token to `FromBytes`/`DecodeBytes`/`DecodeToImage<T>`/`ToBytes`/`WriteTo`, or set it with `J2KDecoderConfiguration.WithCancellationToken` / `J2KEncoderConfiguration.WithCancellationToken`.
 - **Decode Limits**: A decode is rejected with `DecoderLimitException` before any image-sized allocation if it would exceed the default 1 Gpixel / 2 GiB limits (at the requested resolution). Use `DecoderLimits.Strict` for untrusted input or `DecoderLimits.None` to opt out. See the [decoder guide](docs/DECODER_CONFIGURATION_GUIDE.md#8-resource-limits).
 
@@ -441,52 +403,31 @@ Two defaults changed. Each is one line to revert.
   `J2kImage.DefaultMaxDegreeOfParallelism = 1;` once at start-up to opt out of both, or pass `WithMaxDegreeOfParallelism(1)` to a
   single call.
 
-### Fast Random Tile Access (TLM Markers)
+Streams written with PLT (`Hplt`) or TLM (`Htlm`) markers are different from 2.3.x: tile-part lengths now include the PLT marker, PLT
+markers list every packet in the order it is written, and `Htlm` now writes a TLM marker. Streams written without those options are
+byte-identical to 2.3.x. See the [changelog](CHANGELOG.md) for everything in this release.
 
-**NEW in CoreJ2K**: Support for TLM (Tile-part Lengths) markers enables **O(1) random tile access** instead of O(n) sequential parsing. This provides **100-1000x performance improvements** for:
+### Encoding with TLM and PLT Markers
 
-- **GIS/Map Servers**: Sub-second tile delivery (~30s → ~0.03s)
-- **Medical Imaging**: Interactive whole-slide image viewing (~30s → ~0.05s)
-- **Satellite Imagery**: Efficient ROI extraction
-- **Parallel Processing**: Callers can decode different tiles concurrently on their own threads; each decode also parallelizes its code-blocks
-
-#### Encoding with TLM
+TLM (tile-part lengths, in the main header) and PLT (packet lengths, in each tile-part header) markers let a reader find a tile, or a
+packet within it, without parsing everything before it. They are off by default. Turn them on with encoder parameters:
 
 ```csharp
-// Create tiled image with TLM markers
-var config = new CompleteEncoderConfigurationBuilder()
-    .WithTiles(t => t.SetSize(512, 512))
-    .WithPointerMarkers(p => p.UseTLM(true))  // Enable TLM
-    .Build();
-
-byte[] data = J2kImage.ToBytes(image, config);
+var pl = new ParameterList
+{
+    ["tiles"] = "512 512",
+    ["Htlm"] = "on",   // TLM marker in the main header
+    ["Hplt"] = "on",   // PLT markers in the tile-part headers
+};
+byte[] data = J2kImage.ToBytes(image, pl);
 ```
 
-#### Decoding with Fast Access
-
-```csharp
-var decoder = CreateDecoder(stream);
-
-// Check TLM availability
-if (decoder.SupportsFastTileAccess())
-{
-    // O(1) fast path - instant seeking
-    decoder.SeekToTile(500);  // Jump directly to tile 500
-}
-else
-{
-    // O(n) sequential fallback
-    decoder.SetTile(x, y);    // Parse all previous tiles
-}
-```
-
-**Performance Impact:**
-
-| Operation | Without TLM | With TLM | Speed-up |
-|-----------|-------------|----------|----------|
-| Access tile 100 (of 1000) | 1000ms | 1ms | **1000x** |
-| Access tile 1000 (of 10K) | 30s | 1ms | **30,000x** |
-| Decode 10 random tiles | 30s | 0.1s | **300x** |
+- The decoder reads both and uses TLM to find tiles. Other decoders can use them too; OpenJPEG reads CoreJ2K's streams with both.
+- TLM lists one tile-part per tile, with 32-bit lengths. The marker counts against a rate target. PLT markers do not, so a rate-limited
+  stream written with `Hplt` comes out a little over its target.
+- `Htlm` is ignored, with a warning, together with `tile_parts` or packed packet headers (`pph_main`, `pph_tile`), which rewrite the
+  tile-parts after they are written.
+- `Hppm` and `Hppt` are accepted but have no effect; use `pph_main` and `pph_tile`.
 
 [↑ Back to top](#corej2k)
 
@@ -508,8 +449,8 @@ else
 | **ROI Encoding** | ✅ Complete | Max-shift method, arbitrary shapes |
 | **Progression Orders** | ✅ All 5 | LRCP, RLCP, RPCL, PCRL, CPRL |
 | **Error Resilience** | ✅ Complete | SOP/EPH markers, segmentation symbols |
-| **Pointer Markers** | ✅ Full R/W | PPM, PPT, PLM, PLT, TLM (read and write) |
-| **TLM Fast Access** | ✅ **NEW!** | O(1) random tile seeking • 100-1000x speed-up |
+| **Pointer Markers** | ✅ | PPM and PPT (`pph_main`, `pph_tile`), PLT (`Hplt`) and TLM (`Htlm`) read and written; PLM read only |
+| **TLM Tile Access** | ✅ | Tiles located from TLM tile-part lengths |
 | **Extended Length** | ✅ Complete | XLBox support for files >4GB |
 | **ICC Profiles** | ✅ Complete | Full color management support |
 | **Metadata** | ✅ Complete | XML, UUID, resolution, channels, Part 14 JPXML |
