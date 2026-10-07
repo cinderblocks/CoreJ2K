@@ -1228,6 +1228,7 @@ namespace CoreJ2K
             {
                 throw new ArgumentException($"Invalid value in 'rate' option: {pl.GetParameter("rate")}");
             }
+            var maxBytes = ParseMaxBytes(pl, defpl);
             int pktspertp;
             try
             {
@@ -1550,6 +1551,32 @@ namespace CoreJ2K
                     throw new InvalidOperationException($"Could not open output stream for writing: {e.Message}", e);
                 }
 
+                // The reader requirements box that Part 2 features need is written with the file format, so it takes part in the
+                // size of the wrapper whenever that is measured.
+                var isJpx = hasNlt || hasMct || hasDco || hasAtk
+                            || (metadata?.HasJpxBoxes ?? false)
+                            || (metadata?.UseJpxBrand ?? false);
+                if (useFileFormat && isJpx)
+                {
+                    metadata ??= new j2k.fileformat.metadata.J2KMetadata();
+                    metadata.ReaderRequirements ??= j2k.fileformat.metadata.ReaderRequirementsBox.BuildForJpx(hasMct, hasNlt, hasDco, hasAtk);
+                }
+
+                // With a hard limit, the codestream may use what the limit leaves after the file format wrapper.
+                var wrapperBytes = 0;
+                int? codestreamLimit = null;
+                if (maxBytes.HasValue)
+                {
+                    wrapperBytes = useFileFormat ? MeasureFileFormatBytes(imgsrc, metadata) : 0;
+                    codestreamLimit = maxBytes.Value - wrapperBytes;
+                    if (codestreamLimit.Value <= 0)
+                    {
+                        throw new ArgumentException(
+                            $"The limit of {maxBytes.Value} bytes cannot hold the {wrapperBytes} bytes of the file format wrapper.");
+                    }
+                    rate = codestreamLimit.Value * 8f / ((float)imgsrc.ImgWidth * imgsrc.ImgHeight);
+                }
+
                 // **** Rate allocator ****
                 PostCompRateAllocator ralloc;
                 try
@@ -1614,6 +1641,7 @@ namespace CoreJ2K
                 if (ralloc is EBCOTRateAllocator packetBuilder)
                 {
                     packetBuilder.SetMaxDegreeOfParallelism(encodeThreads);
+                    if (codestreamLimit.HasValue) packetBuilder.SetCodestreamByteLimit(codestreamLimit.Value);
                 }
 
                 // **** Write header to be able to estimate header overhead ****
@@ -1690,17 +1718,6 @@ namespace CoreJ2K
                 // **** File Format ****
                 if (useFileFormat)
                 {
-                    // Auto-generate Reader Requirements for JPX output when Part 2 features are active.
-                    // The rreq box is required in every conformant JPX file (ISO/IEC 15444-2 §M.9.2).
-                    var isJpx = hasNlt || hasMct || hasDco || hasAtk
-                                || (metadata?.HasJpxBoxes ?? false)
-                                || (metadata?.UseJpxBrand ?? false);
-                    if (isJpx)
-                    {
-                        metadata ??= new j2k.fileformat.metadata.J2KMetadata();
-                        metadata.ReaderRequirements ??= j2k.fileformat.metadata.ReaderRequirementsBox.BuildForJpx(hasMct, hasNlt, hasDco, hasAtk);
-                    }
-
                     try
                     {
                         var nc = imgsrc.NumComps;
@@ -1736,6 +1753,13 @@ namespace CoreJ2K
                 // **** Close image readers ***
                 cancellationToken.ThrowIfCancellationRequested();
                 imgsrc.Close();
+
+                if (maxBytes.HasValue && outStream.Length > maxBytes.Value)
+                {
+                    // The allocator keeps to the limit by construction; this is the check that nothing sized later pushed it over.
+                    throw new InvalidOperationException(
+                        $"The encoded output is {outStream.Length} bytes, over the limit of {maxBytes.Value}.");
+                }
 
                 return outStream.ToArray();
             }
@@ -2252,6 +2276,45 @@ namespace CoreJ2K
 
         #endregion
 
+        /// <summary>
+        /// Reads the <c>max_bytes</c> option and checks it against the options it cannot be combined with, and puts the
+        /// single quality layer it needs in place of the default layers.
+        /// </summary>
+        private static int? ParseMaxBytes(ParameterList pl, ParameterList defpl)
+        {
+            var text = pl.GetParameter("max_bytes");
+            if (text == null) return null;
+
+            if (!int.TryParse(text, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out var maxBytes)
+                || maxBytes <= 0)
+            {
+                throw new ArgumentException($"Invalid value in 'max_bytes' option: {text}");
+            }
+            if (pl.GetBooleanParameter("lossless"))
+                throw new ArgumentException("Cannot use 'max_bytes' and 'lossless' at the same time.");
+            if (pl.GetBooleanParameter("Hplt"))
+                throw new ArgumentException("Cannot use 'max_bytes' with PLT markers ('Hplt'): their size is known only after the layers are built.");
+            if (pl.GetIntParameter("tile_parts") != 0 || pl.GetBooleanParameter("pph_tile") || pl.GetBooleanParameter("pph_main"))
+                throw new ArgumentException("Cannot use 'max_bytes' with tile-parts or packed packet headers: they are sized after the layers are built.");
+
+            var layers = pl.GetParameter("Alayers");
+            if (layers != null && layers != defpl.GetParameter("Alayers") && !string.Equals(layers, "sl", StringComparison.OrdinalIgnoreCase))
+                throw new ArgumentException("'max_bytes' needs a single quality layer; do not set 'Alayers' to anything but 'sl'.");
+            pl["Alayers"] = "sl";
+            return maxBytes;
+        }
+
+        /// <summary>The bytes the JP2 file format adds around a codestream, found by writing the wrapper around an empty one.</summary>
+        private static int MeasureFileFormatBytes(BlkImgDataSrc imgsrc, j2k.fileformat.metadata.J2KMetadata? metadata)
+        {
+            var bpc = new int[imgsrc.NumComps];
+            for (var comp = 0; comp < bpc.Length; comp++) bpc[comp] = imgsrc.GetNomRangeBits(comp);
+            using var scratch = new MemoryStream();
+            var writer = new FileFormatWriter(scratch, imgsrc.ImgHeight, imgsrc.ImgWidth, bpc.Length, bpc, 0);
+            if (metadata != null) writer.Metadata = metadata;
+            return writer.writeFileFormat();
+        }
+
         #region Encoder Parameters
 
         private static readonly string?[][] encoder_pinfo =
@@ -2263,6 +2326,16 @@ namespace CoreJ2K
                         + "of code-blocks. 1 keeps everything on the calling thread; 0 or unset uses "
                         + "J2kImage.DefaultMaxDegreeOfParallelism (all processors unless changed). The encoded output "
                         + "is identical for every value.",
+                        null
+                    },
+                new string?[]
+                    {
+                        "max_bytes", "<bytes>",
+                        "Hard limit on the size of the complete output, JP2 boxes included when 'file_format' is on. The encoder "
+                        + "keeps as much of the image as fits and never writes more; if even the headers do not fit it fails. "
+                        + "Replaces 'rate'. Needs a single quality layer (the default 'Alayers' is replaced by 'sl') and "
+                        + "cannot be combined with PLT markers, tile-parts or packed packet headers, because those are sized "
+                        + "after the layers are built.",
                         null
                     },
                 new string?[]

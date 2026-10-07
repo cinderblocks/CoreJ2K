@@ -98,9 +98,10 @@ coding of deep samples, can exceed it.
 
 ## Rate control
 
-ROI changes what the encoder keeps, not how many bytes it writes: `WithBitrate` still limits the codestream, and the ROI takes
-its share first. Note that the bitrate limits the codestream only, not the JP2 boxes around it, and that the default of many
-quality layers adds packet-header overhead; for small byte budgets set `Alayers` to `sl` (one layer) through the parameter list.
+ROI changes what the encoder keeps, not how many bytes it writes: the limit still applies, and the ROI takes its share first.
+`WithBitrate` limits the codestream only, not the JP2 boxes around it, and the default of many quality layers adds
+packet-header overhead. For a firm byte budget use `WithMaxBytes(n)`, which limits the complete output, JP2 boxes included, and
+uses a single quality layer (see the encoder configuration guide).
 
 ## Validation
 

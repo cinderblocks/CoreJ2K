@@ -563,6 +563,17 @@ namespace CoreJ2K.Configuration
         }
 
         /// <summary>
+        /// Sets a hard limit on the size of the complete output, JP2 boxes included. See <see cref="J2KEncoderConfiguration.WithMaxBytes"/>.
+        /// </summary>
+        /// <param name="maxBytes">The most bytes the output may take.</param>
+        /// <returns>This builder for method chaining.</returns>
+        public CompleteEncoderConfigurationBuilder WithMaxBytes(int maxBytes)
+        {
+            _encoderConfig.WithMaxBytes(maxBytes);
+            return this;
+        }
+
+        /// <summary>
         /// Encodes the given regions of interest with higher priority than the rest of the image.
         /// </summary>
         /// <param name="roiConfig">The ROI configuration.</param>

@@ -25,6 +25,7 @@ namespace CoreJ2K.Configuration
         private EntropyCodingConfiguration _entropyConfig = new EntropyCodingConfiguration();
         private ErrorResilienceConfiguration _resilienceConfig = new ErrorResilienceConfiguration();
         private ROIConfiguration? _roiConfig = null;
+        private int? _maxBytes;
         private System.Threading.CancellationToken _cancellationToken;
         private int _maxDegreeOfParallelism;
         
@@ -82,6 +83,16 @@ namespace CoreJ2K.Configuration
             set => _targetBitrate = value;
         }
         
+        /// <summary>
+        /// Gets or sets the most bytes the complete output may take, or null for no hard limit.
+        /// See <see cref="WithMaxBytes"/>.
+        /// </summary>
+        public int? MaxBytes
+        {
+            get => _maxBytes;
+            set => _maxBytes = value;
+        }
+
         /// <summary>
         /// Gets or sets whether to use lossless compression.
         /// This automatically sets reversible quantization and 5-3 wavelet filter.
@@ -156,6 +167,26 @@ namespace CoreJ2K.Configuration
             return this;
         }
         
+        /// <summary>
+        /// Sets a hard limit on the size of the complete output, in bytes. The encoder keeps as much of the image as fits
+        /// and never writes more: with <see cref="UseFileFormat"/> on, the JP2 boxes (including any metadata) count towards the limit,
+        /// and the encode fails if even the headers do not fit.
+        /// </summary>
+        /// <remarks>
+        /// The limit replaces the target bitrate. It needs a single quality layer, which it sets up, and cannot be combined with
+        /// lossless coding, PLT markers, tile-parts or packed packet headers (those are sized after the layers are built).
+        /// </remarks>
+        /// <param name="maxBytes">The most bytes the output may take; at least 1.</param>
+        /// <returns>This configuration instance for method chaining.</returns>
+        public J2KEncoderConfiguration WithMaxBytes(int maxBytes)
+        {
+            if (maxBytes <= 0)
+                throw new ArgumentOutOfRangeException(nameof(maxBytes), "The byte limit must be positive");
+
+            _maxBytes = maxBytes;
+            return this;
+        }
+
         /// <summary>
         /// Sets the target quality level (0.0 to 1.0).
         /// This is converted to an appropriate bitrate.
@@ -335,6 +366,12 @@ namespace CoreJ2K.Configuration
             // Error resilience
             _resilienceConfig.ApplyTo(pl);
             
+            // Hard size limit (replaces the bitrate)
+            if (_maxBytes.HasValue)
+            {
+                pl["max_bytes"] = _maxBytes.Value.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            }
+
             // Parallelism (unset leaves the process-wide default in effect)
             if (_maxDegreeOfParallelism > 0)
             {
@@ -360,6 +397,14 @@ namespace CoreJ2K.Configuration
                 errors.Add("Cannot specify both lossless mode and a target bitrate");
             }
             
+            if (_maxBytes.HasValue)
+            {
+                if (_maxBytes.Value <= 0)
+                    errors.Add("The byte limit must be positive");
+                if (_lossless)
+                    errors.Add("Cannot specify both lossless mode and a byte limit");
+            }
+
             if (_targetBitrate < -1)
             {
                 errors.Add("Target bitrate must be -1 (unlimited) or positive");

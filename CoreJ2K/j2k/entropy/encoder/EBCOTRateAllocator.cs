@@ -452,6 +452,16 @@ namespace CoreJ2K.j2k.entropy.encoder
 
         private int parallelDegree = 1;
 
+        private int? codestreamByteLimit;
+
+        private const int EocMarkerBytes = 2;
+
+        /// <summary>
+        /// Sets the exact number of bytes the whole codestream may take, in place of the one the overall bitrate works out to.
+        /// </summary>
+        /// <param name="bytes">The limit, headers and EOC marker included.</param>
+        internal void SetCodestreamByteLimit(int bytes) => codestreamByteLimit = bytes;
+
         /// <summary>
         /// Allows packets to be built on up to <paramref name="maxDegreeOfParallelism"/> threads. The packets, and so the codestream,
         /// are identical whatever the degree.
@@ -956,7 +966,9 @@ namespace CoreJ2K.j2k.entropy.encoder
             // Ensure minimum size of last layer (this one determines overall
             // bitrate)
             n = num_Layers - 2;
-            nextbytes = (int)(lyrSpec.TotBitrate * np) - ho;
+            // A byte limit is exact; a bitrate is rounded to whole bytes and can only be that precise.
+            // The EOC marker that ends the codestream comes after the last packet, and is not part of 'ho'.
+            nextbytes = (codestreamByteLimit.HasValue ? codestreamByteLimit.Value - EocMarkerBytes : (int)(lyrSpec.TotBitrate * np)) - ho;
             newbytes = nextbytes - ((n >= 0) ? layers[n].maxBytes : 0);
             while (newbytes < minlsz)
             {
@@ -964,7 +976,9 @@ namespace CoreJ2K.j2k.entropy.encoder
                 {
                     if (newbytes <= 0)
                     {
-                        throw new ArgumentException("Overall target bitrate too low, given the current bit stream header overhead");
+                        throw new ArgumentException(codestreamByteLimit.HasValue
+                            ? "The byte limit is too low, given the current bit stream header overhead"
+                            : "Overall target bitrate too low, given the current bit stream header overhead");
                     }
                     break;
                 }

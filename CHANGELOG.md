@@ -5,6 +5,13 @@ This file starts with 2.4.0. Earlier releases are described on the
 
 ## Unreleased
 
+### Added
+
+- **A hard limit on the complete output**: `J2KEncoderConfiguration.WithMaxBytes(n)` (builder `WithMaxBytes`, parameter `max_bytes`). The JP2
+  boxes, including metadata, count towards `n`; the encoder keeps as much of the image as fits and never writes more, and fails if the headers
+  alone do not fit. A bitrate limits the codestream only; this limits the whole file. It sets up a single quality layer
+  and cannot be combined with lossless coding, PLT markers, tile-parts or packed packet headers.
+
 ### Fixed
 
 - **`WithROI` now takes effect.** `J2KEncoderConfiguration.WithROI` stored the configuration but never passed it to the encoder, so the

@@ -217,7 +217,36 @@ var config = new J2KEncoderConfiguration()
     .WithROI(roiConfig);
 ```
 
-### 10. Cancellation
+### 10. Hard size limit
+
+`WithMaxBytes` limits the size of the **complete output**. With the file format on, the JP2 boxes (and any metadata) count toward the
+limit; the encoder keeps as much of the image as fits and never writes more than the limit.
+
+```csharp
+var config = new J2KEncoderConfiguration()
+    .WithMaxBytes(11820)
+    .WithFileFormat(true);
+
+byte[] jp2 = J2kImage.ToBytes(image, config);   // jp2.Length <= 11820
+```
+
+- The limit replaces the target bitrate. (A bitrate limits the codestream only, in whole bytes of `rate × pixels / 8`, so a JP2 made
+  with one comes out larger than the figure by the size of the boxes.)
+- It uses a single quality layer and sets that up for you. Setting `Alayers` to anything but `sl` is an error.
+- It cannot be combined with lossless coding, PLT markers (`Hplt`), tile-parts or packed packet headers, because those are sized
+  after the layers are built. TLM markers (`Htlm`) are fine.
+- If the limit cannot hold even the headers, the encode throws an `ArgumentException`.
+- Expect the output to fall short of the limit by up to a few hundred bytes: the encoder stops at the last coding pass that fits.
+
+Pair it with ROI to spend a small budget on the part of the image that matters:
+
+```csharp
+var config = new J2KEncoderConfiguration()
+    .WithMaxBytes(12000)
+    .WithROI(new ROIConfiguration().AddRectangle(-1, 100, 100, 240, 320).SetStartLevel(4));
+```
+
+### 11. Cancellation
 
 An encode can be cancelled part-way through. Cancellation is cooperative: the encoder checks the token for every code-block it
 transforms and codes, every packet it writes, every few rows of the wavelet transform, and during the rate-allocation search, so a
@@ -255,7 +284,7 @@ catch (OperationCanceledException)
 If a configuration (or builder) carries a token *and* an async method is given one, cancelling either stops the encode. As with any
 other failure, a cancelled encode leaves the image source open; the encoder only closes it after a successful encode.
 
-### 11. Parallel Encoding
+### 12. Parallel Encoding
 
 Most of an encode is coding code-blocks: the MQ coding passes and rate-distortion statistics for every block, and every block is
 independent. CoreJ2K codes batches of code-blocks on several threads, while a producer thread reads the source and pulls the next
@@ -483,6 +512,7 @@ Main configuration class with fluent API.
 - `WithEntropyCoding(Action<EntropyCodingConfiguration>)` - Configure entropy coding
 - `WithErrorResilience(Action<ErrorResilienceConfiguration>)` - Configure error resilience
 - `WithROI(ROIConfiguration)` - Configure region of interest
+- `WithMaxBytes(int)` - Hard limit on the size of the complete output, JP2 boxes included
 - `WithCancellationToken(CancellationToken)` - Cancels encodes started with this configuration
 - `WithMaxDegreeOfParallelism(int threads)` - Threads used to encode (1 = single-threaded)
 - `Validate()` - Returns list of validation errors
