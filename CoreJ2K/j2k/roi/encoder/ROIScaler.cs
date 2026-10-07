@@ -170,6 +170,7 @@ namespace CoreJ2K.j2k.roi.encoder
                 roiMask = new DataBlkInt();
                 calcMaxMagBits(encSpec);
                 blockAligned = uba;
+                if (!uba) CheckMagnitudeBits(mg.ROIs);
             }
         }
 
@@ -602,7 +603,7 @@ namespace CoreJ2K.j2k.roi.encoder
             {
                 // Scale the wmse so that instead of scaling the coefficients, the
                 // wmse is scaled.
-                cblk.wmseScaling *= 1 << (maxBits << 1);
+                cblk.wmseScaling *= (float)Math.Pow(2, maxBits << 1);
                 cblk.nROIcoeff = w * h;
                 return cblk;
             }
@@ -630,7 +631,7 @@ namespace CoreJ2K.j2k.roi.encoder
                 if (nroicoeff != 0)
                 {
                     // Include the subband
-                    cblk.wmseScaling *= 1 << (maxBits << 1);
+                    cblk.wmseScaling *= (float)Math.Pow(2, maxBits << 1);
                     cblk.nROIcoeff = w * h;
                 }
                 return cblk;
@@ -725,6 +726,33 @@ namespace CoreJ2K.j2k.roi.encoder
         /// <param name="encSpec">The encoder specifications for addition of roi specs
         /// 
         /// </param>
+        /// <summary>
+        /// The most magnitude bits a component can have when the background is shifted down by Maxshift. The shift equals
+        /// the magnitude bit count, and the code-block coder holds at most 31 bit-planes, so twice the count must fit in 31.
+        /// </summary>
+        public const int MaxRoiMagnitudeBits = 15;
+
+        /// <summary>
+        /// Rejects ROI coding that needs more bit-planes than the code-block coder holds. Past that limit the shifted
+        /// coefficients overflow and the codestream decodes to garbage without any error.
+        /// </summary>
+        private void CheckMagnitudeBits(ROI[] rois)
+        {
+            foreach (var roiDesc in rois)
+            {
+                for (var t = 0; t < maxMagBits.Length; t++)
+                {
+                    var bits = maxMagBits[t][roiDesc.comp];
+                    if (bits > MaxRoiMagnitudeBits)
+                    {
+                        throw new ArgumentException(
+                            $"ROI coding with Maxshift supports at most {MaxRoiMagnitudeBits} quantized magnitude bits, but component {roiDesc.comp} " +
+                            $"of tile {t} needs {bits}. Use a larger quantization step (Qstep), a lower-precision source, or block-aligned ROI (Ralign).");
+                    }
+                }
+            }
+        }
+
         private void calcMaxMagBits(EncoderSpecs encSpec)
         {
             int tmp;

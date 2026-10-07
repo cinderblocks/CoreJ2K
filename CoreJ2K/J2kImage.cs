@@ -1776,9 +1776,7 @@ namespace CoreJ2K
             // Convert modern configuration to ParameterList
             var pl = configuration.ToParameterList();
             
-            // Handle ROI if configured
             j2k.fileformat.metadata.J2KMetadata? metadata = null;
-            // Note: ROI is handled through ParameterList in the existing encoding pipeline
             
             return ToBytesCore(imgsrc, metadata, pl, null, null, null, null, configuration.CancellationToken);
         }

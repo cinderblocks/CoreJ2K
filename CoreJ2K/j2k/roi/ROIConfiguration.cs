@@ -176,6 +176,8 @@ namespace CoreJ2K.j2k.roi
             
             foreach (var roi in _rois)
             {
+                if (roi.Component < -1)
+                    errors.Add($"ROI component must be -1 (all components) or a 0-based index (got {roi.Component})");
                 var roiErrors = roi.Validate();
                 errors.AddRange(roiErrors);
             }
@@ -187,6 +189,39 @@ namespace CoreJ2K.j2k.roi
         /// Checks if the configuration is valid.
         /// </summary>
         public bool IsValid => Validate().Count == 0;
+
+        /// <summary>
+        /// Writes this configuration into the encoder parameter list as the <c>Rroi</c>,
+        /// <c>Rstart_level</c>, <c>Ralign</c> and <c>Rno_rect</c> options.
+        /// </summary>
+        /// <param name="pl">The parameter list to write into.</param>
+        internal void ApplyTo(CoreJ2K.j2k.util.ParameterList pl)
+        {
+            if (_rois.Count == 0) return;
+
+            // A component prefix in 'Rroi' stays in force until the next one, so the ROIs for
+            // all components go first (no prefix yet) and the rest follow grouped by component.
+            var words = new List<string>();
+            foreach (var roi in _rois)
+            {
+                if (roi.Component < 0) words.Add(roi.ToRroiString());
+            }
+            for (var c = 0; c < _rois.Count; c++)
+            {
+                var component = _rois[c].Component;
+                if (component < 0 || _rois.FindIndex(r => r.Component == component) != c) continue;
+                words.Add("c" + component.ToString(System.Globalization.CultureInfo.InvariantCulture));
+                foreach (var roi in _rois)
+                {
+                    if (roi.Component == component) words.Add(roi.ToRroiString());
+                }
+            }
+
+            pl["Rroi"] = string.Join(" ", words);
+            pl["Rstart_level"] = StartLevel.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            pl["Ralign"] = BlockAligned ? "on" : "off";
+            pl["Rno_rect"] = ForceGenericMaskGeneration ? "on" : "off";
+        }
     }
     
     /// <summary>
@@ -221,6 +256,11 @@ namespace CoreJ2K.j2k.roi
         /// </summary>
         /// <returns>List of validation error messages</returns>
         public abstract List<string> Validate();
+
+        /// <summary>
+        /// Gets this ROI as it is written in the <c>Rroi</c> encoder option, without a component prefix.
+        /// </summary>
+        internal abstract string ToRroiString();
     }
     
     /// <summary>
@@ -293,6 +333,8 @@ namespace CoreJ2K.j2k.roi
             return errors;
         }
         
+        internal override string ToRroiString() => FormattableString.Invariant($"R {X} {Y} {Width} {Height}");
+
         /// <inheritdoc/>
         public override string ToString()
         {
@@ -349,6 +391,8 @@ namespace CoreJ2K.j2k.roi
             return errors;
         }
         
+        internal override string ToRroiString() => FormattableString.Invariant($"C {CenterX} {CenterY} {Radius}");
+
         /// <inheritdoc/>
         public override string ToString()
         {
@@ -385,12 +429,16 @@ namespace CoreJ2K.j2k.roi
             
             if (string.IsNullOrWhiteSpace(MaskFilePath))
                 errors.Add("Arbitrary ROI mask file path cannot be empty");
+            else if (MaskFilePath.IndexOfAny(new[] { ' ', '\t', '\n', '\r', '\f' }) >= 0)
+                errors.Add($"Arbitrary ROI mask file path cannot contain whitespace: {MaskFilePath}");
             else if (!System.IO.File.Exists(MaskFilePath))
                 errors.Add($"Arbitrary ROI mask file not found: {MaskFilePath}");
                 
             return errors;
         }
         
+        internal override string ToRroiString() => "A " + MaskFilePath;
+
         /// <inheritdoc/>
         public override string ToString()
         {

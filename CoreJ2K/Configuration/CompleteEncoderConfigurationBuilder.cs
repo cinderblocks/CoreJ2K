@@ -563,6 +563,29 @@ namespace CoreJ2K.Configuration
         }
 
         /// <summary>
+        /// Encodes the given regions of interest with higher priority than the rest of the image.
+        /// </summary>
+        /// <param name="roiConfig">The ROI configuration.</param>
+        /// <returns>This builder for method chaining.</returns>
+        public CompleteEncoderConfigurationBuilder WithROI(j2k.roi.ROIConfiguration roiConfig)
+        {
+            _encoderConfig.WithROI(roiConfig);
+            return this;
+        }
+
+        /// <summary>
+        /// Encodes the regions of interest set up by <paramref name="configurator"/> with higher priority than the rest of the image.
+        /// </summary>
+        /// <param name="configurator">Adds regions to a new ROI configuration.</param>
+        /// <returns>This builder for method chaining.</returns>
+        public CompleteEncoderConfigurationBuilder WithROI(Action<j2k.roi.ROIConfiguration> configurator)
+        {
+            var roiConfig = new j2k.roi.ROIConfiguration();
+            configurator?.Invoke(roiConfig);
+            return WithROI(roiConfig);
+        }
+
+        /// <summary>
         /// Sets the maximum number of threads used to encode.
         /// </summary>
         /// <param name="maxDegreeOfParallelism">1 for single-threaded; 0 or negative for the process-wide default.</param>

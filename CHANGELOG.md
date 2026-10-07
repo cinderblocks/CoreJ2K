@@ -5,6 +5,17 @@ This file starts with 2.4.0. Earlier releases are described on the
 
 ## Unreleased
 
+### Fixed
+
+- **`WithROI` now takes effect.** `J2KEncoderConfiguration.WithROI` stored the configuration but never passed it to the encoder, so the
+  output was identical to an encode without ROI. It now writes `Rroi`, `Rstart_level`, `Ralign` and `Rno_rect`. The builder gains `WithROI`.
+  Component `-1` means all components and `0` means the first component only; `ROI_ENCODING_GUIDE.md` said `0` meant all, and is rewritten.
+- **ROI encoding no longer writes corrupt streams when the quantized magnitudes are too wide.** Maxshift needs twice the magnitude bit count to
+  fit in 31 bits, so a component with more than 15 bits (a very small `Qstep`, or deep samples) overflowed and decoded to garbage with no
+  error, in CoreJ2K and in OpenJPEG alike. The encoder now throws `InvalidOperationException` naming the component and the count.
+  Block-aligned ROI (`Ralign`) does not scale coefficients and is not limited.
+- The distortion weight for ROI code-blocks overflowed `int` at 16 or more magnitude bits (`1 << (bits << 1)`); it is now computed in floating point.
+
 ### Changed
 
 - **The ImageSharp package is `CoreJ2K.ImageSharp` again.** It was published as `CoreJ2K.ImageSharp-Official` while the `CoreJ2K.ImageSharp`

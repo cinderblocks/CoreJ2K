@@ -341,7 +341,8 @@ namespace CoreJ2K.Configuration
                 pl["threads"] = _maxDegreeOfParallelism.ToString(System.Globalization.CultureInfo.InvariantCulture);
             }
 
-            // ROI (handled separately in encoding pipeline)
+            // ROI
+            _roiConfig?.ApplyTo(pl);
             
             return pl;
         }

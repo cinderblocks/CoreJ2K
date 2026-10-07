@@ -210,7 +210,7 @@ byte[] data = J2kImage.ToBytes(image, config);
 
 ```csharp
 var roiConfig = new ROIConfiguration()
-    .AddRectangle(0, 100, 100, 400, 300);
+    .AddRectangle(-1, 100, 100, 400, 300);  // -1: all components
 
 var config = new J2KEncoderConfiguration()
     .WithQuality(0.5)
@@ -390,7 +390,7 @@ byte[] webData = J2kImage.ToBytes(webImage, config);
 
 ```csharp
 var roiConfig = new ROIConfiguration()
-    .AddRectangle(0, 500, 500, 1000, 1000);  // Important region
+    .AddRectangle(-1, 500, 500, 1000, 1000);  // Important region, all components
 
 var config = new J2KEncoderConfiguration()
     .WithQuality(0.95)
