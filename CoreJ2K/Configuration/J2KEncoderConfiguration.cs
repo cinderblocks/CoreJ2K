@@ -27,6 +27,7 @@ namespace CoreJ2K.Configuration
         private ErrorResilienceConfiguration _resilienceConfig = new ErrorResilienceConfiguration();
         private ROIConfiguration? _roiConfig = null;
         private int? _maxBytes;
+        private Action<EncodeTelemetry>? _telemetry;
         private DistortionWeights? _distortionWeights;
         private System.Threading.CancellationToken _cancellationToken;
         private int _maxDegreeOfParallelism;
@@ -207,6 +208,28 @@ namespace CoreJ2K.Configuration
                 throw new ArgumentOutOfRangeException(nameof(maxBytes), "The byte limit must be positive");
 
             _maxBytes = maxBytes;
+            return this;
+        }
+
+        /// <summary>
+        /// Gets the callback that receives what the encode kept; see <see cref="WithTelemetry"/>.
+        /// </summary>
+        public Action<EncodeTelemetry>? Telemetry => _telemetry;
+
+        /// <summary>
+        /// Asks for a report of what the encode kept: every code-block's passes, bytes and distortion per quality layer, and the bytes
+        /// of each part of the output. <paramref name="callback"/> is called once, on the encoding thread, after the output is final and has
+        /// passed the size checks; it is not called if the encode fails. See <see cref="EncodeTelemetry"/>.
+        /// </summary>
+        /// <remarks>
+        /// Costs nothing when not set, and does not change the output. It cannot be combined with tile-parts or packed packet headers,
+        /// which rewrite the codestream after the packets are written.
+        /// </remarks>
+        /// <param name="callback">Receives the report, or null to turn it off.</param>
+        /// <returns>This configuration instance for method chaining.</returns>
+        public J2KEncoderConfiguration WithTelemetry(Action<EncodeTelemetry>? callback)
+        {
+            _telemetry = callback;
             return this;
         }
 
@@ -406,6 +429,8 @@ namespace CoreJ2K.Configuration
 
             // ROI
             _roiConfig?.ApplyTo(pl);
+
+            pl.TelemetryCallback = _telemetry;
             
             return pl;
         }

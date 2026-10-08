@@ -384,6 +384,45 @@ lossy one). Building packets in parallel, and no longer copying packet bodies ju
 image with a few very large packets (no precincts) gains less than one with many, and the encoded bytes are still written to the
 output by one thread. Together with the serial reading of the source that keeps the ratio below the core count. Decoding is parallel in the same way; see the [decoder guide](DECODER_CONFIGURATION_GUIDE.md#9-parallel-decoding).
 
+### 15. Reporting what an encode kept
+
+`WithTelemetry(callback)` gives you the numbers the rate allocator worked with, for accounting outside the codec, such as how much of
+a size-limited file went to a face region.
+
+```csharp
+EncodeTelemetry? report = null;
+
+var config = new CompleteEncoderConfigurationBuilder()
+    .ForPortrait(12000, face)
+    .WithTelemetry(t => report = t)
+    .Build();
+
+byte[] jp2 = J2kImage.ToBytes(image, config);
+
+// Coded bytes in blocks that hold face coefficients, in the passes that code only face bit-planes
+var faceBytes = report!.CodeBlocks
+    .Where(b => b.RoiCoefficients > 0 && b.RoiPasses > 0)
+    .Sum(b => b.PassEndBytes[Math.Min(b.RoiPasses, b.PassesIncluded) - 1]);
+```
+
+The callback is called once, on the encoding thread, after the output has passed the size checks. A failed encode does not call it. Without
+a callback nothing is collected and the output is the same.
+
+- **Per code-block, per quality layer** (`report.CodeBlocks`, in the order the packets were written): tile, component, resolution level, subband,
+  the block's place in the subband (`X`, `Y`, `Width`, `Height`, and the subband's size), the passes and bytes kept
+  (`PassesIncluded`, `BytesInLayer`, `PassEndBytes` for the end of every kept pass), the bit-planes it skipped (`MissingMsbs`), and the
+  distortion the kept passes remove. With a single layer, which a byte limit gives you, "in layer" and cumulative are the same.
+- **Region of interest**: `RoiCoefficients` is how many of the block's coefficients are inside a Maxshift region, and `RoiPasses` how many
+  of its leading passes code only region bit-planes (those bytes are the ones the region has before any background is coded).
+- **Distortion** is in the allocator's units: the squared error removed, in the quantizer's step-normalised domain, times `DistortionScale`,
+  which is the product of the block's distortion weights and the Maxshift scale of a block coded wholly as ROI. `UnscaledDistortionReduction`
+  divides it out.
+- **Bytes of each part**: `HeaderBytes` (main and tile-part headers), `PacketHeaderBytes` (SOP and EPH markers included), `PacketBodyBytes`,
+  `EndOfCodestreamBytes`, and `ContainerBytes` for the JP2 boxes. Each is counted where it is written, not by subtraction, so
+  `HeaderBytes + PacketHeaderBytes + PacketBodyBytes + EndOfCodestreamBytes == CodestreamBytes` and `TotalBytes` is the length of the output.
+- Telemetry cannot be combined with tile-parts or packed packet headers (they rewrite the codestream after the packets are written).
+  In a `ParameterList` the callback is the `TelemetryCallback` property, not a string option.
+
 ## Complete Examples
 
 ### Example 1: High-Quality Lossy

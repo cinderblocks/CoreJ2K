@@ -454,6 +454,19 @@ namespace CoreJ2K.j2k.entropy.encoder
 
         private int? codestreamByteLimit;
 
+        /// <summary>Collects what the final write keeps; null (and nothing is allocated) unless the caller asked for telemetry.</summary>
+        internal sealed class TelemetryCollector
+        {
+            internal readonly List<CodeBlockTelemetry> Blocks = new List<CodeBlockTelemetry>();
+            internal int Packets;
+            internal int Layers;
+        }
+
+        private TelemetryCollector? telemetry;
+
+        /// <summary>Records the code-blocks and packets of the final write in <paramref name="collector"/>.</summary>
+        internal void SetTelemetry(TelemetryCollector collector) => telemetry = collector;
+
         private const int EocMarkerBytes = 2;
 
         /// <summary>
@@ -627,6 +640,7 @@ namespace CoreJ2K.j2k.entropy.encoder
             public int BodyLength;
             public bool Writable, RoiInPacket;
             public int RoiLength;
+            public List<CodeBlockTelemetry>? Blocks;
         }
 
         /// <summary>Packets waiting to be built in parallel and written, in writing order; null when packets are written one by one.</summary>
@@ -705,9 +719,15 @@ namespace CoreJ2K.j2k.entropy.encoder
             CancellationToken.ThrowIfCancellationRequested();
 
             var buffers = serialBuffers ??= new PktEncoder.PacketBuffers();
+            buffers.Blocks = telemetry != null ? new List<CodeBlockTelemetry>() : null;
             pktEnc.EncodePacket(buffers, src.GetAnSubbandTree(t, c), l + 1, c, r, t, cblks[t][c][r], truncIdxs[t][l][c][r], p, simulate: false);
             if (buffers.Writable)
             {
+                if (telemetry != null)
+                {
+                    telemetry.Packets++;
+                    telemetry.Blocks.AddRange(buffers.Blocks!);
+                }
                 bsWriter.writePacketHead(buffers.Head!.Buffer, buffers.Head.Length, false, sop, eph);
                 bsWriter.writePacketBody(buffers.Body!, buffers.BodyLength, false, buffers.RoiInPacket, buffers.RoiLength);
             }
@@ -747,6 +767,7 @@ namespace CoreJ2K.j2k.entropy.encoder
                     CancellationToken.ThrowIfCancellationRequested();
 
                     buffers.Body = null; // a body is not reused: it is kept until it has been written
+                    buffers.Blocks = telemetry != null ? new List<CodeBlockTelemetry>() : null;
                     pktEnc.EncodePacket(buffers, job.Root, packet.Layer + 1, packet.Comp, packet.Res, packet.Tile,
                         cblks[packet.Tile][packet.Comp][packet.Res], truncIdxs[packet.Tile][packet.Layer][packet.Comp][packet.Res],
                         packet.Precinct, simulate: false);
@@ -760,6 +781,7 @@ namespace CoreJ2K.j2k.entropy.encoder
                         result.BodyLength = buffers.BodyLength;
                         result.RoiInPacket = buffers.RoiInPacket;
                         result.RoiLength = buffers.RoiLength;
+                        result.Blocks = buffers.Blocks;
                     }
                     built[index] = result;
                 }
@@ -789,6 +811,12 @@ namespace CoreJ2K.j2k.entropy.encoder
                 var packet = built[i];
                 if (!packet.Writable) continue;
 
+                // Recorded here, on the calling thread and in writing order, not where the packet was built.
+                if (telemetry != null)
+                {
+                    telemetry.Packets++;
+                    telemetry.Blocks.AddRange(packet.Blocks!);
+                }
                 bsWriter.writePacketHead(packet.Head, packet.Head.Length, false, queue[i].Sop, queue[i].Eph);
                 bsWriter.writePacketBody(packet.Body, packet.BodyLength, false, packet.RoiInPacket, packet.RoiLength);
                 built[i] = null!; // let the body go as soon as it has been written
@@ -1404,6 +1432,7 @@ namespace CoreJ2K.j2k.entropy.encoder
             // +--------------------------------------------------+
             // Reset the packet encoder before writing all packets
             pktEnc.reset();
+            if (telemetry != null) telemetry.Layers = num_Layers; // empty trailing layers have been dropped from this count
             pendingPackets = ShouldBuildPacketsInParallel() ? new List<PendingPacket>() : null;
             for (var t = 0; t < nt; t++)
             {

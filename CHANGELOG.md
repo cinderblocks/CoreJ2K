@@ -24,6 +24,12 @@ This file starts with 2.4.0. Earlier releases are described on the
   a face image under a hard size limit: one tile and one layer, ICT with 9/7, five levels, 64x64 code-blocks, a luma weight of 1.25, and an optional
   Maxshift face region at start level 4.
 
+- **Encode telemetry**: `J2KEncoderConfiguration.WithTelemetry(callback)` (builder `WithTelemetry`) reports, once the output is final, every
+  code-block's passes, coded bytes, per-pass byte offsets, skipped bit-planes and distortion per quality layer, its place in its subband, its
+  region-of-interest coefficients and passes, and the bytes of the headers, packet headers, packet bodies, EOC marker and JP2 boxes, each counted where
+  it was written. It is for accounting outside the codec, such as how much of a size-limited file went to a face. It does not change the output,
+  costs nothing when not set, and cannot be combined with tile-parts or packed packet headers.
+
 ### Fixed
 
 - **`FromJ2KFile`, `FromJ2KBytes` and `FromJ2KStream` in CoreJ2K.ImageSharp threw `InvalidCastException` for RGB and greyscale streams.** They return

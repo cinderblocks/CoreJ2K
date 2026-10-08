@@ -114,6 +114,24 @@ namespace CoreJ2K.j2k.entropy.encoder
         /// <summary>Number of ROI coding passes </summary>
         public int nROIcp = 0;
 
+        /// <summary>The code-block's left edge, in the coordinates of the decomposed component (the subband's own <c>ulx</c> included).</summary>
+        public int cbUlx;
+
+        /// <summary>The code-block's top edge, in the coordinates of the decomposed component (the subband's own <c>uly</c> included).</summary>
+        public int cbUly;
+
+        /// <summary>The width of the code-block.</summary>
+        public int cbW;
+
+        /// <summary>The height of the code-block.</summary>
+        public int cbH;
+
+        /// <summary>The magnitude bit-planes the block was coded with.</summary>
+        public int magbits;
+
+        /// <summary>The factor the block's distortion was multiplied by (distortion weights and ROI scaling).</summary>
+        public double wmseScaling = 1.0;
+
         /// <summary> Creates a new CBlkRateDistStats object without allocating any space for
         /// 'truncRates', 'truncSlopes', 'truncDists' and 'truncIdxs' or 'data'.
         /// 

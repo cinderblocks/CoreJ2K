@@ -641,6 +641,17 @@ namespace CoreJ2K.Configuration
         }
 
         /// <summary>
+        /// Reports what the encode kept to <paramref name="callback"/> when it is done. See <see cref="J2KEncoderConfiguration.WithTelemetry"/>.
+        /// </summary>
+        /// <param name="callback">Receives the report, or null to turn it off.</param>
+        /// <returns>This builder for method chaining.</returns>
+        public CompleteEncoderConfigurationBuilder WithTelemetry(Action<EncodeTelemetry>? callback)
+        {
+            _encoderConfig.WithTelemetry(callback);
+            return this;
+        }
+
+        /// <summary>
         /// Sets a hard limit on the size of the complete output, JP2 boxes included. See <see cref="J2KEncoderConfiguration.WithMaxBytes"/>.
         /// </summary>
         /// <param name="maxBytes">The most bytes the output may take.</param>

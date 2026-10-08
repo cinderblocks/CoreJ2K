@@ -90,6 +90,18 @@ namespace CoreJ2K.j2k.codestream.writer
         /// </summary>
         internal new int ndata = 0;
 
+        /// <summary>The bytes of main and tile-part headers written, as they were added to the codestream.</summary>
+        internal long HeaderBytesWritten;
+
+        /// <summary>The bytes of packet headers written, SOP and EPH markers included.</summary>
+        internal long PacketHeaderBytesWritten;
+
+        /// <summary>The bytes of packet bodies written.</summary>
+        internal long PacketBodyBytesWritten;
+
+        /// <summary>The bytes of the end-of-codestream marker written.</summary>
+        internal int EndOfCodestreamBytesWritten;
+
         /// <summary>The default buffer length, 1024 bytes </summary>
         public static int DEF_BUF_LEN = 1024;
 
@@ -213,6 +225,7 @@ namespace CoreJ2K.j2k.codestream.writer
                     outStream.Write(head, 0, hlen);
                     // Update data length 
                     ndata += len;
+                    PacketHeaderBytesWritten += len;
 
                     // Write End of Packet Header markers if necessary 
                     if (eph)
@@ -285,6 +298,7 @@ namespace CoreJ2K.j2k.codestream.writer
                 }
                 // Update data length 
                 ndata += len;
+                PacketBodyBytesWritten += len;
 
                 // Deal with ROI information
                 if (roiInPkt)
@@ -315,6 +329,7 @@ namespace CoreJ2K.j2k.codestream.writer
             outStream.WriteByte(Markers.EOC & 0x00FF);
 
             ndata += 2; // Add two to length of codestream for EOC marker
+            EndOfCodestreamBytesWritten += 2;
         }
 
         /// <summary> Writes the header data in the codestream and actualize ndata with the
@@ -332,6 +347,7 @@ namespace CoreJ2K.j2k.codestream.writer
         {
             // Actualize ndata
             ndata += he.Length;
+            HeaderBytesWritten += he.Length;
             he.writeTo(outStream); // Write the header
                                      // Reset packet index used for SOP markers
             packetIdx = 0;

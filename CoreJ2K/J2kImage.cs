@@ -1253,6 +1253,13 @@ namespace CoreJ2K
                 throw new ArgumentException($"Invalid value in 'tile_parts' option: {pl.GetParameter("tile_parts")}");
             }
 
+            if (pl.TelemetryCallback != null && (pktspertp > 0 || pphTile || pphMain))
+            {
+                // Tile-parts and packed packet headers are made by rewriting the codestream after the packets are written, so the bytes
+                // counted while writing would no longer be where they were.
+                throw new ArgumentException("Telemetry cannot be combined with tile-parts or packed packet headers.");
+            }
+
             // **** ImgReader ****
             var ncomp = imgsrc.NumComps;
             var ppminput = imgsrc.NumComps > 1;
@@ -1639,8 +1646,14 @@ namespace CoreJ2K
                     blockCoder.SetCancellationToken(cancellationToken);
                     blockCoder.SetMaxDegreeOfParallelism(encodeThreads);
                 }
+                EBCOTRateAllocator.TelemetryCollector? telemetry = null;
                 if (ralloc is EBCOTRateAllocator packetBuilder)
                 {
+                    if (pl.TelemetryCallback != null)
+                    {
+                        telemetry = new EBCOTRateAllocator.TelemetryCollector();
+                        packetBuilder.SetTelemetry(telemetry);
+                    }
                     packetBuilder.SetMaxDegreeOfParallelism(encodeThreads);
                     if (codestreamLimit.HasValue) packetBuilder.SetCodestreamByteLimit(codestreamLimit.Value);
                 }
@@ -1716,6 +1729,9 @@ namespace CoreJ2K
                     }
                 }
 
+                var codestreamBytes = fileLength;
+                var containerBytes = 0;
+
                 // **** File Format ****
                 if (useFileFormat)
                 {
@@ -1743,7 +1759,8 @@ namespace CoreJ2K
                             ffw.Metadata = metadata;
                         }
                         
-                        fileLength += ffw.writeFileFormat();
+                        containerBytes = ffw.writeFileFormat();
+                        fileLength += containerBytes;
                     }
                     catch (IOException e)
                     {
@@ -1760,6 +1777,17 @@ namespace CoreJ2K
                     // The allocator keeps to the limit by construction; this is the check that nothing sized later pushed it over.
                     throw new InvalidOperationException(
                         $"The encoded output is {outStream.Length} bytes, over the limit of {maxBytes.Value}.");
+                }
+
+                if (pl.TelemetryCallback != null)
+                {
+                    if (telemetry == null || bwriter is not FileCodestreamWriter counted)
+                    {
+                        throw new InvalidOperationException("Telemetry needs the EBCOT rate allocator.");
+                    }
+                    pl.TelemetryCallback(new EncodeTelemetry(telemetry.Blocks.ToArray(), telemetry.Layers, telemetry.Packets,
+                        counted.HeaderBytesWritten, counted.PacketHeaderBytesWritten, counted.PacketBodyBytesWritten,
+                        counted.EndOfCodestreamBytesWritten, codestreamBytes, containerBytes));
                 }
 
                 return outStream.ToArray();

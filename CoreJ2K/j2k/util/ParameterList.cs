@@ -64,6 +64,13 @@ namespace CoreJ2K.j2k.util
         /// </summary>
         public System.Collections.Generic.List<CoreJ2K.j2k.roi.ROIMask> RoiMasks { get; } = new System.Collections.Generic.List<CoreJ2K.j2k.roi.ROIMask>();
 
+        /// <summary>
+        /// Gets or sets the callback that receives <see cref="CoreJ2K.EncodeTelemetry"/> once an encode with this list has produced its final
+        /// output. <see cref="CoreJ2K.Configuration.J2KEncoderConfiguration.WithTelemetry"/> sets it; it is not a string option, so copying only
+        /// the string options to another list leaves it behind.
+        /// </summary>
+        public System.Action<CoreJ2K.EncodeTelemetry>? TelemetryCallback { get; set; }
+
         /// <summary> Returns the default ParameterList.</summary>
         /// <returns> Default ParameterList</returns>
         public virtual ParameterList DefaultParameterList => defaults;

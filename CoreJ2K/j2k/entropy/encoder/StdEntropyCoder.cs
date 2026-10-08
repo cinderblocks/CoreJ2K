@@ -1369,6 +1369,12 @@ namespace CoreJ2K.j2k.entropy.encoder
             ccb.n = srcblk.n;
             ccb.sb = srcblk.sb;
             ccb.nROIcoeff = srcblk.nROIcoeff;
+            ccb.cbUlx = srcblk.ulx;
+            ccb.cbUly = srcblk.uly;
+            ccb.cbW = srcblk.w;
+            ccb.cbH = srcblk.h;
+            ccb.magbits = srcblk.magbits;
+            ccb.wmseScaling = srcblk.wmseScaling;
             ccb.skipMSBP = skipbp;
             if (ccb.nROIcoeff != 0)
             {

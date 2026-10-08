@@ -37,6 +37,7 @@ using CoreJ2K.j2k.image;
 using CoreJ2K.j2k.util;
 using CoreJ2K.j2k.wavelet.analysis;
 using System;
+using System.Collections.Generic;
 
 namespace CoreJ2K.j2k.codestream.writer
 {
@@ -300,6 +301,9 @@ namespace CoreJ2K.j2k.codestream.writer
 
             /// <summary>The length to read of the packet body to get all the ROI information.</summary>
             internal int RoiLength;
+
+            /// <summary>When non-null, receives a record for each code-block a (non-simulated) packet includes.</summary>
+            internal List<CodeBlockTelemetry>? Blocks;
         }
 
         /// <summary> Creates a new packet encoder object, using the information from the
@@ -1229,6 +1233,19 @@ namespace CoreJ2K.j2k.codestream.writer
                                 if (!simulate) Array.Copy(cur_cbs[b].data!, cur_cbs[b].truncRates![cur_cbs[b].truncIdxs![cur_prevtIdxs[b]]], bbuf!, lblen, cblen);
                             }
                             lblen += cblen;
+
+                            if (!simulate && buffers.Blocks != null)
+                            {
+                                var passIdx = cur_cbs[b].truncIdxs![cur_tIndx[b]];
+                                var prevPass = cur_prevtIdxs[b] < 0 ? -1 : cur_cbs[b].truncIdxs![cur_prevtIdxs[b]];
+                                var passEnds = new int[passIdx + 1];
+                                Array.Copy(cur_cbs[b].truncRates!, passEnds, passEnds.Length);
+                                buffers.Blocks.Add(new CodeBlockTelemetry(t, c, r, (WaveletSubband)sb.orientation, ly - 1,
+                                    cbCoord.x, cbCoord.y, cur_cbs[b].cbUlx - sb.ulx, cur_cbs[b].cbUly - sb.uly, cur_cbs[b].cbW, cur_cbs[b].cbH,
+                                    sb.w, sb.h, cur_cbs[b].magbits, cur_cbs[b].skipMSBP, cur_cbs[b].nTotTrunc, passIdx + 1,
+                                    passIdx - prevPass, cblen, passEnds, cur_cbs[b].truncDists![passIdx], cur_cbs[b].wmseScaling,
+                                    cur_cbs[b].nROIcoeff, cur_cbs[b].nROIcp));
+                            }
 
                             // Verifies if this code-block contains new ROI
                             // information
