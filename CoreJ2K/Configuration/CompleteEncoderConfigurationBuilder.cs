@@ -544,9 +544,11 @@ namespace CoreJ2K.Configuration
             {
                 _encoderConfig.WithQuantization(q =>
                 {
-                    q.Type = _quantization.Type;
-                    q.BaseStepSize = _quantization.BaseStepSize;
-                    q.GuardBits = _quantization.GuardBits;
+                    // Only what was chosen: the rest keeps what the encoder configuration already has (for example a lossless
+                    // setting, or a preset's guard bits)
+                    if (_quantization.TypeIsSet) q.Type = _quantization.Type;
+                    if (_quantization.BaseStepSizeIsSet) q.BaseStepSize = _quantization.BaseStepSize;
+                    if (_quantization.GuardBitsAreSet) q.GuardBits = _quantization.GuardBits;
                 });
             }
             
@@ -555,8 +557,8 @@ namespace CoreJ2K.Configuration
             {
                 _encoderConfig.WithWavelet(w =>
                 {
-                    w.Filter = _wavelet.Filter;
-                    w.DecompositionLevels = _wavelet.DecompositionLevels;
+                    if (_wavelet.FilterIsSet) w.Filter = _wavelet.Filter;
+                    if (_wavelet.DecompositionLevelsAreSet) w.DecompositionLevels = _wavelet.DecompositionLevels;
                 });
             }
             

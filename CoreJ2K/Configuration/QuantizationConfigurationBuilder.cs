@@ -16,6 +16,11 @@ namespace CoreJ2K.Configuration
         private QuantizationType _type = QuantizationType.Expounded;
         private float _baseStepSize = 0.0078125f;
         private int _guardBits = 1;
+
+        // Whether the caller chose the value; see WaveletConfigurationBuilder.FilterIsSet.
+        internal bool TypeIsSet { get; private set; }
+        internal bool BaseStepSizeIsSet { get; private set; }
+        internal bool GuardBitsAreSet { get; private set; }
         private Dictionary<int, Dictionary<string, float>> _subbandSteps = new Dictionary<int, Dictionary<string, float>>();
         private bool _useDefaultSteps = true;
         
@@ -25,7 +30,7 @@ namespace CoreJ2K.Configuration
         public QuantizationType Type
         {
             get => _type;
-            set => _type = value;
+            set { _type = value; TypeIsSet = true; }
         }
         
         /// <summary>
@@ -35,7 +40,7 @@ namespace CoreJ2K.Configuration
         public float BaseStepSize
         {
             get => _baseStepSize;
-            set => _baseStepSize = value;
+            set { _baseStepSize = value; BaseStepSizeIsSet = true; }
         }
         
         /// <summary>
@@ -45,7 +50,7 @@ namespace CoreJ2K.Configuration
         public int GuardBits
         {
             get => _guardBits;
-            set => _guardBits = value;
+            set { _guardBits = value; GuardBitsAreSet = true; }
         }
         
         /// <summary>
@@ -64,7 +69,7 @@ namespace CoreJ2K.Configuration
         /// <returns>This configuration instance for method chaining.</returns>
         public QuantizationConfigurationBuilder UseReversible()
         {
-            _type = QuantizationType.Reversible;
+            Type = QuantizationType.Reversible;
             return this;
         }
         
@@ -75,7 +80,7 @@ namespace CoreJ2K.Configuration
         /// <returns>This configuration instance for method chaining.</returns>
         public QuantizationConfigurationBuilder UseDerived()
         {
-            _type = QuantizationType.Derived;
+            Type = QuantizationType.Derived;
             _useDefaultSteps = true;
             return this;
         }
@@ -87,7 +92,7 @@ namespace CoreJ2K.Configuration
         /// <returns>This configuration instance for method chaining.</returns>
         public QuantizationConfigurationBuilder UseExpounded()
         {
-            _type = QuantizationType.Expounded;
+            Type = QuantizationType.Expounded;
             return this;
         }
         
@@ -102,7 +107,7 @@ namespace CoreJ2K.Configuration
             if (stepSize <= 0)
                 throw new ArgumentException("Step size must be positive", nameof(stepSize));
             
-            _baseStepSize = stepSize;
+            BaseStepSize = stepSize;
             return this;
         }
         
@@ -117,7 +122,7 @@ namespace CoreJ2K.Configuration
             if (bits < 0 || bits > 7)
                 throw new ArgumentException("Guard bits must be between 0 and 7", nameof(bits));
             
-            _guardBits = bits;
+            GuardBits = bits;
             return this;
         }
         
@@ -330,7 +335,10 @@ namespace CoreJ2K.Configuration
                 _type = this._type,
                 _baseStepSize = this._baseStepSize,
                 _guardBits = this._guardBits,
-                _useDefaultSteps = this._useDefaultSteps
+                _useDefaultSteps = this._useDefaultSteps,
+                TypeIsSet = this.TypeIsSet,
+                BaseStepSizeIsSet = this.BaseStepSizeIsSet,
+                GuardBitsAreSet = this.GuardBitsAreSet
             };
             
             foreach (var level in _subbandSteps.Keys)

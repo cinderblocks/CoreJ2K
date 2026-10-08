@@ -21,6 +21,7 @@ namespace CoreJ2K.Configuration
         private int _decodingBytes = -1; // -1 means decode all
         private bool _useColorSpace = true;
         private bool _parsingMode = true;
+        private bool _parsingModeChosen;
         private QuitConditions _quitConditions = new QuitConditions();
         private ComponentTransformSettings _componentTransform = new ComponentTransformSettings();
         private bool _verbose = true;
@@ -170,6 +171,7 @@ namespace CoreJ2K.Configuration
         public J2KDecoderConfiguration WithParsingMode(bool parsingMode)
         {
             _parsingMode = parsingMode;
+            _parsingModeChosen = true;
             return this;
         }
         
@@ -180,6 +182,7 @@ namespace CoreJ2K.Configuration
         public J2KDecoderConfiguration WithProgressiveDecoding()
         {
             _parsingMode = true;
+            _parsingModeChosen = true;
             return this;
         }
         
@@ -306,7 +309,9 @@ namespace CoreJ2K.Configuration
             pl["nocolorspace"] = _useColorSpace ? "off" : "on";
             
             // Parsing mode
-            pl["parsing"] = _parsingMode ? "on" : "off";
+            // A limit on code-blocks cannot be combined with parsing mode, so unless parsing was asked for it is turned off
+            var parsing = _parsingMode && (_parsingModeChosen || _quitConditions.MaxCodeBlocks < 0);
+            pl["parsing"] = parsing ? "on" : "off";
             
             // Verbose
             pl["verbose"] = _verbose ? "on" : "off";
@@ -361,6 +366,11 @@ namespace CoreJ2K.Configuration
             }
             
             errors.AddRange(_quitConditions.Validate());
+
+            if (_parsingModeChosen && _parsingMode && _quitConditions.MaxCodeBlocks >= 0)
+            {
+                errors.Add("A limit on code-blocks cannot be combined with parsing mode; leave parsing mode unset or call WithParsingMode(false)");
+            }
             
             return errors;
         }

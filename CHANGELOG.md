@@ -45,6 +45,11 @@ This file starts with 2.4.0. Earlier releases are described on the
   encoded with that, so the copyright and comments were never written. They now call `builder.Encode`.
 - **A JP2 file with two, or five or more, components could not be decoded.** The palette stage, which passes the components through when the file has no palette, rejected
   any count but 1, 3 and 4.
+- **`CompleteEncoderConfigurationBuilder.Build()` overwrote settings of the encoder configuration that the caller had not set.** `WithWavelet(w => w.WithDecompositionLevels(3))`
+  also set the filter to 5/3, which a lossy encode rejects ("Filter ... does not allow non-reversible quantization"), and `WithQuantization(q => q.WithBaseStepSize(...))`
+  also set the type and guard bits. `Build()` now passes on only the values that were set.
+- **`J2KDecoderConfiguration`: `QuitConditions.MaxCodeBlocks` always failed** because parsing mode, which is on by default, cannot be combined with it. Parsing is
+  now turned off when a code-block limit is set and parsing was not asked for; asking for both is reported by `Validate`.
 - **`FromJ2KFile`, `FromJ2KBytes` and `FromJ2KStream` in CoreJ2K.ImageSharp threw `InvalidCastException` for RGB and greyscale streams.** They return
   `Image<Rgba32>` but the decoder produced `Rgb24` and `L8` images for 3- and 1-component streams. They now convert, adding an opaque alpha channel.
 - **`WithROI` now takes effect.** `J2KEncoderConfiguration.WithROI` stored the configuration but never passed it to the encoder, so the

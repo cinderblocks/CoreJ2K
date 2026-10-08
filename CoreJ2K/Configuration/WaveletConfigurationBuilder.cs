@@ -17,6 +17,11 @@ namespace CoreJ2K.Configuration
         private int _decompositionLevels = 5;
         private Dictionary<int, WaveletFilter> _componentFilters = new Dictionary<int, WaveletFilter>();
         private bool _useDefaultFilters = true;
+
+        // Whether the caller chose the value. Build() of the complete builder passes on only what was chosen, so that touching one
+        // setting does not reset the others to this class's defaults (5/3 is not what a lossy encode starts with).
+        internal bool FilterIsSet { get; private set; }
+        internal bool DecompositionLevelsAreSet { get; private set; }
         
         /// <summary>
         /// Gets or sets the default wavelet filter for all components.
@@ -24,7 +29,7 @@ namespace CoreJ2K.Configuration
         public WaveletFilter Filter
         {
             get => _filter;
-            set => _filter = value;
+            set { _filter = value; FilterIsSet = true; }
         }
         
         /// <summary>
@@ -34,7 +39,7 @@ namespace CoreJ2K.Configuration
         public int DecompositionLevels
         {
             get => _decompositionLevels;
-            set => _decompositionLevels = value;
+            set { _decompositionLevels = value; DecompositionLevelsAreSet = true; }
         }
         
         /// <summary>
@@ -53,7 +58,7 @@ namespace CoreJ2K.Configuration
         /// <returns>This configuration instance for method chaining.</returns>
         public WaveletConfigurationBuilder UseReversible_5_3()
         {
-            _filter = WaveletFilter.Reversible53;
+            Filter = WaveletFilter.Reversible53;
             return this;
         }
         
@@ -64,7 +69,7 @@ namespace CoreJ2K.Configuration
         /// <returns>This configuration instance for method chaining.</returns>
         public WaveletConfigurationBuilder UseIrreversible_9_7()
         {
-            _filter = WaveletFilter.Irreversible97;
+            Filter = WaveletFilter.Irreversible97;
             return this;
         }
         
@@ -97,7 +102,7 @@ namespace CoreJ2K.Configuration
             if (levels < 1 || levels > 32)
                 throw new ArgumentException("Decomposition levels must be between 1 and 32", nameof(levels));
             
-            _decompositionLevels = levels;
+            DecompositionLevels = levels;
             return this;
         }
         
@@ -255,7 +260,9 @@ namespace CoreJ2K.Configuration
             {
                 _filter = this._filter,
                 _decompositionLevels = this._decompositionLevels,
-                _useDefaultFilters = this._useDefaultFilters
+                _useDefaultFilters = this._useDefaultFilters,
+                FilterIsSet = this.FilterIsSet,
+                DecompositionLevelsAreSet = this.DecompositionLevelsAreSet
             };
             
             foreach (var comp in _componentFilters.Keys)
