@@ -2579,7 +2579,11 @@ namespace CoreJ2K.j2k.entropy.encoder
                         cur_cblk = cblks[tileIdx][compIdx][lvlIdx][s][b];
                         for (n = 0; n < cur_cblk.nVldTrunc; n++)
                         {
-                            if (cur_cblk.truncSlopes[n] < fthresh)
+                            // A threshold of 0 takes everything into the layer (the search sets it so for the layer that has all the
+                            // data, to send every bit-plane of a lossless encode). The last point of a lossless block is kept valid
+                            // whatever its slope, and the distortion estimate can make that slope negative, so it must not be
+                            // compared with the threshold then.
+                            if (fthresh > 0f && cur_cblk.truncSlopes[n] < fthresh)
                             {
                                 break;
                             }

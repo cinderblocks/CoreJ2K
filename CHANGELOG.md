@@ -32,6 +32,10 @@ This file starts with 2.4.0. Earlier releases are described on the
 
 ### Fixed
 
+- **A lossless encode could change samples of deep images.** The last coding passes of a code-block are kept whatever their estimated distortion, and
+  that estimate can fall below an earlier pass's, but the final layer compared the resulting negative slope with its threshold of 0 and dropped them.
+  Samples of 12-bit and deeper images came back up to 10 away from the source (a 50x20 tile with five decomposition levels is enough), and other
+  decoders read the same wrong values. A threshold of 0 now takes every valid pass.
 - **`FromJ2KFile`, `FromJ2KBytes` and `FromJ2KStream` in CoreJ2K.ImageSharp threw `InvalidCastException` for RGB and greyscale streams.** They return
   `Image<Rgba32>` but the decoder produced `Rgb24` and `L8` images for 3- and 1-component streams. They now convert, adding an opaque alpha channel.
 - **`WithROI` now takes effect.** `J2KEncoderConfiguration.WithROI` stored the configuration but never passed it to the encoder, so the
