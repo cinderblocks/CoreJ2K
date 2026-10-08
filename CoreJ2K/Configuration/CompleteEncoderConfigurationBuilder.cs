@@ -559,6 +559,11 @@ namespace CoreJ2K.Configuration
                 {
                     if (_wavelet.FilterIsSet) w.Filter = _wavelet.Filter;
                     if (_wavelet.DecompositionLevelsAreSet) w.DecompositionLevels = _wavelet.DecompositionLevels;
+                    if (!_wavelet.UseDefaultFilters)
+                    {
+                        foreach (var cf in _wavelet.ComponentFilters)
+                            w.ComponentFilters[cf.Key] = cf.Value;
+                    }
                 });
             }
             
@@ -568,6 +573,11 @@ namespace CoreJ2K.Configuration
                 _encoderConfig.WithProgression(p =>
                 {
                     p.Order = _progression.DefaultOrder;
+                    if (!_progression.UseDefaultOrder)
+                    {
+                        foreach (var to in _progression.TileOrders)
+                            p.TileOrders[to.Key] = to.Value;
+                    }
                 });
             }
             
@@ -731,7 +741,6 @@ namespace CoreJ2K.Configuration
         {
             if (_atk == null) return;
             pl.Remove("Ffilters");
-            pl.Remove("Ffilters_comp");
         }
 
         /// <summary>

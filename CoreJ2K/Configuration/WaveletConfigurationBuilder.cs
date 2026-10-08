@@ -50,6 +50,8 @@ namespace CoreJ2K.Configuration
             get => _useDefaultFilters;
             set => _useDefaultFilters = value;
         }
+
+        internal IReadOnlyDictionary<int, WaveletFilter> ComponentFilters => _componentFilters;
         
         /// <summary>
         /// Uses the reversible 5/3 filter (for lossless compression).
@@ -108,7 +110,9 @@ namespace CoreJ2K.Configuration
         
         /// <summary>
         /// Sets the wavelet filter for a specific component.
-        /// Allows different filters for different components (e.g., Y vs CbCr).
+        /// Allows different filters for different components (e.g., Y vs CbCr). A component with the 5/3 filter is
+        /// quantized reversibly and one with the 9/7 filter is not, which the complete builder arranges. The encoder
+        /// switches the component transform off when the first three components do not all use the same filter.
         /// </summary>
         /// <param name="component">Component index (0-based).</param>
         /// <param name="filter">Wavelet filter to use for this component.</param>
@@ -202,27 +206,12 @@ namespace CoreJ2K.Configuration
                     filterValue = "w5x3";
                     break;
             }
-            pl["Ffilters"] = filterValue;
+            pl["Ffilters"] = _useDefaultFilters
+                ? filterValue
+                : WaveletConfiguration.FilterSpec(_filter, _componentFilters);
             
             // Set decomposition levels
             pl["Wlev"] = _decompositionLevels.ToString();
-            
-            // Apply per-component filters if specified
-            if (!_useDefaultFilters && _componentFilters.Count > 0)
-            {
-                var filterSpecs = new List<string>();
-                foreach (var comp in _componentFilters.Keys)
-                {
-                    var compFilter = _componentFilters[comp];
-                    var compFilterValue = compFilter == WaveletFilter.Reversible53 ? "w5x3" : "w9x7";
-                    filterSpecs.Add($"c{comp}:{compFilterValue}");
-                }
-                
-                if (filterSpecs.Count > 0)
-                {
-                    pl["Ffilters_comp"] = string.Join(",", filterSpecs);
-                }
-            }
         }
         
         /// <summary>

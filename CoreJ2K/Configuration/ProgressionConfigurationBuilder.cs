@@ -34,6 +34,8 @@ namespace CoreJ2K.Configuration
             get => _useDefaultOrder;
             set => _useDefaultOrder = value;
         }
+
+        internal IReadOnlyDictionary<int, ProgressionOrder> TileOrders => _tileOrders;
         
         /// <summary>
         /// Uses Layer-Resolution-Component-Position (LRCP) progression order.
@@ -184,24 +186,9 @@ namespace CoreJ2K.Configuration
         /// <param name="pl">The parameter list to configure.</param>
         public void ApplyTo(ParameterList pl)
         {
-            // Set default progression order
-            pl["Porder"] = _defaultOrder.ToParameterString();
-            
-            // Apply per-tile progression orders if specified
-            if (!_useDefaultOrder && _tileOrders.Count > 0)
-            {
-                var orderSpecs = new List<string>();
-                foreach (var tile in _tileOrders.Keys)
-                {
-                    var tileOrder = _tileOrders[tile];
-                    orderSpecs.Add($"t{tile}:{tileOrder.ToParameterString()}");
-                }
-                
-                if (orderSpecs.Count > 0)
-                {
-                    pl["Porder_tile"] = string.Join(",", orderSpecs);
-                }
-            }
+            // The default order, then the tiles with their own
+            pl["Aptype"] = ProgressionConfiguration.AptypeSpec(_defaultOrder,
+                _useDefaultOrder ? new Dictionary<int, ProgressionOrder>() : _tileOrders);
         }
         
         /// <summary>

@@ -50,6 +50,11 @@ This file starts with 2.4.0. Earlier releases are described on the
   also set the type and guard bits. `Build()` now passes on only the values that were set.
 - **`J2KDecoderConfiguration`: `QuitConditions.MaxCodeBlocks` always failed** because parsing mode, which is on by default, cannot be combined with it. Parsing is
   now turned off when a code-block limit is set and parsing was not asked for; asking for both is reported by `Validate`.
+- **`WithComponentFilter` and `WithTileOrder` did nothing.** The wavelet builder wrote an `Ffilters_comp` parameter and the progression builder a `Porder` and
+  `Porder_tile`, which nothing reads, and `Build()` dropped both settings. They now write `Ffilters` and `Aptype` with the per-component and per-tile syntax; the
+  complete builder gives each component the quantization type its filter needs, and a mixed set of filters on the first three components switches the colour transform
+  off. `WaveletConfiguration` gains `WithComponentFilter` and `ProgressionConfiguration` gains `WithTileOrder`, so `J2KEncoderConfiguration` takes them too, and `Validate`
+  reports a 9-7 component filter in lossless mode.
 - **A JP2 or codestream with some components reversible (5/3) and others not (9/7) could not be decoded** (`NullReferenceException`). The decode loop read the block it had passed in,
   but the converter hands back its own when the components differ in data type, and the converter cast the rows of all components into one shared buffer, so a 9/7
   component was overwritten by the next one. Every component now has its own.

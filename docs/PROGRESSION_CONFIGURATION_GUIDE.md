@@ -106,6 +106,8 @@ var p = new ProgressionConfigurationBuilder()
     .WithTileOrder(1, ProgressionOrder.RLCP); // tile 1 uses resolution order
 ```
 
+A tile with its own order gets its own COD marker in its tile-part header. Tiles count from 0 in raster order.
+
 Call `UseDefaultTileOrders()` to remove per-tile overrides.
 
 ## Presets

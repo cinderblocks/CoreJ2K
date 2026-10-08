@@ -62,6 +62,11 @@ var w = new WaveletConfigurationBuilder()
     .WithComponentFilter(2, WaveletFilter.Irreversible97); // override component 2
 ```
 
+A component with the 5/3 filter is quantized reversibly and one with the 9/7 filter is not; the complete builder sets each
+component's quantization type to match. When the first three components do not all use the same filter, the encoder switches the
+component transform off. Per-component filters cannot be combined with lossless mode if any component uses 9/7, and
+`ApplyTo` on this builder alone writes only the filters (`Ffilters`), not the quantization types.
+
 Call `UseDefaultComponentFilters()` to clear per-component overrides.
 
 ## Presets

@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using CoreJ2K.j2k.encoder;
 using CoreJ2K.j2k.roi;
 using CoreJ2K.j2k.util;
@@ -399,6 +400,7 @@ namespace CoreJ2K.Configuration
             
             // Quantization
             _quantizationConfig.ApplyTo(pl);
+            _waveletConfig.ApplyComponentQuantization(pl, _quantizationConfig.Type);
             
             // Progression
             _progressionConfig.ApplyTo(pl);
@@ -468,6 +470,8 @@ namespace CoreJ2K.Configuration
             
             errors.AddRange(_tileConfig.Validate());
             errors.AddRange(_waveletConfig.Validate());
+            if (_lossless && _waveletConfig.ComponentFilters.Values.Any(f => f != WaveletFilter.Reversible53))
+                errors.Add("Cannot specify both lossless mode and a 9-7 filter for a component");
             errors.AddRange(_quantizationConfig.Validate());
             errors.AddRange(_progressionConfig.Validate());
             errors.AddRange(_codeBlockConfig.Validate());

@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using CoreJ2K.j2k.util;
 
 namespace CoreJ2K.Configuration
@@ -131,6 +132,24 @@ namespace CoreJ2K.Configuration
         
         /// <summary>Gets or sets the code-block partition origin Y.</summary>
         public int CodeBlockOriginY { get; set; } = 0;
+
+        /// <summary>
+        /// Gets the filters of individual components, by component index; the other components use <see cref="Filter"/>. Each component's
+        /// quantization type follows its filter (reversible for 5-3, otherwise the configured type).
+        /// </summary>
+        public Dictionary<int, WaveletFilter> ComponentFilters { get; } = new Dictionary<int, WaveletFilter>();
+
+        /// <summary>
+        /// Sets the filter of one component, for example 5-3 on the second component of an otherwise lossy encode. The encoder
+        /// switches the component transform off when the first three components do not all use the same filter.
+        /// </summary>
+        public WaveletConfiguration WithComponentFilter(int component, WaveletFilter filter)
+        {
+            if (component < 0)
+                throw new ArgumentOutOfRangeException(nameof(component), "Component index must be non-negative");
+            ComponentFilters[component] = filter;
+            return this;
+        }
         
         /// <summary>
         /// Uses the 5-3 reversible filter (for lossless compression).
@@ -171,14 +190,49 @@ namespace CoreJ2K.Configuration
         
         internal void ApplyTo(ParameterList pl)
         {
-            pl["Ffilters"] = Filter == WaveletFilter.Reversible53 ? "w5x3" : "w9x7";
+            pl["Ffilters"] = FilterSpec(Filter, ComponentFilters);
             pl["Wlev"] = DecompositionLevels.ToString();
             pl["Wcboff"] = $"{CodeBlockOriginX} {CodeBlockOriginY}";
+        }
+        
+        internal static string FilterId(WaveletFilter filter) => filter == WaveletFilter.Reversible53 ? "w5x3" : "w9x7";
+
+        /// <summary>The <c>Ffilters</c> value: the default filter, then <c>c&lt;index&gt; &lt;filter&gt;</c> for each component with its own.</summary>
+        internal static string FilterSpec(WaveletFilter filter, IReadOnlyDictionary<int, WaveletFilter> componentFilters)
+        {
+            var spec = FilterId(filter);
+            foreach (var cf in componentFilters.OrderBy(kv => kv.Key))
+                spec += $" c{cf.Key} {FilterId(cf.Value)}";
+            return spec;
+        }
+
+        /// <summary>
+        /// Gives each component with its own filter the quantization type that filter needs: the 5-3 filter requires reversible
+        /// quantization, the 9-7 filter a non-reversible one.
+        /// </summary>
+        internal void ApplyComponentQuantization(ParameterList pl, QuantizationType type)
+        {
+            if (ComponentFilters.Count == 0) return;
+            var nonReversible = type == QuantizationType.Derived ? "derived" : "expounded";
+            var global = type == QuantizationType.Reversible ? "reversible" : nonReversible;
+            var qtype = global;
+            foreach (var cf in ComponentFilters.OrderBy(kv => kv.Key))
+            {
+                var needed = cf.Value == WaveletFilter.Reversible53 ? "reversible" : nonReversible;
+                if (needed != global) qtype += $" c{cf.Key} {needed}";
+            }
+            pl["Qtype"] = qtype;
         }
         
         internal List<string> Validate()
         {
             var errors = new List<string>();
+
+            foreach (var component in ComponentFilters.Keys)
+            {
+                if (component < 0)
+                    errors.Add($"Invalid component index for a wavelet filter: {component}");
+            }
             
             if (DecompositionLevels < 0 || DecompositionLevels > 32)
                 errors.Add("Decomposition levels must be between 0 and 32");
@@ -340,6 +394,20 @@ namespace CoreJ2K.Configuration
         
         /// <summary>Gets the quality layers specification.</summary>
         public List<float> QualityLayers { get; } = new List<float>();
+
+        /// <summary>Gets the progression orders of individual tiles, by tile index; the other tiles use <see cref="Order"/>.</summary>
+        public Dictionary<int, ProgressionOrder> TileOrders { get; } = new Dictionary<int, ProgressionOrder>();
+
+        /// <summary>
+        /// Sets the progression order of one tile.
+        /// </summary>
+        public ProgressionConfiguration WithTileOrder(int tile, ProgressionOrder order)
+        {
+            if (tile < 0)
+                throw new ArgumentOutOfRangeException(nameof(tile), "Tile index must be non-negative");
+            TileOrders[tile] = order;
+            return this;
+        }
         
         /// <summary>
         /// Sets the progression order.
@@ -360,31 +428,35 @@ namespace CoreJ2K.Configuration
             return this;
         }
         
+        internal static string AptypeId(ProgressionOrder order)
+        {
+            switch (order)
+            {
+                case ProgressionOrder.RLCP:
+                    return "res";
+                case ProgressionOrder.RPCL:
+                    return "res-pos";
+                case ProgressionOrder.PCRL:
+                    return "pos-comp";
+                case ProgressionOrder.CPRL:
+                    return "comp-pos";
+                default:
+                    return "layer";
+            }
+        }
+
+        /// <summary>The <c>Aptype</c> value: the default order, then <c>t&lt;index&gt; &lt;order&gt;</c> for each tile with its own.</summary>
+        internal static string AptypeSpec(ProgressionOrder order, IReadOnlyDictionary<int, ProgressionOrder> tileOrders)
+        {
+            var spec = AptypeId(order);
+            foreach (var to in tileOrders.OrderBy(kv => kv.Key))
+                spec += $" t{to.Key} {AptypeId(to.Value)}";
+            return spec;
+        }
+
         internal void ApplyTo(ParameterList pl)
         {
-            string aptypeValue;
-            switch (Order)
-            {
-                case ProgressionOrder.LRCP:
-                    aptypeValue = "layer";
-                    break;
-                case ProgressionOrder.RLCP:
-                    aptypeValue = "res";
-                    break;
-                case ProgressionOrder.RPCL:
-                    aptypeValue = "res-pos";
-                    break;
-                case ProgressionOrder.PCRL:
-                    aptypeValue = "pos-comp";
-                    break;
-                case ProgressionOrder.CPRL:
-                    aptypeValue = "comp-pos";
-                    break;
-                default:
-                    aptypeValue = "layer";
-                    break;
-            }
-            pl["Aptype"] = aptypeValue;
+            pl["Aptype"] = AptypeSpec(Order, TileOrders);
             
             if (QualityLayers.Count > 0)
             {
@@ -401,6 +473,12 @@ namespace CoreJ2K.Configuration
             {
                 if (layer <= 0)
                     errors.Add("Quality layer bitrates must be positive");
+            }
+
+            foreach (var tile in TileOrders.Keys)
+            {
+                if (tile < 0)
+                    errors.Add($"Invalid tile index for a progression order: {tile}");
             }
             
             return errors;
