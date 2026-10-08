@@ -275,7 +275,39 @@ var config = new J2KEncoderConfiguration()
 - A rule that names a component or level the image does not have is an error.
 - In a `ParameterList`, the option is `Dweights`, for example `pl["Dweights"] = "1.25:c0 0.8:c1 0.8:c2"`.
 
-### 12. Cancellation
+### 12. Small portraits under a size limit
+
+`ForPortrait(maxBytes, face)` sets up the encode for a face image that has to fit a fixed budget, such as an identity card:
+
+```csharp
+using CoreJ2K.j2k.roi;
+
+var face = ROIMask.FromConvexHull(width, height, landmarks);
+
+var config = new CompleteEncoderConfigurationBuilder()
+    .ForPortrait(12000, face)      // face is optional
+    .Build();
+
+byte[] jp2 = J2kImage.ToBytes(image, config);
+```
+
+`CompleteConfigurationPresets.Portrait(12000, face)` is the same thing. The recipe:
+
+| Setting | Value |
+|---------|-------|
+| Output | JP2, at most `maxBytes` including the boxes (see section 10) |
+| Tiles, quality layers | One tile, one layer |
+| Transform | Colour transform (ICT) with the irreversible 9/7 wavelet, five decomposition levels |
+| Quantization | Expounded, base step 1/128, two guard bits |
+| Code-blocks, progression | 64×64, layer-resolution-component-position |
+| Distortion weights | 1.25 on luma (component 0), every subband |
+| Face (when given) | Maxshift ROI on every component, start level 4, no block alignment |
+
+The preset replaces the quantization, wavelet, progression, tile, code-block, entropy-coding, error-resilience and distortion-weight
+settings, the rate and the file-format choice, wherever they were set before, so call it first and adjust afterwards. It leaves a region
+of interest set earlier alone when no `face` is given. `WithMaxBytes` after the preset changes the limit.
+
+### 13. Cancellation
 
 An encode can be cancelled part-way through. Cancellation is cooperative: the encoder checks the token for every code-block it
 transforms and codes, every packet it writes, every few rows of the wavelet transform, and during the rate-allocation search, so a
@@ -313,7 +345,7 @@ catch (OperationCanceledException)
 If a configuration (or builder) carries a token *and* an async method is given one, cancelling either stops the encode. As with any
 other failure, a cancelled encode leaves the image source open; the encoder only closes it after a successful encode.
 
-### 13. Parallel Encoding
+### 14. Parallel Encoding
 
 Most of an encode is coding code-blocks: the MQ coding passes and rate-distortion statistics for every block, and every block is
 independent. CoreJ2K codes batches of code-blocks on several threads, while a producer thread reads the source and pulls the next

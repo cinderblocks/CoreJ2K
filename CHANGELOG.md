@@ -20,6 +20,10 @@ This file starts with 2.4.0. Earlier releases are described on the
   code-blocks by component, resolution level and subband, which steers where the rate allocator spends a limited budget, for example 1.25 on
   luma. They combine with ROI and with `WithMaxBytes`, and change nothing in the codestream's structure.
 
+- **A portrait preset**: `CompleteEncoderConfigurationBuilder.ForPortrait(maxBytes, face)` and `CompleteConfigurationPresets.Portrait` set up a JP2 for
+  a face image under a hard size limit: one tile and one layer, ICT with 9/7, five levels, 64x64 code-blocks, a luma weight of 1.25, and an optional
+  Maxshift face region at start level 4.
+
 ### Fixed
 
 - **`FromJ2KFile`, `FromJ2KBytes` and `FromJ2KStream` in CoreJ2K.ImageSharp threw `InvalidCastException` for RGB and greyscale streams.** They return

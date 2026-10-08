@@ -229,8 +229,75 @@ namespace CoreJ2K.Configuration
             return this;
         }
         
+        /// <summary>
+        /// Configures for a small portrait that must fit a hard size limit, such as a face image on an identity card.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// The recipe is a JP2 file with one tile and one quality layer, the irreversible colour transform and 9/7 wavelet,
+        /// five decomposition levels, 64×64 code-blocks, and a luma distortion weight of 1.25. The encoder keeps as much of the
+        /// image as fits in <paramref name="maxBytes"/> and never writes more, JP2 boxes included. Quantization is expounded
+        /// with a base step of 1/128 and two guard bits, the progression order is layer-resolution-component-position, and
+        /// everything else keeps the codec default.
+        /// </para>
+        /// <para>
+        /// With <paramref name="face"/>, that region is coded as Maxshift ROI on every component, with the lowest five resolution
+        /// levels (<c>start level</c> 4) coded entirely as ROI. The mask must be the size of the image. A face that
+        /// needs more than 15 quantized magnitude bits is refused, which this recipe's step size does not reach for 8-bit input.
+        /// </para>
+        /// <para>
+        /// The preset replaces the quantization, wavelet, progression, tile, code-block, entropy-coding, error-resilience and
+        /// distortion-weight settings, the rate, and the file-format choice, so call it before adjusting any of those. It leaves a region of interest set
+        /// earlier alone unless <paramref name="face"/> is given. Calling <see cref="WithMaxBytes"/> afterwards changes the limit.
+        /// </para>
+        /// </remarks>
+        /// <param name="maxBytes">The most bytes the complete output may take.</param>
+        /// <param name="face">The region to prioritise, or null for no ROI.</param>
+        /// <returns>This configuration instance for method chaining.</returns>
+        public CompleteEncoderConfigurationBuilder ForPortrait(int maxBytes, j2k.roi.ROIMask? face = null)
+        {
+            // These builder fields overwrite the configuration when Build() runs, so drop any left by an earlier preset.
+            _quantization = null;
+            _wavelet = null;
+            _progression = null;
+
+            _encoderConfig.WithBitrate(-1f); // not lossless; the byte limit replaces the rate
+            _encoderConfig.WithFileFormat(true);
+            _encoderConfig.WithMaxBytes(maxBytes);
+            _encoderConfig.WithTiles(t => t.SetSize(0, 0));
+            _encoderConfig.WithWavelet(w => w.UseIrreversible97().WithDecompositionLevels(5));
+            _encoderConfig.WithQuantization(q => q.UseExpounded().WithBaseStepSize(0.0078125f).WithGuardBits(2));
+            _encoderConfig.WithProgression(p =>
+            {
+                p.WithOrder(ProgressionOrder.LRCP);
+                p.QualityLayers.Clear();
+            });
+            _encoderConfig.WithCodeBlocks(c => c.SetSize(64, 64));
+            _encoderConfig.WithEntropyCoding(e =>
+            {
+                e.LengthCalculation = LengthCalculation.NearOptimal;
+                e.Termination = TerminationType.NearOptimal;
+                e.SegmentationSymbol = false;
+                e.CausalMode = false;
+                e.ResetMQ = false;
+                e.BypassMode = false;
+                e.RegularTermination = false;
+            });
+            _encoderConfig.WithErrorResilience(r =>
+            {
+                r.SOPMarkers = false;
+                r.EPHMarkers = false;
+            });
+            _encoderConfig.WithDistortionWeights(new j2k.encoder.DistortionWeights().ForComponent(0, 1.25));
+
+            if (face != null)
+                _encoderConfig.WithROI(new j2k.roi.ROIConfiguration().AddMask(-1, face).SetStartLevel(4));
+
+            return this;
+        }
+
         #endregion
-        
+
         #region Configuration Methods
         
         /// <summary>
@@ -859,6 +926,15 @@ namespace CoreJ2K.Configuration
                 .ForHighQuality()
                 .WithComment("High-quality photograph");
         
+        /// <summary>
+        /// Portrait preset for a hard size limit; see <see cref="CompleteEncoderConfigurationBuilder.ForPortrait"/>.
+        /// </summary>
+        /// <param name="maxBytes">The most bytes the complete output may take.</param>
+        /// <param name="face">The region to prioritise, or null for no ROI.</param>
+        public static CompleteEncoderConfigurationBuilder Portrait(int maxBytes, j2k.roi.ROIMask? face = null) =>
+            new CompleteEncoderConfigurationBuilder()
+                .ForPortrait(maxBytes, face);
+
         /// <summary>
         /// Balanced general purpose preset.
         /// </summary>
