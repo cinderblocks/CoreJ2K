@@ -308,7 +308,16 @@ namespace CoreJ2K.j2k
         public virtual void SetDefault(object value)
         {
             def = value;
+            Changed();
         }
+
+        private int _version;
+
+        /// <summary>Counts the changes made to the specification, so that what is worked out from all of it can be kept until the next change.</summary>
+        internal int Version => System.Threading.Volatile.Read(ref _version);
+
+        /// <summary>Notes that a value of the specification has changed.</summary>
+        protected void Changed() => System.Threading.Interlocked.Increment(ref _version);
 
         /// <summary>Cached boxed <c>true</c> to avoid repeated boxing allocations.</summary>
         private static readonly object BoxedTrue = true;
@@ -321,6 +330,7 @@ namespace CoreJ2K.j2k
         public void SetBoolDefault(bool value)
         {
             def = value ? BoxedTrue : BoxedFalse;
+            Changed();
         }
 
         /// <summary>Sets the tile-level default using a pre-boxed bool singleton.</summary>
@@ -405,6 +415,7 @@ namespace CoreJ2K.j2k
                 }
             }
             compDef[c] = value;
+            Changed();
         }
 
         /// <summary> Gets default value of the specified component. If no specification have
@@ -456,6 +467,7 @@ namespace CoreJ2K.j2k
                 }
             }
             tileDef[t] = value;
+            Changed();
         }
 
         /// <summary> Gets default value of the specified tile. If no specification has been
@@ -510,6 +522,7 @@ namespace CoreJ2K.j2k
                 tileCompVal = new object[nTiles * nComp];
             specValType[t][c] = SPEC_TILE_COMP;
             tileCompVal[t * nComp + c] = value;
+            Changed();
         }
 
         /// <summary> Gets value of specified tile-component. This method calls GetSpec but

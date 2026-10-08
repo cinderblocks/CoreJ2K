@@ -70,10 +70,22 @@ This file starts with 2.4.0. Earlier releases are described on the
 - The distortion weight for ROI code-blocks overflowed `int` at 16 or more magnitude bits (`1 << (bits << 1)`); it is now computed in floating point.
 - **Tiled encodes with an image offset failed.** The tile count ignored the origin of the tile grid, so `ref` combined with `tiles` counted tiles beyond the image and
   the encoder threw (`ArgumentOutOfRangeException` or `OverflowException`).
+- **Lossy decodes that use the colour transform came out about half a level too bright on the dark half of the image.** The inverse transform rounded values centred on
+  zero by adding one half and truncating, which rounds negative values up by a whole level; on one test file the PSNR against the source rose from 48.7 to 59.6 dB
+  (OpenJPEG decodes it at 59.6). With no wavelet decomposition (`Wlev 0`) a lossy component was also rounded to integers before the transform.
+- **A file with packed packet headers in the main header (`pph_main`, PPM) could not be decoded**: the marker was read in the wrong byte order.
+- **Random access to tiles through TLM failed in a JP2 file** (`NullReferenceException`): the offsets were measured from the start of the codestream but used as file
+  positions. When the TLM data was wrong, the decoder said it would parse the tiles in sequence but did not.
 - **Tile-parts.** A tile with more packets than the first tile was split into several tile-parts although none were asked for. More than 255 tile-parts for one tile
   (`tile_parts` of a few packets) wrote a count the SOT marker cannot hold; the packets per tile-part are now raised to stay within 255. When packed packet headers or
   tile-parts made the codestream shorter, the end of the old codestream stayed after the new end marker.
 - **Selective arithmetic-coding bypass could make the encoder throw `IndexOutOfRangeException`** when the estimated end of a raw pass lay past the end of the code-block's data.
+- **Damaged files could hang the decoder or end in an implementation exception.** A packet header of 1 bits read a tag tree and a length indicator without end, and a JP2
+  box of length 0 was never passed. Both now fail; a file that makes the decoder run into a missing structure raises `InvalidOperationException` (with the original as
+  the inner exception) instead of `NullReferenceException` or `IndexOutOfRangeException`, and an arbitrary-filter file raises `NotSupportedException`.
+- **Decoding time grew with the square of the number of tiles** (16,384 tiles of 4x4 took 17 seconds, now 0.3) because each code-block looked at the decomposition level of
+  every tile-component.
+- **`CodestreamValidator` rejected valid codestreams**: it never recognised the main header markers it compared (reporting COD as missing) and miscounted the precinct sizes.
 
 ### Changed
 

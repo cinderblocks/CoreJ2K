@@ -190,7 +190,7 @@ namespace CoreJ2K.j2k.codestream
                     return -1;
                 }
 
-                var marker = (data[pos] << 8) | data[pos + 1];
+                var marker = unchecked((short)((data[pos] << 8) | data[pos + 1]));
                 pos += 2;
 
                 switch (marker)
@@ -363,7 +363,7 @@ namespace CoreJ2K.j2k.codestream
                     break;
                 }
 
-                var marker = (data[pos] << 8) | data[pos + 1];
+                var marker = unchecked((short)((data[pos] << 8) | data[pos + 1]));
 
                 // SOD marks end of tile-part header
                 if (marker == Markers.SOD)
@@ -445,7 +445,7 @@ namespace CoreJ2K.j2k.codestream
                 // Check for next marker (SOT, EOC, or packet markers)
                 if (data[pos] == 0xFF)
                 {
-                    var marker = (data[pos] << 8) | data[pos + 1];
+                    var marker = unchecked((short)((data[pos] << 8) | data[pos + 1]));
 
                     if (marker == Markers.SOT || marker == Markers.EOC)
                     {
@@ -760,7 +760,7 @@ namespace CoreJ2K.j2k.codestream
             if (precinctUsed)
             {
                 var expectedPrecincts = levels + 1;
-                var remainingBytes = lcod - 11;
+                var remainingBytes = lcod - 12; // Lcod, Scod, SGcod (4) and SPcod (5) come before the precinct sizes
                 
                 if (remainingBytes != expectedPrecincts)
                 {

@@ -39,9 +39,9 @@ namespace CoreJ2K.Tests
         {
             for (int i = 0; i < y.Length; i++)
             {
-                r[i] = (int)(y[i] + 1.402f * cr[i] + 0.5f);
-                g[i] = (int)(y[i] - 0.34413f * cb[i] - 0.71414f * cr[i] + 0.5f);
-                b[i] = (int)(y[i] + 1.772f * cb[i] + 0.5f);
+                r[i] = (int)Math.Floor(y[i] + 1.402f * cr[i] + 0.5f);
+                g[i] = (int)Math.Floor(y[i] - 0.34413f * cb[i] - 0.71414f * cr[i] + 0.5f);
+                b[i] = (int)Math.Floor(y[i] + 1.772f * cb[i] + 0.5f);
             }
         }
 
@@ -110,13 +110,27 @@ namespace CoreJ2K.Tests
                 ScalarInvIct(y, cb, cr, rRef, gRef, bRef);
                 SimdColorTransform.InvIctRow(y, cb, cr, rSimd, gSimd, bSimd);
 
-                // ConvertToInt32 truncates toward zero, identical to the
-                // (int) cast used by the scalar reference. Result MUST be
-                // bit-exact.
+                // The vector and scalar paths must agree bit for bit.
                 Assert.Equal(rRef, rSimd);
                 Assert.Equal(gRef, gSimd);
                 Assert.Equal(bRef, bSimd);
             }
+        }
+
+        [Fact]
+        public void InvIct_RoundsNegativeValuesToNearest()
+        {
+            // Centred samples: -2.3 rounds to -2 (truncating after adding 0.5 would give -1), -2.5 to -2, 2.4 to 2, 2.5 to 3.
+            float[] y = { -2.3f, -2.5f, -2.6f, 2.4f, 2.5f, -0.4f, -0.6f, 0f, -7.9f };
+            var zero = new float[y.Length];
+            int[] r = new int[y.Length], g = new int[y.Length], b = new int[y.Length];
+
+            SimdColorTransform.InvIctRow(y, zero, zero, r, g, b);
+
+            var expected = new[] { -2, -2, -3, 2, 3, 0, -1, 0, -8 };
+            Assert.Equal(expected, r);
+            Assert.Equal(expected, g);
+            Assert.Equal(expected, b);
         }
 
         [Fact]

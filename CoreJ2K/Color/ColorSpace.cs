@@ -156,7 +156,10 @@ namespace CoreJ2K.Color
                     break;
                 }
 
-                // Progress to the next box.
+                // Progress to the next box. A length below the 8 bytes of the box's own header (0 means "to the end of the file") does
+                // not get past it, so the walk would never end.
+                if (len < 8)
+                    throw new ColorSpaceException("header box not found in image");
                 ++i;
                 boxStart = (int)(boxStart + len);
             }
@@ -175,6 +178,8 @@ namespace CoreJ2K.Color
                 len = Icc.ICCProfile.GetInt(boxHeader, 0);
                 if (len == 1)
                     throw new ColorSpaceException("Extended length boxes " + "not supported");
+                if (len < 8)
+                    throw new ColorSpaceException("invalid box length in the header box");
                 type = Icc.ICCProfile.GetInt(boxHeader, 4);
 
                 switch (type)

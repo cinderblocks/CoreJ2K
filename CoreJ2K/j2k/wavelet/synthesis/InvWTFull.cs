@@ -347,7 +347,12 @@ namespace CoreJ2K.j2k.wavelet.synthesis
                 // dtype determination and waveletTreeReconstruction — avoids the extra
                 // virtual dispatch that was occurring on every call in the original code.
                 var synTree = src.GetSynSubbandTree(tIdx, compIndex);
-                dtype = synTree.HorWFilter! == null ? DataBlk.TYPE_INT : synTree.HorWFilter!.DataType;
+                // Without a decomposition there is no filter to say which type the data has; it is the dequantizer's: integers if the
+                // quantization is reversible, otherwise floats (integers would drop the fraction of every coefficient, which the
+                // component transform that follows needs)
+                dtype = synTree.HorWFilter! != null
+                    ? synTree.HorWFilter!.DataType
+                    : (decSpec.qts.IsReversible(tIdx, compIndex) ? DataBlk.TYPE_INT : DataBlk.TYPE_FLOAT);
 
                 //Allocate component data buffer
                 switch (dtype)

@@ -34,6 +34,7 @@
 using CoreJ2K.Util;
 using CoreJ2K.j2k.util;
 using System;
+using System.Threading;
 
 namespace CoreJ2K.j2k
 {
@@ -55,6 +56,11 @@ namespace CoreJ2K.j2k
         {
             get
             {
+                var version = Version;
+                var cached = Volatile.Read(ref _maxCache);
+                if (cached != null && cached.Version == version)
+                    return cached.Value;
+
                 var max = ((int)def);
                 int tmp;
 
@@ -68,6 +74,7 @@ namespace CoreJ2K.j2k
                     }
                 }
 
+                Volatile.Write(ref _maxCache, new Cached(version, max));
                 return max;
             }
 
@@ -82,6 +89,12 @@ namespace CoreJ2K.j2k
         {
             get
             {
+                // The decoder asks for this for every code-block, and it looks at every tile-component: keep the answer until a value changes
+                var version = Version;
+                var cached = Volatile.Read(ref _minCache);
+                if (cached != null && cached.Version == version)
+                    return cached.Value;
+
                 var min = ((int)def);
                 int tmp;
 
@@ -95,10 +108,27 @@ namespace CoreJ2K.j2k
                     }
                 }
 
+                Volatile.Write(ref _minCache, new Cached(version, min));
                 return min;
             }
 
         }
+
+        private sealed class Cached
+        {
+            public Cached(int version, int value)
+            {
+                Version = version;
+                Value = value;
+            }
+
+            public int Version { get; }
+
+            public int Value { get; }
+        }
+
+        private Cached? _minCache;
+        private Cached? _maxCache;
 
 
         /// <summary>The largest value of type int </summary>

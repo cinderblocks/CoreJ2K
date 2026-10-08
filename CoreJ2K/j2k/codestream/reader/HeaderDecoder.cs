@@ -656,7 +656,7 @@ namespace CoreJ2K.j2k.codestream.reader
                 filtIdx[0] = ehs.ReadByte();
             if (kid >= (1 << 7))
             {
-                throw new NotImplementedException("Custom filters not supported");
+                throw new NotSupportedException("Custom wavelet filters are not supported");
             }
             // Return filter based on ID
             switch (kid)
@@ -2946,7 +2946,7 @@ namespace CoreJ2K.j2k.codestream.reader
                 for (var i = 0; i < nPPMMarkSeg; i++)
                 {
                     bais = new System.IO.MemoryStream(ht[$"PPM{i}"]);
-                    readPPM(new Util.EndianBinaryReader(bais));
+                    readPPM(new Util.EndianBinaryReader(bais, true));
                 }
             }
 

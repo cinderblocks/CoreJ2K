@@ -82,15 +82,15 @@ namespace CoreJ2K.j2k.image.Simd
 
         // ----------------------------------------------------------------
         //  Inverse ICT  (lossy / irreversible)
-        //      Y, Cb, Cr (float)  ->  R, G, B (int, truncated)
+        //      Y, Cb, Cr (float)  ->  R, G, B (int, rounded)
         //
-        //      R = (int)(Y + 1.402   * Cr + 0.5)
-        //      G = (int)(Y - 0.34413 * Cb - 0.71414 * Cr + 0.5)
-        //      B = (int)(Y + 1.772   * Cb + 0.5)
+        //      R = floor(Y + 1.402   * Cr + 0.5)
+        //      G = floor(Y - 0.34413 * Cb - 0.71414 * Cr + 0.5)
+        //      B = floor(Y + 1.772   * Cb + 0.5)
         //
-        //  The +0.5 followed by (int) truncation toward zero is the exact
-        //  rounding used by the legacy scalar code; Vector.ConvertToInt32
-        //  also truncates toward zero, so the result matches bit-for-bit.
+        //  The samples are still centred on zero here (the DC level shift comes later), so about half of them are negative. Adding
+        //  0.5 and truncating toward zero rounds a negative value up by a whole step (-2.3 -> -1), a bias of about half a level on
+        //  the dark half of every image; flooring rounds to nearest.
         // ----------------------------------------------------------------
         public static void InvIctRow(
             ReadOnlySpan<float> y,
@@ -122,9 +122,9 @@ namespace CoreJ2K.j2k.image.Simd
                     var vCb = new Vector<float>(cb.Slice(i, step));
                     var vCr = new Vector<float>(cr.Slice(i, step));
 
-                    var vR = vY + k_RCr * vCr + k_half;
-                    var vG = vY - k_GCb * vCb - k_GCr * vCr + k_half;
-                    var vB = vY + k_BCb * vCb + k_half;
+                    var vR = Vector.Floor(vY + k_RCr * vCr + k_half);
+                    var vG = Vector.Floor(vY - k_GCb * vCb - k_GCr * vCr + k_half);
+                    var vB = Vector.Floor(vY + k_BCb * vCb + k_half);
 
                     Vector.ConvertToInt32(vR).CopyTo(r.Slice(i, step));
                     Vector.ConvertToInt32(vG).CopyTo(g.Slice(i, step));
@@ -132,12 +132,12 @@ namespace CoreJ2K.j2k.image.Simd
                 }
             }
 #endif
-            // Scalar tail / fallback. Identical arithmetic to InvCompTransf.invICT.
+            // Scalar tail / fallback, the same arithmetic as the vector loop.
             for (; i < n; i++)
             {
-                r[i] = (int)(y[i] + 1.402f * cr[i] + 0.5f);
-                g[i] = (int)(y[i] - 0.34413f * cb[i] - 0.71414f * cr[i] + 0.5f);
-                b[i] = (int)(y[i] + 1.772f * cb[i] + 0.5f);
+                r[i] = (int)Math.Floor(y[i] + 1.402f * cr[i] + 0.5f);
+                g[i] = (int)Math.Floor(y[i] - 0.34413f * cb[i] - 0.71414f * cr[i] + 0.5f);
+                b[i] = (int)Math.Floor(y[i] + 1.772f * cb[i] + 0.5f);
             }
         }
 

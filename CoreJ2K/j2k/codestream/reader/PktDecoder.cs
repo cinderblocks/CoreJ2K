@@ -813,6 +813,12 @@ namespace CoreJ2K.j2k.codestream.reader
             return numPrec[c][r].x * numPrec[c][r].y;
         }
 
+        /// <summary>The most bit-planes a code-block can skip: a coefficient has at most 31 bit-planes, and a region of interest doubles them.</summary>
+        private const int MaxZeroBitPlanes = 70;
+
+        /// <summary>The largest length indicator (the number of bits a length is read with): lengths are less than 2^32.</summary>
+        private const int MaxLblock = 40;
+
         /// <summary> Read specified packet head and found length of each code-block's piece
         /// of codewords as well as number of skipped most significant bit-planes.
         /// 
@@ -1017,6 +1023,10 @@ namespace CoreJ2K.j2k.codestream.reader
                                 tmp = 1; // initialization
                                 for (tmp2 = 1; tmp >= tmp2; tmp2++)
                                 {
+                                    // A code-block has at most a few dozen bit-planes; a tag tree that goes on past that is reading
+                                    // bits that are not a packet header
+                                    if (tmp2 > MaxZeroBitPlanes)
+                                        throw new CorruptedCodestreamException("Number of missing bit-planes of a code-block is out of range");
                                     tmp = tdBD.update(m, n, tmp2, bin);
                                 }
                                 ccb.msbSkipped = tmp2 - 2;
@@ -1159,7 +1169,8 @@ namespace CoreJ2K.j2k.codestream.reader
                             // Reads lblock increment (common to all segments)
                             while (bin.readBit() != 0)
                             {
-                                lblock[c][r][s][cbc.y][cbc.x]++;
+                                if (++lblock[c][r][s][cbc.y][cbc.x] > MaxLblock)
+                                    throw new CorruptedCodestreamException("Code-block length indicator is out of range");
                             }
 
                             if (nSeg == 1)

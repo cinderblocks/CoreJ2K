@@ -241,8 +241,9 @@ namespace CoreJ2K.j2k.codestream.reader
                 lengths[entry.TileIndex] += entry.TilePartLength;
             }
 
+            // the tile-part lengths are measured from the start of the codestream, which is not the start of the file in a JP2
             var offsets = new long[lengths.Length];
-            var offset = (long)mainHeadLen;
+            var offset = (long)hd.mainHeadOff + mainHeadLen;
             for (var t = 0; t < lengths.Length; t++)
             {
                 offsets[t] = offset;
@@ -2482,6 +2483,7 @@ namespace CoreJ2K.j2k.codestream.reader
             if (tlmOffset >= 0 && !isTruncMode)
             {
                 // TLM available - attempt fast path
+                var positionBefore = inStream.Pos;
                 try
                 {
                     // Reset byte counters if starting from tile 0
@@ -2592,8 +2594,11 @@ namespace CoreJ2K.j2k.codestream.reader
                     FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING,
                         $"TLM fast seek failed for tile {t}: {e.Message}, using sequential parsing");
                 }
+
+                // The fast path returns when it succeeds; here it did not, so parse on from where the previous tile ended
+                inStream.seek(positionBefore);
             }
-            else
+
             {
                 // Reset number of read bytes if needed
                 if (t == 0)

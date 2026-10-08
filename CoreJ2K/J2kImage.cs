@@ -126,6 +126,11 @@ namespace CoreJ2K
         public static InterleavedImage FromStream(Stream stream, ParameterList? parameters, CancellationToken cancellationToken)
             => FromStreamCore(stream, parameters, cancellationToken);
 
+        /// <summary>The exceptions a damaged file makes the decoder throw by running into a structure that is not there.</summary>
+        private static bool IsDamagedFileSymptom(Exception e) =>
+            e is NullReferenceException || e is IndexOutOfRangeException || e is InvalidCastException || e is DivideByZeroException
+            || e is OverflowException || e is KeyNotFoundException || e is ArrayTypeMismatchException;
+
         private static InterleavedImage FromStreamCore(Stream stream, ParameterList? parameters, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -419,6 +424,12 @@ namespace CoreJ2K
             }
 
             return dst;
+            }
+            catch (Exception e) when (IsDamagedFileSymptom(e))
+            {
+                // The decoder trusts the structure it reads; a file that breaks that trust shows as one of these. Report the file, not the
+                // line of the decoder that was the first to notice (it stays in InnerException).
+                throw new InvalidOperationException($"The data is damaged or is not a JPEG 2000 file it can decode: {e.Message}", e);
             }
             finally
             {
@@ -751,6 +762,12 @@ namespace CoreJ2K
             }
 
             return dst;
+            }
+            catch (Exception e) when (IsDamagedFileSymptom(e))
+            {
+                // The decoder trusts the structure it reads; a file that breaks that trust shows as one of these. Report the file, not the
+                // line of the decoder that was the first to notice (it stays in InnerException).
+                throw new InvalidOperationException($"The data is damaged or is not a JPEG 2000 file it can decode: {e.Message}", e);
             }
             finally
             {
