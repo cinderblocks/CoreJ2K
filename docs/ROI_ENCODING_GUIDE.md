@@ -71,6 +71,38 @@ Coordinates are in pixels from the image origin.
 cannot contain whitespace, and the file must exist when the configuration is validated. Rectangles use a fast mask generator;
 circles and masks use the generic one.
 
+### In-memory masks
+
+A region of any shape can also be held in memory as a `ROIMask`, with no file. A mask is as large as the image it is used with
+(one bit per pixel), and a pixel is inside when its centre is.
+
+```csharp
+// From the convex hull of facial landmarks (pixel coordinates from the top left):
+var face = ROIMask.FromConvexHull(width, height, landmarks);   // IReadOnlyList<PointF> or (double X, double Y)
+
+var config = new J2KEncoderConfiguration()
+    .WithMaxBytes(12000)
+    .WithROI(new ROIConfiguration().AddMask(-1, face).SetStartLevel(4));
+```
+
+| Factory | Makes |
+|---------|-------|
+| `FromConvexHull(w, h, points)` | The hull of a point set. Points inside it change nothing; they must not all lie on one line. |
+| `FromPolygon(w, h, vertices)` | A polygon (even-odd rule where it crosses itself). Parts outside the image are cut off. |
+| `FromEllipse(w, h, cx, cy, rx, ry)` | An ellipse with axes along the image axes. |
+| `FromBytes(w, h, pixels)` | One byte per pixel, row by row; non-zero is inside. |
+| `FromPredicate(w, h, (x, y) => ...)` | Any test applied to every pixel. |
+
+The point lists take `System.Drawing.PointF` or plain `(double X, double Y)` tuples; use the tuples when your own point type is
+ImageSharp's `PointF`, which is a different type.
+
+Several masks and shapes in one configuration are combined into one region. A mask of the wrong size makes the encode fail with
+"Input image and ROI mask must have the same size".
+
+The masks travel in the encoder's parameter list: `ToParameterList()` fills `ParameterList.RoiMasks` and writes `M <index>` in
+`Rroi`. If you build a `ParameterList` by hand, add the masks to `RoiMasks` yourself; an `M` that points at a missing mask is an
+error, not silently ignored. Copying only the string options to another list drops the masks, and the encode fails.
+
 ## Options
 
 | Method | `Rroi`-style option | Default | Description |
@@ -117,4 +149,5 @@ includes them.
 | The ROI is sharp on one colour channel only | The region was added for component `0` instead of `-1`. |
 | `Could not instantiate ROI scaler: ... magnitude bits` | See "Limit on magnitude bits". |
 | `Arbitrary ROI mask file path cannot contain whitespace` | Move or rename the PGM file. |
-| `Input image and ROI mask must have the same size` | The PGM mask must match the image dimensions. |
+| `'-Rroi M n' refers to an in-memory ROI mask that is not in ... RoiMasks` | The parameter list lost its masks; encode with the configuration, or add them to `RoiMasks`. |
+| `Input image and ROI mask must have the same size` | The PGM file or `ROIMask` must match the image dimensions. |

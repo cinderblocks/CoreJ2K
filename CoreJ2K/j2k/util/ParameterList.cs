@@ -58,6 +58,12 @@ namespace CoreJ2K.j2k.util
     {
         private readonly ParameterList defaults;
 
+        /// <summary>
+        /// Gets the in-memory ROI masks that <c>M &lt;index&gt;</c> in the <c>Rroi</c> option refers to by position.
+        /// <see cref="CoreJ2K.Configuration.J2KEncoderConfiguration"/> fills it in; a hand-made list adds its masks here.
+        /// </summary>
+        public System.Collections.Generic.List<CoreJ2K.j2k.roi.ROIMask> RoiMasks { get; } = new System.Collections.Generic.List<CoreJ2K.j2k.roi.ROIMask>();
+
         /// <summary> Returns the default ParameterList.</summary>
         /// <returns> Default ParameterList</returns>
         public virtual ParameterList DefaultParameterList => defaults;

@@ -111,7 +111,7 @@ namespace CoreJ2K.j2k.roi.encoder
         /// <summary>The list of parameters that are accepted for ROI coding. Options 
         /// for ROI Scaler start with 'R'. 
         /// </summary>
-        private static readonly string[][] pinfo = { new string[] { "Rroi", "[<component idx>] R <left> <top> <width> <height> or [<component idx>] C <centre column> <centre row> <radius> or [<component idx>] A <filename>", "Specifies ROIs shape and location. The shape can be either rectangular 'R', or circular 'C' or arbitrary 'A'. Each new occurrence of an 'R', a 'C' or an 'A' is a new ROI. For circular and rectangular ROIs, all values are given as their pixel values relative to the canvas origin. Arbitrary shapes must be included in a PGM file where non 0 values correspond to ROI coefficients. The PGM file must have the size as the image. The component idx specifies which components contain the ROI. The component index is specified as described by points 3 and 4 in the general comment on tile-component idx. If this option is used, the codestream is layer progressive by default unless it is overridden by the 'Aptype' option.", null }, new string[] { "Ralign", "[on|off]", "By specifying this argument, the ROI mask will be limited to covering only entire code-blocks. The ROI coding can then be performed without any actual scaling of the coefficients but by instead scaling the distortion estimates.", "off" }, new string[] { "Rstart_level", "<level>", "This argument forces the lowest <level> resolution levels to " + "belong to the ROI. By doing this, it is possible to avoid only " + "getting information for the ROI at an early stage of " + "transmission.<level> = 0 means the lowest resolution level " + "belongs to the ROI, 1 means the two lowest etc. (-1 deactivates" + " the option)", "-1" }, new string[] { "Rno_rect", "[on|off]", "This argument makes sure that the ROI mask generation is not done " + "using the fast ROI mask generation for rectangular ROIs " + "regardless of whether the specified ROIs are rectangular or not", "off" } };
+        private static readonly string[][] pinfo = { new string[] { "Rroi", "[<component idx>] R <left> <top> <width> <height> or [<component idx>] C <centre column> <centre row> <radius> or [<component idx>] A <filename> or [<component idx>] M <index>", "Specifies ROIs shape and location. The shape can be either rectangular 'R', or circular 'C' or arbitrary 'A' or 'M'. Each new occurrence of an 'R', a 'C', an 'A' or an 'M' is a new ROI. For circular and rectangular ROIs, all values are given as their pixel values relative to the canvas origin. Arbitrary shapes must be included in a PGM file where non 0 values correspond to ROI coefficients. The PGM file must have the size as the image. 'M' takes an arbitrary shape from the ParameterList's RoiMasks list, by position, instead of from a file; the mask must have the size of the image. The component idx specifies which components contain the ROI. The component index is specified as described by points 3 and 4 in the general comment on tile-component idx. If this option is used, the codestream is layer progressive by default unless it is overridden by the 'Aptype' option.", null }, new string[] { "Ralign", "[on|off]", "By specifying this argument, the ROI mask will be limited to covering only entire code-blocks. The ROI coding can then be performed without any actual scaling of the coefficients but by instead scaling the distortion estimates.", "off" }, new string[] { "Rstart_level", "<level>", "This argument forces the lowest <level> resolution levels to " + "belong to the ROI. By doing this, it is possible to avoid only " + "getting information for the ROI at an early stage of " + "transmission.<level> = 0 means the lowest resolution level " + "belongs to the ROI, 1 means the two lowest etc. (-1 deactivates" + " the option)", "-1" }, new string[] { "Rno_rect", "[on|off]", "This argument makes sure that the ROI mask generation is not done " + "using the fast ROI mask generation for rectangular ROIs " + "regardless of whether the specified ROIs are rectangular or not", "off" } };
 
         /// <summary>The maximum number of magnitude bit-planes in any subband. One value
         /// for each tile-component 
@@ -259,9 +259,17 @@ namespace CoreJ2K.j2k.roi.encoder
             var onlyRect = !pl.GetBooleanParameter("Rno_rect");
 
             // Parse the ROIs
-            parseROIs(roiopt, src.NumComps, roiVector);
+            parseROIs(roiopt, src.NumComps, roiVector, pl.RoiMasks);
             var roiArray = new ROI[roiVector.Count];
             roiVector.CopyTo(roiArray);
+            foreach (var roiItem in roiArray)
+            {
+                if (roiItem.memMask != null && (roiItem.memMask.Width != src.ImgWidth || roiItem.memMask.Height != src.ImgHeight))
+                {
+                    throw new ArgumentException(
+                        $"Input image and ROI mask must have the same size (image {src.ImgWidth}x{src.ImgHeight}, mask {roiItem.memMask.Width}x{roiItem.memMask.Height})");
+                }
+            }
 
             // If onlyRect has been forced, check if there are any non-rectangular
             // ROIs specified.  Currently, only the presence of circular ROIs will
@@ -315,7 +323,7 @@ namespace CoreJ2K.j2k.roi.encoder
         /// <returns> The ROIs specified in roiopt
         /// 
         /// </returns>
-        protected internal static List<ROI> parseROIs(string roiopt, int nc, List<ROI> roiVector)
+        protected internal static List<ROI> parseROIs(string roiopt, int nc, List<ROI> roiVector, IReadOnlyList<ROIMask> masks = null)
         {
             //ROI[] ROIs;
             ROI roi;
@@ -421,6 +429,49 @@ namespace CoreJ2K.j2k.roi.encoder
                             {
                                 roi = new ROI(i, x, y, rad);
                                 roiVector.Add(roi);
+                            }
+                        }
+                        break;
+
+                    case 'M':  // ROI with arbitrary shape, from a mask held in memory
+                        nrOfROIs++;
+
+                        ROIMask memMask;
+                        try
+                        {
+                            word = stok.NextToken();
+                            var maskIndex = int.Parse(word);
+                            if (masks == null || maskIndex < 0 || maskIndex >= masks.Count)
+                            {
+                                throw new ArgumentException(
+                                    $"'-Rroi M {word}' refers to an in-memory ROI mask that is not in the parameter list's RoiMasks.");
+                            }
+                            memMask = masks[maskIndex];
+                        }
+                        catch (FormatException)
+                        {
+                            throw new ArgumentException($"Bad parameter for '-Rroi M' option : {word}");
+                        }
+                        catch (ArgumentOutOfRangeException)
+                        {
+                            throw new ArgumentException("Wrong number of " + "parameters for " + "'-Rroi M' option.");
+                        }
+
+                        // If the ROI is component-specific, check which comps.
+                        if (roiInComp != null)
+                            for (var i = 0; i < nc; i++)
+                            {
+                                if (roiInComp[i])
+                                {
+                                    roiVector.Add(new ROI(i, memMask));
+                                }
+                            }
+                        else
+                        {
+                            // Otherwise add ROI for all components
+                            for (var i = 0; i < nc; i++)
+                            {
+                                roiVector.Add(new ROI(i, memMask));
                             }
                         }
                         break;

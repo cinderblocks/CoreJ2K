@@ -187,7 +187,7 @@ namespace CoreJ2K.ImageSharp
                 ? J2kImage.FromFile(path, config)
                 : J2kImage.FromFile(path);
 
-            return image.As<Image<Rgba32>>();
+            return ToRgba32(image);
         }
 
         /// <summary>
@@ -204,7 +204,7 @@ namespace CoreJ2K.ImageSharp
                 ? J2kImage.FromBytes(data, config)
                 : J2kImage.FromBytes(data);
 
-            return image.As<Image<Rgba32>>();
+            return ToRgba32(image);
         }
 
         /// <summary>
@@ -221,7 +221,21 @@ namespace CoreJ2K.ImageSharp
                 ? J2kImage.FromStream(stream, config)
                 : J2kImage.FromStream(stream);
 
-            return image.As<Image<Rgba32>>();
+            return ToRgba32(image);
+        }
+
+        /// <summary>
+        /// Takes the decoded image as <see cref="Image{Rgba32}"/>. Greyscale and RGB streams decode to <c>L8</c> and <c>Rgb24</c>
+        /// images, which are converted (an opaque alpha channel is added).
+        /// </summary>
+        private static Image<Rgba32> ToRgba32(CoreJ2K.Util.InterleavedImage image)
+        {
+            var decoded = image.As<Image>();
+            if (decoded is Image<Rgba32> rgba) return rgba;
+            using (decoded)
+            {
+                return decoded.CloneAs<Rgba32>();
+            }
         }
 
         #endregion

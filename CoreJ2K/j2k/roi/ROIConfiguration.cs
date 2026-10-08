@@ -113,6 +113,21 @@ namespace CoreJ2K.j2k.roi
         }
         
         /// <summary>
+        /// Adds a region of any shape that is held in memory. See <see cref="ROIMask"/> for ways to make one, such as from the
+        /// convex hull of facial landmarks.
+        /// </summary>
+        /// <param name="component">Component index (0-based) to apply ROI to, or -1 for all components</param>
+        /// <param name="mask">The region; it must be as large as the image that is encoded.</param>
+        /// <returns>This configuration instance for method chaining</returns>
+        public ROIConfiguration AddMask(int component, ROIMask mask)
+        {
+            if (mask == null) throw new ArgumentNullException(nameof(mask));
+
+            _rois.Add(new MaskROI(component, mask));
+            return this;
+        }
+
+        /// <summary>
         /// Sets the block alignment mode.
         /// </summary>
         /// <param name="enabled">True to enable block-aligned ROI encoding</param>
@@ -201,10 +216,12 @@ namespace CoreJ2K.j2k.roi
 
             // A component prefix in 'Rroi' stays in force until the next one, so the ROIs for
             // all components go first (no prefix yet) and the rest follow grouped by component.
+            // In-memory masks travel with the parameter list; 'Rroi' refers to them by position.
             var words = new List<string>();
+            pl.RoiMasks.Clear();
             foreach (var roi in _rois)
             {
-                if (roi.Component < 0) words.Add(roi.ToRroiString());
+                if (roi.Component < 0) words.Add(roi.ToRroiString(pl.RoiMasks));
             }
             for (var c = 0; c < _rois.Count; c++)
             {
@@ -213,7 +230,7 @@ namespace CoreJ2K.j2k.roi
                 words.Add("c" + component.ToString(System.Globalization.CultureInfo.InvariantCulture));
                 foreach (var roi in _rois)
                 {
-                    if (roi.Component == component) words.Add(roi.ToRroiString());
+                    if (roi.Component == component) words.Add(roi.ToRroiString(pl.RoiMasks));
                 }
             }
 
@@ -260,7 +277,8 @@ namespace CoreJ2K.j2k.roi
         /// <summary>
         /// Gets this ROI as it is written in the <c>Rroi</c> encoder option, without a component prefix.
         /// </summary>
-        internal abstract string ToRroiString();
+        /// <param name="masks">The in-memory masks of the parameter list; a shape held in memory adds itself if it is not there yet.</param>
+        internal abstract string ToRroiString(List<ROIMask> masks);
     }
     
     /// <summary>
@@ -273,7 +291,9 @@ namespace CoreJ2K.j2k.roi
         /// <summary>Circular ROI</summary>
         Circle,
         /// <summary>Arbitrary shape from mask file</summary>
-        Arbitrary
+        Arbitrary,
+        /// <summary>Arbitrary shape from a mask held in memory</summary>
+        Mask
     }
     
     /// <summary>
@@ -333,7 +353,7 @@ namespace CoreJ2K.j2k.roi
             return errors;
         }
         
-        internal override string ToRroiString() => FormattableString.Invariant($"R {X} {Y} {Width} {Height}");
+        internal override string ToRroiString(List<ROIMask> masks) => FormattableString.Invariant($"R {X} {Y} {Width} {Height}");
 
         /// <inheritdoc/>
         public override string ToString()
@@ -391,7 +411,7 @@ namespace CoreJ2K.j2k.roi
             return errors;
         }
         
-        internal override string ToRroiString() => FormattableString.Invariant($"C {CenterX} {CenterY} {Radius}");
+        internal override string ToRroiString(List<ROIMask> masks) => FormattableString.Invariant($"C {CenterX} {CenterY} {Radius}");
 
         /// <inheritdoc/>
         public override string ToString()
@@ -437,12 +457,65 @@ namespace CoreJ2K.j2k.roi
             return errors;
         }
         
-        internal override string ToRroiString() => "A " + MaskFilePath;
+        internal override string ToRroiString(List<ROIMask> masks) => "A " + MaskFilePath;
 
         /// <inheritdoc/>
         public override string ToString()
         {
             return $"Arbitrary ROI: Component={Component}, MaskFile={MaskFilePath}";
+        }
+    }
+
+    /// <summary>
+    /// Arbitrary-shaped ROI from a mask held in memory.
+    /// </summary>
+    public class MaskROI : ROIDescriptor
+    {
+        /// <summary>
+        /// Gets the mask.
+        /// </summary>
+        public ROIMask Mask { get; }
+
+        /// <inheritdoc/>
+        public override ROIShapeType ShapeType => ROIShapeType.Mask;
+
+        /// <summary>
+        /// Creates a new in-memory mask ROI descriptor.
+        /// </summary>
+        public MaskROI(int component, ROIMask mask)
+        {
+            Component = component;
+            Mask = mask;
+        }
+
+        /// <inheritdoc/>
+        public override List<string> Validate()
+        {
+            var errors = new List<string>();
+
+            if (Mask == null)
+                errors.Add("ROI mask cannot be null");
+            else if (Mask.PixelCount == 0)
+                errors.Add("ROI mask must contain at least one pixel");
+
+            return errors;
+        }
+
+        internal override string ToRroiString(List<ROIMask> masks)
+        {
+            var index = masks.IndexOf(Mask);
+            if (index < 0)
+            {
+                index = masks.Count;
+                masks.Add(Mask);
+            }
+            return "M " + index.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        }
+
+        /// <inheritdoc/>
+        public override string ToString()
+        {
+            return $"Mask ROI: Component={Component}, Mask={Mask?.Width}x{Mask?.Height}, Pixels={Mask?.PixelCount}";
         }
     }
 }

@@ -223,8 +223,11 @@ namespace CoreJ2K.j2k.roi.encoder
                     if (rois[r].arbShape)
                     {
                         var maskPGM = rois[r].maskPGM; // Local copy
+                        var memMask = rois[r].memMask;
 
-                        if ((src.ImgWidth != maskPGM.ImgWidth) || (src.ImgHeight != maskPGM.ImgHeight))
+                        var maskWidth = memMask != null ? memMask.Width : maskPGM.ImgWidth;
+                        var maskHeight = memMask != null ? memMask.Height : maskPGM.ImgHeight;
+                        if ((src.ImgWidth != maskWidth) || (src.ImgHeight != maskHeight))
                             throw new ArgumentException("Input image and ROI mask must have the same size");
                         x = src.ImgULX;
                         y = src.ImgULY;
@@ -270,6 +273,21 @@ namespace CoreJ2K.j2k.roi.encoder
                         wrap = tilew - maxj;
                         for (k = h; k > 0; k--)
                         {
+                            if (memMask != null)
+                            {
+                                var row = offy + k - 1;
+                                for (j = maxj; j > 0; j--, i--)
+                                {
+                                    if (memMask.IsSet(offx + j - 1, row))
+                                    {
+                                        mask[i] = curScalVal;
+                                        nROIcoeff++;
+                                    }
+                                }
+                                i -= wrap;
+                                continue;
+                            }
+
                             srcblk.uly = offy + k - 1;
                             srcblk = (DataBlkInt)maskPGM.GetInternCompData(srcblk, 0);
                             src_data = srcblk.DataInt;

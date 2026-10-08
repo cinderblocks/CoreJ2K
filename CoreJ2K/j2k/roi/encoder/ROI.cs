@@ -33,6 +33,7 @@
 */
 
 using CoreJ2K.j2k.image.input;
+using CoreJ2K.j2k.roi;
 
 namespace CoreJ2K.j2k.roi.encoder
 {
@@ -112,6 +113,18 @@ namespace CoreJ2K.j2k.roi.encoder
         /// </param>
         /// <param name="h">height of ROI
         /// </param>
+        /// <summary>The in-memory mask of an arbitrary-shaped ROI, or null if the mask comes from <see cref="maskPGM"/></summary>
+        public ROIMask memMask = null;
+
+        /// <summary> Creates an ROI of arbitrary shape from a mask held in memory</summary>
+        public ROI(int comp, ROIMask mask)
+        {
+            arbShape = true;
+            rect = false;
+            this.comp = comp;
+            memMask = mask;
+        }
+
         public ROI(int comp, int ulx, int uly, int w, int h)
         {
             arbShape = false;
@@ -151,7 +164,9 @@ namespace CoreJ2K.j2k.roi.encoder
         {
             if (arbShape)
             {
-                return $"ROI with arbitrary shape, PGM file= {maskPGM}";
+                return memMask != null
+                    ? $"ROI with arbitrary shape, in-memory mask {memMask.Width}x{memMask.Height}, comp={comp}"
+                    : $"ROI with arbitrary shape, PGM file= {maskPGM}";
             }
             else if (rect)
                 return $"Rectangular ROI, comp={comp} ulx={ulx} uly={uly} w={w} h={h}";

@@ -12,8 +12,14 @@ This file starts with 2.4.0. Earlier releases are described on the
   alone do not fit. A bitrate limits the codestream only; this limits the whole file. It sets up a single quality layer
   and cannot be combined with lossless coding, PLT markers, tile-parts or packed packet headers.
 
+- **Regions of interest held in memory**: `ROIMask` (`FromConvexHull`, `FromPolygon`, `FromEllipse`, `FromBytes`, `FromPredicate`) and
+  `ROIConfiguration.AddMask`, for arbitrary shapes without a PGM file on disk. A mask is one bit per pixel; `FromConvexHull` builds
+  the region from a set of landmarks directly. Masks travel in the new `ParameterList.RoiMasks`, and `Rroi` refers to them as `M <index>`.
+
 ### Fixed
 
+- **`FromJ2KFile`, `FromJ2KBytes` and `FromJ2KStream` in CoreJ2K.ImageSharp threw `InvalidCastException` for RGB and greyscale streams.** They return
+  `Image<Rgba32>` but the decoder produced `Rgb24` and `L8` images for 3- and 1-component streams. They now convert, adding an opaque alpha channel.
 - **`WithROI` now takes effect.** `J2KEncoderConfiguration.WithROI` stored the configuration but never passed it to the encoder, so the
   output was identical to an encode without ROI. It now writes `Rroi`, `Rstart_level`, `Ralign` and `Rno_rect`. The builder gains `WithROI`.
   Component `-1` means all components and `0` means the first component only; `ROI_ENCODING_GUIDE.md` said `0` meant all, and is rewritten.
