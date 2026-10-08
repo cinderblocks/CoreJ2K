@@ -388,7 +388,7 @@ namespace CoreJ2K
                                 db[i].uly = l;
                                 db[i].w = tileWidth;
                                 db[i].h = 1;
-                                decodedImage.GetInternCompData(db[i], i);
+                                db[i] = (DataBlkInt)decodedImage.GetInternCompData(db[i], i);
                                 k[i] = db[i].offset;
                             }
 

@@ -67,8 +67,10 @@ namespace CoreJ2K.j2k.image
 
         // Grow-only scratch buffers for type-conversion paths.
         // Avoids a new float[]/int[] allocation per block on every INT↔FLOAT conversion.
-        private float[]? _scratchFloat;
-        private int[]? _scratchInt;
+        // One per component: a caller that holds the blocks of several components at once (one row of each) must not find
+        // them sharing an array.
+        private float[]?[]? _scratchFloat;
+        private int[]?[]? _scratchInt;
 
         /// <summary> Constructs a new ImgDataConverter object that operates on the specified
         /// source of image data.
@@ -332,9 +334,10 @@ namespace CoreJ2K.j2k.image
                     if (farr == null || farr.Length < w * h)
                     {
                         int needF = w * h;
-                        if (_scratchFloat == null || _scratchFloat.Length < needF)
-                            _scratchFloat = new float[needF];
-                        farr = _scratchFloat;
+                        _scratchFloat ??= new float[]?[src.NumComps];
+                        if (_scratchFloat[c] == null || _scratchFloat[c]!.Length < needF)
+                            _scratchFloat[c] = new float[needF];
+                        farr = _scratchFloat[c]!;
                         blk.Data = farr;
                     }
 
@@ -388,9 +391,10 @@ namespace CoreJ2K.j2k.image
                     if (iarr == null || iarr.Length < w * h)
                     {
                         int needI = w * h;
-                        if (_scratchInt == null || _scratchInt.Length < needI)
-                            _scratchInt = new int[needI];
-                        iarr = _scratchInt;
+                        _scratchInt ??= new int[]?[src.NumComps];
+                        if (_scratchInt[c] == null || _scratchInt[c]!.Length < needI)
+                            _scratchInt[c] = new int[needI];
+                        iarr = _scratchInt[c]!;
                         blk.Data = iarr;
                     }
                     blk.scanw = srcBlk.w;

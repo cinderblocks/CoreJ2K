@@ -50,6 +50,9 @@ This file starts with 2.4.0. Earlier releases are described on the
   also set the type and guard bits. `Build()` now passes on only the values that were set.
 - **`J2KDecoderConfiguration`: `QuitConditions.MaxCodeBlocks` always failed** because parsing mode, which is on by default, cannot be combined with it. Parsing is
   now turned off when a code-block limit is set and parsing was not asked for; asking for both is reported by `Validate`.
+- **A JP2 or codestream with some components reversible (5/3) and others not (9/7) could not be decoded** (`NullReferenceException`). The decode loop read the block it had passed in,
+  but the converter hands back its own when the components differ in data type, and the converter cast the rows of all components into one shared buffer, so a 9/7
+  component was overwritten by the next one. Every component now has its own.
 - **`FromJ2KFile`, `FromJ2KBytes` and `FromJ2KStream` in CoreJ2K.ImageSharp threw `InvalidCastException` for RGB and greyscale streams.** They return
   `Image<Rgba32>` but the decoder produced `Rgb24` and `L8` images for 3- and 1-component streams. They now convert, adding an opaque alpha channel.
 - **`WithROI` now takes effect.** `J2KEncoderConfiguration.WithROI` stored the configuration but never passed it to the encoder, so the
