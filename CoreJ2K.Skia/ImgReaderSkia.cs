@@ -29,8 +29,16 @@ namespace CoreJ2K.j2k.image.input
 
         private SKPixmap image;
 
+        /// <summary>The 8-bit copy made of a bitmap whose pixels are not one byte per component, released with the reader.</summary>
+        private SKBitmap converted;
+
         public ImgReaderSkia(SKBitmap image)
         {
+            if (NeedsConversion(image.ColorType))
+            {
+                converted = ConvertTo8Bit(image.PeekPixels());
+                image = converted;
+            }
             this.image = image.PeekPixels();
             w = image.Width;
             h = image.Height;
@@ -39,10 +47,64 @@ namespace CoreJ2K.j2k.image.input
 
         public ImgReaderSkia(SKPixmap image)
         {
+            if (NeedsConversion(image.ColorType))
+            {
+                converted = ConvertTo8Bit(image);
+                image = converted.PeekPixels();
+            }
             this.image = image;
             w = image.Width;
             h = image.Height;
             nc = GetNumberOfComponents(image.Info);
+        }
+
+        /// <summary>
+        /// Whether the pixels are packed or wider than a byte per component. The loader below reads one byte per component, which
+        /// is the layout of the 8-bit types only; anything else would be read as the wrong bytes.
+        /// </summary>
+        private static bool NeedsConversion(SKColorType colorType)
+        {
+            switch (colorType)
+            {
+                case SKColorType.Rgb565:
+                case SKColorType.Rgb101010x:
+                case SKColorType.Bgr101010x:
+                case SKColorType.Rgba1010102:
+                case SKColorType.Bgra1010102:
+                case SKColorType.Bgr101010xXR:
+                case SKColorType.Rgba16161616:
+                case SKColorType.Alpha16:
+                case SKColorType.Rg1616:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        /// <summary>Copies pixels to the 8-bit type with the same components (Skia scales every channel to 8 bits).</summary>
+        private static SKBitmap ConvertTo8Bit(SKPixmap source)
+        {
+            SKColorType target;
+            switch (source.ColorType)
+            {
+                case SKColorType.Alpha16:
+                    target = SKColorType.Alpha8;
+                    break;
+                case SKColorType.Rg1616:
+                    target = SKColorType.Rg88;
+                    break;
+                default:
+                    target = SKColorType.Rgba8888;
+                    break;
+            }
+
+            var bitmap = new SKBitmap(new SKImageInfo(source.Width, source.Height, target, source.AlphaType));
+            if (!source.ReadPixels(bitmap.Info, bitmap.GetPixels(), bitmap.RowBytes))
+            {
+                bitmap.Dispose();
+                throw new NotSupportedException($"Could not convert {source.ColorType} pixels to {target}.");
+            }
+            return bitmap;
         }
 
         public override void Close()
@@ -64,6 +126,8 @@ namespace CoreJ2K.j2k.image.input
 
             image.Dispose();
             image = null;
+            converted?.Dispose();
+            converted = null;
         }
 
         /// <summary>

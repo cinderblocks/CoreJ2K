@@ -30,8 +30,8 @@ namespace CoreJ2K.ImageSharp.Tests
             var blk = new DataBlkInt(0,0,1,1);
             var db = reader.GetInternCompData(blk, 0);
             var v = ((DataBlkInt)db).DataInt[0];
-            // L16 is shifted down by >>8 in loader
-            Assert.Equal((0x1234 >> 8) - 128, v);
+            // 16-bit samples are kept whole and level-shifted by half of the 16-bit range, to match the 16 bits the reader declares
+            Assert.Equal(0x1234 - 32768, v);
         }
 
         [Fact]
@@ -90,9 +90,9 @@ namespace CoreJ2K.ImageSharp.Tests
             img[0,0] = px;
             using var reader = new ImgReaderImageSharp(img);
             var blk = new DataBlkInt(0,0,1,1);
-            Assert.Equal((0x1234 >> 8) - 128, ((DataBlkInt)reader.GetInternCompData(blk,0)).DataInt[0]);
-            Assert.Equal((0x2345 >> 8) - 128, ((DataBlkInt)reader.GetInternCompData(blk,1)).DataInt[0]);
-            Assert.Equal((0x3456 >> 8) - 128, ((DataBlkInt)reader.GetInternCompData(blk,2)).DataInt[0]);
+            Assert.Equal(0x1234 - 32768, ((DataBlkInt)reader.GetInternCompData(blk,0)).DataInt[0]);
+            Assert.Equal(0x2345 - 32768, ((DataBlkInt)reader.GetInternCompData(blk,1)).DataInt[0]);
+            Assert.Equal(0x3456 - 32768, ((DataBlkInt)reader.GetInternCompData(blk,2)).DataInt[0]);
         }
 
         [Fact]
@@ -104,10 +104,10 @@ namespace CoreJ2K.ImageSharp.Tests
             img[0,0] = px;
             using var reader = new ImgReaderImageSharp(img);
             var blk = new DataBlkInt(0,0,1,1);
-            Assert.Equal((0x1111 >> 8) - 128, ((DataBlkInt)reader.GetInternCompData(blk,0)).DataInt[0]);
-            Assert.Equal((0x2222 >> 8) - 128, ((DataBlkInt)reader.GetInternCompData(blk,1)).DataInt[0]);
-            Assert.Equal((0x3333 >> 8) - 128, ((DataBlkInt)reader.GetInternCompData(blk,2)).DataInt[0]);
-            Assert.Equal((0x4444 >> 8) - 128, ((DataBlkInt)reader.GetInternCompData(blk,3)).DataInt[0]);
+            Assert.Equal(0x1111 - 32768, ((DataBlkInt)reader.GetInternCompData(blk,0)).DataInt[0]);
+            Assert.Equal(0x2222 - 32768, ((DataBlkInt)reader.GetInternCompData(blk,1)).DataInt[0]);
+            Assert.Equal(0x3333 - 32768, ((DataBlkInt)reader.GetInternCompData(blk,2)).DataInt[0]);
+            Assert.Equal(0x4444 - 32768, ((DataBlkInt)reader.GetInternCompData(blk,3)).DataInt[0]);
         }
     }
 }

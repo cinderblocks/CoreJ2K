@@ -36,6 +36,15 @@ This file starts with 2.4.0. Earlier releases are described on the
   that estimate can fall below an earlier pass's, but the final layer compared the resulting negative slope with its threshold of 0 and dropped them.
   Samples of 12-bit and deeper images came back up to 10 away from the source (a 50x20 tile with five decomposition levels is enough), and other
   decoders read the same wrong values. A threshold of 0 now takes every valid pass.
+- **Encoding a 16-bit ImageSharp image (`L16`, `Rgb48`, `Rgba64`) produced an almost flat grey image.** The reader declared 16 bits per component but
+  supplied the top 8 bits around a 16-bit mid-point. It now supplies the full samples; a 16-bit lossless encode is exact.
+- **Skia bitmaps of the types `Rgba16161616`, `Rgba1010102`, `Rgb565`, `Rgb101010x` and similar were encoded as noise.** The reader takes one byte per
+  component, which only the 8-bit types have. The others are now converted to 8-bit `Rgba8888` (`Alpha8` or `Rg88` for the one- and two-channel types) first.
+- **The helpers that take a `CompleteEncoderConfigurationBuilder` dropped its metadata and Part 2 transforms** (`EncodeToJ2K(builder)`, `EncodeToJ2KHighQuality(copyright)`,
+  `EncodeToJ2KWeb(copyright)` and the `SaveAs` versions, in the ImageSharp, Skia, Avalonia, Windows and Pfim packages). They built the `J2KEncoderConfiguration` and
+  encoded with that, so the copyright and comments were never written. They now call `builder.Encode`.
+- **A JP2 file with two, or five or more, components could not be decoded.** The palette stage, which passes the components through when the file has no palette, rejected
+  any count but 1, 3 and 4.
 - **`FromJ2KFile`, `FromJ2KBytes` and `FromJ2KStream` in CoreJ2K.ImageSharp threw `InvalidCastException` for RGB and greyscale streams.** They return
   `Image<Rgba32>` but the decoder produced `Rgb24` and `L8` images for 3- and 1-component streams. They now convert, adding an opaque alpha channel.
 - **`WithROI` now takes effect.** `J2KEncoderConfiguration.WithROI` stored the configuration but never passed it to the encoder, so the

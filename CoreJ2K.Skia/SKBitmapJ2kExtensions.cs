@@ -40,8 +40,8 @@ namespace CoreJ2K.Skia
             if (bitmap == null) throw new ArgumentNullException(nameof(bitmap));
             if (builder == null) throw new ArgumentNullException(nameof(builder));
 
-            var config = builder.Build();
-            return J2kImage.ToBytes(bitmap, config);
+            // Not Build() and ToBytes: the builder's metadata and Part 2 transforms live outside the J2KEncoderConfiguration.
+            return builder.Encode(bitmap);
         }
 
         /// <summary>

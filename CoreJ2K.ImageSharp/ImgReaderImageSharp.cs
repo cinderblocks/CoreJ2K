@@ -18,8 +18,6 @@ namespace CoreJ2K.j2k.image.input
     /// </summary>
     public sealed class ImgReaderImageSharp : ImgReader
     {
-        private const int DC_OFFSET = 128;
-
         private int[][] barr;               // cached component buffers for current block
         private readonly DataBlkInt dbi = new DataBlkInt(); // tracks cached block rectangle
         private DataBlkInt intBlk;          // reusable int block wrapper
@@ -178,13 +176,15 @@ namespace CoreJ2K.j2k.image.input
 
                 try
                 {
+                    // The samples are unsigned, bitsPerComponent wide: level-shift by half the range.
+                    var dcOffset = 1 << (bitsPerComponent - 1);
                     for (var c = 0; c < nc; ++c)
                     {
                         var dest = barr[c];
                         var compOffset = c;
                         for (int i = 0, p = 0; i < needed; ++i, p+=nc)
                         {
-                            dest[i] = interleaved[p + compOffset] - DC_OFFSET;
+                            dest[i] = interleaved[p + compOffset] - dcOffset;
                         }
                     }
                 }
@@ -276,7 +276,7 @@ namespace CoreJ2K.j2k.image.input
             {
                 for (var col=x; col< x+width; ++col)
                 {
-                    ret[idx++] = img[col,row].PackedValue >> 8; // reduce to 8-bit nominal range
+                    ret[idx++] = img[col,row].PackedValue;
                 }
             }
             return ret;
@@ -393,10 +393,9 @@ namespace CoreJ2K.j2k.image.input
                 for (var col=x; col< x+width; ++col)
                 {
                     var px = img[col,row];
-                    // 16-bit channels -> reduce to 8-bit nominal by shifting
-                    ret[idx++] = px.R >> 8;
-                    ret[idx++] = px.G >> 8;
-                    ret[idx++] = px.B >> 8;
+                    ret[idx++] = px.R;
+                    ret[idx++] = px.G;
+                    ret[idx++] = px.B;
                 }
             }
             return ret;
@@ -413,10 +412,10 @@ namespace CoreJ2K.j2k.image.input
                 for (var col=x; col< x+width; ++col)
                 {
                     var px = img[col,row];
-                    ret[idx++] = px.R >> 8;
-                    ret[idx++] = px.G >> 8;
-                    ret[idx++] = px.B >> 8;
-                    ret[idx++] = px.A >> 8;
+                    ret[idx++] = px.R;
+                    ret[idx++] = px.G;
+                    ret[idx++] = px.B;
+                    ret[idx++] = px.A;
                 }
             }
             return ret;

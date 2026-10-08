@@ -67,7 +67,8 @@ namespace CoreJ2K.Color
         /// <summary>General utility used by ctors </summary>
         private void initialize()
         {
-            if (ncomps != 1 && ncomps != 3 && ncomps != 4)
+            // Without a palette this mapper passes the components through, so any number of them is fine
+            if (pbox != null && ncomps != 1 && ncomps != 3 && ncomps != 4)
                 throw new ColorSpaceException($"wrong number of components ({ncomps}) for palettized image");
 
             var outComps = NumComps;

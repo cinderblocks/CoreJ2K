@@ -41,8 +41,8 @@ namespace CoreJ2K.Pfim
             if (image == null) throw new ArgumentNullException(nameof(image));
             if (builder == null) throw new ArgumentNullException(nameof(builder));
 
-            var config = builder.Build();
-            return J2kImage.ToBytes(image, config);
+            // Not Build() and ToBytes: the builder's metadata and Part 2 transforms live outside the J2KEncoderConfiguration.
+            return builder.Encode(image);
         }
 
         /// <summary>

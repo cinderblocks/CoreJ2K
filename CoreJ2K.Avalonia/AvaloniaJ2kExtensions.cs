@@ -26,7 +26,8 @@ namespace CoreJ2K.Avalonia
         {
             if (bitmap == null) throw new ArgumentNullException(nameof(bitmap));
             if (builder == null) throw new ArgumentNullException(nameof(builder));
-            return J2kImage.ToBytes(bitmap, builder.Build());
+            // Not Build() and ToBytes: the builder's metadata and Part 2 transforms live outside the J2KEncoderConfiguration.
+            return builder.Encode(bitmap);
         }
 
         public static byte[] EncodeToJ2KLossless(this WriteableBitmap bitmap) =>
