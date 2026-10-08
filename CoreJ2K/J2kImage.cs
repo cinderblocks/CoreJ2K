@@ -1229,6 +1229,7 @@ namespace CoreJ2K
                 throw new ArgumentException($"Invalid value in 'rate' option: {pl.GetParameter("rate")}");
             }
             var maxBytes = ParseMaxBytes(pl, defpl);
+            j2k.encoder.DistortionWeights.FromParameterList(pl); // fail early, with its own message, if the weights are malformed
             int pktspertp;
             try
             {
@@ -2326,6 +2327,15 @@ namespace CoreJ2K
                         + "of code-blocks. 1 keeps everything on the calling thread; 0 or unset uses "
                         + "J2kImage.DefaultMaxDegreeOfParallelism (all processors unless changed). The encoded output "
                         + "is identical for every value.",
+                        null
+                    },
+                new string?[]
+                    {
+                        "Dweights", "<weight>[:c<component>][:r<resolution>][:LL|HL|LH|HH] [...]",
+                        "Weights on the distortion of code-blocks, which steer the rate allocator: a weight above 1 spends more of the "
+                        + "bytes on the matching code-blocks. Each word is a factor from 0.0625 to 16 and optional conditions on the "
+                        + "component, the resolution level (0 is the lowest) and the subband; a code-block's weight is the product of "
+                        + "the words it matches. Example: '1.25:c0 0.8:c1 0.8:c2' favours the first component over the others.",
                         null
                     },
                 new string?[]

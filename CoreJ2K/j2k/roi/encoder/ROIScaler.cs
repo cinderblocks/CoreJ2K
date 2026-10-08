@@ -118,6 +118,9 @@ namespace CoreJ2K.j2k.roi.encoder
         /// </summary>
         private int[][] maxMagBits;
 
+        /// <summary>Weights on the distortion of code-blocks, or null for none</summary>
+        private CoreJ2K.j2k.encoder.DistortionWeights distortionWeights;
+
         /// <summary>Flag indicating the presence of ROIs </summary>
         private readonly bool roi;
 
@@ -241,12 +244,16 @@ namespace CoreJ2K.j2k.roi.encoder
             // Check parameters
             pl.checkList(OPT_PREFIX, ParameterList.toNameArray(pinfo));
 
+            // The distortion weights apply with or without ROIs
+            var weights = CoreJ2K.j2k.encoder.DistortionWeights.FromParameterList(pl);
+            if (weights != null) weights.CheckAgainst(src);
+
             // Get parameters and check if there are and ROIs specified 
             var roiopt = pl.GetParameter("Rroi");
             if (roiopt == null)
             {
                 // No ROIs specified! Create ROIScaler with no mask generator
-                return new ROIScaler(src, null, false, -1, false, encSpec);
+                return new ROIScaler(src, null, false, -1, false, encSpec) { distortionWeights = weights };
             }
 
             // Check if the lowest resolution levels should belong to the ROI 
@@ -295,7 +302,7 @@ namespace CoreJ2K.j2k.roi.encoder
                 // It's necessary to use the generic mask generation
                 maskGen = new ArbROIMaskGenerator(roiArray, src.NumComps, src);
             }
-            return new ROIScaler(src, maskGen, true, sLev, useBlockAligned, encSpec);
+            return new ROIScaler(src, maskGen, true, sLev, useBlockAligned, encSpec) { distortionWeights = weights };
         }
 
         /// <summary> This function parses the values given for the ROIs with the argument
@@ -600,6 +607,12 @@ namespace CoreJ2K.j2k.roi.encoder
 
             // Get codeblock's data from quantizer
             cblk = src.GetNextCodeBlock(c, cblk);
+
+            // Weight the code-block's distortion, which only moves the rate allocator's choices
+            if (cblk != null && distortionWeights != null)
+            {
+                cblk.wmseScaling *= (float)distortionWeights.GetWeight(c, cblk.sb.resLvl, (CoreJ2K.j2k.encoder.WaveletSubband)cblk.sb.orientation);
+            }
 
             // If there is no ROI in the image, or if we already got all
             // code-blocks

@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using CoreJ2K.j2k.encoder;
 using CoreJ2K.j2k.roi;
 using CoreJ2K.j2k.util;
 
@@ -26,6 +27,7 @@ namespace CoreJ2K.Configuration
         private ErrorResilienceConfiguration _resilienceConfig = new ErrorResilienceConfiguration();
         private ROIConfiguration? _roiConfig = null;
         private int? _maxBytes;
+        private DistortionWeights? _distortionWeights;
         private System.Threading.CancellationToken _cancellationToken;
         private int _maxDegreeOfParallelism;
         
@@ -92,6 +94,11 @@ namespace CoreJ2K.Configuration
             get => _maxBytes;
             set => _maxBytes = value;
         }
+
+        /// <summary>
+        /// Gets the weights on the distortion of code-blocks, if any. See <see cref="WithDistortionWeights"/>.
+        /// </summary>
+        public DistortionWeights? DistortionWeights => _distortionWeights;
 
         /// <summary>
         /// Gets or sets whether to use lossless compression.
@@ -167,6 +174,22 @@ namespace CoreJ2K.Configuration
             return this;
         }
         
+        /// <summary>
+        /// Weights the distortion of code-blocks by component, resolution level and subband, which steers where the rate allocator
+        /// spends the bytes it has. See <see cref="DistortionWeights"/>.
+        /// </summary>
+        /// <remarks>
+        /// Components are numbered after the colour transform, which is on by default for three components: 0 is luma (Y), 1 and 2
+        /// are chroma. The weights are not recorded in the codestream, and a lossless encode keeps all of its data whatever they are.
+        /// </remarks>
+        /// <param name="weights">The weights.</param>
+        /// <returns>This configuration instance for method chaining.</returns>
+        public J2KEncoderConfiguration WithDistortionWeights(DistortionWeights weights)
+        {
+            _distortionWeights = weights;
+            return this;
+        }
+
         /// <summary>
         /// Sets a hard limit on the size of the complete output, in bytes. The encoder keeps as much of the image as fits
         /// and never writes more: with <see cref="UseFileFormat"/> on, the JP2 boxes (including any metadata) count towards the limit,
@@ -366,6 +389,9 @@ namespace CoreJ2K.Configuration
             // Error resilience
             _resilienceConfig.ApplyTo(pl);
             
+            // Distortion weights
+            _distortionWeights?.ApplyTo(pl);
+
             // Hard size limit (replaces the bitrate)
             if (_maxBytes.HasValue)
             {
@@ -397,6 +423,11 @@ namespace CoreJ2K.Configuration
                 errors.Add("Cannot specify both lossless mode and a target bitrate");
             }
             
+            if (_distortionWeights != null)
+            {
+                errors.AddRange(_distortionWeights.Validate());
+            }
+
             if (_maxBytes.HasValue)
             {
                 if (_maxBytes.Value <= 0)

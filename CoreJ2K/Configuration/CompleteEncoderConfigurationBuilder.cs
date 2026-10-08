@@ -563,6 +563,17 @@ namespace CoreJ2K.Configuration
         }
 
         /// <summary>
+        /// Weights the distortion of code-blocks by component, resolution level and subband. See <see cref="J2KEncoderConfiguration.WithDistortionWeights"/>.
+        /// </summary>
+        /// <param name="weights">The weights.</param>
+        /// <returns>This builder for method chaining.</returns>
+        public CompleteEncoderConfigurationBuilder WithDistortionWeights(j2k.encoder.DistortionWeights weights)
+        {
+            _encoderConfig.WithDistortionWeights(weights);
+            return this;
+        }
+
+        /// <summary>
         /// Sets a hard limit on the size of the complete output, JP2 boxes included. See <see cref="J2KEncoderConfiguration.WithMaxBytes"/>.
         /// </summary>
         /// <param name="maxBytes">The most bytes the output may take.</param>

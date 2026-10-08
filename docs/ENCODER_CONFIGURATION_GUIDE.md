@@ -246,7 +246,36 @@ var config = new J2KEncoderConfiguration()
     .WithROI(new ROIConfiguration().AddRectangle(-1, 100, 100, 240, 320).SetStartLevel(4));
 ```
 
-### 11. Cancellation
+### 11. Distortion Weights
+
+The rate allocator decides what to keep by how much each coding pass reduces distortion per byte. `DistortionWeights` scale the
+distortion of code-blocks by component, resolution level and subband, so the bytes go where you want them.
+
+```csharp
+using CoreJ2K.j2k.encoder;
+
+var weights = new DistortionWeights()
+    .ForComponent(0, 1.25)                    // luma (Y) after the colour transform
+    .Add(0.8, component: 1)                   // chroma
+    .Add(0.8, component: 2)
+    .Add(1.2, resolution: 0, subband: WaveletSubband.LL);
+
+var config = new J2KEncoderConfiguration()
+    .WithMaxBytes(12000)
+    .WithDistortionWeights(weights);
+```
+
+- A weight above 1 spends more on the matching code-blocks, at the expense of the rest; below 1, the opposite. Weights only matter
+  when the encoder has to choose, which is to say at a rate or byte limit; they run from 1/16 to 16.
+- A code-block gets the **product** of every rule that matches it, and 1 if none does. `Add(weight, component, resolution, subband)`
+  leaves out any condition you do not want (`-1` or `null` is "any").
+- Components are numbered **after** the colour transform, which is on by default for three components: 0 is luma, 1 and 2 are chroma.
+- Resolution level 0 is the lowest (it holds the LL band); the highest is the finest detail. HL, LH and HH bands start at level 1.
+- Nothing in the codestream records the weights; any decoder reads the result. They combine with ROI and with a byte limit.
+- A rule that names a component or level the image does not have is an error.
+- In a `ParameterList`, the option is `Dweights`, for example `pl["Dweights"] = "1.25:c0 0.8:c1 0.8:c2"`.
+
+### 12. Cancellation
 
 An encode can be cancelled part-way through. Cancellation is cooperative: the encoder checks the token for every code-block it
 transforms and codes, every packet it writes, every few rows of the wavelet transform, and during the rate-allocation search, so a
@@ -284,7 +313,7 @@ catch (OperationCanceledException)
 If a configuration (or builder) carries a token *and* an async method is given one, cancelling either stops the encode. As with any
 other failure, a cancelled encode leaves the image source open; the encoder only closes it after a successful encode.
 
-### 12. Parallel Encoding
+### 13. Parallel Encoding
 
 Most of an encode is coding code-blocks: the MQ coding passes and rate-distortion statistics for every block, and every block is
 independent. CoreJ2K codes batches of code-blocks on several threads, while a producer thread reads the source and pulls the next
@@ -513,6 +542,7 @@ Main configuration class with fluent API.
 - `WithErrorResilience(Action<ErrorResilienceConfiguration>)` - Configure error resilience
 - `WithROI(ROIConfiguration)` - Configure region of interest
 - `WithMaxBytes(int)` - Hard limit on the size of the complete output, JP2 boxes included
+- `WithDistortionWeights(DistortionWeights)` - Weight the rate allocator's choices by component, resolution and subband
 - `WithCancellationToken(CancellationToken)` - Cancels encodes started with this configuration
 - `WithMaxDegreeOfParallelism(int threads)` - Threads used to encode (1 = single-threaded)
 - `Validate()` - Returns list of validation errors

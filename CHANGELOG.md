@@ -16,6 +16,10 @@ This file starts with 2.4.0. Earlier releases are described on the
   `ROIConfiguration.AddMask`, for arbitrary shapes without a PGM file on disk. A mask is one bit per pixel; `FromConvexHull` builds
   the region from a set of landmarks directly. Masks travel in the new `ParameterList.RoiMasks`, and `Rroi` refers to them as `M <index>`.
 
+- **Distortion weights**: `DistortionWeights` and `J2KEncoderConfiguration.WithDistortionWeights` (option `Dweights`) weight the distortion of
+  code-blocks by component, resolution level and subband, which steers where the rate allocator spends a limited budget, for example 1.25 on
+  luma. They combine with ROI and with `WithMaxBytes`, and change nothing in the codestream's structure.
+
 ### Fixed
 
 - **`FromJ2KFile`, `FromJ2KBytes` and `FromJ2KStream` in CoreJ2K.ImageSharp threw `InvalidCastException` for RGB and greyscale streams.** They return
