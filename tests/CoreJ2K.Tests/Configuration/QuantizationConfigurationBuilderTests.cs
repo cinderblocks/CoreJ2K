@@ -6,6 +6,8 @@ using System.Linq;
 using CoreJ2K.Configuration;
 using Xunit;
 
+#pragma warning disable CS0618 // These tests cover the per-subband steps, which the encoder does not support
+
 namespace CoreJ2K.Tests.Configuration
 {
     /// <summary>
@@ -103,13 +105,14 @@ namespace CoreJ2K.Tests.Configuration
         }
         
         [Fact]
-        public void WithSubbandStep_SetsCustomStep()
+        public void WithSubbandStep_IsRecorded_ButReportedAsUnsupported()
         {
             var config = new QuantizationConfigurationBuilder()
                 .WithSubbandStep(0, "LL", 0.01f);
             
             Assert.False(config.UseDefaultSteps);
-            Assert.True(config.IsValid);
+            Assert.False(config.IsValid);
+            Assert.Contains(config.Validate(), e => e.Contains("not supported"));
         }
         
         [Theory]
@@ -163,13 +166,13 @@ namespace CoreJ2K.Tests.Configuration
         }
         
         [Fact]
-        public void WithResolutionSteps_SetsAllSubbands()
+        public void WithResolutionSteps_IsRecorded_ButReportedAsUnsupported()
         {
             var config = new QuantizationConfigurationBuilder()
                 .WithResolutionSteps(0, 0.01f, 0.012f, 0.013f, 0.015f);
             
             Assert.False(config.UseDefaultSteps);
-            Assert.True(config.IsValid);
+            Assert.False(config.IsValid);
         }
         
         [Fact]
@@ -474,16 +477,28 @@ namespace CoreJ2K.Tests.Configuration
         }
         
         [Fact]
-        public void RealWorldScenario_CustomSubbandWeighting()
+        public void SubbandSteps_AreRefusedWhenApplied_NotDroppedSilently()
         {
             var config = new QuantizationConfigurationBuilder()
                 .UseExpounded()
                 .WithBaseStepSize(0.01f)
-                .WithResolutionSteps(0, 0.008f, 0.012f, 0.012f, 0.015f) // Fine-tune subbands
-                .WithResolutionSteps(1, 0.010f, 0.015f, 0.015f, 0.020f);
-            
+                .WithResolutionSteps(0, 0.008f, 0.012f, 0.012f, 0.015f);
+
+            Assert.Throws<NotSupportedException>(() => config.ApplyTo(new CoreJ2K.j2k.util.ParameterList()));
+            Assert.Throws<NotSupportedException>(() =>
+                new CompleteEncoderConfigurationBuilder().WithQuantization(q => q.WithSubbandStep(0, "LL", 0.01f)).Build());
+        }
+
+        [Fact]
+        public void SubbandSteps_ClearedAgain_AreAccepted()
+        {
+            var config = new QuantizationConfigurationBuilder()
+                .WithSubbandStep(0, "LL", 0.01f)
+                .UseDefaultSubbandSteps();
+
+            config.ApplyTo(new CoreJ2K.j2k.util.ParameterList());
             Assert.True(config.IsValid);
-            Assert.False(config.UseDefaultSteps);
+            new CompleteEncoderConfigurationBuilder().WithQuantization(q => q.WithSubbandStep(0, "LL", 0.01f).UseDefaultSubbandSteps()).Build();
         }
     }
 }

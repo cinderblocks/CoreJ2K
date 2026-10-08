@@ -74,6 +74,10 @@ This file starts with 2.4.0. Earlier releases are described on the
 - **The ImageSharp package is `CoreJ2K.ImageSharp` again.** It was published as `CoreJ2K.ImageSharp-Official` while the `CoreJ2K.ImageSharp`
   id on NuGet belonged to someone else; that id has been transferred to this project. `CoreJ2K.ImageSharp-Official` is deprecated and
   will not get further releases. To migrate, replace the package reference; the assembly and namespace (`CoreJ2K.ImageSharp`) are unchanged.
+- **`WithSubbandStep` and `WithResolutionSteps` are obsolete and no longer ignored.** The encoder has no per-subband step sizes (it derives every subband's step from the
+  base step), so the values were written to a `Qstep_subband` parameter that nothing reads and dropped by `Build()`. `QuantizationConfigurationBuilder.ApplyTo` and
+  `CompleteEncoderConfigurationBuilder.Build()` now throw `NotSupportedException` when one is set, and `Validate` reports it. To favour a subband or resolution level
+  under a rate limit, use `WithDistortionWeights`.
 
 ## 2.4.0
 

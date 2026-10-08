@@ -135,19 +135,17 @@ var config = new QuantizationConfigurationBuilder()
 
 ### 3. Expounded (Scalar Expounded)
 
-Advanced lossy with per-subband control.
+Lossy, with a step size written for every subband. The encoder derives each step from the base step and the
+subband's gain; individual subbands cannot be given their own step (see "Favouring Subbands" below).
 
 ```csharp
 var config = new QuantizationConfigurationBuilder()
     .UseExpounded()
-    .WithBaseStepSize(0.01f)
-    .WithSubbandStep(0, "LL", 0.008f)  // Fine-tune low frequencies
-    .WithSubbandStep(0, "HH", 0.015f); // Coarser for high frequencies
+    .WithBaseStepSize(0.01f);
 ```
 
 **Characteristics:**
 - ? Maximum flexibility
-- ? Per-subband optimization
 - ? Best quality/size trade-offs
 - **Use for:** Professional imaging, custom optimization
 
@@ -203,28 +201,11 @@ Protects against quantization overflow.
 - **2 bits**: 12-16 bit images, high dynamic range
 - **3+ bits**: Very high bit-depth, special cases
 
-### Subband Steps (Expounded Only)
+### Subband Steps (Not Supported)
 
-Fine-tune individual frequency subbands.
-
-```csharp
-// Single subband
-.WithSubbandStep(0, "LL", 0.008f)  // Resolution 0, Low-Low
-
-// All subbands at a resolution level
-.WithResolutionSteps(
-    0,              // Resolution level
-    0.008f,         // LL (low frequencies)
-    0.012f,         // HL (horizontal edges)
-    0.012f,         // LH (vertical edges)
-    0.015f)         // HH (diagonal, high frequencies)
-```
-
-**Subband Types:**
-- **LL** (Low-Low): Coarse approximation, most important
-- **HL** (High-Low): Horizontal detail
-- **LH** (Low-High): Vertical detail
-- **HH** (High-High): Diagonal detail, can use larger steps
+`WithSubbandStep` and `WithResolutionSteps` are obsolete. The encoder has no per-subband step sizes, so the values would be
+ignored; `ApplyTo` and the complete builder's `Build()` throw `NotSupportedException` when one is set, and `Validate()` reports it.
+To spend bytes on some subbands rather than others, use distortion weights (below).
 
 ## Presets
 
@@ -311,45 +292,27 @@ var thumbnail = QuantizationPresets.Thumbnail;
 
 ## Advanced Features
 
-### Custom Subband Weighting
+### Favouring Subbands
 
-Optimize for specific image characteristics.
-
-```csharp
-var config = new QuantizationConfigurationBuilder()
-    .UseExpounded()
-    .WithBaseStepSize(0.01f)
-    // Preserve low frequencies (important detail)
-    .WithResolutionSteps(0, 0.008f, 0.012f, 0.012f, 0.015f)
-    // Allow more loss in high frequencies
-    .WithResolutionSteps(1, 0.010f, 0.015f, 0.015f, 0.020f);
-```
-
-### Multi-Resolution Optimization
-
-Different quantization for different resolution levels.
+Under a bitrate or byte limit, `DistortionWeights` steer the rate allocator towards some subbands or resolution levels
+(see the encoder guide):
 
 ```csharp
-var config = new QuantizationConfigurationBuilder()
-    .UseExpounded()
-    .WithBaseStepSize(0.01f);
+var weights = new DistortionWeights()
+    .Add(1.2, resolution: 0, subband: WaveletSubband.LL)   // keep low frequencies
+    .Add(0.8, resolution: 5);                              // allow more loss in the finest detail (5 levels)
 
-// Fine detail at level 0 (highest resolution)
-config.WithResolutionSteps(0, 0.008f, 0.010f, 0.010f, 0.012f);
-
-// Moderate at level 1
-config.WithResolutionSteps(1, 0.012f, 0.015f, 0.015f, 0.018f);
-
-// Coarser at level 2
-config.WithResolutionSteps(2, 0.015f, 0.020f, 0.020f, 0.025f);
+var config = new J2KEncoderConfiguration()
+    .WithBitrate(2.0f)
+    .WithDistortionWeights(weights);
 ```
 
 ### Validation
 
 ```csharp
 var config = new QuantizationConfigurationBuilder()
-    .UseReversible()
-    .WithSubbandStep(0, "LL", 0.01f);  // Error: can't combine!
+    .UseExpounded();
+config.GuardBits = 9;  // Error: out of range
 
 if (!config.IsValid)
 {
@@ -357,7 +320,7 @@ if (!config.IsValid)
     foreach (var error in errors)
         Console.WriteLine($"Error: {error}");
 }
-// Output: "Custom subband steps are not applicable for reversible quantization"
+// Output: "Error: Guard bits must be between 0 and 7"
 ```
 
 ### Cloning
@@ -441,23 +404,18 @@ var encoderConfig = new J2KEncoderConfiguration()
 byte[] archiveData = J2kImage.ToBytes(archiveImage, encoderConfig);
 ```
 
-### Example 5: Custom Subband Optimization
+### Example 5: Favouring Low Frequencies
 
 ```csharp
-var config = new QuantizationConfigurationBuilder()
-    .UseExpounded()
-    .WithBaseStepSize(0.01f)
+var weights = new DistortionWeights()
     // Prioritize low frequencies (important visual content)
-    .WithSubbandStep(0, "LL", 0.007f)
-    .WithSubbandStep(0, "HL", 0.011f)
-    .WithSubbandStep(0, "LH", 0.011f)
-    .WithSubbandStep(0, "HH", 0.015f)
-    // Allow more loss in higher resolution levels
-    .WithResolutionSteps(1, 0.012f, 0.016f, 0.016f, 0.020f);
+    .Add(1.2, resolution: 0, subband: WaveletSubband.LL)
+    // Allow more loss in the finest detail (the highest level of a 5-level transform)
+    .Add(0.8, resolution: 5);
 
 var encoderConfig = new J2KEncoderConfiguration()
     .WithBitrate(2.0f)
-    .WithQuantization(q => config);
+    .WithDistortionWeights(weights);
 
 byte[] optimizedData = J2kImage.ToBytes(image, encoderConfig);
 ```
@@ -510,9 +468,8 @@ Main quantization configuration class.
 - `UseExpounded()` - Enable scalar expounded quantization
 - `WithBaseStepSize(float)` - Set base quantization step
 - `WithGuardBits(int)` - Set guard bits (0-7)
-- `WithSubbandStep(int, string, float)` - Set step for specific subband
-- `WithResolutionSteps(int, float, float, float, float)` - Set all subbands at level
-- `UseDefaultSubbandSteps()` - Clear custom subband steps
+- `WithSubbandStep(int, string, float)`, `WithResolutionSteps(int, float, float, float, float)` - Obsolete; per-subband steps are not supported
+- `UseDefaultSubbandSteps()` - Clear subband steps
 - `ForHighQuality()` - Configure for high quality
 - `ForBalanced()` - Configure for balanced quality/size
 - `ForHighCompression()` - Configure for high compression

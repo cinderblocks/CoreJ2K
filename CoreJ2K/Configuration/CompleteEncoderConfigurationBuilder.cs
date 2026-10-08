@@ -539,6 +539,8 @@ namespace CoreJ2K.Configuration
         /// <returns>A configured J2KEncoderConfiguration instance.</returns>
         public J2KEncoderConfiguration Build()
         {
+            _quantization?.ThrowIfSubbandStepsAreSet();
+
             // Apply quantization if configured
             if (_quantization != null)
             {

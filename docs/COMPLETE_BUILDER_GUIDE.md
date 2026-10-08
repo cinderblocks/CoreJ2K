@@ -504,10 +504,7 @@ var config = new CompleteEncoderConfigurationBuilder()
     .WithQuantization(q => q
         .UseExpounded()
         .WithBaseStepSize(0.008f)
-        .WithGuardBits(2)
-        // Fine-tune subband quantization
-        .WithSubbandStep(0, "LL", 0.007f)  // Preserve low frequencies
-        .WithSubbandStep(0, "HH", 0.015f)) // Allow more loss in high frequencies
+        .WithGuardBits(2))
     .WithWavelet(w => w
         .UseIrreversible_9_7()
         .WithDecompositionLevels(6))

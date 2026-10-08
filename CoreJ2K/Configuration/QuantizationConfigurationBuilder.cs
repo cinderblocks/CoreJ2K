@@ -128,12 +128,14 @@ namespace CoreJ2K.Configuration
         
         /// <summary>
         /// Sets the quantization step size for a specific resolution level and subband.
-        /// Only applicable for expounded quantization.
+        /// Not supported: the encoder derives every subband's step from the base step, so <see cref="ApplyTo"/> and the complete
+        /// builder's <c>Build()</c> throw <see cref="NotSupportedException"/> when a step is set here.
         /// </summary>
         /// <param name="resolutionLevel">Resolution level (0 = coarsest).</param>
         /// <param name="subband">Subband orientation ("LL", "HL", "LH", "HH").</param>
         /// <param name="stepSize">Step size for this subband.</param>
         /// <returns>This configuration instance for method chaining.</returns>
+        [Obsolete("The encoder has no per-subband step sizes: Build() and ApplyTo throw NotSupportedException when they are set. Use WithDistortionWeights to favour a subband or resolution level in rate allocation, or WithBaseStepSize to change the quantization.")]
         public QuantizationConfigurationBuilder WithSubbandStep(int resolutionLevel, string subband, float stepSize)
         {
             if (resolutionLevel < 0)
@@ -160,7 +162,7 @@ namespace CoreJ2K.Configuration
         
         /// <summary>
         /// Sets quantization step sizes for all subbands at a resolution level.
-        /// Only applicable for expounded quantization.
+        /// Not supported, like <see cref="WithSubbandStep"/>.
         /// </summary>
         /// <param name="resolutionLevel">Resolution level (0 = coarsest).</param>
         /// <param name="llStep">Step size for LL subband (low-low).</param>
@@ -168,6 +170,7 @@ namespace CoreJ2K.Configuration
         /// <param name="lhStep">Step size for LH subband (low-high).</param>
         /// <param name="hhStep">Step size for HH subband (high-high).</param>
         /// <returns>This configuration instance for method chaining.</returns>
+        [Obsolete("The encoder has no per-subband step sizes: Build() and ApplyTo throw NotSupportedException when they are set. Use WithDistortionWeights to favour a subband or resolution level in rate allocation, or WithBaseStepSize to change the quantization.")]
         public QuantizationConfigurationBuilder WithResolutionSteps(
             int resolutionLevel,
             float llStep,
@@ -239,6 +242,8 @@ namespace CoreJ2K.Configuration
         /// <param name="pl">The parameter list to configure.</param>
         public void ApplyTo(ParameterList pl)
         {
+            ThrowIfSubbandStepsAreSet();
+
             string qtypeValue;
             switch (_type)
             {
@@ -261,27 +266,16 @@ namespace CoreJ2K.Configuration
             // The QuantStepSizeSpec constructor expects it to be present
             pl["Qstep"] = _baseStepSize.ToString(System.Globalization.CultureInfo.InvariantCulture);
             
-            // Apply custom subband steps if specified (only for non-reversible)
-            if (_type != QuantizationType.Reversible && !_useDefaultSteps && _subbandSteps.Count > 0)
-            {
-                // Build subband step specification string
-                var stepSpecs = new List<string>();
-                foreach (var level in _subbandSteps.Keys)
-                {
-                    foreach (var subband in _subbandSteps[level].Keys)
-                    {
-                        var step = _subbandSteps[level][subband];
-                        stepSpecs.Add($"{level}-{subband}:{step.ToString(System.Globalization.CultureInfo.InvariantCulture)}");
-                    }
-                }
-                
-                if (stepSpecs.Count > 0)
-                {
-                    pl["Qstep_subband"] = string.Join(",", stepSpecs);
-                }
-            }
-            
             pl["Qguard_bits"] = _guardBits.ToString();
+        }
+
+        internal bool HasSubbandSteps => !_useDefaultSteps && _subbandSteps.Count > 0;
+
+        internal void ThrowIfSubbandStepsAreSet()
+        {
+            if (HasSubbandSteps)
+                throw new NotSupportedException("Per-subband quantization step sizes are not supported by the encoder. "
+                    + "Use WithDistortionWeights to favour a subband or resolution level in rate allocation, or WithBaseStepSize to change the quantization.");
         }
         
         /// <summary>
@@ -298,6 +292,9 @@ namespace CoreJ2K.Configuration
             if (_guardBits < 0 || _guardBits > 7)
                 errors.Add("Guard bits must be between 0 and 7");
             
+            if (HasSubbandSteps)
+                errors.Add("Per-subband quantization step sizes are not supported by the encoder");
+
             if (_type == QuantizationType.Reversible && !_useDefaultSteps)
                 errors.Add("Custom subband steps are not applicable for reversible quantization");
             
