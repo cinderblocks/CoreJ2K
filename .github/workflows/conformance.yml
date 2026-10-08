@@ -1,0 +1,88 @@
+name: Conformance
+
+# Runs the random-scenario tests (tests/CoreJ2K.Tests/Conformance, see docs/TESTING_AND_CONFORMANCE.md) with OpenJPEG installed, which the
+# Windows job in ci-and-release.yml does not have, so the comparison with OpenJPEG is skipped there.
+#
+# Pull requests and pushes run a fixed range of seeds (the same cases every time, so a failure can be reproduced). The weekly run draws a
+# fresh, larger range from the run number. A failure's seed is in the report artifact.
+#
+# The cases excluded from the OpenJPEG comparison were found against OpenJPEG 2.5.4; the version apt installs may differ, and a difference
+# shows as a failure here that is not one in CoreJ2K.
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+  schedule:
+    - cron: '0 3 * * 1'
+  workflow_dispatch:
+    inputs:
+      count:
+        description: 'Scenarios (and damaged files) to draw'
+        required: false
+        default: '600'
+      start:
+        description: 'First seed'
+        required: false
+        default: '0'
+
+jobs:
+  conformance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    strategy:
+      fail-fast: false
+      matrix:
+        # 0: the code paths a normal run takes; 1: the parallel code paths, which a normal run only takes for large images
+        force_parallel: ['0', '1']
+
+    env:
+      COREJ2K_TEST_FORCE_PARALLEL: ${{ matrix.force_parallel }}
+      COREJ2K_SWEEP_COUNT: ${{ github.event_name == 'schedule' && '5000' || inputs.count || '600' }}
+      COREJ2K_SWEEP_START: ${{ github.event_name == 'schedule' && format('{0}0000', github.run_number) || inputs.start || '0' }}
+      COREJ2K_SWEEP_REPORT: ${{ github.workspace }}/conformance-report/sweep
+      COREJ2K_SWEEP_DUMP: ${{ github.workspace }}/conformance-report/files
+      COREJ2K_FUZZ_DUMP: ${{ github.workspace }}/conformance-report/damaged
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Install OpenJPEG
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libopenjp2-tools
+          opj_compress -h | head -n 3
+
+      - name: Restore
+        run: dotnet restore tests/CoreJ2K.Tests/CoreJ2K.Tests.csproj
+
+      - name: Conformance tests
+        run: |
+          mkdir -p conformance-report
+          dotnet test tests/CoreJ2K.Tests/CoreJ2K.Tests.csproj -c Release -f net10.0 --no-restore \
+            --filter "FullyQualifiedName~Conformance" --logger "trx;LogFileName=conformance.trx" --verbosity normal
+
+      - name: Upload reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: conformance-report-parallel-${{ matrix.force_parallel }}
+          path: |
+            conformance-report/
+            tests/CoreJ2K.Tests/TestResults/
+          if-no-files-found: ignore

@@ -26,6 +26,13 @@ Some combinations are left out of the comparison because OpenJPEG itself fails o
 region of interest together with selective bypass, a tile whose packets are all empty when the packet headers are packed, tiles narrower than the wavelet is deep
 when OpenJPEG encodes, the numbering of PPT marker segments across the tile-parts of a tile, and PPM with several tiles each in several tile-parts.
 
+## In CI
+
+`ci-and-release.yml` runs these tests with the rest of the suite, on Windows, without OpenJPEG (so the comparison with it is skipped). `conformance.yml` runs them on
+Linux with OpenJPEG installed: a fixed range of seeds on pull requests and pushes (the same cases each time), and a larger, fresh range every Monday, each with and
+without the parallel code paths forced on (`COREJ2K_TEST_FORCE_PARALLEL`). It can also be started by hand with a count and a first seed. A failing run uploads the
+report, the encoded files and the damaged files that failed.
+
 ## Running more
 
 All of these are environment variables:
