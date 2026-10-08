@@ -3278,6 +3278,15 @@ namespace CoreJ2K.j2k.entropy.encoder
         {
             int dp; // the position to test in 'data'
 
+            // The rate of a raw (bypass) pass is estimated before its segment is terminated and can come out a byte beyond what
+            // the segment ends up holding; a pass cannot end after the data does, nor after the pass that follows it.
+            var limit = data.Length;
+            for (var i = n - 1; i >= 0; i--)
+            {
+                if (rates[i] > limit) rates[i] = limit;
+                else limit = rates[i];
+            }
+
             // If a pass ends in 0xFF we need to reduce the number of bytes in it,
             // so that it does not end in 0xFF. We only need to go back one byte
             // since there can be no consecutive 0xFF bytes.

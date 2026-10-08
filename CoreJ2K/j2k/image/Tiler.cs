@@ -287,8 +287,8 @@ namespace CoreJ2K.j2k.image
             }
 
             // Calculate the number of tiles
-            ntX = (int)Math.Ceiling((x0siz + src.ImgWidth) / (double)xtsiz);
-            ntY = (int)Math.Ceiling((y0siz + src.ImgHeight) / (double)ytsiz);
+            ntX = (int)Math.Ceiling((x0siz + src.ImgWidth - xt0siz) / (double)xtsiz);
+            ntY = (int)Math.Ceiling((y0siz + src.ImgHeight - yt0siz) / (double)ytsiz);
         }
 
         /// <summary> Returns the width in pixels of the specified tile-component.

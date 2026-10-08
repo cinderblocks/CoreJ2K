@@ -68,6 +68,12 @@ This file starts with 2.4.0. Earlier releases are described on the
   error, in CoreJ2K and in OpenJPEG alike. The encoder now throws `InvalidOperationException` naming the component and the count.
   Block-aligned ROI (`Ralign`) does not scale coefficients and is not limited.
 - The distortion weight for ROI code-blocks overflowed `int` at 16 or more magnitude bits (`1 << (bits << 1)`); it is now computed in floating point.
+- **Tiled encodes with an image offset failed.** The tile count ignored the origin of the tile grid, so `ref` combined with `tiles` counted tiles beyond the image and
+  the encoder threw (`ArgumentOutOfRangeException` or `OverflowException`).
+- **Tile-parts.** A tile with more packets than the first tile was split into several tile-parts although none were asked for. More than 255 tile-parts for one tile
+  (`tile_parts` of a few packets) wrote a count the SOT marker cannot hold; the packets per tile-part are now raised to stay within 255. When packed packet headers or
+  tile-parts made the codestream shorter, the end of the old codestream stayed after the new end marker.
+- **Selective arithmetic-coding bypass could make the encoder throw `IndexOutOfRangeException`** when the estimated end of a raw pass lay past the end of the code-block's data.
 
 ### Changed
 

@@ -74,6 +74,12 @@ namespace CoreJ2K.j2k.util
         /// <summary>The number of packets per tile-part </summary>
         private int pptp;
 
+        /// <summary>The number of packets in each tile-part but the last of a tile; the same for every tile unless <see cref="pptp"/> is 0.</summary>
+        private int[] packetsPerTilePart = new int[0];
+
+        /// <summary>The most tile-parts a tile can have: the index and the count of tile-parts in the SOT marker are one byte each.</summary>
+        private const int MAX_TILE_PARTS = 255;
+
         /// <summary>The name of the outfile </summary>
         private readonly Stream stream;
 
@@ -174,7 +180,7 @@ namespace CoreJ2K.j2k.util
 
             // Open file for reading and writing
             fi = new BEBufferedRandomAccessFile(stream, false);
-            addedHeaderBytes -= fi.length();
+            var originalLength = fi.length();
 
             // Parse the codestream for SOT, SOP and EPH markers
             parseAndFind(fi);
@@ -191,9 +197,14 @@ namespace CoreJ2K.j2k.util
             // Write new codestream
             writeNewCodestream(fi);
 
-            // Close file
+            // The new codestream can be shorter than the old one (the SOP and EPH markers that were only there to parse it are gone);
+            // what follows it must not stay
+            var newLength = fi.Pos;
             fi.flush();
-            addedHeaderBytes += fi.length();
+            stream.SetLength(newLength);
+            addedHeaderBytes = newLength - originalLength;
+
+            // Close file
             fi.Close();
 
             return addedHeaderBytes;
@@ -416,16 +427,22 @@ namespace CoreJ2K.j2k.util
 
             // Create tile parts
             tileParts = new byte[nt][][];
+            packetsPerTilePart = new int[nt];
             maxtp = 0;
 
             for (t = 0; t < nt; t++)
             {
                 // Calculate number of tile parts. If tileparts are not used, 
-                // put all packets in the first tilepart
-                if (pptp == 0)
-                    pptp = ppt[t];
+                // put all packets in the first tilepart (of every tile, however many packets it has)
+                packetsPerTilePart[t] = pptp == 0 ? (ppt[t] > 1 ? ppt[t] : 1) : pptp;
                 prem = ppt[t];
-                numTileParts = (int)System.Math.Ceiling(((double)prem) / pptp);
+                numTileParts = (int)System.Math.Ceiling(((double)prem) / packetsPerTilePart[t]);
+                if (numTileParts > MAX_TILE_PARTS)
+                {
+                    // TPsot and TNsot are single bytes, so a tile has at most 255 tile-parts: put more packets in each
+                    packetsPerTilePart[t] = (prem + MAX_TILE_PARTS - 1) / MAX_TILE_PARTS;
+                    numTileParts = (int)System.Math.Ceiling(((double)prem) / packetsPerTilePart[t]);
+                }
                 numPackets = packetHeaders[t].Length;
                 maxtp = (numTileParts > maxtp) ? numTileParts : maxtp;
                 tileParts[t] = new byte[numTileParts][];
@@ -440,7 +457,7 @@ namespace CoreJ2K.j2k.util
                 {
 
                     // Calculate number of packets in this tilepart
-                    nomnp = (pptp > prem) ? prem : pptp;
+                    nomnp = (packetsPerTilePart[t] > prem) ? prem : packetsPerTilePart[t];
                     np = nomnp;
 
                     // Write tile part header
@@ -613,7 +630,7 @@ namespace CoreJ2K.j2k.util
                         {
                             totNumPackets = packetHeaders[t].Length;
                             // Calculate number of packets in this tilepart
-                            numPackets = (tp == tileParts[t].Length - 1) ? prem[t] : pptp;
+                            numPackets = (tp == tileParts[t].Length - 1) ? prem[t] : packetsPerTilePart[t];
 
                             pStart = totNumPackets - prem[t];
                             pStop = pStart + numPackets;
@@ -652,7 +669,7 @@ namespace CoreJ2K.j2k.util
                             totNumPackets = packetHeaders[t].Length;
 
                             // Calculate number of packets in this tilepart
-                            numPackets = (tp == tileParts[t].Length - 1) ? prem[t] : pptp;
+                            numPackets = (tp == tileParts[t].Length - 1) ? prem[t] : packetsPerTilePart[t];
 
                             pStart = totNumPackets - prem[t];
                             pStop = pStart + numPackets;
