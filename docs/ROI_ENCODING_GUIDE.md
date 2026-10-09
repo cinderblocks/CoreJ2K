@@ -145,7 +145,7 @@ includes them.
 
 | Symptom | Cause |
 |---------|-------|
-| The output has no RGN marker and looks like a plain encode | No regions were added, or the configuration was built with an older CoreJ2K that ignored `WithROI` (fixed after 2.4.0). |
+| The output has no RGN marker and looks like a plain encode | No regions were added, or the configuration was built with an older CoreJ2K that ignored `WithROI` (fixed in 2.4.1). |
 | The ROI is sharp on one colour channel only | The region was added for component `0` instead of `-1`. |
 | `Could not instantiate ROI scaler: ... magnitude bits` | See "Limit on magnitude bits". |
 | `Arbitrary ROI mask file path cannot contain whitespace` | Move or rename the PGM file. |

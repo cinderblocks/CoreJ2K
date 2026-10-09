@@ -3,7 +3,7 @@
 This file starts with 2.4.0. Earlier releases are described on the
 [GitHub releases page](https://github.com/cinderblocks/CoreJ2K/releases).
 
-## Unreleased
+## 2.4.1
 
 ### Added
 
