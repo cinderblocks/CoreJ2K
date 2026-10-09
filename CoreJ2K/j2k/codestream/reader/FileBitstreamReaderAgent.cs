@@ -474,7 +474,7 @@ namespace CoreJ2K.j2k.codestream.reader
 
             try
             {
-                while (remainingTileParts != 0)
+                while (remainingTileParts != 0 || TilePartFollows())
                 {
 
                     tilePartStart = inStream.Pos;
@@ -933,6 +933,22 @@ namespace CoreJ2K.j2k.codestream.reader
                     }
                 }
             }
+            else if (tileParts[tile] != 0 && tilePart >= Math.Max(nrOfTileParts, tileParts[tile]))
+            {
+                // A tile-part past the number the tile-part headers announce. Some encoders write the index of the last tile-part
+                // where the number of them belongs (OpenJPEG: "Non conformant codestream TPsot==TNsot"), which leaves the last
+                // tile-part of every tile beyond the count. Taking it in is what other decoders do.
+                var count = tilePart + 1;
+                FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING,
+                    $"Tile-part {tilePart} of tile {tile} is beyond the {tileParts[tile]} the tile-part headers announce. Reading it nevertheless.");
+                remainingTileParts += count - tileParts[tile];
+                tileParts[tile] = count;
+                nrOfTileParts = count;
+                tilePartLen[tile] = GrowTo(tilePartLen[tile], count);
+                tilePartNum[tile] = GrowTo(tilePartNum[tile], count);
+                firstPackOff[tile] = GrowTo(firstPackOff[tile], count);
+                tilePartHeadLen[tile] = GrowTo(tilePartHeadLen[tile], count);
+            }
             else
             {
                 // The number of tile-parts is specified in the tile-part
@@ -1031,6 +1047,32 @@ namespace CoreJ2K.j2k.codestream.reader
             return tile;
         }
 
+        /// <summary>A copy of <paramref name="array"/> with room for <paramref name="length"/> entries.</summary>
+        private static int[] GrowTo(int[]? array, int length)
+        {
+            var grown = new int[length];
+            if (array != null) Array.Copy(array, grown, Math.Min(array.Length, length));
+            return grown;
+        }
+
+        /// <summary>Whether the next marker of the codestream starts a tile-part; the position is left where it was.</summary>
+        private bool TilePartFollows()
+        {
+            var position = inStream.Pos;
+            try
+            {
+                return position + 2 <= inStream.length() && inStream.readShort() == Markers.SOT;
+            }
+            catch (System.IO.EndOfStreamException)
+            {
+                return false;
+            }
+            finally
+            {
+                inStream.seek(position);
+            }
+        }
+
         /// <summary> Reads packets of the current tile according to the
         /// layer-resolution-component-position progressiveness.
         /// 
@@ -1123,11 +1165,13 @@ namespace CoreJ2K.j2k.codestream.reader
 
                             // If we are about to read outside of tile-part,
                             // skip to next tile-part
-                            if (start > lastByte && curTilePart < firstPackOff[t].Length - 1)
+                            // (a tile-part may hold no packet at all, so more than one can have to be passed)
+                            while (start > lastByte && curTilePart < firstPackOff[t].Length - 1)
                             {
                                 curTilePart++;
                                 inStream.seek(firstPackOff[t][curTilePart]);
                                 lastByte = inStream.Pos + tilePartLen[t][curTilePart] - 1 - tilePartHeadLen[t][curTilePart];
+                                start = inStream.Pos;
                             }
 
                             // Read SOP marker segment if necessary
@@ -1280,11 +1324,13 @@ namespace CoreJ2K.j2k.codestream.reader
 
                             // If we are about to read outside of tile-part,
                             // skip to next tile-part
-                            if (start > lastByte && curTilePart < firstPackOff[t].Length - 1)
+                            // (a tile-part may hold no packet at all, so more than one can have to be passed)
+                            while (start > lastByte && curTilePart < firstPackOff[t].Length - 1)
                             {
                                 curTilePart++;
                                 inStream.seek(firstPackOff[t][curTilePart]);
                                 lastByte = inStream.Pos + tilePartLen[t][curTilePart] - 1 - tilePartHeadLen[t][curTilePart];
+                                start = inStream.Pos;
                             }
 
                             // Read SOP marker segment if necessary
@@ -1520,11 +1566,13 @@ namespace CoreJ2K.j2k.codestream.reader
 
                                 // If we are about to read outside of tile-part,
                                 // skip to next tile-part
-                                if (start > lastByte && curTilePart < firstPackOff[t].Length - 1)
+                                // (a tile-part may hold no packet at all, so more than one can have to be passed)
+                                while (start > lastByte && curTilePart < firstPackOff[t].Length - 1)
                                 {
                                     curTilePart++;
                                     inStream.seek(firstPackOff[t][curTilePart]);
                                     lastByte = inStream.Pos + tilePartLen[t][curTilePart] - 1 - tilePartHeadLen[t][curTilePart];
+                                    start = inStream.Pos;
                                 }
 
                                 // Read SOP marker segment if necessary
@@ -1774,11 +1822,13 @@ namespace CoreJ2K.j2k.codestream.reader
 
                                 // If we are about to read outside of tile-part,
                                 // skip to next tile-part
-                                if (start > lastByte && curTilePart < firstPackOff[t].Length - 1)
+                                // (a tile-part may hold no packet at all, so more than one can have to be passed)
+                                while (start > lastByte && curTilePart < firstPackOff[t].Length - 1)
                                 {
                                     curTilePart++;
                                     inStream.seek(firstPackOff[t][curTilePart]);
                                     lastByte = inStream.Pos + tilePartLen[t][curTilePart] - 1 - tilePartHeadLen[t][curTilePart];
+                                    start = inStream.Pos;
                                 }
 
                                 // Read SOP marker segment if necessary
@@ -2030,11 +2080,13 @@ namespace CoreJ2K.j2k.codestream.reader
 
                                 // If we are about to read outside of tile-part,
                                 // skip to next tile-part
-                                if (start > lastByte && curTilePart < firstPackOff[t].Length - 1)
+                                // (a tile-part may hold no packet at all, so more than one can have to be passed)
+                                while (start > lastByte && curTilePart < firstPackOff[t].Length - 1)
                                 {
                                     curTilePart++;
                                     inStream.seek(firstPackOff[t][curTilePart]);
                                     lastByte = inStream.Pos + tilePartLen[t][curTilePart] - 1 - tilePartHeadLen[t][curTilePart];
+                                    start = inStream.Pos;
                                 }
 
                                 // Read SOP marker segment if necessary
@@ -2770,9 +2822,10 @@ namespace CoreJ2K.j2k.codestream.reader
 
             // If the l quit condition is used, Make sure that no layer 
             // after lquit is returned
-            if (lQuit != -1 && fl + nl > lQuit)
+            // (layers are numbered from 1, so the last one returned is fl + nl - 1)
+            if (lQuit != -1 && fl + nl - 1 > lQuit)
             {
-                nl = lQuit - fl;
+                nl = Math.Max(0, lQuit - fl + 1);
             }
 
             // Check validity of resquested resolution level (according to the

@@ -359,8 +359,8 @@ namespace CoreJ2K.j2k.wavelet.synthesis
                 {
 
                     case DataBlk.TYPE_FLOAT:
-                        var fwidth = GetTileCompWidth(tIdx, compIndex);
-                        var fheight = GetTileCompHeight(tIdx, compIndex);
+                        var fwidth = GetFullTileCompWidth(tIdx, compIndex);
+                        var fheight = GetFullTileCompHeight(tIdx, compIndex);
 
                         // Validate dimensions to prevent integer overflow
                         long fBufferSize = (long)fwidth * fheight;
@@ -405,8 +405,8 @@ namespace CoreJ2K.j2k.wavelet.synthesis
                         break;
 
                     case DataBlk.TYPE_INT:
-                        var iwidth = GetTileCompWidth(tIdx, compIndex);
-                        var iheight = GetTileCompHeight(tIdx, compIndex);
+                        var iwidth = GetFullTileCompWidth(tIdx, compIndex);
+                        var iheight = GetFullTileCompHeight(tIdx, compIndex);
 
                         // Validate dimensions to prevent integer overflow
                         long iBufferSize = (long)iwidth * iheight;
@@ -1164,8 +1164,8 @@ namespace CoreJ2K.j2k.wavelet.synthesis
             // Ensure rented buffers are large enough for new tile; do not return them so they are reused
             for (i = 0; i < nc; i++)
             {
-                var newWidth = GetTileCompWidth(tIdx, i);
-                var newHeight = GetTileCompHeight(tIdx, i);
+                var newWidth = GetFullTileCompWidth(tIdx, i);
+                var newHeight = GetFullTileCompHeight(tIdx, i);
                 
                 // Validate dimensions to prevent integer overflow
                 long needed = (long)newWidth * newHeight;
@@ -1255,8 +1255,8 @@ namespace CoreJ2K.j2k.wavelet.synthesis
             // Ensure rented buffers are large enough for new tile; keep them for reuse
             for (i = 0; i < nc; i++)
             {
-                var newWidth = GetTileCompWidth(tIdx, i);
-                var newHeight = GetTileCompHeight(tIdx, i);
+                var newWidth = GetFullTileCompWidth(tIdx, i);
+                var newHeight = GetFullTileCompHeight(tIdx, i);
                 
                 // Validate dimensions to prevent integer overflow
                 long needed = (long)newWidth * newHeight;

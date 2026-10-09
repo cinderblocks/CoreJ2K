@@ -1008,6 +1008,10 @@ namespace CoreJ2K.j2k.codestream
         /// </summary>
         public codestream.metadata.TilePartLengthsData? tlmValue;
 
+        /// <summary>The marker segment stored under <paramref name="key"/>, or null when the header did not carry one.</summary>
+        private static T? Peek<T>(Dictionary<string, T> segments, string key) where T : class
+            => segments.TryGetValue(key, out var segment) ? segment : null;
+
         /// <summary>Display information found in the different marker segments of the main
         /// header 
         /// </summary>
@@ -1017,43 +1021,43 @@ namespace CoreJ2K.j2k.codestream
             // SIZ
             var str = $"{sizValue}";
             // COD
-            if (codValue["main"] != null)
+            if (Peek(codValue, "main") != null)
             {
-                str += ("" + codValue["main"]);
+                str += ("" + Peek(codValue, "main"));
             }
             // COCs
             for (var c = 0; c < nc; c++)
             {
-                if (cocValue[$"main_c{c}"] != null)
+                if (Peek(cocValue, $"main_c{c}") != null)
                 {
-                    str += ("" + cocValue[$"main_c{c}"]);
+                    str += ("" + Peek(cocValue, $"main_c{c}"));
                 }
             }
             // QCD
-            if (qcdValue["main"] != null)
+            if (Peek(qcdValue, "main") != null)
             {
-                str += ("" + qcdValue["main"]);
+                str += ("" + Peek(qcdValue, "main"));
             }
             // QCCs
             for (var c = 0; c < nc; c++)
             {
-                if (qccValue[$"main_c{c}"] != null)
+                if (Peek(qccValue, $"main_c{c}") != null)
                 {
-                    str += ("" + qccValue[$"main_c{c}"]);
+                    str += ("" + Peek(qccValue, $"main_c{c}"));
                 }
             }
             // RGN
             for (var c = 0; c < nc; c++)
             {
-                if (rgnValue[$"main_c{c}"] != null)
+                if (Peek(rgnValue, $"main_c{c}") != null)
                 {
-                    str += ("" + rgnValue[$"main_c{c}"]);
+                    str += ("" + Peek(rgnValue, $"main_c{c}"));
                 }
             }
             // POC
-            if (pocValue["main"] != null)
+            if (Peek(pocValue, "main") != null)
             {
-                str += ("" + pocValue["main"]);
+                str += ("" + Peek(pocValue, "main"));
             }
             // CRG
             if (crgValue != null)
@@ -1063,9 +1067,9 @@ namespace CoreJ2K.j2k.codestream
             // COM
             for (var i = 0; i < ncom; i++)
             {
-                if (comValue[$"main_{i}"] != null)
+                if (Peek(comValue, $"main_{i}") != null)
                 {
-                    str += ("" + comValue[$"main_{i}"]);
+                    str += ("" + Peek(comValue, $"main_{i}"));
                 }
             }
             return str;
@@ -1091,43 +1095,43 @@ namespace CoreJ2K.j2k.codestream
                 str += ("" + sotValue[$"t{t}_tp{i}"]);
             }
             // COD
-            if (codValue[$"t{t}"] != null)
+            if (Peek(codValue, $"t{t}") != null)
             {
-                str += ("" + codValue[$"t{t}"]);
+                str += ("" + Peek(codValue, $"t{t}"));
             }
             // COCs
             for (var c = 0; c < nc; c++)
             {
-                if (cocValue[$"t{t}_c{c}"] != null)
+                if (Peek(cocValue, $"t{t}_c{c}") != null)
                 {
-                    str += ("" + cocValue[$"t{t}_c{c}"]);
+                    str += ("" + Peek(cocValue, $"t{t}_c{c}"));
                 }
             }
             // QCD
-            if (qcdValue[$"t{t}"] != null)
+            if (Peek(qcdValue, $"t{t}") != null)
             {
-                str += ("" + qcdValue[$"t{t}"]);
+                str += ("" + Peek(qcdValue, $"t{t}"));
             }
             // QCCs
             for (var c = 0; c < nc; c++)
             {
-                if (qccValue[$"t{t}_c{c}"] != null)
+                if (Peek(qccValue, $"t{t}_c{c}") != null)
                 {
-                    str += ("" + qccValue[$"t{t}_c{c}"]);
+                    str += ("" + Peek(qccValue, $"t{t}_c{c}"));
                 }
             }
             // RGN
             for (var c = 0; c < nc; c++)
             {
-                if (rgnValue[$"t{t}_c{c}"] != null)
+                if (Peek(rgnValue, $"t{t}_c{c}") != null)
                 {
-                    str += ("" + rgnValue[$"t{t}_c{c}"]);
+                    str += ("" + Peek(rgnValue, $"t{t}_c{c}"));
                 }
             }
             // POC
-            if (pocValue[$"t{t}"] != null)
+            if (Peek(pocValue, $"t{t}") != null)
             {
-                str += ("" + pocValue[$"t{t}"]);
+                str += ("" + Peek(pocValue, $"t{t}"));
             }
             return str;
         }
@@ -1147,43 +1151,43 @@ namespace CoreJ2K.j2k.codestream
             var nc = sizValue.csiz;
             var str = "";
             // COD
-            if (codValue[$"t{t}"] != null)
+            if (Peek(codValue, $"t{t}") != null)
             {
-                str += ("" + codValue[$"t{t}"]);
+                str += ("" + Peek(codValue, $"t{t}"));
             }
             // COCs
             for (var c = 0; c < nc; c++)
             {
-                if (cocValue[$"t{t}_c{c}"] != null)
+                if (Peek(cocValue, $"t{t}_c{c}") != null)
                 {
-                    str += ("" + cocValue[$"t{t}_c{c}"]);
+                    str += ("" + Peek(cocValue, $"t{t}_c{c}"));
                 }
             }
             // QCD
-            if (qcdValue[$"t{t}"] != null)
+            if (Peek(qcdValue, $"t{t}") != null)
             {
-                str += ("" + qcdValue[$"t{t}"]);
+                str += ("" + Peek(qcdValue, $"t{t}"));
             }
             // QCCs
             for (var c = 0; c < nc; c++)
             {
-                if (qccValue[$"t{t}_c{c}"] != null)
+                if (Peek(qccValue, $"t{t}_c{c}") != null)
                 {
-                    str += ("" + qccValue[$"t{t}_c{c}"]);
+                    str += ("" + Peek(qccValue, $"t{t}_c{c}"));
                 }
             }
             // RGN
             for (var c = 0; c < nc; c++)
             {
-                if (rgnValue[$"t{t}_c{c}"] != null)
+                if (Peek(rgnValue, $"t{t}_c{c}") != null)
                 {
-                    str += ("" + rgnValue[$"t{t}_c{c}"]);
+                    str += ("" + Peek(rgnValue, $"t{t}_c{c}"));
                 }
             }
             // POC
-            if (pocValue[$"t{t}"] != null)
+            if (Peek(pocValue, $"t{t}") != null)
             {
-                str += ("" + pocValue[$"t{t}"]);
+                str += ("" + Peek(pocValue, $"t{t}"));
             }
             return str;
         }

@@ -38,10 +38,10 @@ namespace CoreJ2K.Color
         /// </summary>
         /// <returns> the ICC Profile as a byte [].
         /// </returns>
-        public virtual byte[] ICCProfile => csbox.ICCProfile;
+        public virtual byte[] ICCProfile => csbox!.ICCProfile;
 
         /// <summary>Return the colorspace method (Profiled, enumerated, or palettized). </summary>
-        public virtual MethodEnum Method => csbox.Method;
+        public virtual MethodEnum Method => csbox?.Method ?? MethodEnum.ENUMERATED;
 
         /// <summary>Return number of channels in the palette. </summary>
         public virtual PaletteBox PaletteBox => pbox;
@@ -171,6 +171,7 @@ namespace CoreJ2K.Color
             if (len == 1)
                 boxStart += 8; // Extended length header
 
+            ColorSpecificationBox? firstColr = null;
             for (boxStart += 8; boxStart < headerBoxEnd; boxStart = (int)(boxStart + len))
             {
                 inStream.seek(boxStart);
@@ -190,7 +191,23 @@ namespace CoreJ2K.Color
                         break;
 
                     case FileFormatBoxes.COLOUR_SPECIFICATION_BOX:
-                        csbox = new ColorSpecificationBox(inStream, boxStart);
+                        // A file may carry several, and a reader uses the first one it can: an ICC profile, or an enumerated colour
+                        // space that it converts. The ones after that are for readers that know other methods.
+                        ColorSpecificationBox? candidate;
+                        try
+                        {
+                            candidate = new ColorSpecificationBox(inStream, boxStart);
+                        }
+                        catch (ColorSpaceException)
+                        {
+                            candidate = null; // a method this reader does not know
+                        }
+                        if (candidate != null)
+                        {
+                            firstColr ??= candidate;
+                            if (csbox == null && (candidate.Method == MethodEnum.ICC_PROFILED || candidate.ColorSpace != CSEnum.Unknown))
+                                csbox = candidate;
+                        }
                         break;
 
                     case FileFormatBoxes.CHANNEL_DEFINITION_BOX:
@@ -211,6 +228,9 @@ namespace CoreJ2K.Color
                 }
             }
 
+            // none that this reader can use: keep the first, which says what the colours are even if they are not converted
+            csbox ??= firstColr;
+
             if (ihbox == null)
                 throw new ColorSpaceException("image header box not found");
 
@@ -225,10 +245,23 @@ namespace CoreJ2K.Color
             return cdbox?.GetCn(c + 1) ?? c;
         }
 
+        /// <summary>
+        /// The channels in the order the channel definition box gives them (colours first, then opacity), each one once; the order of
+        /// the channels themselves when there is no such box. Entry <c>i</c> is the channel that is put out as channel <c>i</c>.
+        /// </summary>
+        /// <param name="channelCount">The number of channels the image has.</param>
+        public virtual int[] GetChannelOrder(int channelCount)
+        {
+            if (cdbox != null) return cdbox.GetOutputOrder(channelCount);
+            var identity = new int[channelCount];
+            for (var i = 0; i < identity.Length; i++) identity[i] = i;
+            return identity;
+        }
+
         /// <summary>Return the colorspace (sYCC, sRGB, sGreyScale). </summary>
         public virtual CSEnum GetColorSpace()
         {
-            return csbox.ColorSpace;
+            return csbox?.ColorSpace ?? CSEnum.Unknown;
         }
 
         /// <summary>Return bitdepth of the palette entries. </summary>
@@ -258,7 +291,7 @@ namespace CoreJ2K.Color
         /// <summary>Return a suitable String representation of the class instance. </summary>
         public override string ToString()
         {
-            var rep = new System.Text.StringBuilder("[ColorSpace is ").Append(csbox.MethodString).Append(Palettized ? "  and palettized " : " ").Append(Method == MethodEnum.ENUMERATED ? csbox.ColorSpaceString : "");
+            var rep = new System.Text.StringBuilder("[ColorSpace is ").Append(csbox?.MethodString ?? "unspecified").Append(Palettized ? "  and palettized " : " ").Append(csbox != null && Method == MethodEnum.ENUMERATED ? csbox.ColorSpaceString : "");
             if (ihbox != null)
             {
                 rep.Append(Environment.NewLine).Append(indent("    ", ihbox.ToString()));

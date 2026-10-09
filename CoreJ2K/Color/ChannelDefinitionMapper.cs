@@ -50,9 +50,7 @@ namespace CoreJ2K.Color
         /// </param>
         protected internal ChannelDefinitionMapper(BlkImgDataSrc src, ColorSpace csMap) : base(src, csMap)
         {
-            _channelDef = new int[ncomps];
-            for (var i = 0; i < ncomps; i++)
-                _channelDef[i] = csMap.GetChannelDefinition(i);
+            _channelDef = csMap.GetChannelOrder(ncomps);
         }
 
 

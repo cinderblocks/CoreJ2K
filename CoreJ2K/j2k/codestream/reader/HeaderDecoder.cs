@@ -761,10 +761,11 @@ namespace CoreJ2K.j2k.codestream.reader
                 throw new System.IO.IOException("JJ2000 does not support images offset " + "not in the range: 0 -- (2^31)-1");
             }
 
-            // Read size of tile
-            ms.xtsiz = ehs.ReadInt32();
-            ms.ytsiz = ehs.ReadInt32();
-            if (ms.xtsiz <= 0 || ms.ytsiz <= 0)
+            // Read size of tile (an unsigned 32-bit value: one that does not fit in an int is a tile larger than any image this reader
+            // holds, and so one tile that covers everything; it is cut down to the image below)
+            var xtsizRaw = ehs.ReadInt32();
+            var ytsizRaw = ehs.ReadInt32();
+            if (xtsizRaw == 0 || ytsizRaw == 0)
             {
                 throw new System.IO.IOException("JJ2000 does not support tiles whose " + "width and/or height are not in  " + "the range: 1 -- (2^31)-1");
             }
@@ -776,6 +777,10 @@ namespace CoreJ2K.j2k.codestream.reader
             {
                 throw new System.IO.IOException("JJ2000 does not support tiles whose " + "offset is not in  " + "the range: 0 -- (2^31)-1");
             }
+
+            // a tile reaches at most to the edge of the image
+            ms.xtsiz = (int)Math.Min((uint)xtsizRaw, (uint)Math.Max(1, ms.xsiz - ms.xt0siz));
+            ms.ytsiz = (int)Math.Min((uint)ytsizRaw, (uint)Math.Max(1, ms.ysiz - ms.yt0siz));
 
             // Read number of components and initialize related arrays
             nComp = ms.csiz = ehs.ReadUInt16();
@@ -965,6 +970,24 @@ namespace CoreJ2K.j2k.codestream.reader
             checkMarkerLength(ehs, "COM marker");
         }
 
+        /// <summary>
+        /// The next step size entry of a QCD or QCC marker segment, or zero when the segment is already used up. Some encoders write
+        /// fewer entries than the decomposition has subbands (the 32-level image of the OpenJPEG test suite has 18 of about 97); the
+        /// subbands that are left over have no step size to read, and a zero exponent is what other decoders give them.
+        /// </summary>
+        private static int ReadStepByte(System.IO.BinaryReader ehs)
+        {
+            try { return ehs.ReadByte(); }
+            catch (Exception e) when (e is System.IO.EndOfStreamException || e is ArgumentOutOfRangeException) { return 0; }
+        }
+
+        /// <summary>The 16-bit variant of <see cref="ReadStepByte"/>, for the expounded quantization.</summary>
+        private static int ReadStepWord(System.IO.BinaryReader ehs)
+        {
+            try { return ehs.ReadUInt16(); }
+            catch (Exception e) when (e is System.IO.EndOfStreamException || e is ArgumentOutOfRangeException) { return 0; }
+        }
+
         /// <summary> Reads a QCD marker segment and realigns the codestream at the point
         /// where the next marker should be found. QCD is a functional marker
         /// segment that describes the quantization default.
@@ -1115,7 +1138,7 @@ namespace CoreJ2K.j2k.codestream.reader
 
                     for (j = minb; j < maxb; j++)
                     {
-                        tmp = ms.spqcd[rl][j] = ehs.ReadByte();
+                        tmp = ms.spqcd[rl][j] = ReadStepByte(ehs);
                         exp[rl][j] = (tmp >> Markers.SQCX_EXP_SHIFT) & Markers.SQCX_EXP_MASK;
                     }
                 } // end for rl
@@ -1190,7 +1213,7 @@ namespace CoreJ2K.j2k.codestream.reader
 
                     for (j = minb; j < maxb; j++)
                     {
-                        tmp = ms.spqcd[rl][j] = ehs.ReadUInt16();
+                        tmp = ms.spqcd[rl][j] = ReadStepWord(ehs);
                         exp[rl][j] = (tmp >> 11) & 0x1f;
                         // NOTE: the formula below does not support more than 5
                         // bits for the exponent, otherwise (-1<<exp) might
@@ -1369,7 +1392,7 @@ namespace CoreJ2K.j2k.codestream.reader
 
                     for (j = minb; j < maxb; j++)
                     {
-                        tmp = ms.spqcc[rl][j] = ehs.ReadByte();
+                        tmp = ms.spqcc[rl][j] = ReadStepByte(ehs);
                         expC[rl][j] = (tmp >> Markers.SQCX_EXP_SHIFT) & Markers.SQCX_EXP_MASK;
                     }
                 } // end for rl
@@ -1423,7 +1446,7 @@ namespace CoreJ2K.j2k.codestream.reader
 
                     for (j = minb; j < maxb; j++)
                     {
-                        tmp = ms.spqcc[rl][j] = ehs.ReadUInt16();
+                        tmp = ms.spqcc[rl][j] = ReadStepWord(ehs);
                         expC[rl][j] = (tmp >> 11) & 0x1f;
                         // NOTE: the formula below does not support more than 5
                         // bits for the exponent, otherwise (-1<<exp) might
@@ -1931,13 +1954,15 @@ namespace CoreJ2K.j2k.codestream.reader
             int tmp;
             var nOldChg = 0;
             HeaderInfo.POC ms;
-            if (mainh || hi.pocValue[$"t{t}"] == null)
+            HeaderInfo.POC? earlier = null;
+            if (!mainh) hi.pocValue.TryGetValue($"t{t}", out earlier);
+            if (earlier == null)
             {
                 ms = hi.NewPOC;
             }
             else
             {
-                ms = hi.pocValue[$"t{t}"];
+                ms = earlier;
                 nOldChg = ms.rspoc.Length;
             }
 

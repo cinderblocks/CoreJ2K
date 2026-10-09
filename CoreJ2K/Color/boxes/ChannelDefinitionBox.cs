@@ -7,6 +7,7 @@
 /// </summary>
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using ICCProfile = CoreJ2K.Icc.ICCProfile;
 using io_RandomAccessIO = CoreJ2K.j2k.io.RandomAccessIO;
 
@@ -27,6 +28,9 @@ namespace CoreJ2K.Color.Boxes
         public int NDefs { get; private set; }
 
         private readonly Dictionary<int, int[]> definitions = new Dictionary<int, int[]>();
+
+        // every definition in file order: a channel may be defined more than once (an opacity channel for several colours)
+        private readonly List<(int Cn, int Typ, int Asoc)> entries = new List<(int, int, int)>();
 
         /// <summary> Construct a ChannelDefinitionBox from an input image.</summary>
         /// <param name="in">RandomAccessIO jp2 image
@@ -61,7 +65,39 @@ namespace CoreJ2K.Color.Boxes
                 channel_def[1] = GetTyp(bfr);
                 channel_def[2] = GetAsoc(bfr);
                 definitions[channel_def[0]] = channel_def;
+                entries.Add((channel_def[0], channel_def[1], channel_def[2]));
             }
+        }
+
+        /// <summary>
+        /// The order in which the channels are put out: the colour channels in the order of the colours they stand for (association
+        /// 1, 2, 3 ...), then the opacity channels, then the premultiplied-opacity channels, then any channel the box does not
+        /// define. The result holds each of the <paramref name="channelCount"/> channels exactly once, so it can be used to
+        /// index them: definitions of channels that do not exist are ignored, and so are repeats.
+        /// </summary>
+        /// <param name="channelCount">The number of channels the image has.</param>
+        public int[] GetOutputOrder(int channelCount)
+        {
+            var order = new List<int>(channelCount);
+            var taken = new bool[channelCount];
+
+            void Take(IEnumerable<(int Cn, int Typ, int Asoc)> group)
+            {
+                foreach (var entry in group)
+                {
+                    if (entry.Cn < 0 || entry.Cn >= channelCount || taken[entry.Cn]) continue;
+                    taken[entry.Cn] = true;
+                    order.Add(entry.Cn);
+                }
+            }
+
+            // association 0 means the whole image, which is no position among the colours: such a channel goes after the others
+            Take(entries.Where(e => e.Typ == 0).OrderBy(e => e.Asoc == 0 ? int.MaxValue : e.Asoc));
+            Take(entries.Where(e => e.Typ == 1).OrderBy(e => e.Asoc));
+            Take(entries.Where(e => e.Typ == 2).OrderBy(e => e.Asoc));
+            for (var c = 0; c < channelCount; c++)
+                if (!taken[c]) order.Add(c);
+            return order.ToArray();
         }
 
         /* Return the channel association. */

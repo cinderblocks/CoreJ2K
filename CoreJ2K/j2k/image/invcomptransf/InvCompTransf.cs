@@ -645,13 +645,14 @@ namespace CoreJ2K.j2k.image.invcomptransf
                 float[] indata; // input data array
 
                 // Get the input data
-                // (returned block may be larger than requested one)
-                src.GetInternCompData(indb, c);
-                indata = (float[])indb.Data;
+                // (returned block may be larger than requested one, and need not be the block that was passed: the source hands
+                // back a block of its own when it holds its data in another type)
+                var got = src.GetInternCompData(indb, c);
+                indata = (float[])got.Data;
 
                 // Copy the data converting from int to int
                 k = w * h - 1;
-                k0 = indb.offset + (h - 1) * indb.scanw + w - 1;
+                k0 = got.offset + (h - 1) * got.scanw + w - 1;
                 for (i = h - 1; i >= 0; i--)
                 {
                     for (mink = k - w; k > mink; k--, k0--)
@@ -659,11 +660,11 @@ namespace CoreJ2K.j2k.image.invcomptransf
                         out_data[k] = (int)(indata[k0]);
                     }
                     // Jump to beggining of previous line in input
-                    k0 -= (indb.scanw - w);
+                    k0 -= (got.scanw - w);
                 }
 
                 // Set the progressivity and offset
-                blk.progressive = indb.progressive;
+                blk.progressive = got.progressive;
                 blk.offset = 0;
                 blk.scanw = w;
             }
@@ -808,7 +809,9 @@ namespace CoreJ2K.j2k.image.invcomptransf
             tIdx = TileIdx; // index of the current tile
 
             // initializations
-            if (cts.GetIntTileDef(tIdx) == NONE) transfType = NONE;
+            // (a component transform asked for by an image with fewer than three components has nothing to act on; encoders that
+            // set the flag anyway are common enough that the image is read as if it were off)
+            if (cts.GetIntTileDef(tIdx) == NONE || src.NumComps < 3) transfType = NONE;
             else
             {
                 var nc = src.NumComps > 3 ? 3 : src.NumComps;
@@ -852,7 +855,9 @@ namespace CoreJ2K.j2k.image.invcomptransf
             tIdx = TileIdx; // index of the current tile
 
             // initializations
-            if (cts.GetIntTileDef(tIdx) == NONE) transfType = NONE;
+            // (a component transform asked for by an image with fewer than three components has nothing to act on; encoders that
+            // set the flag anyway are common enough that the image is read as if it were off)
+            if (cts.GetIntTileDef(tIdx) == NONE || src.NumComps < 3) transfType = NONE;
             else
             {
                 var nc = src.NumComps > 3 ? 3 : src.NumComps;

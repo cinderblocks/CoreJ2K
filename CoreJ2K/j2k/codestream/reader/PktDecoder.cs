@@ -614,10 +614,13 @@ namespace CoreJ2K.j2k.codestream.reader
             {
                 for (var j = jstart; j <= jend; j++, nPrec++)
                 {
-                    prg_ulx = (j == jstart && (trx0 - cb0x) % (xrsiz * twoppx) != 0)
+                    // The first precinct of the tile-component is at the tile's own origin when the resolution level does not begin
+                    // at a precinct boundary (ISO/IEC 15444-1 B.12.1.3: trx0 * 2^(NL-r) not divisible by 2^(PPx + NL - r)); the
+                    // component's subsampling factor has no part in that test
+                    prg_ulx = (j == jstart && (trx0 - cb0x) % twoppx != 0)
                         ? tx0
                         : cb0x + j * xrsiz * (twoppx << ndl);
-                    prg_uly = (i == istart && (try0 - cb0y) % (yrsiz * twoppy) != 0)
+                    prg_uly = (i == istart && (try0 - cb0y) % twoppy != 0)
                         ? ty0
                         : cb0y + i * yrsiz * (twoppy << ndl);
 

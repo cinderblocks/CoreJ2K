@@ -10,12 +10,29 @@ implementation what the right answer is. They run with the rest of the suite on 
 | `ScenarioSweepTests` | Encodes and decodes random *scenarios* (see below). The codestream passes `CodestreamValidator`, the decoded image has the right shape, a lossless coding returns every sample. |
 | `OpenJpegDifferentialTests` | CoreJ2K encodes and OpenJPEG decodes; OpenJPEG encodes and CoreJ2K decodes. Lossless files must agree exactly, lossy ones to within a level or so. Skipped when OpenJPEG is not installed. |
 | `MalformedStreamTests` | Decodes valid files that were cut short, had bytes changed, or a stretch overwritten. The decoder must not hang, and the exception must not be one of the decoder's own slips (null reference, index out of range, ...). |
+| `ReducedResolutionTests` | CoreJ2K and OpenJPEG decode the same files one and two resolution levels down (`opj_decompress -r`); tiles and image origins are also checked without OpenJPEG. |
 | `CodecRegressionTests` | One small test for each defect those sweeps found. |
 | `ScenarioTriage` | Not a test: explains one scenario (see "When something fails"). |
 
 A *scenario* (`CodingScenario`) is a random choice of image size, depth and signedness, components, image offset, tiling, wavelet, quantization, code-block and
 precinct sizes, progression, layers, entropy-coder modes, markers (SOP, EPH, PLT, TLM, packed packet headers, tile-parts) and region of interest. It is a pure
 function of its seed, so a failure is reproduced by the seed alone. `SampleImage` makes the picture (smooth, edges, noise, constant, extremes, sparse) for a seed.
+
+## Streams that others wrote
+
+The sweeps only see what CoreJ2K's encoder and OpenJPEG's make. Other encoders write things neither does, and the standard's own conformance suite
+(ITU-T T.803 | ISO/IEC 15444-4) is built to find what decoders get wrong, so two kinds of fixed files are kept in `tests/CoreJ2K.Tests/TestFiles/`:
+
+- `iso15444-4/`: a few streams of the suite with the reference images it gives for them (`Iso15444PartFourStreamTests`). They cover subsampled components, image and
+  tile origins, tile-parts that do not give their number, an empty tile-part, a lower resolution of a tiled image, and position progressions with 1 x 1 precincts.
+  The notice that comes with these files is in `ATTRIBUTION.md`.
+- `subsampled/`: small lossless streams with differently subsampled components, written by OpenJPEG (`SubsampledComponentTests`).
+
+To look for more, take the rest of the suite and OpenJPEG's own test data (https://github.com/uclouvain/openjpeg-data, folders `input/conformance`, `baseline/conformance` and
+`input/nonregression`), decode each file with CoreJ2K and with `opj_decompress`, and compare the components: a difference is either a defect in one of them or a choice
+(OpenJPEG ignores ICC profiles unless it was built with lcms, and does not repeat subsampled components). Where two decoders disagree and a third is not at hand, decode one
+code-block by hand: the tier-2 packet headers and the tier-1 coding of a block are short enough to write out again from the standard, and that was how the one remaining
+difference (in the Known issues of the changelog) was narrowed down.
 
 ## OpenJPEG
 

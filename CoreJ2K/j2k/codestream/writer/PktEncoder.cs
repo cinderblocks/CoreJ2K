@@ -521,7 +521,7 @@ namespace CoreJ2K.j2k.codestream.writer
                 for (var j = jstart; j <= jend; j++, nPrec++)
                 {
                     // Horizontal precincts
-                    if (j == jstart && (trx0 - cb0x) % (xrsiz * ((int)twoppx)) != 0)
+                    if (j == jstart && (trx0 - cb0x) % ((int)twoppx) != 0)
                     {
                         prg_ulx = tx0;
                     }
@@ -529,7 +529,7 @@ namespace CoreJ2K.j2k.codestream.writer
                     {
                         prg_ulx = cb0x + j * xrsiz * ((int)twoppx << ndl);
                     }
-                    if (i == istart && (try0 - cb0y) % (yrsiz * ((int)twoppy)) != 0)
+                    if (i == istart && (try0 - cb0y) % ((int)twoppy) != 0)
                     {
                         prg_uly = ty0;
                     }

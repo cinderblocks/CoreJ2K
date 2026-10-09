@@ -121,7 +121,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
                     if (mrl < rl)
                         rl = mrl;
                 }
-                return mressrc.GetTileWidth(rl);
+                return mressrc.GetTileWidth(ReconstructedRes(rl));
             }
 
         }
@@ -153,7 +153,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
                     if (mrl < rl)
                         rl = mrl;
                 }
-                return mressrc.GetTileHeight(rl);
+                return mressrc.GetTileHeight(ReconstructedRes(rl));
             }
 
         }
@@ -246,6 +246,13 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         /// <summary>The maximum available image resolution level </summary>
         protected internal int maxImgRes;
 
+        /// <summary>
+        /// The resolution index of a tile-component at the requested reconstruction level: its own highest index, less the levels that
+        /// the request leaves out (those the shallowest tile-component has beyond the requested level).
+        /// </summary>
+        /// <param name="highest">The highest resolution index the tile-component, or the image, has.</param>
+        protected int ReconstructedRes(int highest) => Math.Max(0, highest - Math.Max(0, maxImgRes - reslvl));
+
         /// <summary> Instantiates the 'InvWTAdapter' object using the specified
         /// 'MultiResImgData' source. The reconstruction resolution level is set to
         /// full resolution (i.e. the maximum resolution level).
@@ -318,9 +325,15 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         {
             // Retrieves the tile-component maximum resolution index and gets the
             // width from the source.
-            var rl = mressrc.GetSynSubbandTree(t, c).resLvl;
+            var rl = ReconstructedRes(mressrc.GetSynSubbandTree(t, c).resLvl);
             return mressrc.GetTileCompWidth(t, c, rl);
         }
+
+        /// <summary>
+        /// The width in pixels of the specified tile-component at its highest resolution, whatever level is being reconstructed. The
+        /// reconstruction buffer is this wide, and holds a smaller reconstruction in its top-left corner.
+        /// </summary>
+        protected int GetFullTileCompWidth(int t, int c) => mressrc.GetTileCompWidth(t, c, mressrc.GetSynSubbandTree(t, c).resLvl);
 
         /// <summary> Returns the height in pixels of the specified tile-component.
         /// 
@@ -342,9 +355,12 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         {
             // Retrieves the tile-component maximum resolution index and gets the
             // height from the source.
-            var rl = mressrc.GetSynSubbandTree(t, c).resLvl;
+            var rl = ReconstructedRes(mressrc.GetSynSubbandTree(t, c).resLvl);
             return mressrc.GetTileCompHeight(t, c, rl);
         }
+
+        /// <summary>The height in pixels of the specified tile-component at its highest resolution; see <see cref="GetFullTileCompWidth"/>.</summary>
+        protected int GetFullTileCompHeight(int t, int c) => mressrc.GetTileCompHeight(t, c, mressrc.GetSynSubbandTree(t, c).resLvl);
 
         /// <summary> Returns the width in pixels of the specified component in the overall
         /// image.
@@ -361,7 +377,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         {
             // Retrieves the component maximum resolution index and gets the width
             // from the source module.
-            var rl = decSpec.dls.GetMinInComp(c);
+            var rl = ReconstructedRes(decSpec.dls.GetMinInComp(c));
             return mressrc.GetCompImgWidth(c, rl);
         }
 
@@ -383,7 +399,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         {
             // Retrieves the component maximum resolution index and gets the
             // height from the source module.
-            var rl = decSpec.dls.GetMinInComp(c);
+            var rl = ReconstructedRes(decSpec.dls.GetMinInComp(c));
             return mressrc.GetCompImgHeight(c, rl);
         }
 
@@ -447,7 +463,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
             // Find tile-component maximum resolution index and gets information
             // from the source module.
             var tIdx = TileIdx;
-            var rl = mressrc.GetSynSubbandTree(tIdx, c).resLvl;
+            var rl = ReconstructedRes(mressrc.GetSynSubbandTree(tIdx, c).resLvl);
             return mressrc.GetResULX(c, rl);
         }
 
@@ -463,7 +479,7 @@ namespace CoreJ2K.j2k.wavelet.synthesis
             // Find tile-component maximum resolution index and gets information
             // from the source module.
             var tIdx = TileIdx;
-            var rl = mressrc.GetSynSubbandTree(tIdx, c).resLvl;
+            var rl = ReconstructedRes(mressrc.GetSynSubbandTree(tIdx, c).resLvl);
             return mressrc.GetResULY(c, rl);
         }
 

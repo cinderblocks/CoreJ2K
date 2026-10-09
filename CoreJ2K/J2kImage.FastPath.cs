@@ -274,16 +274,20 @@ namespace CoreJ2K
                     postCt = new InvDCO(postCt, hd.DcoSegment);
                 }
 
+                // Components may be subsampled, and so differ in size; put them on one grid before anything is made of them
+                postCt = j2k.image.ComponentGridUpsampler.IfNeeded(postCt);
+
                 BlkImgDataSrc color;
                 if (ff.JP2FFUsed && pl.GetParameter("nocolorspace").Equals("off"))
                 {
                     try
                     {
                         var csMap = new ColorSpace(in_stream, hd, pl);
-                        var channels = hd.createChannelDefinitionMapper(postCt, csMap);
-                        var resampled = hd.createResampler(channels, csMap);
+                        // the channel definitions name the channels the palette makes, so they come after it
+                        var resampled = hd.createResampler(postCt, csMap);
                         var palettized = hd.createPalettizedColorSpaceMapper(resampled, csMap);
-                        color = hd.createColorSpaceMapper(palettized, csMap);
+                        var channels = hd.createChannelDefinitionMapper(palettized, csMap);
+                        color = ConvertColors(hd, channels, csMap);
                     }
                     catch (ArgumentException e)
                     {

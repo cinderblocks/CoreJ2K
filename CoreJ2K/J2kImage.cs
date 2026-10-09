@@ -131,6 +131,27 @@ namespace CoreJ2K
             e is NullReferenceException || e is IndexOutOfRangeException || e is InvalidCastException || e is DivideByZeroException
             || e is OverflowException || e is KeyNotFoundException || e is ArrayTypeMismatchException;
 
+        /// <summary>
+        /// The stage that converts the channels to the colour space the file names. When that cannot be done here (an ICC profile for
+        /// another number of channels than the image has, as with an RGB profile on an image that also has an alpha channel, or a profile
+        /// that cannot be read), and when the colour space is not one that is converted, the channels are used as they are, which is
+        /// what other decoders do; the image is decoded all the same.
+        /// </summary>
+        private static BlkImgDataSrc ConvertColors(HeaderDecoder hd, BlkImgDataSrc channels, Color.ColorSpace csMap)
+        {
+            try
+            {
+                return hd.createColorSpaceMapper(channels, csMap) ?? channels;
+            }
+            catch (Exception e) when (e is ArgumentException || e is Color.ColorSpaceException || e is Icc.ICCProfileException
+                                      || e is Icc.Lut.MatrixBasedTransformException || e is Icc.Lut.MonochromeTransformException)
+            {
+                FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING,
+                    $"The colour space of the file is not applied: {e.Message}");
+                return channels;
+            }
+        }
+
         private static InterleavedImage FromStreamCore(Stream stream, ParameterList? parameters, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -278,6 +299,11 @@ namespace CoreJ2K
                 postCt = new InvDCO(postCt, hd.DcoSegment);
             }
 
+            // **** Component grid ****
+            // Components may be subsampled, and so differ in size; put them on one grid (the image as large as the components
+            // when they are all sampled alike) before anything is made of them
+            postCt = j2k.image.ComponentGridUpsampler.IfNeeded(postCt);
+
             // **** Color space mapping ****
             BlkImgDataSrc color;
             if (ff.JP2FFUsed && pl.GetParameter("nocolorspace").Equals("off"))
@@ -285,10 +311,11 @@ namespace CoreJ2K
                 try
                 {
                     var csMap = new ColorSpace(in_stream, hd, pl);
-                    var channels = hd.createChannelDefinitionMapper(postCt, csMap);
-                    var resampled = hd.createResampler(channels, csMap);
+                    // the channel definitions name the channels the palette makes, so they come after it
+                    var resampled = hd.createResampler(postCt, csMap);
                     var palettized = hd.createPalettizedColorSpaceMapper(resampled, csMap);
-                    color = hd.createColorSpaceMapper(palettized, csMap);
+                    var channels = hd.createChannelDefinitionMapper(palettized, csMap);
+                    color = ConvertColors(hd, channels, csMap);
                 }
                 catch (ArgumentException e)
                 {
@@ -616,6 +643,11 @@ namespace CoreJ2K
                 postCt = new InvDCO(postCt, hd.DcoSegment);
             }
 
+            // **** Component grid ****
+            // Components may be subsampled, and so differ in size; put them on one grid (the image as large as the components
+            // when they are all sampled alike) before anything is made of them
+            postCt = j2k.image.ComponentGridUpsampler.IfNeeded(postCt);
+
             // **** Color space mapping ****
             BlkImgDataSrc color;
             if (ff.JP2FFUsed && pl.GetParameter("nocolorspace").Equals("off"))
@@ -623,10 +655,11 @@ namespace CoreJ2K
                 try
                 {
                     var csMap = new ColorSpace(in_stream, hd, pl);
-                    var channels = hd.createChannelDefinitionMapper(postCt, csMap);
-                    var resampled = hd.createResampler(channels, csMap);
+                    // the channel definitions name the channels the palette makes, so they come after it
+                    var resampled = hd.createResampler(postCt, csMap);
                     var palettized = hd.createPalettizedColorSpaceMapper(resampled, csMap);
-                    color = hd.createColorSpaceMapper(palettized, csMap);
+                    var channels = hd.createChannelDefinitionMapper(palettized, csMap);
+                    color = ConvertColors(hd, channels, csMap);
                 }
                 catch (ArgumentException e)
                 {

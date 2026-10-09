@@ -64,26 +64,30 @@ namespace CoreJ2K.Tests.Conformance
         /// OpenJPEG decides which passes of a code-block are raw (selective bypass) without the Maxshift shift, so it misreads files that
         /// combine the two; CoreJ2K and ffmpeg's decoder read them correctly. Scenarios with both are left out of the comparison.
         /// </summary>
-        private static bool OpenJpegMisreadsBypassWithRoi(CodingScenario s) => s.Roi && s.Bypass;
+        internal static bool OpenJpegMisreadsBypassWithRoi(CodingScenario s) => s.Roi && s.Bypass;
 
         /// <summary>
         /// CoreJ2K numbers the PPT marker segments of each tile-part header from 0 (the index is "relative to all other PPT marker
         /// segments present in the current header"); OpenJPEG numbers them across all the tile-parts of a tile and refuses a file that
         /// starts over ("Zppt already read"). Which is meant is not settled here, so such files are left out of the comparison.
         /// </summary>
-        private static bool PptIndexAcrossTileParts(CodingScenario s) => s.PackedHeadersInTile && s.PacketsPerTilePart > 0;
+        internal static bool PptIndexAcrossTileParts(CodingScenario s) => s.PackedHeadersInTile && s.PacketsPerTilePart > 0;
 
         /// <summary>
         /// With tile-parts, CoreJ2K writes the first tile-part of every tile, then the second of every tile, and so on, and the packed
         /// packet headers of a PPM marker follow that order. OpenJPEG takes the packet headers of a tile from the PPM data one after the
         /// other, so it reads the headers of another tile's tile-part and fails. CoreJ2K reads these files; the standard allows the layout.
         /// </summary>
-        private static bool PpmWithInterleavedTileParts(CodingScenario s) => s.PackedHeadersInMain && s.PacketsPerTilePart > 0 && s.TileCount > 1;
+        internal static bool PpmWithInterleavedTileParts(CodingScenario s) => s.PackedHeadersInMain && s.PacketsPerTilePart > 0 && s.TileCount > 1;
+
+        /// <summary>Whether OpenJPEG is known to misread (or refuse) files of the scenario, so that what it decodes says nothing about CoreJ2K.</summary>
+        internal static bool OpenJpegMisreads(CodingScenario s) =>
+            OpenJpegMisreadsBypassWithRoi(s) || PptIndexAcrossTileParts(s) || PpmWithInterleavedTileParts(s);
 
         /// <summary>CoreJ2K encodes, OpenJPEG decodes.</summary>
         internal static string? CheckOurEncode(CodingScenario scenario)
         {
-            if (OpenJpegMisreadsBypassWithRoi(scenario) || PptIndexAcrossTileParts(scenario) || PpmWithInterleavedTileParts(scenario)) return null;
+            if (OpenJpegMisreads(scenario)) return null;
             var image = scenario.MakeImage();
             byte[] data;
             try

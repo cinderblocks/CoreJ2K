@@ -223,24 +223,43 @@ namespace CoreJ2K.j2k.fileformat.reader
                 {
                     pos = inStream.Pos;
                     length = inStream.readInt();
-                    if ((pos + length) == inStream.length())
-                        lastBoxFound = true;
 
                     box = inStream.readInt();
+
+                    // The readers of the individual boxes take the header to be the 8 bytes of LBox and TBox; a box with an XLBox has
+                    // 8 more, so they are given a length that is 8 short of the real one.
+                    var readerLength = length;
                     if (length == 0)
                     {
                         // Box extends to end of file; reconstruct the total box length
                         // (including the 8-byte header) so it matches sized boxes.
                         lastBoxFound = true;
                         length = inStream.length() - pos;
+                        readerLength = length;
                     }
                     else if (length == 1)
                     {
                         longLength = inStream.readLong();
-                        throw new System.IO.IOException("File too long.");
+                        if (longLength < 16 || longLength > int.MaxValue - 16 || box == FileFormatBoxes.JP2_HEADER_BOX)
+                            throw new System.IO.IOException("File too long.");
+                        length = (int)longLength;
+                        readerLength = length - 8;
+                        longLength = 0;
+                    }
+                    else if (length < 0)
+                    {
+                        // 2 GiB or more: more than this reader can address, so it can only be the last box of a larger file
+                        lastBoxFound = true;
+                        length = inStream.length() - pos;
+                        readerLength = length;
+                        longLength = 0;
                     }
                     else
                         longLength = 0;
+
+                    // The last box ends at the end of the file, or, in a file that was cut short, past it
+                    if ((long)pos + length >= inStream.length())
+                        lastBoxFound = true;
 
                     switch (box)
                     {
@@ -270,61 +289,61 @@ namespace CoreJ2K.j2k.fileformat.reader
                             break;
 
                         case FileFormatBoxes.INTELLECTUAL_PROPERTY_BOX:
-                            readIntPropertyBox(length);
+                            readIntPropertyBox(readerLength);
                             if (!jp2HeaderBoxFound)
                                 FileStructure.HasMetadataBeforeHeader = true;
                             break;
 
                         case FileFormatBoxes.XML_BOX:
-                            readXMLBox(length);
+                            readXMLBox(readerLength);
                             if (!jp2HeaderBoxFound)
                                 FileStructure.HasMetadataBeforeHeader = true;
                             break;
 
                         case FileFormatBoxes.UUID_BOX:
-                            readUUIDBox(length);
+                            readUUIDBox(readerLength);
                             if (!jp2HeaderBoxFound)
                                 FileStructure.HasMetadataBeforeHeader = true;
                             break;
 
                         case FileFormatBoxes.UUID_INFO_BOX:
-                            readUUIDInfoBox(length);
+                            readUUIDInfoBox(readerLength);
                             break;
 
                         case FileFormatBoxes.READER_REQUIREMENTS_BOX:
-                            readReaderRequirementsBox(length);
+                            readReaderRequirementsBox(readerLength);
                             break;
 
                         case FileFormatBoxes.JPR_BOX:
-                            readJPRBox(length);
+                            readJPRBox(readerLength);
                             break;
 
                         case FileFormatBoxes.LBL_BOX:
-                            readLabelBox(length);
+                            readLabelBox(readerLength);
                             break;
 
                         case FileFormatBoxes.ASSOCIATION_BOX:
-                            readAssociationBox(length);
+                            readAssociationBox(readerLength);
                             break;
 
                         case FileFormatBoxes.DATA_REFERENCE_BOX:
-                            readDataReferenceBox(length);
+                            readDataReferenceBox(readerLength);
                             break;
 
                         case FileFormatBoxes.FRAGMENT_TABLE_BOX:
-                            readFragmentTableBox(length);
+                            readFragmentTableBox(readerLength);
                             break;
 
                         case FileFormatBoxes.CROSS_REFERENCE_BOX:
-                            readCrossReferenceBox(length);
+                            readCrossReferenceBox(readerLength);
                             break;
 
                         case FileFormatBoxes.CODESTREAM_HEADER_BOX:
-                            readCodestreamHeaderBox(length);
+                            readCodestreamHeaderBox(readerLength);
                             break;
 
                         case FileFormatBoxes.COMPOSITING_LAYER_HEADER_BOX:
-                            readCompositingLayerHeaderBox(length);
+                            readCompositingLayerHeaderBox(readerLength);
                             break;
 
                         default:
@@ -339,10 +358,14 @@ namespace CoreJ2K.j2k.fileformat.reader
             }
             catch (System.IO.EndOfStreamException)
             {
-                throw new InvalidOperationException("EOF reached before finding Contiguous " + "Codestream Box");
+                // A file that ends in the middle of a box after the codestream (trailing bytes, a metadata box that was cut short) still
+                // holds the image
+                if (codeStreamPos == null || codeStreamPos.Count == 0)
+                    throw new InvalidOperationException("EOF reached before finding Contiguous " + "Codestream Box");
+                FacilityManager.GetMsgLogger().printmsg(MsgLogger_Fields.WARNING, "The file ends in the middle of a box that follows the codestream.");
             }
 
-            if (codeStreamPos.Count == 0)
+            if (codeStreamPos == null || codeStreamPos.Count == 0)
             {
                 // Not a valid JP2 file or codestream
                 throw new InvalidOperationException("Invalid JP2 file: Contiguous codestream box " + "missing");
@@ -852,6 +875,10 @@ namespace CoreJ2K.j2k.fileformat.reader
                 throw new InvalidOperationException(
                     "Invalid JP2 file: Contiguous Codestream box length is smaller than its own header");
             }
+
+            // a file that was cut short has less of the box than its length says
+            if (payloadLength > inStream.length() - ccpos)
+                payloadLength = inStream.length() - ccpos;
 
             if (codeStreamLength == null)
                 codeStreamLength = new List<int>(10);

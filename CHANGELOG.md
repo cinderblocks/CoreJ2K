@@ -86,9 +86,37 @@ This file starts with 2.4.0. Earlier releases are described on the
 - **Decoding time grew with the square of the number of tiles** (16,384 tiles of 4x4 took 17 seconds, now 0.3) because each code-block looked at the decomposition level of
   every tile-component.
 - **`CodestreamValidator` rejected valid codestreams**: it never recognised the main header markers it compared (reporting COD as missing) and miscounted the precinct sizes.
+- **Decoding a tiled image, or one with an image origin, at a reduced resolution (`WithResolutionLevel`) put every tile but the first off the image.** The tile
+  sizes and origins the wavelet stage reported were those of the full-size tile, so the rows of a tile were read at the wrong width and written where the next tile
+  belongs. They are now those of the level being reconstructed. Checked against the official `p0_03` stream and OpenJPEG over a few thousand random files.
+- **`QuitConditions.WithMaxLayers(n)` decoded n - 1 layers**, so one layer gave a blank image and the full count could not be asked for. It now decodes n.
+- **A JP2 file with a channel definition box that names an opacity channel could not be decoded**, nor could one that writes its own colour channels in another order
+  with the palette in play. That is every RGBA and grey-plus-alpha JP2, including those CoreJ2K wrote (`IndexOutOfRangeException`). Channels are now put out as the colours in
+  the order of their association, then the opacity channels, then any the box does not mention; the definition applies after the palette, as the standard says.
+- **Components that are subsampled could not be decoded properly.** In a raw codestream they gave `IndexOutOfRangeException`, or an image mostly of empty rows; in a JP2,
+  factors other than 2 were refused, and an image whose components are all subsampled alike came out at the size of the reference grid. The components are now put on
+  the grid of the finest one, which keeps its samples while the others repeat theirs, so an image subsampled alike is as large as its components, as in the
+  standard's reference images. That makes eleven streams of the conformance suite decode that did not (`p0_02`, `p0_05`, `p0_06`, `p0_10`, `p1_01`, `p1_03`, `p1_07`, `a4_colr`,
+  `a6_mono_colr`, `b2_mono` and `e2_colr`).
+- **Position-based progressions (RPCL, PCRL, CPRL) misplaced the first precinct of a subsampled component when the image origin was not a multiple of the precinct size**,
+  so the packets were read in the wrong order. The test for it included the subsampling factor, which the standard's does not (official stream `p1_07`).
+- **A tile-part with no packets, and tile-parts that do not announce their number (TNsot 0), made the packet reader read the next tile-part's marker as data** (official `p0_10`).
+  Tile-parts beyond the announced number are now read as well (OpenJPEG's "TPsot==TNsot"; some encoders write the last index, not the count).
+- **A POC marker segment in a tile-part header threw `KeyNotFoundException`** (official `p0_07` and `e1_colr`), and so did printing the header of a tile that had none of an optional segment.
+- **A JP2 file with several colour specification boxes used the last one**, and refused one whose method it did not know. The first one that can be used is taken (an ICC
+  profile, or an enumerated colour space that is converted), as the standard says; this is why `file5.jp2` of the conformance suite came out unconverted.
+  When the colour conversion cannot be set up, for example an RGB profile on an image that also has an alpha channel, the channels are returned unconverted with a warning
+  instead of failing; a colour space that is not converted no longer drops the palette and the channel definitions with it.
+- **Files that other decoders read and CoreJ2K refused:** a QCD or QCC segment with fewer step sizes than there are subbands (the missing ones get a zero exponent); a codestream
+  box longer than the file, bytes after the last box, and boxes with a 64-bit length that fits in 2 GiB; a tile size of 2^31 or more (one tile over the image); and a colour
+  transform asked for by an image with fewer than three components (it is not applied).
+- **The inverse irreversible colour transform failed when a component beyond the third was asked for first** (`NullReferenceException`; it came up once the channels were put in order).
 
 ### Changed
 
+- **Subsampled components and the size of the image.** An image whose components are all subsampled alike is now decoded at the size of the components, not of the reference
+  grid (`subsampling_2.jp2` of the conformance suite is 640 x 512, not 1280 x 1024); components of different sampling are repeated up to the finest. Nothing changes for images
+  that are not subsampled. The encoder still writes components of full resolution only.
 - **The ImageSharp package is `CoreJ2K.ImageSharp` again.** It was published as `CoreJ2K.ImageSharp-Official` while the `CoreJ2K.ImageSharp`
   id on NuGet belonged to someone else; that id has been transferred to this project. `CoreJ2K.ImageSharp-Official` is deprecated and
   will not get further releases. To migrate, replace the package reference; the assembly and namespace (`CoreJ2K.ImageSharp`) are unchanged.
@@ -100,6 +128,17 @@ This file starts with 2.4.0. Earlier releases are described on the
   base step), so the values were written to a `Qstep_subband` parameter that nothing reads and dropped by `Build()`. `QuantizationConfigurationBuilder.ApplyTo` and
   `CompleteEncoderConfigurationBuilder.Build()` now throw `NotSupportedException` when one is set, and `Validate` reports it. To favour a subband or resolution level
   under a rate limit, use `WithDistortionWeights`.
+
+### Known issues
+
+- A JP2 component mapping box that takes some channels from the palette and others straight from a component (`mtyp` 0 next to 1) is refused.
+- Encoding with many decomposition levels (the standard allows 32) needs memory that doubles with every level, and ends the process at 31: the norms of the subband
+  synthesis filters are found from waveforms of that length. Up to 28 levels work.
+- The enumerated colour spaces e-sYCC (24), CMYK, CIELab and ROMM-RGB are not converted (the samples are returned as they are), and an ICC profile is applied to
+  images of 1 or 3 components only.
+- `issue135.j2k`/`kodak_2layers_lrcp.j2c` of the OpenJPEG test data (12 bit, two layers, 9/7 with the colour transform) decodes differently from OpenJPEG in the second layer's
+  refinements of the code-blocks that have data in both layers (up to 274 of 4095 at the worst sample). The packet headers of the whole file and the entropy decoding of one
+  block were checked against separate implementations of the standard and agree with CoreJ2K; no third decoder could read the file, so which one is right is not settled.
 
 ## 2.4.0
 

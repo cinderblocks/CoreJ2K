@@ -220,7 +220,8 @@ namespace CoreJ2K.j2k.quantization.dequantizer
 
             // initializations
             var cttype = 0;
-            if (cts.GetIntTileDef(tIdx) == InvCompTransf.NONE)
+            // (as in InvCompTransf, a component transform asked for by an image with fewer than three components is not applied)
+            if (cts.GetIntTileDef(tIdx) == InvCompTransf.NONE || src.NumComps < 3)
                 cttype = InvCompTransf.NONE;
             else
             {
