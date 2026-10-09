@@ -68,7 +68,7 @@ jobs:
         run: dotnet build CoreJ2K.sln -c Release --no-restore /p:Version=${{ steps.version.outputs.VERSION }}
 
       - name: Test
-        run: dotnet test CoreJ2K.sln -c Release --no-build --verbosity normal --logger trx --collect:"XPlat Code Coverage"
+        run: dotnet test CoreJ2K.sln -c Release --no-build --verbosity normal --logger trx
 
       - name: Pack
         run: |

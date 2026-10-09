@@ -24,4 +24,8 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Shared\QuietLogging.cs" Link="QuietLogging.cs" />
+  </ItemGroup>
 </Project>

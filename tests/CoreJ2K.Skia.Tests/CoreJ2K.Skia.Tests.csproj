@@ -17,4 +17,8 @@
   <ItemGroup>
     <ProjectReference Include="..\..\CoreJ2K.Skia\CoreJ2K.Skia.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Shared\QuietLogging.cs" Link="QuietLogging.cs" />
+  </ItemGroup>
 </Project>

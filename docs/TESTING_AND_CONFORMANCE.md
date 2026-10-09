@@ -46,6 +46,7 @@ All of these are environment variables:
 | `COREJ2K_FUZZ_MUTATIONS` | Damaged copies made of each file (12). |
 | `COREJ2K_FUZZ_DEADLINE` | Seconds a damaged file may take to decode (20). |
 | `COREJ2K_FUZZ_DUMP` | A directory to keep the damaged files that fail in. |
+| `COREJ2K_TEST_LOG` | Set to anything to let the codec print its warnings and errors while the tests run. They are silenced by default, since the tests cause most of them on purpose. |
 
 ```
 COREJ2K_SWEEP_COUNT=3000 COREJ2K_SWEEP_START=40000 COREJ2K_SWEEP_REPORT=/tmp/sweep \

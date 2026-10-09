@@ -21,4 +21,8 @@
   <ItemGroup>
     <ProjectReference Include="..\..\CoreJ2K.Avalonia\CoreJ2K.Avalonia.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Shared\QuietLogging.cs" Link="QuietLogging.cs" />
+  </ItemGroup>
 </Project>

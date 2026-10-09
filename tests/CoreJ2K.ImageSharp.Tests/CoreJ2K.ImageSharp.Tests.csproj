@@ -16,4 +16,8 @@
     <ProjectReference Include="..\..\CoreJ2K.ImageSharp\CoreJ2K.ImageSharp.csproj" />
     <ProjectReference Include="..\..\CoreJ2K\CoreJ2K.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Shared\QuietLogging.cs" Link="QuietLogging.cs" />
+  </ItemGroup>
 </Project>
