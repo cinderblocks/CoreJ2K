@@ -5,7 +5,7 @@
   <!-- Development / tooling -->
   <ItemGroup>
     <PackageVersion Include="JetBrains.Annotations" Version="2026.2.0" />
-    <PackageVersion Include="SharpFuzz" Version="2.2.0" />
+    <PackageVersion Include="SharpFuzz" Version="2.3.0" />
   </ItemGroup>
   <!-- Runtime libraries -->
   <ItemGroup>
