@@ -68,6 +68,11 @@ namespace CoreJ2K.j2k.entropy.decoder
         /// </summary>
         private int pos;
 
+        /// <summary>The bytes, the index of the next one and the index after the last one, for a reader that keeps them itself.</summary>
+        internal byte[]? Bytes => buf;
+        internal int Position { get => pos; set => pos = value; }
+        internal int End => count;
+
         /// <summary> Creates a new byte array input stream that reads data from the
         /// specified byte array. The byte array is not copied.
         /// 

@@ -84,12 +84,155 @@ namespace CoreJ2K.j2k.entropy.decoder
         internal static readonly int[] switchLM = { 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
         /// <summary>The ByteInputBuffer used to read the compressed bit stream. </summary>
+        /// <summary>
+        /// The probability state machine, one entry for each state of a context, which is its index into <see cref="qe"/>
+        /// doubled plus its MPS: Qe in bits 0 to 15, the state after an MPS in bits 16 to 23 and after an LPS (with the MPS
+        /// switched where the table says so) in bits 24 to 31.
+        /// </summary>
+        private static readonly uint[] Transitions = BuildTransitions();
+
+        private static uint[] BuildTransitions()
+        {
+            var table = new uint[qe.Length * 2];
+            for (var index = 0; index < qe.Length; index++)
+            {
+                for (var mps = 0; mps < 2; mps++)
+                {
+                    var afterMps = (uint)((nMPS[index] << 1) | mps);
+                    var afterLps = (uint)((nLPS[index] << 1) | (mps ^ switchLM[index]));
+                    table[(index << 1) | mps] = qe[index] | (afterMps << 16) | (afterLps << 24);
+                }
+            }
+            return table;
+        }
+
+        /// <summary>
+        /// The registers of the decoder and its place in the input, as a value. A coding pass takes them with
+        /// <see cref="Take"/>, decodes with <see cref="Decode"/> and gives them back with <see cref="Give"/>: held in a
+        /// local they stay in machine registers, where the fields of this object are loaded and stored for every symbol.
+        /// </summary>
+        internal struct Registers
+        {
+            public uint A, C, CT, B;
+            public bool MarkerFound;
+            public byte[]? Bytes;
+            public int Position, End;
+        }
+
+        internal Registers Take() => new Registers
+        {
+            A = a, C = c, CT = cT, B = b, MarkerFound = markerFound,
+            Bytes = inputBuffer.Bytes, Position = inputBuffer.Position, End = inputBuffer.End,
+        };
+
+        internal void Give(Registers r)
+        {
+            a = r.A; c = r.C; cT = r.CT; b = r.B; markerFound = r.MarkerFound;
+            inputBuffer.Position = r.Position;
+        }
+
+        /// <summary>Decodes one symbol like <see cref="decodeSymbol"/>, on registers held by the caller.</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static int Decode(ref Registers r, int[] states, int context)
+        {
+            ref int state = ref states[context];
+            int cur = state;
+            uint entry = Transitions[cur];
+            uint q = entry & 0xFFFF;
+            uint la = r.A - q;
+            uint lc = r.C;
+            int decision;
+
+            if ((lc >> 16) < la)
+            {
+                if (la >= 0x8000)
+                {
+                    // Most common: the MPS, and the interval is still large enough
+                    r.A = la;
+                    return cur & 1;
+                }
+
+                if (la >= q)
+                {
+                    decision = cur & 1;
+                    state = (int)((entry >> 16) & 0xFF);
+                }
+                else
+                {
+                    decision = (cur ^ 1) & 1;
+                    state = (int)(entry >> 24);
+                }
+            }
+            else
+            {
+                lc -= la << 16;
+                if (la < q)
+                {
+                    decision = cur & 1;
+                    state = (int)((entry >> 16) & 0xFF);
+                }
+                else
+                {
+                    decision = (cur ^ 1) & 1;
+                    state = (int)(entry >> 24);
+                }
+                la = q;
+            }
+
+            // Renormalize. After an MPS the interval is above 0x4000, so the loop runs once.
+            uint ct = r.CT;
+            do
+            {
+                if (ct == 0)
+                {
+                    // BYTEIN
+                    if (r.MarkerFound)
+                    {
+                        ct = 8;
+                    }
+                    else
+                    {
+                        var position = r.Position;
+                        uint next = 0xFF; // past the end of the data the decoder is fed 1 bits
+                        if (position < r.End)
+                        {
+                            next = r.Bytes![position];
+                            r.Position = position + 1;
+                        }
+
+                        if (r.B != 0xFF)
+                        {
+                            lc += 0xFF00 - (next << 8);
+                            ct = 8;
+                        }
+                        else if (next > 0x8F)
+                        {
+                            r.MarkerFound = true;
+                            ct = 8;
+                        }
+                        else
+                        {
+                            lc += 0xFE00 - (next << 9);
+                            ct = 7;
+                        }
+                        r.B = next;
+                    }
+                }
+                la <<= 1;
+                lc <<= 1;
+                ct--;
+            }
+            while (la < 0x8000);
+
+            r.A = la;
+            r.C = lc;
+            r.CT = ct;
+            return decision;
+        }
+
         internal ByteInputBuffer inputBuffer;
 
-        /// <summary>The current most probable signal for each context </summary>
-        internal int[] mPS;
-
-        /// <summary>The current index of each context </summary>
+        /// <summary>The state of each context: its index into <see cref="qe"/> doubled, plus its most probable symbol.</summary>
         internal int[] I;
 
         /// <summary>The current bit code </summary>
@@ -133,7 +276,6 @@ namespace CoreJ2K.j2k.entropy.decoder
             // Default initialization of the statistics bins is MPS=0 and
             // I=0
             I = new int[nrOfContexts];
-            mPS = new int[nrOfContexts];
             // Save the initial states
             this.initStates = initStates;
 
@@ -144,434 +286,44 @@ namespace CoreJ2K.j2k.entropy.decoder
             resetCtxts();
         }
 
-        /// <summary> Decodes 'n' symbols from the bit stream using the same context
-        /// 'ctxt'. If possible the MQ-coder speedup mode will be used to speed up
-        /// decoding. The speedup mode is used if Q (the LPS probability for 'ctxt'
-        /// is low enough) and the A and C registers permit decoding several MPS
-        /// symbols without renormalization.
-        /// 
-        /// Speedup mode should be used when decoding long runs of MPS with high
-        /// probability with the same context.
-        /// 
-        /// This methiod will return the decoded symbols differently if speedup 
-        /// mode was used or not. If true is returned, then speedup mode was used
-        /// and the 'n' decoded symbols are all the same and it is returned ain
-        /// bits[0] only. If false is returned then speedup mode was not used, the
-        /// decoded symbols are probably not all the same and they are returned in
-        /// bits[0], bits[1], ... bits[n-1].
-        /// 
-        /// </summary>
-        /// <param name="bits">The array where to put the decoded symbols. Must be of
-        /// length 'n' or more.
-        /// 
-        /// </param>
-        /// <param name="ctxt">The context to use in decoding the symbols.
-        /// 
-        /// </param>
-        /// <param name="n">The number of symbols to decode.
-        /// 
-        /// </param>
-        /// <returns> True if speedup mode was used, false if not. If speedup mode
-        /// was used then all the decoded symbols are the same and its value is
-        /// returned in 'bits[0]' only (not in bits[1], bits[2], etc.).
-        /// 
-        /// </returns>
-        internal bool fastDecodeSymbols(int[] bits, int ctxt, uint n)
-        {
-            uint q; // LPS probability for context
-            int idx; // Index of current state
-            uint la; // cache for A register
-            int i; // counter
-
-            idx = I[ctxt];
-            q = qe[idx];
-
-            // This is a first attempt to implement speedup mode, it is probably
-            // not the most efficient way of doing it.
-
-            if ((q < 0x4000) && (n <= (a - (c >> 16) - 1) / q) && (n <= (a - 0x8000) / q + 1))
-            {
-                // Q is small enough. There will be no modification of C that
-                // affects decoding, and Q can be substracted from A several
-                // times. We will decode all MPS.
-                a -= n * q;
-                if (a >= 0x8000)
-                {
-                    // No renormalization needed
-                    bits[0] = mPS[ctxt];
-                    return true; // Done, used speedup mode
-                }
-                else
-                {
-                    // renormalization needed
-                    I[ctxt] = nMPS[idx];
-                    // Renormalize (MPS: no need for while loop)
-                    if (cT == 0)
-                        byteIn();
-                    a <<= 1;
-                    c <<= 1;
-                    cT--;
-                    // End renormalization
-                    bits[0] = mPS[ctxt];
-                    return true; // Done, used speedup mode
-                }
-            }
-            else
-            {
-                // Normal mode
-                la = a; // cache A register
-                for (i = 0; i < n; i++)
-                {
-                    la -= q;
-                    if ((c >> 16) < la)
-                    {
-                        if (la >= 0x8000)
-                        {
-                            bits[i] = mPS[ctxt];
-                        }
-                        else
-                        {
-                            // -- MPS Exchange
-                            if (la >= q)
-                            {
-                                bits[i] = mPS[ctxt];
-                                idx = nMPS[idx];
-                                q = qe[idx];
-                                // I[ctxt] set at end of loop
-                                // -- Renormalize (MPS: no need for while loop)
-                                if (cT == 0)
-                                    byteIn();
-                                la <<= 1;
-                                c <<= 1;
-                                cT--;
-                                // -- End renormalization
-                            }
-                            else
-                            {
-                                bits[i] = 1 - mPS[ctxt];
-                                if (switchLM[idx] == 1)
-                                    mPS[ctxt] = 1 - mPS[ctxt];
-                                idx = nLPS[idx];
-                                q = qe[idx];
-                                // I[ctxt] set at end of loop
-                                // -- Renormalize
-                                do
-                                {
-                                    if (cT == 0)
-                                        byteIn();
-                                    la <<= 1;
-                                    c <<= 1;
-                                    cT--;
-                                }
-                                while (la < 0x8000);
-                                // -- End renormalization
-                            }
-                            // -- End MPS Exchange
-                        }
-                    }
-                    else
-                    {
-                        c -= (la << 16);
-                        // -- LPS Exchange
-                        if (la < q)
-                        {
-                            la = q;
-                            bits[i] = mPS[ctxt];
-                            idx = nMPS[idx];
-                            q = qe[idx];
-                            // I[ctxt] set at end of loop
-                            // -- Renormalize (MPS: no need for while loop)
-                            if (cT == 0)
-                                byteIn();
-                            la <<= 1;
-                            c <<= 1;
-                            cT--;
-                            // -- End renormalization
-                        }
-                        else
-                        {
-                            la = q;
-                            bits[i] = 1 - mPS[ctxt];
-                            if (switchLM[idx] == 1)
-                                mPS[ctxt] = 1 - mPS[ctxt];
-                            idx = nLPS[idx];
-                            q = qe[idx];
-                            // I[ctxt] set at end of loop
-                            // -- Renormalize
-                            do
-                            {
-                                if (cT == 0)
-                                    byteIn();
-                                la <<= 1;
-                                c <<= 1;
-                                cT--;
-                            }
-                            while (la < 0x8000);
-                            // -- End renormalization
-                        }
-                        // -- End LPS Exchange
-                    }
-                }
-                a = la; // save cached A register
-                I[ctxt] = idx; // save current index for context
-                return false; // done, did not use speedup mode
-            } // End normal mode
-        }
-
-        /// <summary> This function performs the arithmetic decoding. The function receives 
-        /// an array in which to put the decoded symbols and an array of contexts 
-        /// with which to decode them. 
-        /// 
-        /// Each context has a current MPS and an index describing what the
-        /// current probability is for the LPS. Each bit is decoded and if the
-        /// probability of the LPS exceeds .5, the MPS and LPS are switched.
-        /// 
+        /// <summary> This function performs the arithmetic decoding. The function receives
+        /// an array in which to put the decoded symbols and an array of contexts
+        /// with which to decode them.
         /// </summary>
         /// <param name="bits">The array where to place the decoded symbols. It should be
         /// long enough to contain 'n' elements.
-        /// 
         /// </param>
         /// <param name="cX">The context to use in decoding each symbol.
-        /// 
         /// </param>
         /// <param name="n">The number of symbols to decode
-        /// 
         /// </param>
         public void decodeSymbols(int[] bits, int[] cX, int n)
         {
-            uint q;
-            int ctxt;
-            uint la; // cache for A register value
-            int index;
-            int i;
-
-            // NOTE: (a < 0x8000) is equivalent to ((a & 0x8000)==0)
-            // since 'a' is always less than or equal to 0xFFFF
-
-            // NOTE: conditional exchange guarantees that A for MPS is
-            // always greater than 0x4000 (i.e. 0.375)
-            // => one renormalization shift is enough for MPS
-            // => no need to do a renormalization while loop for MPS
-
-            for (i = 0; i < n; i++)
+            for (var i = 0; i < n; i++)
             {
-                ctxt = cX[i];
-
-                index = I[ctxt];
-                q = qe[index];
-
-                a -= q;
-                if ((c >> 16) < a)
-                {
-                    if (a >= 0x8000)
-                    {
-                        bits[i] = mPS[ctxt];
-                    }
-                    else
-                    {
-                        la = a;
-                        // -- MPS Exchange
-                        if (la >= q)
-                        {
-                            bits[i] = mPS[ctxt];
-                            I[ctxt] = nMPS[index];
-                            // -- Renormalize (MPS: no need for while loop)
-                            if (cT == 0)
-                                byteIn();
-                            la <<= 1;
-                            c <<= 1;
-                            cT--;
-                            // -- End renormalization
-                        }
-                        else
-                        {
-                            bits[i] = 1 - mPS[ctxt];
-                            if (switchLM[index] == 1)
-                                mPS[ctxt] = 1 - mPS[ctxt];
-                            I[ctxt] = nLPS[index];
-                            // -- Renormalize
-                            do
-                            {
-                                if (cT == 0)
-                                    byteIn();
-                                la <<= 1;
-                                c <<= 1;
-                                cT--;
-                            }
-                            while (la < 0x8000);
-                            // -- End renormalization
-                        }
-                        // -- End MPS Exchange
-                        a = la;
-                    }
-                }
-                else
-                {
-                    la = a;
-                    c -= (la << 16);
-                    // -- LPS Exchange
-                    if (la < q)
-                    {
-                        la = q;
-                        bits[i] = mPS[ctxt];
-                        I[ctxt] = nMPS[index];
-                        // -- Renormalize (MPS: no need for while loop)
-                        if (cT == 0)
-                            byteIn();
-                        la <<= 1;
-                        c <<= 1;
-                        cT--;
-                        // -- End renormalization
-                    }
-                    else
-                    {
-                        la = q;
-                        bits[i] = 1 - mPS[ctxt];
-                        if (switchLM[index] == 1)
-                            mPS[ctxt] = 1 - mPS[ctxt];
-                        I[ctxt] = nLPS[index];
-                        // -- Renormalize
-                        do
-                        {
-                            if (cT == 0)
-                                byteIn();
-                            la <<= 1;
-                            c <<= 1;
-                            cT--;
-                        }
-                        while (la < 0x8000);
-                        // -- End renormalization
-                    }
-                    // -- End LPS Exchange
-
-                    a = la;
-                }
+                bits[i] = decodeSymbol(cX[i]);
             }
         }
 
-
         /// <summary> Arithmetically decodes one symbol from the bit stream with the given
         /// context and returns its decoded value.
-        /// 
+        ///
         /// Each context has a current MPS and an index describing what the
         /// current probability is for the LPS. Each bit is encoded and if the
         /// probability of the LPS exceeds .5, the MPS and LPS are switched.
-        /// 
+        ///
         /// </summary>
         /// <param name="context">The context to use in decoding the symbol
-        /// 
+        ///
         /// </param>
         /// <returns> The decoded symbol, 0 or 1.
-        /// 
+        ///
         /// </returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int decodeSymbol(int context)
         {
-            // Pin I[context] and mPS[context] as ref locals: single bounds check each,
-            // all subsequent reads/writes go through the pinned reference.
-            ref int iCtx = ref I[context];
-            ref int mpsCtx = ref mPS[context];
-            int index = iCtx;
-            int curMps = mpsCtx;        // hoist: avoids a second indexed read on every path
-            uint q = qe[index];
-            uint la;
-            int decision;
-
-            // NOTE: (a < 0x8000) is equivalent to ((a & 0x8000)==0)
-            // since 'a' is always less than or equal to 0xFFFF
-
-            // NOTE: conditional exchange guarantees that A for MPS is
-            // always greater than 0x4000 (i.e. 0.375)
-            // => one renormalization shift is enough for MPS
-            // => no need to do a renormalization while loop for MPS
-
-            a -= q;
-            if ((c >> 16) < a)
-            {
-                if (a >= 0x8000)
-                {
-                    // Most common fast path: MPS, interval already large — no renorm
-                    decision = curMps;
-                }
-                else
-                {
-                    la = a;
-                    // -- MPS Exchange
-                    if (la >= q)
-                    {
-                        decision = curMps;
-                        iCtx = nMPS[index];
-                        // -- Renormalize (MPS: no need for while loop)
-                        if (cT == 0)
-                            byteIn();
-                        la <<= 1;
-                        c <<= 1;
-                        cT--;
-                        // -- End renormalization
-                    }
-                    else
-                    {
-                        decision = 1 - curMps;
-                        if (switchLM[index] == 1)
-                            mpsCtx = 1 - curMps;
-                        iCtx = nLPS[index];
-                        // -- Renormalize
-                        do
-                        {
-                            if (cT == 0)
-                                byteIn();
-                            la <<= 1;
-                            c <<= 1;
-                            cT--;
-                        }
-                        while (la < 0x8000);
-                        // -- End renormalization
-                    }
-                    // -- End MPS Exchange
-                    a = la;
-                }
-            }
-            else
-            {
-                la = a;
-                c -= (la << 16);
-                // -- LPS Exchange
-                if (la < q)
-                {
-                    la = q;
-                    decision = curMps;
-                    iCtx = nMPS[index];
-                    // -- Renormalize (MPS: no need for while loop)
-                    if (cT == 0)
-                        byteIn();
-                    la <<= 1;
-                    c <<= 1;
-                    cT--;
-                    // -- End renormalization
-                }
-                else
-                {
-                    la = q;
-                    decision = 1 - curMps;
-                    if (switchLM[index] == 1)
-                        mpsCtx = 1 - curMps;
-                    iCtx = nLPS[index];
-                    // -- Renormalize
-                    do
-                    {
-                        if (cT == 0)
-                            byteIn();
-                        la <<= 1;
-                        c <<= 1;
-                        cT--;
-                    }
-                    while (la < 0x8000);
-                    // -- End renormalization
-                }
-                // -- End LPS Exchange
-
-                a = la;
-            }
+            var r = Take();
+            var decision = Decode(ref r, I, context);
+            Give(r);
             return decision;
         }
 
@@ -718,8 +470,7 @@ namespace CoreJ2K.j2k.entropy.decoder
         /// </param>
         public void resetCtxt(int c)
         {
-            I[c] = initStates[c];
-            mPS[c] = 0;
+            I[c] = initStates[c] << 1;
         }
 
         /// <summary> Resets a context to the original probability distribution. The original
@@ -732,8 +483,7 @@ namespace CoreJ2K.j2k.entropy.decoder
         /// </param>
         public void resetCtxts()
         {
-            Array.Copy(initStates, 0, I, 0, I.Length);
-            ArrayUtil.intArraySet(mPS, 0);
+            for (var i = 0; i < I.Length; i++) I[i] = initStates[i] << 1;
         }
 
         /// <summary> Resets the MQ decoder to start a new segment. This is like recreating a

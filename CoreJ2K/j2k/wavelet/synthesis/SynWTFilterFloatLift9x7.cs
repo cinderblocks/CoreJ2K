@@ -736,6 +736,170 @@ namespace CoreJ2K.j2k.wavelet.synthesis
             }
         }
 
+        #region Many columns at once
+
+        /// <summary>
+        /// Synthesises <paramref name="n"/> adjacent columns together. <paramref name="buf"/> holds the columns' samples row by
+        /// row, <paramref name="n"/> to a row: first the rows of the subband that comes first (low-pass if
+        /// <paramref name="lowFirst"/>, as for <see cref="synthetize_lpf(float[],int,int,int,float[],int,int,int,float[],int,int)"/>,
+        /// otherwise as for the <c>synthetize_hpf</c> overload), then the rows of the other. The output rows are written to
+        /// <paramref name="data"/>, row <c>r</c> at <c>outBase + r * stride</c>. <paramref name="buf"/> is overwritten.
+        /// </summary>
+        /// <remarks>
+        /// The arithmetic of every sample is that of the one-column methods, operation for operation, so the results are the
+        /// same to the bit. What differs is the order: each lifting step runs along a row, over samples that lie next to each
+        /// other in memory, where a column has one sample per cache line and cannot be vectorised.
+        /// </remarks>
+        internal static void SynthetizeColumns(bool lowFirst, float[] buf, int n, int h, float[] data, int outBase, int stride)
+        {
+            if (lowFirst)
+                SynthetizeColumnsLowFirst(buf, n, h, data, outBase, stride);
+            else
+                SynthetizeColumnsHighFirst(buf, n, h, data, outBase, stride);
+        }
+
+        private static void SynthetizeColumnsLowFirst(float[] buf, int n, int outLen, float[] data, int outBase, int stride)
+        {
+            int lowLen = (outLen + 1) / 2, highLen = outLen / 2;
+            var even = outLen % 2 == 0;
+            int Lo(int i) => i * n;
+            int Hi(int i) => (lowLen + i) * n;
+            int Out(int r) => outBase + r * stride;
+
+            if (outLen == 1)
+            {
+                System.Array.Copy(buf, 0, data, outBase, n);
+                return;
+            }
+
+            // ---- Phase 1: intermediate low-frequency samples (even rows) ----
+            for (var i = 0; i < lowLen; i++) ScaleRow(buf, Lo(i), INV_KL, n);
+            LiftRow(data, Out(0), buf, Lo(0), TWO_DELTA_OVER_KH, buf, Hi(0), n);
+            var lastPair = even ? lowLen - 1 : lowLen - 2; // the last low sample with a high sample on both sides
+            for (var i = 1; i <= lastPair; i++)
+                LiftRow(data, Out(2 * i), buf, Lo(i), DELTA_OVER_KH, buf, Hi(i - 1), buf, Hi(i), n);
+            if (!even)
+                LiftRow(data, Out(2 * (lowLen - 1)), buf, Lo(lowLen - 1), TWO_DELTA_OVER_KH, buf, Hi(highLen - 1), n);
+
+            // ---- Phase 2: intermediate high-frequency samples (odd rows) ----
+            for (var i = 0; i < highLen; i++) ScaleRow(buf, Hi(i), INV_KH, n);
+            lastPair = even ? highLen - 2 : highLen - 1;
+            for (var i = 0; i <= lastPair; i++)
+                LiftRow(data, Out(2 * i + 1), buf, Hi(i), GAMMA, data, Out(2 * i), data, Out(2 * i + 2), n);
+            if (even)
+                LiftRow(data, Out(outLen - 1), buf, Hi(highLen - 1), TWO_GAMMA, data, Out(outLen - 2), n);
+
+            // ---- Phase 3: BETA on the even rows ----
+            LiftRow(data, Out(0), data, Out(0), TWO_BETA, data, Out(1), n);
+            var lastInner = even ? outLen - 2 : outLen - 3;
+            for (var r = 2; r <= lastInner; r += 2)
+                LiftRow(data, Out(r), data, Out(r), BETA, data, Out(r - 1), data, Out(r + 1), n);
+            if (!even)
+                LiftRow(data, Out(outLen - 1), data, Out(outLen - 1), TWO_BETA, data, Out(outLen - 2), n);
+
+            // ---- Phase 4: ALPHA on the odd rows ----
+            lastInner = even ? outLen - 3 : outLen - 2;
+            for (var r = 1; r <= lastInner; r += 2)
+                LiftRow(data, Out(r), data, Out(r), ALPHA, data, Out(r - 1), data, Out(r + 1), n);
+            if (even)
+                LiftRow(data, Out(outLen - 1), data, Out(outLen - 1), TWO_ALPHA, data, Out(outLen - 2), n);
+        }
+
+        private static void SynthetizeColumnsHighFirst(float[] buf, int n, int outLen, float[] data, int outBase, int stride)
+        {
+            // The first sample is a high-pass one: the low-pass samples make the odd rows, the high-pass samples the even rows
+            int lowLen = outLen / 2, highLen = (outLen + 1) / 2;
+            var even = outLen % 2 == 0;
+            int Lo(int i) => i * n;
+            int Hi(int i) => (lowLen + i) * n;
+            int Out(int r) => outBase + r * stride;
+
+            if (outLen == 1)
+            {
+                // Normalize for Nyquist gain
+                for (var x = 0; x < n; x++) data[outBase + x] = buf[Hi(0) + x] / 2;
+                return;
+            }
+
+            // "Inverse normalize" each sample
+            for (var i = 0; i < lowLen; i++) ScaleRow(buf, Lo(i), INV_KL, n);
+            for (var i = 0; i < highLen; i++) ScaleRow(buf, Hi(i), INV_KH, n);
+
+            // ---- Intermediate low-frequency samples (odd rows) ----
+            var lastPair = even ? lowLen - 2 : lowLen - 1; // the last low sample with a high sample on both sides
+            for (var i = 0; i <= lastPair; i++)
+                LiftRow(data, Out(2 * i + 1), buf, Lo(i), DELTA, buf, Hi(i), buf, Hi(i + 1), n);
+            if (even)
+                LiftRow(data, Out(outLen - 1), buf, Lo(lowLen - 1), TWO_DELTA, buf, Hi(highLen - 1), n);
+
+            // ---- Intermediate high-frequency samples (even rows) ----
+            LiftRow(data, Out(0), buf, Hi(0), TWO_GAMMA, data, Out(1), n);
+            lastPair = even ? highLen - 1 : highLen - 2;
+            for (var i = 1; i <= lastPair; i++)
+                LiftRow(data, Out(2 * i), buf, Hi(i), GAMMA, data, Out(2 * i - 1), data, Out(2 * i + 1), n);
+            if (!even)
+                LiftRow(data, Out(outLen - 1), buf, Hi(highLen - 1), TWO_GAMMA, data, Out(outLen - 2), n);
+
+            // ---- BETA on the odd rows ----
+            var lastInner = even ? outLen - 3 : outLen - 2;
+            for (var r = 1; r <= lastInner; r += 2)
+                LiftRow(data, Out(r), data, Out(r), BETA, data, Out(r - 1), data, Out(r + 1), n);
+            if (even)
+                LiftRow(data, Out(outLen - 1), data, Out(outLen - 1), TWO_BETA, data, Out(outLen - 2), n);
+
+            // ---- ALPHA on the even rows ----
+            LiftRow(data, Out(0), data, Out(0), TWO_ALPHA, data, Out(1), n);
+            lastInner = even ? outLen - 2 : outLen - 3;
+            for (var r = 2; r <= lastInner; r += 2)
+                LiftRow(data, Out(r), data, Out(r), ALPHA, data, Out(r - 1), data, Out(r + 1), n);
+            if (!even)
+                LiftRow(data, Out(outLen - 1), data, Out(outLen - 1), TWO_ALPHA, data, Out(outLen - 2), n);
+        }
+
+        /// <summary><c>row[i] *= k</c></summary>
+        private static void ScaleRow(float[] row, int at, float k, int n)
+        {
+            var i = 0;
+            if (System.Numerics.Vector.IsHardwareAccelerated)
+            {
+                var vk = new System.Numerics.Vector<float>(k);
+                for (; i <= n - System.Numerics.Vector<float>.Count; i += System.Numerics.Vector<float>.Count)
+                    (new System.Numerics.Vector<float>(row, at + i) * vk).CopyTo(row, at + i);
+            }
+            for (; i < n; i++) row[at + i] *= k;
+        }
+
+        /// <summary><c>dst[i] = a[i] - c * b[i]</c>; <paramref name="dst"/> may be <paramref name="a"/>.</summary>
+        private static void LiftRow(float[] dst, int d, float[] a, int ao, float c, float[] b, int bo, int n)
+        {
+            var i = 0;
+            if (System.Numerics.Vector.IsHardwareAccelerated)
+            {
+                var vc = new System.Numerics.Vector<float>(c);
+                for (; i <= n - System.Numerics.Vector<float>.Count; i += System.Numerics.Vector<float>.Count)
+                    (new System.Numerics.Vector<float>(a, ao + i) - vc * new System.Numerics.Vector<float>(b, bo + i)).CopyTo(dst, d + i);
+            }
+            for (; i < n; i++) dst[d + i] = a[ao + i] - c * b[bo + i];
+        }
+
+        /// <summary><c>dst[i] = a[i] - c * (b1[i] + b2[i])</c>; <paramref name="dst"/> may be <paramref name="a"/>.</summary>
+        private static void LiftRow(float[] dst, int d, float[] a, int ao, float c, float[] b1, int o1, float[] b2, int o2, int n)
+        {
+            var i = 0;
+            if (System.Numerics.Vector.IsHardwareAccelerated)
+            {
+                var vc = new System.Numerics.Vector<float>(c);
+                for (; i <= n - System.Numerics.Vector<float>.Count; i += System.Numerics.Vector<float>.Count)
+                {
+                    var sum = new System.Numerics.Vector<float>(b1, o1 + i) + new System.Numerics.Vector<float>(b2, o2 + i);
+                    (new System.Numerics.Vector<float>(a, ao + i) - vc * sum).CopyTo(dst, d + i);
+                }
+            }
+            for (; i < n; i++) dst[d + i] = a[ao + i] - c * (b1[o1 + i] + b2[o2 + i]);
+        }
+
+        #endregion
+
         /// <summary> Returns true if the wavelet filter computes or uses the
         /// same "inner" subband coefficient as the full frame wavelet transform,
         /// and false otherwise. In particular, for block based transforms with 

@@ -683,38 +683,19 @@ namespace CoreJ2K.j2k.wavelet.synthesis
         private void VerticalPass9x7(float[] data, float[] buf, SynWTFilterFloatLift9x7 filter, bool evenStart, int baseOffset, int stride,
             int h, int colStart, int colEnd)
         {
-            int hHalf = h / 2, hHalfCeil = (h + 1) / 2;
-            var outBase = ColumnBlock * h;
-            for (var blockStart = colStart; blockStart < colEnd; blockStart += ColumnBlock)
+            // 2 * ColumnBlock columns at a time, which is what the scratch buffer holds: the rows of those columns are copied
+            // out, and the lifting steps then run along rows, straight into the tile-component buffer.
+            const int block = 2 * ColumnBlock;
+            for (var blockStart = colStart; blockStart < colEnd; blockStart += block)
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                var width = Math.Min(ColumnBlock, colEnd - blockStart);
+                var width = Math.Min(block, colEnd - blockStart);
                 var rowBase = baseOffset + blockStart;
 
-                // Gather: one pass down the rows, reading 'width' adjacent samples (one cache line) per row.
                 for (var i = 0; i < h; i++)
-                {
-                    var src = rowBase + i * stride;
-                    for (var cc = 0; cc < width; cc++)
-                        buf[cc * h + i] = data[src + cc];
-                }
+                    Array.Copy(data, rowBase + i * stride, buf, i * width, width);
 
-                for (var cc = 0; cc < width; cc++)
-                {
-                    var inOff = cc * h;
-                    if (evenStart)
-                        filter.synthetize_lpf(buf, inOff, hHalfCeil, 1, buf, inOff + hHalfCeil, hHalf, 1, buf, outBase + inOff, 1);
-                    else
-                        filter.synthetize_hpf(buf, inOff, hHalf, 1, buf, inOff + hHalf, hHalfCeil, 1, buf, outBase + inOff, 1);
-                }
-
-                // Scatter the synthesised columns back, again a cache line per row.
-                for (var i = 0; i < h; i++)
-                {
-                    var dst = rowBase + i * stride;
-                    for (var cc = 0; cc < width; cc++)
-                        data[dst + cc] = buf[outBase + cc * h + i];
-                }
+                SynWTFilterFloatLift9x7.SynthetizeColumns(evenStart, buf, width, h, data, rowBase, stride);
             }
         }
 

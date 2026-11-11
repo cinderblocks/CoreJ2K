@@ -18,6 +18,13 @@ This file starts with 2.4.0. Earlier releases are described on the
   It also let a damaged file end in the decoder's own `NullReferenceException` or `IndexOutOfRangeException`, where `FromStream` reports
   `InvalidOperationException`. `DecodeToImage`, `FromStream` and `DecodeStream` now share one decoding chain, so they treat a file alike.
 
+### Changed
+
+- **Decoding is faster**, with the same output to the bit. On one thread a 3072x2048 RGB image decodes in 1.73 s instead of 2.05 s when lossless and in
+  0.45 s instead of 0.56 s at 10:1 (Apple M1, .NET 10); on eight threads in 0.35 s instead of 0.46 s and 0.12 s instead of 0.17 s. The arithmetic decoder
+  keeps its registers in locals for the length of a coding pass and reads a context's state from one table; the vertical 9/7 synthesis
+  runs its lifting steps along rows, with SIMD on every platform; and the samples go straight into the output buffer.
+
 ## 2.4.1
 
 ### Added

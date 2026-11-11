@@ -899,6 +899,8 @@ namespace CoreJ2K.j2k.entropy.decoder
             int[] sc_lut = SC_LUT; // Hoist static array reference into local
             int localOptions = options; // Hoist instance field into local
 
+            var r = mq.Take();
+            var ctxs = mq.I;
             // Initialize local variables
             dscanw = cblk.scanw;
             sscanw = cblk.w + 2;
@@ -938,12 +940,12 @@ namespace CoreJ2K.j2k.entropy.decoder
                         if ((csj & (STATE_SIG_R1 | STATE_NZ_CTXT_R1)) == STATE_NZ_CTXT_R1)
                         {
                             // Use zero coding
-                            if (mq.decodeSymbol(zc_lut[csj & ZC_MASK]) != 0)
+                            if (MQDecoder.Decode(ref r, ctxs, zc_lut[csj & ZC_MASK]) != 0)
                             {
                                 // Became significant
                                 // Use sign coding
                                 ctxt = sc_lut[((csj >>> SC_SHIFT_R1)) & SC_MASK];
-                                sym = mq.decodeSymbol(ctxt & SC_LUT_MASK) ^ ((ctxt >>> SC_SPRED_SHIFT));
+                                sym = MQDecoder.Decode(ref r, ctxs, ctxt & SC_LUT_MASK) ^ ((ctxt >>> SC_SPRED_SHIFT));
                                 // Update data
                                 data[k] = (sym << 31) | setmask;
                                 // Update state information (significant bit,
@@ -984,12 +986,12 @@ namespace CoreJ2K.j2k.entropy.decoder
                         {
                             k += dscanw;
                             // Use zero coding
-                            if (mq.decodeSymbol(zc_lut[((csj >>> STATE_SEP)) & ZC_MASK]) != 0)
+                            if (MQDecoder.Decode(ref r, ctxs, zc_lut[((csj >>> STATE_SEP)) & ZC_MASK]) != 0)
                             {
                                 // Became significant
                                 // Use sign coding
                                 ctxt = sc_lut[((csj >>> SC_SHIFT_R2)) & SC_MASK];
-                                sym = mq.decodeSymbol(ctxt & SC_LUT_MASK) ^ ((ctxt >>> SC_SPRED_SHIFT));
+                                sym = MQDecoder.Decode(ref r, ctxs, ctxt & SC_LUT_MASK) ^ ((ctxt >>> SC_SPRED_SHIFT));
                                 // Update data
                                 data[k] = (sym << 31) | setmask;
                                 // Update state information (significant bit,
@@ -1029,12 +1031,12 @@ namespace CoreJ2K.j2k.entropy.decoder
                         if ((csj & (STATE_SIG_R1 | STATE_NZ_CTXT_R1)) == STATE_NZ_CTXT_R1)
                         {
                             // Use zero coding
-                            if (mq.decodeSymbol(zc_lut[csj & ZC_MASK]) != 0)
+                            if (MQDecoder.Decode(ref r, ctxs, zc_lut[csj & ZC_MASK]) != 0)
                             {
                                 // Became significant
                                 // Use sign coding
                                 ctxt = sc_lut[((csj >>> SC_SHIFT_R1)) & SC_MASK];
-                                sym = mq.decodeSymbol(ctxt & SC_LUT_MASK) ^ ((ctxt >>> SC_SPRED_SHIFT));
+                                sym = MQDecoder.Decode(ref r, ctxs, ctxt & SC_LUT_MASK) ^ ((ctxt >>> SC_SPRED_SHIFT));
                                 // Update data
                                 data[k] = (sym << 31) | setmask;
                                 // Update state information (significant bit,
@@ -1065,12 +1067,12 @@ namespace CoreJ2K.j2k.entropy.decoder
                         {
                             k += dscanw;
                             // Use zero coding
-                            if (mq.decodeSymbol(zc_lut[((csj >>> STATE_SEP)) & ZC_MASK]) != 0)
+                            if (MQDecoder.Decode(ref r, ctxs, zc_lut[((csj >>> STATE_SEP)) & ZC_MASK]) != 0)
                             {
                                 // Became significant
                                 // Use sign coding
                                 ctxt = sc_lut[((csj >>> SC_SHIFT_R2)) & SC_MASK];
-                                sym = mq.decodeSymbol(ctxt & SC_LUT_MASK) ^ ((ctxt >>> SC_SPRED_SHIFT));
+                                sym = MQDecoder.Decode(ref r, ctxs, ctxt & SC_LUT_MASK) ^ ((ctxt >>> SC_SPRED_SHIFT));
                                 // Update data
                                 data[k] = (sym << 31) | setmask;
                                 // Update state information (significant bit,
@@ -1098,6 +1100,7 @@ namespace CoreJ2K.j2k.entropy.decoder
                 }
             }
 
+            mq.Give(r);
             error = false;
 
             // Check the error resilience termination
@@ -1449,6 +1452,8 @@ namespace CoreJ2K.j2k.entropy.decoder
             int[] mr_lut = MR_LUT; // Hoist static array reference into local
             int localOptions = options; // Hoist instance field into local
 
+            var r = mq.Take();
+            var ctxs = mq.I;
             // Initialize local variables
             dscanw = cblk.scanw;
             sscanw = cblk.w + 2;
@@ -1481,7 +1486,7 @@ namespace CoreJ2K.j2k.entropy.decoder
                         if ((csj & (STATE_SIG_R1 | STATE_VISITED_R1)) == STATE_SIG_R1)
                         {
                             // Use MR primitive
-                            sym = mq.decodeSymbol(mr_lut[csj & MR_MASK]);
+                            sym = MQDecoder.Decode(ref r, ctxs, mr_lut[csj & MR_MASK]);
                             // Update the data
                             data[k] &= resetmask;
                             data[k] |= (sym << bp) | setmask;
@@ -1498,7 +1503,7 @@ namespace CoreJ2K.j2k.entropy.decoder
                         {
                             k += dscanw;
                             // Use MR primitive
-                            sym = mq.decodeSymbol(mr_lut[((csj >>> STATE_SEP)) & MR_MASK]);
+                            sym = MQDecoder.Decode(ref r, ctxs, mr_lut[((csj >>> STATE_SEP)) & MR_MASK]);
                             // Update the data
                             data[k] &= resetmask;
                             data[k] |= (sym << bp) | setmask;
@@ -1521,7 +1526,7 @@ namespace CoreJ2K.j2k.entropy.decoder
                         if ((csj & (STATE_SIG_R1 | STATE_VISITED_R1)) == STATE_SIG_R1)
                         {
                             // Use MR primitive
-                            sym = mq.decodeSymbol(mr_lut[csj & MR_MASK]);
+                            sym = MQDecoder.Decode(ref r, ctxs, mr_lut[csj & MR_MASK]);
                             // Update the data
                             data[k] &= resetmask;
                             data[k] |= (sym << bp) | setmask;
@@ -1538,7 +1543,7 @@ namespace CoreJ2K.j2k.entropy.decoder
                         {
                             k += dscanw;
                             // Use MR primitive
-                            sym = mq.decodeSymbol(mr_lut[((csj >>> STATE_SEP)) & MR_MASK]);
+                            sym = MQDecoder.Decode(ref r, ctxs, mr_lut[((csj >>> STATE_SEP)) & MR_MASK]);
                             // Update the data
                             data[k] &= resetmask;
                             data[k] |= (sym << bp) | setmask;
@@ -1550,6 +1555,7 @@ namespace CoreJ2K.j2k.entropy.decoder
                 }
             }
 
+            mq.Give(r);
             error = false;
 
             // Check the error resilient termination
@@ -1802,6 +1808,8 @@ namespace CoreJ2K.j2k.entropy.decoder
             int[] sc_lut = SC_LUT; // Hoist static array reference into local
             int localOptions = options; // Hoist instance field into local
 
+            var r = mq.Take();
+            var ctxs = mq.I;
             // Initialize local variables
             dscanw = cblk.scanw;
             sscanw = cblk.w + 2;
@@ -1837,11 +1845,11 @@ namespace CoreJ2K.j2k.entropy.decoder
                         // is full height, we do RLC.
                         if (csj == 0 && state[j + sscanw] == 0 && sheight == StdEntropyCoderOptions.STRIPE_HEIGHT)
                         {
-                            if (mq.decodeSymbol(RLC_CTXT) != 0)
+                            if (MQDecoder.Decode(ref r, ctxs, RLC_CTXT) != 0)
                             {
                                 // run-length is significant, decode length
-                                rlclen = mq.decodeSymbol(UNIF_CTXT) << 1;
-                                rlclen |= mq.decodeSymbol(UNIF_CTXT);
+                                rlclen = MQDecoder.Decode(ref r, ctxs, UNIF_CTXT) << 1;
+                                rlclen |= MQDecoder.Decode(ref r, ctxs, UNIF_CTXT);
                                 // Set 'k' and 'j' accordingly
                                 k = sk + rlclen * dscanw;
                                 if (rlclen > 1)
@@ -1864,7 +1872,7 @@ namespace CoreJ2K.j2k.entropy.decoder
                                 // Sample that became significant is first row of
                                 // its column half
                                 ctxt = sc_lut[(csj >> SC_SHIFT_R1) & SC_MASK];
-                                sym = mq.decodeSymbol(ctxt & SC_LUT_MASK) ^ ((ctxt >>> SC_SPRED_SHIFT));
+                                sym = MQDecoder.Decode(ref r, ctxs, ctxt & SC_LUT_MASK) ^ ((ctxt >>> SC_SPRED_SHIFT));
                                 // Update the data
                                 data[k] = (sym << 31) | setmask;
                                 // Update state information (significant bit,
@@ -1905,7 +1913,7 @@ namespace CoreJ2K.j2k.entropy.decoder
                                 // Sample that became significant is second row of
                                 // its column half
                                 ctxt = sc_lut[(csj >> SC_SHIFT_R2) & SC_MASK];
-                                sym = mq.decodeSymbol(ctxt & SC_LUT_MASK) ^ ((ctxt >>> SC_SPRED_SHIFT));
+                                sym = MQDecoder.Decode(ref r, ctxs, ctxt & SC_LUT_MASK) ^ ((ctxt >>> SC_SPRED_SHIFT));
                                 // Update the data
                                 data[k] = (sym << 31) | setmask;
                                 // Update state information (significant bit,
@@ -1947,12 +1955,12 @@ namespace CoreJ2K.j2k.entropy.decoder
                             if ((csj & (STATE_SIG_R1 | STATE_VISITED_R1)) == 0)
                             {
                                 // Use zero coding
-                                if (mq.decodeSymbol(zc_lut[csj & ZC_MASK]) != 0)
+                                if (MQDecoder.Decode(ref r, ctxs, zc_lut[csj & ZC_MASK]) != 0)
                                 {
                                     // Became significant
                                     // Use sign coding
                                     ctxt = sc_lut[((csj >>> SC_SHIFT_R1)) & SC_MASK];
-                                    sym = mq.decodeSymbol(ctxt & SC_LUT_MASK) ^ ((ctxt >>> SC_SPRED_SHIFT));
+                                    sym = MQDecoder.Decode(ref r, ctxs, ctxt & SC_LUT_MASK) ^ ((ctxt >>> SC_SPRED_SHIFT));
                                     // Update the data
                                     data[k] = (sym << 31) | setmask;
                                     // Update state information (significant bit,
@@ -1990,12 +1998,12 @@ namespace CoreJ2K.j2k.entropy.decoder
                             {
                                 k += dscanw;
                                 // Use zero coding
-                                if (mq.decodeSymbol(zc_lut[((csj >>> STATE_SEP)) & ZC_MASK]) != 0)
+                                if (MQDecoder.Decode(ref r, ctxs, zc_lut[((csj >>> STATE_SEP)) & ZC_MASK]) != 0)
                                 {
                                     // Became significant
                                     // Use sign coding
                                     ctxt = sc_lut[((csj >>> SC_SHIFT_R2)) & SC_MASK];
-                                    sym = mq.decodeSymbol(ctxt & SC_LUT_MASK) ^ ((ctxt >>> SC_SPRED_SHIFT));
+                                    sym = MQDecoder.Decode(ref r, ctxs, ctxt & SC_LUT_MASK) ^ ((ctxt >>> SC_SPRED_SHIFT));
                                     // Update the data
                                     data[k] = (sym << 31) | setmask;
                                     // Update state information (significant bit,
@@ -2034,12 +2042,12 @@ namespace CoreJ2K.j2k.entropy.decoder
                         if ((csj & (STATE_SIG_R1 | STATE_VISITED_R1)) == 0)
                         {
                             // Use zero coding
-                            if (mq.decodeSymbol(zc_lut[csj & ZC_MASK]) != 0)
+                            if (MQDecoder.Decode(ref r, ctxs, zc_lut[csj & ZC_MASK]) != 0)
                             {
                                 // Became significant
                                 // Use sign coding
                                 ctxt = sc_lut[(csj >> SC_SHIFT_R1) & SC_MASK];
-                                sym = mq.decodeSymbol(ctxt & SC_LUT_MASK) ^ ((ctxt >>> SC_SPRED_SHIFT));
+                                sym = MQDecoder.Decode(ref r, ctxs, ctxt & SC_LUT_MASK) ^ ((ctxt >>> SC_SPRED_SHIFT));
                                 // Update the data
                                 data[k] = (sym << 31) | setmask;
                                 // Update state information (significant bit,
@@ -2067,12 +2075,12 @@ namespace CoreJ2K.j2k.entropy.decoder
                         {
                             k += dscanw;
                             // Use zero coding
-                            if (mq.decodeSymbol(zc_lut[((csj >>> STATE_SEP)) & ZC_MASK]) != 0)
+                            if (MQDecoder.Decode(ref r, ctxs, zc_lut[((csj >>> STATE_SEP)) & ZC_MASK]) != 0)
                             {
                                 // Became significant
                                 // Use sign coding
                                 ctxt = sc_lut[((csj >>> SC_SHIFT_R2)) & SC_MASK];
-                                sym = mq.decodeSymbol(ctxt & SC_LUT_MASK) ^ ((ctxt >>> SC_SPRED_SHIFT));
+                                sym = MQDecoder.Decode(ref r, ctxs, ctxt & SC_LUT_MASK) ^ ((ctxt >>> SC_SPRED_SHIFT));
                                 // Update the data
                                 data[k] = (sym << 31) | setmask;
                                 // Update state information (significant bit,
@@ -2094,6 +2102,8 @@ namespace CoreJ2K.j2k.entropy.decoder
                     state[j] = csj;
                 }
             }
+
+            mq.Give(r);
 
             // Decode segment symbol if we need to
             if ((localOptions & StdEntropyCoderOptions.OPT_SEG_SYMBOLS) != 0)
