@@ -277,10 +277,15 @@ namespace CoreJ2K.j2k.util
             {
                 throw new ArgumentException("Already reached EOF");
             }
-            long available;
-            available = inputStream.Length - inputStream.Position;
-            n = (int)available; /* how much can we read without blocking? */
-            if (n == 0)
+            /* One increment at a time. A stream that cannot seek (a network or a decompression stream) does not know its
+            * length, and one that can may hold more than fits in an int. */
+            n = inc;
+            if (inputStream.CanSeek)
+            {
+                var available = inputStream.Length - inputStream.Position;
+                if (available < n) n = (int)available;
+            }
+            if (n <= 0)
                 n = 1; /* read at least one byte (even if it blocks) */
             while (len + n > buf.Length)
             {

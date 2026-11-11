@@ -165,299 +165,48 @@ namespace CoreJ2K
         /// 8-bit decode-and-display path.
         /// </para>
         /// <para>
-        /// For images with any component wider than 8 bits the method falls back to
-        /// <see cref="FromStream(Stream, ParameterList?)"/> followed by
-        /// <see cref="InterleavedImage.As{T}"/> so that HDR/scientific data is never
-        /// silently truncated.  The source stream must be seekable in that case.
+        /// For images with any component wider than 8 bits the same decoding chain produces an
+        /// <see cref="InterleavedImage"/>, which is converted with <see cref="InterleavedImage.As{T}"/>,
+        /// so that HDR/scientific data is never silently truncated.
         /// </para>
         /// </remarks>
         private static T DecodeToImageCore<T>(Stream stream, ParameterList? parameters, CancellationToken cancellationToken)
         {
-            cancellationToken.ThrowIfCancellationRequested();
-            InverseWT? invWT = null;
-            try
+            // The platform image is made after the chain is closed: an exception from an image creator is not the file's fault.
+            int width = 0, height = 0, components = 0;
+            InterleavedImage? wide = null;
+            var bytes = Decode(stream, parameters, cancellationToken, chain =>
             {
-                var in_stream = new ISRandomAccessIO(stream);
-                var pl = WithDefaults(parameters, GetDefaultDecoderParameterList(decoder_pinfo));
-
-                var ff = new FileFormatReader(in_stream);
-                ff.readFileFormat();
-                if (ff.JP2FFUsed)
+                var image = chain.Image;
+                for (var i = 0; i < image.NumComps; i++)
                 {
-                    in_stream.seek(ff.FirstCodeStreamPos);
+                    if (image.GetNomRangeBits(i) <= 8) continue;
+                    wide = ToInterleavedImage(chain, cancellationToken);
+                    return null;
                 }
 
-                var hi = new HeaderInfo();
-                HeaderDecoder hd;
-                try
-                {
-                    hd = new HeaderDecoder(in_stream, pl, hi);
-                }
-                catch (EndOfStreamException e)
-                {
-                    throw new InvalidOperationException("Codestream too short or bad header, unable to decode.", e);
-                }
+                width = image.ImgWidth;
+                height = image.ImgHeight;
+                components = image.NumComps;
+                return ToInterleavedBytes(chain, cancellationToken);
+            });
 
-                var nCompCod = hd.NumComps;
-                var decSpec = hd.DecoderSpecs;
-
-                var depth = new int[nCompCod];
-                for (var i = 0; i < nCompCod; i++)
-                {
-                    depth[i] = hd.GetOriginalBitDepth(i);
-                }
-
-                BitstreamReaderAgent breader;
-                try
-                {
-                    breader = BitstreamReaderAgent.createInstance(in_stream, hd, pl, decSpec, false, hi);
-                }
-                catch (IOException e)
-                {
-                    throw new InvalidOperationException("Error while reading bit stream header or parsing packets.", e);
-                }
-                catch (ArgumentException e)
-                {
-                    throw new InvalidOperationException("Cannot instantiate bit stream reader.", e);
-                }
-
-                (breader as FileBitstreamReaderAgent)?.SetCancellationToken(cancellationToken);
-
-                // When several threads decode code-blocks they share one bitstream reader through a locking wrapper.
-
-                var parallelDegree = ResolveDegreeOfParallelism(pl);
-
-                var sharedSource = parallelDegree > 1 ? new SharedCodedBlockSource(breader) : null;
-
-                CodedCBlkDataSrcDec blockSource = sharedSource ?? (CodedCBlkDataSrcDec)breader;
-
-                EntropyDecoder entdec;
-                try { entdec = hd.createEntropyDecoder(blockSource, pl); }
-                catch (ArgumentException e) { throw new InvalidOperationException("Cannot instantiate entropy decoder.", e); }
-
-                ROIDeScaler roids;
-                try { roids = hd.createROIDeScaler(entdec, pl, decSpec); }
-                catch (ArgumentException e) { throw new InvalidOperationException("Cannot instantiate roi de-scaler.", e); }
-
-                Dequantizer deq;
-                try { deq = HeaderDecoder.createDequantizer(roids, depth, decSpec); }
-                catch (ArgumentException e) { throw new InvalidOperationException("Cannot instantiate dequantizer.", e); }
-
-                try { invWT = InverseWT.createInstance(deq, decSpec); }
-                catch (ArgumentException e) { throw new InvalidOperationException("Cannot instantiate inverse wavelet transform.", e); }
-
-                var res = breader.ImgRes;
-                invWT.ImgResLevel = res;
-                ConfigureInverseTransform(invWT, sharedSource, parallelDegree, hd, pl, decSpec, depth, cancellationToken);
-
-                var converter = new ImgDataConverter(invWT, 0);
-                var ictransf = new InvCompTransf(converter, decSpec, depth, pl);
-
-                // Inverse multiple component transform (MCT, ISO/IEC 15444-2)
-                BlkImgDataSrc afterCt = ictransf;
-                var mctStages = j2k.codestream.MctTransform.AssembleDecodeStages(hd.MctArrays, hd.MccSegments, hd.McoSegment);
-                if (mctStages.Count > 0)
-                {
-                    afterCt = j2k.image.mct.ComponentTransform.BuildChain(ictransf, mctStages, inverse: true);
-                }
-
-                // Inverse non-linearity point transform (NLT, ISO/IEC 15444-2)
-                BlkImgDataSrc postCt = afterCt;
-                if (hd.NLTSegments != null && hd.NLTSegments.Count > 0)
-                {
-                    postCt = new j2k.image.nlt.InvNLT(afterCt, hd.NLTSegments);
-                }
-
-                // Inverse variable DC offset (DCO, ISO/IEC 15444-2)
-                if (hd.DcoSegment != null)
-                {
-                    postCt = new InvDCO(postCt, hd.DcoSegment);
-                }
-
-                // Components may be subsampled, and so differ in size; put them on one grid before anything is made of them
-                postCt = j2k.image.ComponentGridUpsampler.IfNeeded(postCt);
-
-                BlkImgDataSrc color;
-                if (ff.JP2FFUsed && pl.GetParameter("nocolorspace").Equals("off"))
-                {
-                    try
-                    {
-                        var csMap = new ColorSpace(in_stream, hd, pl);
-                        // the channel definitions name the channels the palette makes, so they come after it
-                        var resampled = hd.createResampler(postCt, csMap);
-                        var palettized = hd.createPalettizedColorSpaceMapper(resampled, csMap);
-                        var channels = hd.createChannelDefinitionMapper(palettized, csMap);
-                        color = ConvertColors(hd, channels, csMap);
-                    }
-                    catch (ArgumentException e)
-                    {
-                        throw new InvalidOperationException("Could not instantiate ICC profiler.", e);
-                    }
-                    catch (ColorSpaceException e)
-                    {
-                        throw new InvalidOperationException("Error processing ColorSpace information.", e);
-                    }
-                }
-                else
-                {
-                    color = postCt;
-                }
-
-                var decodedImage = color ?? postCt;
-                var numComps = decodedImage.NumComps;
-                var imgWidth = decodedImage.ImgWidth;
-                var imgHeight = decodedImage.ImgHeight;
-
-                // Determine whether all components fit the 8-bit fast path
-                var allEightBit = true;
-                for (var i = 0; i < numComps; i++)
-                {
-                    if (decodedImage.GetNomRangeBits(i) > 8)
-                    {
-                        allEightBit = false;
-                        break;
-                    }
-                }
-
-                if (!allEightBit)
-                {
-                    // Fall back to legacy path: build InterleavedImage and convert.
-                    // Restart from the beginning since we already consumed in_stream.
-                    // The cleanest correct behaviour is to delegate by re-seeking the source stream.
-                    if (!stream.CanSeek)
-                    {
-                        throw new InvalidOperationException(
-                            "DecodeToImage fast path requires a seekable stream for >8-bit images (legacy fallback).");
-                    }
-                    // Close our chain first so the legacy decoder owns a fresh pipeline.
-                    try { invWT.Close(); } catch { /* ignore */ }
-                    invWT = null;
-                    stream.Position = 0;
-                    using (var img = FromStreamCore(stream, parameters, cancellationToken))
-                    {
-                        return img.As<T>();
-                    }
-                }
-
-                // **** 8-bit fast path: decode straight into a byte buffer ****
-                // Checked on the final image (a palette or MCT can output more components than the codestream has).
-                EnforceDecoderLimits(pl, hi, invWT!, decodedImage, 1);
-                var totalBytes = checked(imgWidth * imgHeight * numComps);
-                var pixelBytes = new byte[totalBytes];
-
-                var numTiles = decodedImage.GetNumTiles(null);
-                var tIdx = 0;
-                for (var y = 0; y < numTiles.y; y++)
-                {
-                    for (var x = 0; x < numTiles.x; x++, tIdx++)
-                    {
-                        cancellationToken.ThrowIfCancellationRequested();
-                        decodedImage.SetTile(x, y);
-
-                        var tileHeight = decodedImage.GetTileCompHeight(tIdx, 0);
-                        var tileWidth = decodedImage.GetTileCompWidth(tIdx, 0);
-
-                        var tOffx = decodedImage.GetCompULX(0)
-                                    - (int)Math.Ceiling(decodedImage.ImgULX / (double)decodedImage.GetCompSubsX(0));
-                        var tOffy = decodedImage.GetCompULY(0)
-                                    - (int)Math.Ceiling(decodedImage.ImgULY / (double)decodedImage.GetCompSubsY(0));
-
-                        var db = new DataBlkInt[numComps];
-                        var ls = new int[numComps];
-                        var mv = new int[numComps];
-                        var fb = new int[numComps];
-                        var scale = new double[numComps];
-                        for (var i = 0; i < numComps; i++)
-                        {
-                            db[i] = new DataBlkInt();
-                            var bits = decodedImage.GetNomRangeBits(i);
-                            ls[i] = 1 << (bits - 1);
-                            mv[i] = (1 << bits) - 1;
-                            fb[i] = decodedImage.GetFixedPoint(i);
-                            scale[i] = 255.0 / mv[i];
-                        }
-
-                        var k = new int[numComps];
-
-                        for (var l = 0; l < tileHeight; l++)
-                        {
-                            if ((l & 15) == 0) cancellationToken.ThrowIfCancellationRequested();
-                            var destLine = tOffy + l;
-                            if (destLine < 0) continue;
-                            if (destLine >= imgHeight) break;
-
-                            for (var i = 0; i < numComps; i++)
-                            {
-                                db[i].ulx = 0;
-                                db[i].uly = l;
-                                db[i].w = tileWidth;
-                                db[i].h = 1;
-                                db[i] = (DataBlkInt)decodedImage.GetInternCompData(db[i], i);
-                                k[i] = db[i].offset;
-                            }
-
-                            // Compute source horizontal range that maps into image bounds
-                            var dstX = tOffx;
-                            var srcX = 0;
-                            if (dstX < 0)
-                            {
-                                srcX = -dstX;
-                                dstX = 0;
-                            }
-                            var remainingDst = imgWidth - dstX;
-                            if (remainingDst <= 0) continue;
-                            var remainingSrc = tileWidth - srcX;
-                            if (remainingSrc <= 0) continue;
-                            var copyPixels = Math.Min(remainingDst, remainingSrc);
-                            if (copyPixels <= 0) continue;
-
-                            // Advance k[i] past skipped source pixels
-                            if (srcX > 0)
-                            {
-                                for (var i = 0; i < numComps; i++)
-                                {
-                                    k[i] += srcX;
-                                }
-                            }
-
-                            var dstOffset = (destLine * imgWidth + dstX) * numComps;
-
-                            for (var col = 0; col < copyPixels; col++)
-                            {
-                                for (var c = 0; c < numComps; c++)
-                                {
-                                    var v = (db[c].data_array[k[c]++] >> fb[c]) + ls[c];
-                                    if (v < 0) v = 0;
-                                    else if (v > mv[c]) v = mv[c];
-
-                                    // Scale to 0..255. For 8-bit components scale == 1.0 so this is a no-op cast.
-                                    var b = scale[c] == 1.0 ? v : (int)Math.Round(scale[c] * v);
-                                    if (b < 0) b = 0;
-                                    else if (b > 255) b = 255;
-                                    pixelBytes[dstOffset++] = (byte)b;
-                                }
-                            }
-                        }
-                    }
-                }
-
-                var iimg = ImageFactory.New<T>(imgWidth, imgHeight, numComps, pixelBytes);
-                if (iimg == null)
-                {
-                    throw new InvalidOperationException(
-                        $"No image creator registered for target type {typeof(T).FullName}. " +
-                        $"Registered creators: {ImageFactory.DescribeRegistered()}.");
-                }
-                return iimg.As<T>();
-            }
-            finally
+            if (wide != null)
             {
-                if (invWT != null)
+                using (wide)
                 {
-                    try { invWT.Close(); }
-                    catch { /* suppress to avoid masking originals */ }
+                    return wide.As<T>();
                 }
             }
+
+            var iimg = ImageFactory.New<T>(width, height, components, bytes!);
+            if (iimg == null)
+            {
+                throw new InvalidOperationException(
+                    $"No image creator registered for target type {typeof(T).FullName}. " +
+                    $"Registered creators: {ImageFactory.DescribeRegistered()}.");
+            }
+            return iimg.As<T>();
         }
 
         #endregion

@@ -12,6 +12,11 @@ This file starts with 2.4.0. Earlier releases are described on the
   caller's list is not changed.
 - **Decoding with a `ParameterList` that has no defaults behind it reported every file as damaged** (`InvalidOperationException` around a `NullReferenceException`).
   That includes `new ParameterList()` and the list `J2kImage.GetDefaultDecoderParameterList()` returns. `DecodeToImage` is fixed the same way.
+- **Decoding from a stream that cannot seek failed** (`NotSupportedException`), for example a network or a decompression stream: the reader asked the stream
+  for its length. It now reads such a stream as it goes.
+- **`DecodeToImage` on an image of more than 8 bits needed a stream that can seek**, and one that began at position 0, because it started the decode over.
+  It also let a damaged file end in the decoder's own `NullReferenceException` or `IndexOutOfRangeException`, where `FromStream` reports
+  `InvalidOperationException`. `DecodeToImage`, `FromStream` and `DecodeStream` now share one decoding chain, so they treat a file alike.
 
 ## 2.4.1
 
