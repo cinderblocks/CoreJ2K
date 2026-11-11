@@ -163,7 +163,7 @@ namespace CoreJ2K
                 in_stream = new ISRandomAccessIO(stream);
 
                 // Create parameter list using defaults
-                var pl = parameters ?? new ParameterList(GetDefaultDecoderParameterList(decoder_pinfo));
+                var pl = WithDefaults(parameters, GetDefaultDecoderParameterList(decoder_pinfo));
 
                 // **** File Format ****
                 // If the codestream is wrapped in the jp2 file format, Read the
@@ -509,7 +509,7 @@ namespace CoreJ2K
             try
             {
                 in_stream = new ISRandomAccessIO(stream);
-                var pl = parameters ?? new ParameterList(GetDefaultDecoderParameterList(decoder_pinfo));
+                var pl = WithDefaults(parameters, GetDefaultDecoderParameterList(decoder_pinfo));
 
                 var ff = new FileFormatReader(in_stream);
                 ff.readFileFormat();
@@ -1026,6 +1026,23 @@ namespace CoreJ2K
             return await Task.Run(() => encode(pl, token), token).ConfigureAwait(false);
         }
 
+        /// <summary>
+        /// Gives a parameter list the codec's defaults for everything the caller left out. A list that already has defaults (one from
+        /// <see cref="GetDefaultEncoderParameterList()"/>, <see cref="GetDefaultDecoderParameterList()"/> or a configuration) is
+        /// used as it is; one made with <c>new ParameterList()</c> is copied onto the defaults, so the caller's list is not changed.
+        /// </summary>
+        internal static ParameterList WithDefaults(ParameterList? parameters, ParameterList defaults)
+        {
+            if (parameters == null) return new ParameterList(defaults);
+            if (parameters.DefaultParameterList != null) return parameters;
+
+            var pl = new ParameterList(defaults);
+            foreach (var entry in parameters) pl[entry.Key] = entry.Value;
+            pl.RoiMasks.AddRange(parameters.RoiMasks);
+            pl.TelemetryCallback = parameters.TelemetryCallback;
+            return pl;
+        }
+
         private static MemoryStream MemoryStreamFromMemory(ReadOnlyMemory<byte> data)
         {
             if (MemoryMarshal.TryGetArray(data, out var segment))
@@ -1181,7 +1198,7 @@ namespace CoreJ2K
             var defpl = GetDefaultEncoderParameterList(encoder_pinfo);
 
             // Create parameter list using defaults
-            var pl = parameters ?? new ParameterList(defpl);
+            var pl = WithDefaults(parameters, defpl);
 
             // **** Arbitrary Transformation Kernel (ATK, ISO/IEC 15444-2) setup ****
             // The custom kernel replaces the Part 1 wavelet filter for all

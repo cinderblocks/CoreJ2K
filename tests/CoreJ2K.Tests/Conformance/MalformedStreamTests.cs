@@ -18,6 +18,11 @@ namespace CoreJ2K.Tests.Conformance
     /// <c>COREJ2K_SWEEP_COUNT</c> and <c>COREJ2K_SWEEP_START</c> choose the files, <c>COREJ2K_FUZZ_MUTATIONS</c> how many damaged copies of each, <c>COREJ2K_FUZZ_DEADLINE</c> the seconds a decode may take, and
     /// <c>COREJ2K_FUZZ_DUMP</c> a directory to keep the damaged files that fail in.
     /// </summary>
+    /// <remarks>
+    /// Runs apart from the other test classes because of the deadline: a decode that uses several threads waits for the thread pool, and
+    /// with the rest of the suite keeping the pool busy a decode of a millisecond has been seen to wait past it.
+    /// </remarks>
+    [Collection("Cancellation timing")]
     public class MalformedStreamTests
     {
         private readonly ITestOutputHelper _output;

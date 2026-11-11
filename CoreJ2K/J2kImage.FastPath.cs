@@ -178,7 +178,7 @@ namespace CoreJ2K
             try
             {
                 var in_stream = new ISRandomAccessIO(stream);
-                var pl = parameters ?? new ParameterList(GetDefaultDecoderParameterList(decoder_pinfo));
+                var pl = WithDefaults(parameters, GetDefaultDecoderParameterList(decoder_pinfo));
 
                 var ff = new FileFormatReader(in_stream);
                 ff.readFileFormat();

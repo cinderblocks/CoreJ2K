@@ -3,6 +3,16 @@
 This file starts with 2.4.0. Earlier releases are described on the
 [GitHub releases page](https://github.com/cinderblocks/CoreJ2K/releases).
 
+## Unreleased
+
+### Fixed
+
+- **Encoding with a `ParameterList` made by `new ParameterList()` failed** (`InvalidOperationException`: "No tiles option specified"), which is how the README and the
+  guides set options. The encoder's defaults were applied only when no list was passed at all. They are now applied to whatever a list leaves out; the
+  caller's list is not changed.
+- **Decoding with a `ParameterList` that has no defaults behind it reported every file as damaged** (`InvalidOperationException` around a `NullReferenceException`).
+  That includes `new ParameterList()` and the list `J2kImage.GetDefaultDecoderParameterList()` returns. `DecodeToImage` is fixed the same way.
+
 ## 2.4.1
 
 ### Added
