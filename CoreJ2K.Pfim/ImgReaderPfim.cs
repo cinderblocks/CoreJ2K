@@ -23,9 +23,9 @@ namespace CoreJ2K.j2k.image.input
         private readonly bool isBgrOrder;   // true if memory order is B,G,R,(A)
         private readonly bool hasAlpha;
 
-        private int[][] barr;               // cached component buffers for current block
+        private int[]?[]? barr;               // cached component buffers for current block
         private readonly DataBlkInt dbi = new DataBlkInt();
-        private DataBlkInt intBlk;
+        private DataBlkInt? intBlk;
 
         public ImgReaderPfim(IImage img)
         {
@@ -103,7 +103,7 @@ namespace CoreJ2K.j2k.image.input
                 var needed = blk.w * blk.h;
                 for (var c = 0; c < nc; ++c)
                 {
-                    if (barr[c] == null || barr[c].Length < needed) barr[c] = new int[needed];
+                    if (barr[c] == null || barr[c]!.Length < needed) barr[c] = new int[needed];
                 }
 
                 dbi.ulx = blk.ulx; dbi.uly = blk.uly; dbi.w = blk.w; dbi.h = blk.h; dbi.scanw = blk.w;
@@ -136,7 +136,7 @@ namespace CoreJ2K.j2k.image.input
                             if (componentCount == 1)
                             {
                                 var v = src[p];
-                                rBuf[idx] = v - dcOffset;
+                                rBuf![idx] = v - dcOffset;
                             }
                             else
                             {
@@ -167,7 +167,7 @@ namespace CoreJ2K.j2k.image.input
                                 {
                                     val |= src[p + sb] << (8 * sb);
                                 }
-                                rBuf[idx] = val - dcOffset;
+                                rBuf![idx] = val - dcOffset;
                             }
                             else
                             {
@@ -228,7 +228,7 @@ namespace CoreJ2K.j2k.image.input
 
                 if (blk is DataBlkInt dbiBlk)
                 {
-                    dbiBlk.DataInt = barr[compIndex]; dbiBlk.offset = 0; dbiBlk.scanw = dbiBlk.w;
+                    dbiBlk.DataInt = barr[compIndex]!; dbiBlk.offset = 0; dbiBlk.scanw = dbiBlk.w;
                 }
                 else
                 {
@@ -239,7 +239,7 @@ namespace CoreJ2K.j2k.image.input
             {
                 if (blk is DataBlkInt dbiBlk)
                 {
-                    dbiBlk.DataInt = barr[compIndex]; dbiBlk.offset = (blk.ulx - dbi.ulx) + (blk.uly - dbi.uly) * dbi.scanw; dbiBlk.scanw = dbi.scanw;
+                    dbiBlk.DataInt = barr[compIndex]!; dbiBlk.offset = (blk.ulx - dbi.ulx) + (blk.uly - dbi.uly) * dbi.scanw; dbiBlk.scanw = dbi.scanw;
                 }
                 else
                 {
@@ -256,20 +256,20 @@ namespace CoreJ2K.j2k.image.input
             {
                 blk = new DataBlkInt(blk.ulx, blk.uly, blk.w, blk.h);
             }
-            var bak = (int[])blk.Data;
+            var bak = (int[]?)blk.Data;
             var width = blk.w; var height = blk.h;
             blk.Data = null;
             GetInternCompData(blk, c);
             if (bak == null) bak = new int[width * height];
             if (blk.offset == 0 && blk.scanw == width)
             {
-                Array.Copy((int[])blk.Data, 0, bak, 0, width * height);
+                Array.Copy((int[])blk.Data!, 0, bak, 0, width * height);
             }
             else
             {
                 for (var row = 0; row < height; ++row)
                 {
-                    Array.Copy((int[])blk.Data, blk.offset + row * blk.scanw, bak, row * width, width);
+                    Array.Copy((int[])blk.Data!, blk.offset + row * blk.scanw, bak, row * width, width);
                 }
             }
             blk.Data = bak; blk.offset = 0; blk.scanw = blk.w; return blk;

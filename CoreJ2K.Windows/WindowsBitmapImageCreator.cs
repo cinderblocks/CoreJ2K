@@ -24,7 +24,7 @@ namespace CoreJ2K.Util
 
         public override BlkImgDataSrc ToPortableImageSource(object imageObject)
         {
-            if (imageObject is Bitmap bmp) return WindowsBitmapImageSource.Create(bmp);
+            if (imageObject is Bitmap bmp) return WindowsBitmapImageSource.Create(bmp)!;
             if (imageObject is null) throw new ArgumentNullException(nameof(imageObject));
             throw new ArgumentException($"Expected {nameof(Bitmap)} but got {imageObject.GetType()}", nameof(imageObject));
         }

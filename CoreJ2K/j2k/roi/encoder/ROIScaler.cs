@@ -621,7 +621,7 @@ namespace CoreJ2K.j2k.roi.encoder
                 return cblk;
             }
 
-            data = (int[])cblk.Data;
+            data = (int[])cblk.Data!;
             sb = cblk.sb;
             ulx = cblk.ulx;
             uly = cblk.uly;

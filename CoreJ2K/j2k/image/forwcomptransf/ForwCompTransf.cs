@@ -431,7 +431,7 @@ namespace CoreJ2K.j2k.image.forwcomptransf
                 }
 
                 //Reference to output block data array
-                outdata = (int[])blk.Data;
+                outdata = (int[])blk.Data!;
 
                 //Create data array of blk if necessary
                 if (outdata == null || outdata.Length < h * w)
@@ -589,7 +589,7 @@ namespace CoreJ2K.j2k.image.forwcomptransf
             }
 
             //Reference to output block data array
-            outdata = (float[])blk.Data;
+            outdata = (float[])blk.Data!;
 
             //Create data array of blk if necessary
             if (outdata == null || outdata.Length < w * h)
@@ -725,7 +725,7 @@ namespace CoreJ2K.j2k.image.forwcomptransf
                 // Get the input data
                 // (returned block may be larger than requested one)
                 src.GetInternCompData(indb, c);
-                indata = (int[])indb.Data;
+                indata = (int[])indb.Data!;
 
                 // Copy the data converting from int to float
                 k = w * h - 1;

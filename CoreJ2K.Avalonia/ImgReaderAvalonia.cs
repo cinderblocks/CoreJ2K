@@ -16,9 +16,9 @@ namespace CoreJ2K.j2k.image.input
     {
         private const int DC_OFFSET = 128;
 
-        private int[][] barr;
+        private int[]?[]? barr;
         private readonly DataBlkInt dbi = new DataBlkInt();
-        private DataBlkInt intBlk;
+        private DataBlkInt? intBlk;
 
         private WriteableBitmap image;
         private ILockedFramebuffer framebuffer;
@@ -61,8 +61,8 @@ namespace CoreJ2K.j2k.image.input
             }
 
             framebuffer?.Dispose();
-            framebuffer = null;
-            image = null;
+            framebuffer = null!;
+            image = null!;
         }
 
         public override int GetNomRangeBits(int compIndex)
@@ -142,10 +142,10 @@ namespace CoreJ2K.j2k.image.input
                 dbi.ulx = blk.ulx; dbi.uly = blk.uly;
                 dbi.w = blk.w; dbi.h = blk.h; dbi.scanw = dbi.w;
 
-                var red = barr[0];
-                var green = nc > 1 ? barr[1] : null;
-                var blue = nc > 2 ? barr[2] : null;
-                var alpha = nc > 3 ? barr[3] : null;
+                var red = barr[0]!;
+                var green = (nc > 1 ? barr[1] : null)!;
+                var blue = (nc > 2 ? barr[2] : null)!;
+                var alpha = (nc > 3 ? barr[3] : null)!;
 
                 unsafe
                 {
@@ -220,7 +220,7 @@ namespace CoreJ2K.j2k.image.input
 
                 if (blk is DataBlkInt dbiBlk)
                 {
-                    dbiBlk.DataInt = barr[compIndex];
+                    dbiBlk.DataInt = barr[compIndex]!;
                     dbiBlk.offset = 0;
                     dbiBlk.scanw = dbiBlk.w;
                 }
@@ -235,7 +235,7 @@ namespace CoreJ2K.j2k.image.input
             {
                 if (blk is DataBlkInt dbiBlk)
                 {
-                    dbiBlk.DataInt = barr[compIndex];
+                    dbiBlk.DataInt = barr[compIndex]!;
                     dbiBlk.offset = (blk.ulx - dbi.ulx) + (blk.uly - dbi.uly) * dbi.scanw;
                     dbiBlk.scanw = dbi.scanw;
                 }
@@ -258,7 +258,7 @@ namespace CoreJ2K.j2k.image.input
                 blk = new DataBlkInt(blk.ulx, blk.uly, blk.w, blk.h);
             }
 
-            var bak = (int[])blk.Data;
+            var bak = (int[]?)blk.Data;
             var width = blk.w;
             var height = blk.h;
             blk.Data = null;
@@ -267,13 +267,13 @@ namespace CoreJ2K.j2k.image.input
 
             if (blk.offset == 0 && blk.scanw == width)
             {
-                Array.Copy((Array)blk.Data, 0, bak, 0, width * height);
+                Array.Copy((Array)blk.Data!, 0, bak, 0, width * height);
             }
             else
             {
                 for (var i = height - 1; i >= 0; i--)
                 {
-                    Array.Copy((Array)blk.Data, blk.offset + i * blk.scanw, bak, i * width, width);
+                    Array.Copy((Array)blk.Data!, blk.offset + i * blk.scanw, bak, i * width, width);
                 }
             }
             blk.Data = bak;

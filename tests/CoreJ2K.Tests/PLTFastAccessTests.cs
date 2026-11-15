@@ -455,7 +455,7 @@ namespace CoreJ2K.Tests
 
             // Act & Assert
             Assert.Throws<ArgumentNullException>(() =>
-                PLTMarkerWriter.WritePLT(null, pltData, 0, 0));
+                PLTMarkerWriter.WritePLT(null!, pltData, 0, 0));
         }
 
         [Fact]
@@ -466,7 +466,7 @@ namespace CoreJ2K.Tests
 
             // Act & Assert
             Assert.Throws<ArgumentNullException>(() =>
-                PLTMarkerWriter.WritePLT(stream, null, 0, 0));
+                PLTMarkerWriter.WritePLT(stream, null!, 0, 0));
         }
 
         [Fact]
@@ -477,7 +477,7 @@ namespace CoreJ2K.Tests
 
             // Act & Assert
             Assert.Throws<ArgumentNullException>(() =>
-                PLTMarkerReader.ReadPLT(null, pltData, 0));
+                PLTMarkerReader.ReadPLT(null!, pltData, 0));
         }
 
         [Fact]
@@ -488,7 +488,7 @@ namespace CoreJ2K.Tests
 
             // Act & Assert
             Assert.Throws<ArgumentNullException>(() =>
-                PLTMarkerReader.ReadPLT(stream, null, 0));
+                PLTMarkerReader.ReadPLT(stream, null!, 0));
         }
 
         [Fact]

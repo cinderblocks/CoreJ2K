@@ -325,7 +325,7 @@ namespace CoreJ2K.Tests
                 reader.readFileFormat();
 
                 Assert.True(reader.FileStructure.HasComponentMappingBox);
-                Assert.Equal(3, reader.Metadata.ComponentMapping.NumChannels);
+                Assert.Equal(3, reader.Metadata.ComponentMapping!.NumChannels);
                 Assert.False(reader.Metadata.ComponentMapping.UsesPalette);
             }
         }
@@ -361,7 +361,7 @@ namespace CoreJ2K.Tests
                 reader.readFileFormat();
 
                 Assert.True(reader.FileStructure.HasChannelDefinitionBox);
-                Assert.Equal(4, reader.Metadata.ChannelDefinitions.Channels.Count);
+                Assert.Equal(4, reader.Metadata.ChannelDefinitions!.Channels.Count);
                 Assert.True(reader.Metadata.ChannelDefinitions.HasAlphaChannel);
             }
         }
@@ -571,9 +571,9 @@ namespace CoreJ2K.Tests
                 Assert.NotNull(reader.Metadata.Palette);
                 Assert.Equal(3, reader.Metadata.Palette.NumEntries);
                 Assert.NotNull(reader.Metadata.ComponentMapping);
-                Assert.Equal(3, reader.Metadata.ComponentMapping.NumChannels);
+                Assert.Equal(3, reader.Metadata.ComponentMapping!.NumChannels);
                 Assert.NotNull(reader.Metadata.ChannelDefinitions);
-                Assert.Equal(3, reader.Metadata.ChannelDefinitions.Channels.Count);
+                Assert.Equal(3, reader.Metadata.ChannelDefinitions!.Channels.Count);
                 Assert.NotNull(reader.Metadata.Resolution);
 
                 // Verify no validation errors
@@ -746,8 +746,8 @@ namespace CoreJ2K.Tests
                 reader.readFileFormat();
 
                 // Verify values preserved
-                Assert.Equal(0, reader.Metadata.Palette.GetEntry(0, 0));
-                Assert.Equal(255, reader.Metadata.Palette.GetEntry(1, 0));
+                Assert.Equal(0, reader.Metadata.Palette!.GetEntry(0, 0));
+                Assert.Equal(255, reader.Metadata.Palette!.GetEntry(1, 0));
             }
         }
 

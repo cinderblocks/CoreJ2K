@@ -145,7 +145,7 @@ namespace CoreJ2K.Tests.Configuration
         {
             var config = new QuantizationConfigurationBuilder();
             
-            Assert.Throws<ArgumentNullException>(() => config.WithSubbandStep(0, null, 0.01f));
+            Assert.Throws<ArgumentNullException>(() => config.WithSubbandStep(0, null!, 0.01f));
             Assert.Throws<ArgumentNullException>(() => config.WithSubbandStep(0, "", 0.01f));
         }
         

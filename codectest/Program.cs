@@ -96,7 +96,7 @@ namespace codectest
         private static void RunDemo(string name, Action demo)
         {
             var sw = Stopwatch.StartNew();
-            string error = null;
+            string? error = null;
             try
             {
                 demo();
@@ -135,7 +135,7 @@ namespace codectest
                 var label  = r.Name.PadRight(34);
                 Console.WriteLine($"║  [{status}]  {label}  {time}  ║");
                 if (!r.Passed)
-                    Console.WriteLine($"║         └─ {r.Error.PadRight(52)}  ║");
+                    Console.WriteLine($"║         └─ {r.Error!.PadRight(52)}  ║");
             }
 
             Console.WriteLine("╠══════════════════════════════════════════════════════════════╣");
@@ -161,10 +161,10 @@ namespace codectest
         {
             public string   Name    { get; }
             public TimeSpan Elapsed { get; }
-            public string   Error   { get; }
+            public string?  Error   { get; }
             public bool     Passed  => Error == null;
 
-            public DemoResult(string name, TimeSpan elapsed, string error)
+            public DemoResult(string name, TimeSpan elapsed, string? error)
             {
                 Name    = name;
                 Elapsed = elapsed;
@@ -183,7 +183,7 @@ namespace codectest
             using (var ppm = File.OpenRead(Path.Combine("samples", "a1_mono.ppm")))
 
             {
-                var enc = J2kImage.ToBytes(J2kImage.CreateEncodableSource(ppm));
+                var enc = J2kImage.ToBytes(J2kImage.CreateEncodableSource(ppm)!);
                 File.WriteAllBytes(Path.Combine("output", "traditional_mono.jp2"), enc);
                 Console.WriteLine($"? Encoded mono image (traditional API): {enc.Length:N0} bytes");
             }

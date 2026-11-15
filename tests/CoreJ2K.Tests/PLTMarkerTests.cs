@@ -250,10 +250,10 @@ namespace CoreJ2K.Tests
             using (var ms = new MemoryStream())
             {
                 Assert.Throws<ArgumentNullException>(() =>
-                    PLTMarkerWriter.WritePLT(null, pltData, 0, 0));
+                    PLTMarkerWriter.WritePLT(null!, pltData, 0, 0));
 
                 Assert.Throws<ArgumentNullException>(() =>
-                    PLTMarkerWriter.WritePLT(ms, null, 0, 0));
+                    PLTMarkerWriter.WritePLT(ms, null!, 0, 0));
             }
         }
 

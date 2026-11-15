@@ -42,7 +42,7 @@ namespace CoreJ2K.Tests.Configuration
         {
             var config = new MetadataConfigurationBuilder();
             
-            Assert.Throws<ArgumentException>(() => config.WithComment(null));
+            Assert.Throws<ArgumentException>(() => config.WithComment(null!));
             Assert.Throws<ArgumentException>(() => config.WithComment(""));
         }
         
@@ -75,7 +75,7 @@ namespace CoreJ2K.Tests.Configuration
         {
             var config = new MetadataConfigurationBuilder();
             
-            Assert.Throws<ArgumentException>(() => config.WithXml(null));
+            Assert.Throws<ArgumentException>(() => config.WithXml(null!));
             Assert.Throws<ArgumentException>(() => config.WithXml(""));
         }
         
@@ -125,8 +125,8 @@ namespace CoreJ2K.Tests.Configuration
             var config = new MetadataConfigurationBuilder();
             var uuid = Guid.NewGuid();
             
-            Assert.Throws<ArgumentNullException>(() => config.WithUuid(uuid, (byte[])null));
-            Assert.Throws<ArgumentException>(() => config.WithUuid(uuid, (string)null));
+            Assert.Throws<ArgumentNullException>(() => config.WithUuid(uuid, (byte[])null!));
+            Assert.Throws<ArgumentException>(() => config.WithUuid(uuid, (string)null!));
         }
         
         [Fact]

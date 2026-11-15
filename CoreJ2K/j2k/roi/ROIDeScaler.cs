@@ -260,7 +260,7 @@ namespace CoreJ2K.j2k.roi
             {
                 return cblk;
             }
-            data = (int[])cblk.Data;
+            data = (int[])cblk.Data!;
             ulx = cblk.ulx;
             uly = cblk.uly;
             w = cblk.w;

@@ -361,7 +361,7 @@ namespace CoreJ2K.j2k.image.input
                 blk = tmp;
             }
 
-            var bakarr = (int[])blk.Data;
+            var bakarr = (int[])blk.Data!;
             // Save requested block size
             ulx = blk.ulx;
             uly = blk.uly;

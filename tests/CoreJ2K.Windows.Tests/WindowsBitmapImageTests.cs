@@ -25,11 +25,11 @@ namespace CoreJ2K.Windows.Tests
 
             // Create internal WindowsBitmapImage via reflection
             var asm = Assembly.Load("CoreJ2K.Windows");
-            var type = asm.GetType("CoreJ2K.Util.WindowsBitmapImage", throwOnError: true);
+            var type = asm.GetType("CoreJ2K.Util.WindowsBitmapImage", throwOnError: true)!;
             var instance = Activator.CreateInstance(type, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public, null, new object[] { width, height, numComponents, bytes }, null);
 
             // Call As<Bitmap>() method
-            var asMethod = type.GetMethod("As").MakeGenericMethod(typeof(Bitmap));
+            var asMethod = type.GetMethod("As")!.MakeGenericMethod(typeof(Bitmap));
             var bmp = asMethod.Invoke(instance, null) as Bitmap;
 
             Assert.NotNull(bmp);
@@ -60,10 +60,10 @@ namespace CoreJ2K.Windows.Tests
             }
 
             var asm = Assembly.Load("CoreJ2K.Windows");
-            var type = asm.GetType("CoreJ2K.Util.WindowsBitmapImage", throwOnError: true);
+            var type = asm.GetType("CoreJ2K.Util.WindowsBitmapImage", throwOnError: true)!;
             var instance = Activator.CreateInstance(type, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public, null, new object[] { width, height, numComponents, bytes }, null);
 
-            var asMethod = type.GetMethod("As").MakeGenericMethod(typeof(Bitmap));
+            var asMethod = type.GetMethod("As")!.MakeGenericMethod(typeof(Bitmap));
             var bmp = asMethod.Invoke(instance, null) as Bitmap;
 
             Assert.NotNull(bmp);
@@ -92,10 +92,10 @@ namespace CoreJ2K.Windows.Tests
             }
 
             var asm = Assembly.Load("CoreJ2K.Windows");
-            var type = asm.GetType("CoreJ2K.Util.WindowsBitmapImage", throwOnError: true);
+            var type = asm.GetType("CoreJ2K.Util.WindowsBitmapImage", throwOnError: true)!;
             var instance = Activator.CreateInstance(type, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public, null, new object[] { width, height, numComponents, bytes }, null);
 
-            var asMethod = type.GetMethod("As").MakeGenericMethod(typeof(Bitmap));
+            var asMethod = type.GetMethod("As")!.MakeGenericMethod(typeof(Bitmap));
             var bmp = asMethod.Invoke(instance, null) as Bitmap;
 
             Assert.NotNull(bmp);
@@ -144,9 +144,9 @@ namespace CoreJ2K.Windows.Tests
 
                 // Call internal static Create via reflection
                 var asm = Assembly.Load("CoreJ2K.Windows");
-                var type = asm.GetType("CoreJ2K.Util.WindowsBitmapImageSource", throwOnError: true);
+                var type = asm.GetType("CoreJ2K.Util.WindowsBitmapImageSource", throwOnError: true)!;
                 var mi = type.GetMethod("Create", BindingFlags.NonPublic | BindingFlags.Static);
-                var src = mi.Invoke(null, new object[] { bmp });
+                var src = mi!.Invoke(null, new object[] { bmp });
                 Assert.NotNull(src);
             }
         }

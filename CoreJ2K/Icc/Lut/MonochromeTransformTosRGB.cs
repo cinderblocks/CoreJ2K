@@ -125,7 +125,7 @@ namespace CoreJ2K.Icc.Lut
             int i, j, o; //  x, y removed
 
             var inputData = (int[])inb.Data!;
-            var output = (int[])outb.Data;
+            var output = (int[])outb.Data!;
 
             if (output == null || output.Length < inputData.Length)
             {
@@ -167,7 +167,7 @@ namespace CoreJ2K.Icc.Lut
             int i, j, o; // x, y removed
 
             var inputData = (float[])inb.Data!;
-            var output = (float[])outb.Data;
+            var output = (float[])outb.Data!;
 
 
             if (output == null || output.Length < inputData.Length)

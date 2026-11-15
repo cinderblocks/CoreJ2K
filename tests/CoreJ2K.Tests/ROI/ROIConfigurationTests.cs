@@ -122,7 +122,7 @@ namespace CoreJ2K.Tests.ROI
         {
             var config = new ROIConfiguration();
             
-            Assert.Throws<ArgumentException>(() => config.AddArbitraryShape(0, null));
+            Assert.Throws<ArgumentException>(() => config.AddArbitraryShape(0, null!));
             Assert.Throws<ArgumentException>(() => config.AddArbitraryShape(0, ""));
             Assert.Throws<ArgumentException>(() => config.AddArbitraryShape(0, "   "));
         }

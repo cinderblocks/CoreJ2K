@@ -12,7 +12,7 @@ namespace CoreJ2K.Tests
             Assert.Throws<ArgumentOutOfRangeException>(() => new InterleavedImage(0, 1, 1, new[] { 8 }));
             Assert.Throws<ArgumentOutOfRangeException>(() => new InterleavedImage(1, 0, 1, new[] { 8 }));
             Assert.Throws<ArgumentOutOfRangeException>(() => new InterleavedImage(1, 1, 0, new[] { 8 }));
-            Assert.Throws<ArgumentNullException>(() => new InterleavedImage(1, 1, 1, null));
+            Assert.Throws<ArgumentNullException>(() => new InterleavedImage(1, 1, 1, null!));
             Assert.Throws<ArgumentException>(() => new InterleavedImage(1, 1, 2, new[] { 8 }));
 
             // too large totalSamples -> ArgumentException
@@ -473,8 +473,8 @@ namespace CoreJ2K.Tests
             var img = new InterleavedImage(3, 2, 1, new[] { 8 });
             
             Assert.False(img.Equals(null));
-            Assert.False(img == null);
-            Assert.True(img != null);
+            Assert.False(img == null!);
+            Assert.True(img != null!);
         }
 
         [Fact]

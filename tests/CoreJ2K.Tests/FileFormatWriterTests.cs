@@ -363,8 +363,8 @@ namespace CoreJ2K.Tests
                 Assert.True(reader.Metadata.Resolution.HasDisplayResolution);
 
                 // Allow small tolerance for floating-point comparison
-                Assert.InRange(reader.Metadata.Resolution.HorizontalCaptureResolution.Value, 2800, 2900);
-                Assert.InRange(reader.Metadata.Resolution.VerticalCaptureResolution.Value, 2800, 2900);
+                Assert.InRange(reader.Metadata.Resolution.HorizontalCaptureResolution!.Value, 2800, 2900);
+                Assert.InRange(reader.Metadata.Resolution.VerticalCaptureResolution!.Value, 2800, 2900);
             }
         }
 

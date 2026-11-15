@@ -498,7 +498,7 @@ namespace CoreJ2K.j2k.image.invcomptransf
                 var h = blk.h; //height of ouput block
 
                 //Reference to output block data array
-                outdata[c] = (int[])blk.Data;
+                outdata[c] = (int[])blk.Data!;
 
                 //Create data array of blk if necessary
                 if (outdata[c] == null || outdata[c].Length != h * w)
@@ -626,7 +626,7 @@ namespace CoreJ2K.j2k.image.invcomptransf
                 int[] out_data; // array of output data
 
                 //Reference to output block data array
-                out_data = (int[])blk.Data;
+                out_data = (int[])blk.Data!;
 
                 //Create data array of blk if necessary
                 if (out_data == null)
@@ -648,7 +648,7 @@ namespace CoreJ2K.j2k.image.invcomptransf
                 // (returned block may be larger than requested one, and need not be the block that was passed: the source hands
                 // back a block of its own when it holds its data in another type)
                 var got = src.GetInternCompData(indb, c);
-                indata = (float[])got.Data;
+                indata = (float[])got.Data!;
 
                 // Copy the data converting from int to int
                 k = w * h - 1;
@@ -678,7 +678,7 @@ namespace CoreJ2K.j2k.image.invcomptransf
                 var h = blk.h; //height of ouput block
 
                 //Reference to output block data array
-                outdata[c] = (int[])blk.Data;
+                outdata[c] = (int[])blk.Data!;
 
                 // Validate block dimensions
                 long totalSize = (long)w * h;

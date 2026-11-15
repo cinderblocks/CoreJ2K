@@ -20,8 +20,8 @@ namespace CoreJ2K.Tests
 
             Assert.NotNull(data);
             Assert.Equal(3, data.NumComponents);
-            Assert.Equal(3, data.HorizontalOffsets.Length);
-            Assert.Equal(3, data.VerticalOffsets.Length);
+            Assert.Equal(3, data.HorizontalOffsets!.Length);
+            Assert.Equal(3, data.VerticalOffsets!.Length);
             Assert.All(data.HorizontalOffsets, offset => Assert.Equal(0, offset));
             Assert.All(data.VerticalOffsets, offset => Assert.Equal(0, offset));
         }
@@ -241,14 +241,14 @@ namespace CoreJ2K.Tests
             var crg = metadata.ComponentRegistration;
 
             // Y component should have no offset
-            Assert.Equal(0, crg.GetHorizontalOffset(0));
+            Assert.Equal(0, crg!.GetHorizontalOffset(0));
             Assert.Equal(0, crg.GetVerticalOffset(0));
 
             // Cb and Cr components should be centered (0.5 pixel offset)
             var centeredOffset = ComponentRegistrationData.FromFractionalPixels(0.5);
-            Assert.Equal(centeredOffset, crg.GetHorizontalOffset(1));
+            Assert.Equal(centeredOffset, crg!.GetHorizontalOffset(1));
             Assert.Equal(centeredOffset, crg.GetVerticalOffset(1));
-            Assert.Equal(centeredOffset, crg.GetHorizontalOffset(2));
+            Assert.Equal(centeredOffset, crg!.GetHorizontalOffset(2));
             Assert.Equal(centeredOffset, crg.GetVerticalOffset(2));
         }
 
@@ -281,13 +281,13 @@ namespace CoreJ2K.Tests
             metadata.SetComponentRegistration(4, hOffsets, vOffsets);
 
             var crg = metadata.ComponentRegistration;
-            Assert.Equal(4, crg.NumComponents);
+            Assert.Equal(4, crg!.NumComponents);
 
             // Verify offsets
-            Assert.Equal(0.0, ComponentRegistrationData.ToFractionalPixels(crg.GetHorizontalOffset(0)));
-            Assert.Equal(0.5, ComponentRegistrationData.ToFractionalPixels(crg.GetHorizontalOffset(1)), 5);
+            Assert.Equal(0.0, ComponentRegistrationData.ToFractionalPixels(crg!.GetHorizontalOffset(0)));
+            Assert.Equal(0.5, ComponentRegistrationData.ToFractionalPixels(crg!.GetHorizontalOffset(1)), 5);
             Assert.Equal(0.5, ComponentRegistrationData.ToFractionalPixels(crg.GetVerticalOffset(2)), 5);
-            Assert.Equal(0.5, ComponentRegistrationData.ToFractionalPixels(crg.GetHorizontalOffset(3)), 5);
+            Assert.Equal(0.5, ComponentRegistrationData.ToFractionalPixels(crg!.GetHorizontalOffset(3)), 5);
             Assert.Equal(0.5, ComponentRegistrationData.ToFractionalPixels(crg.GetVerticalOffset(3)), 5);
         }
     }

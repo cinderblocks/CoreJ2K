@@ -32,7 +32,7 @@ namespace CoreJ2K.Tests.Configuration
             
             Assert.NotNull(config.Quantization);
             Assert.NotNull(config.Wavelet);
-            Assert.Equal(QuantizationType.Reversible, config.Quantization.Type);
+            Assert.Equal(QuantizationType.Reversible, config.Quantization!.Type);
             Assert.Equal(WaveletFilter.Reversible53, config.Wavelet.Filter);
         }
         
@@ -88,7 +88,7 @@ namespace CoreJ2K.Tests.Configuration
             Assert.NotNull(config.Quantization);
             Assert.NotNull(config.Wavelet);
             Assert.NotNull(config.Progression);
-            Assert.Equal(QuantizationType.Reversible, config.Quantization.Type);
+            Assert.Equal(QuantizationType.Reversible, config.Quantization!.Type);
         }
         
         [Fact]
@@ -153,7 +153,7 @@ namespace CoreJ2K.Tests.Configuration
                     .WithBaseStepSize(0.01f));
             
             Assert.NotNull(config.Quantization);
-            Assert.Equal(QuantizationType.Expounded, config.Quantization.Type);
+            Assert.Equal(QuantizationType.Expounded, config.Quantization!.Type);
             Assert.Equal(0.01f, config.Quantization.BaseStepSize);
         }
         
@@ -319,7 +319,7 @@ namespace CoreJ2K.Tests.Configuration
             
             Assert.NotNull(config.Quantization);
             Assert.NotNull(config.Wavelet);
-            Assert.Equal(QuantizationType.Reversible, config.Quantization.Type);
+            Assert.Equal(QuantizationType.Reversible, config.Quantization!.Type);
         }
         
         [Fact]
@@ -427,7 +427,7 @@ namespace CoreJ2K.Tests.Configuration
                     .WithXml("<dicom><studyId>12345</studyId></dicom>"));
             
             Assert.True(config.IsValid);
-            Assert.Equal(QuantizationType.Reversible, config.Quantization.Type);
+            Assert.Equal(QuantizationType.Reversible, config.Quantization!.Type);
         }
         
         [Fact]

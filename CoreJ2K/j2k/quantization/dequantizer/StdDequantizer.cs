@@ -342,7 +342,7 @@ namespace CoreJ2K.j2k.quantization.dequantizer
                     // can also work "in place" (i.e. same buffer).
                     cblk = src.GetCodeBlock(c, m, n, sb, cblk);
                     // Input and output arrays are the same
-                    outiarr = (int[])cblk.Data;
+                    outiarr = (int[])cblk.Data!;
                     break;
 
                 case DataBlk.TYPE_FLOAT:
@@ -361,7 +361,7 @@ namespace CoreJ2K.j2k.quantization.dequantizer
                     // Get output data array and check its size.
                     // Prefer the caller's existing array; fall back to a grow-only
                     // instance-level scratch buffer to avoid per-code-block allocation.
-                    outfarr = (float[])cblk.Data;
+                    outfarr = (float[])cblk.Data!;
                     int neededFloat = cblk.w * cblk.h;
                     if (outfarr == null || outfarr.Length < neededFloat)
                     {

@@ -91,7 +91,7 @@ namespace CoreJ2K.Fuzz
                 var image = J2kImage.FromBytes(data);
                 
                 // If successful, try to access the image data
-                if (image != null && image.Width > 0 && image.Height > 0)
+                if (image is not null && image.Width > 0 && image.Height > 0)
                 {
                     // Validate dimensions are reasonable
                     if (image.Width > 100000 || image.Height > 100000)

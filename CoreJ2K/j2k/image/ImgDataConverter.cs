@@ -330,7 +330,7 @@ namespace CoreJ2K.j2k.image
                     // Get data array from resulting blk.
                     // Prefer caller's existing buffer; fall back to grow-only scratch
                     // to avoid per-block allocation.
-                    farr = (float[])blk.Data;
+                    farr = (float[])blk.Data!;
                     if (farr == null || farr.Length < w * h)
                     {
                         int needF = w * h;
@@ -344,7 +344,7 @@ namespace CoreJ2K.j2k.image
                     blk.scanw = srcBlk.w;
                     blk.offset = 0;
                     blk.progressive = srcBlk.progressive;
-                    srcIArr = (int[])srcBlk.Data;
+                    srcIArr = (int[])srcBlk.Data!;
 
                     // Cast data from source to blk
                     fp = src.GetFixedPoint(c);
@@ -387,7 +387,7 @@ namespace CoreJ2K.j2k.image
                     // Get data array from resulting blk.
                     // Prefer caller's existing buffer; fall back to grow-only scratch
                     // to avoid per-block allocation.
-                    iarr = (int[])blk.Data;
+                    iarr = (int[])blk.Data!;
                     if (iarr == null || iarr.Length < w * h)
                     {
                         int needI = w * h;
@@ -400,7 +400,7 @@ namespace CoreJ2K.j2k.image
                     blk.scanw = srcBlk.w;
                     blk.offset = 0;
                     blk.progressive = srcBlk.progressive;
-                    srcFArr = (float[])srcBlk.Data;
+                    srcFArr = (float[])srcBlk.Data!;
 
                     // Cast data from source to blk
                     if (fp != 0)

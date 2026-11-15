@@ -33,17 +33,17 @@ namespace CoreJ2K.Avalonia
         public static byte[] EncodeToJ2KLossless(this WriteableBitmap bitmap) =>
             bitmap.EncodeToJ2K(CompleteConfigurationPresets.Medical);
 
-        public static byte[] EncodeToJ2KHighQuality(this WriteableBitmap bitmap, string copyright = null)
+        public static byte[] EncodeToJ2KHighQuality(this WriteableBitmap bitmap, string? copyright = null)
         {
             var builder = CompleteConfigurationPresets.Photography;
-            if (!string.IsNullOrEmpty(copyright)) builder.WithCopyright(copyright);
+            if (!string.IsNullOrEmpty(copyright)) builder.WithCopyright(copyright!);
             return bitmap.EncodeToJ2K(builder);
         }
 
-        public static byte[] EncodeToJ2KWeb(this WriteableBitmap bitmap, string copyright = null)
+        public static byte[] EncodeToJ2KWeb(this WriteableBitmap bitmap, string? copyright = null)
         {
             var builder = CompleteConfigurationPresets.Web;
-            if (!string.IsNullOrEmpty(copyright)) builder.WithCopyright(copyright);
+            if (!string.IsNullOrEmpty(copyright)) builder.WithCopyright(copyright!);
             return bitmap.EncodeToJ2K(builder);
         }
 
@@ -66,21 +66,21 @@ namespace CoreJ2K.Avalonia
 
         #region Decoding
 
-        public static WriteableBitmap FromJ2KFile(string path, J2KDecoderConfiguration config = null)
+        public static WriteableBitmap FromJ2KFile(string path, J2KDecoderConfiguration? config = null)
         {
             if (string.IsNullOrEmpty(path)) throw new ArgumentNullException(nameof(path));
             var image = config != null ? J2kImage.FromFile(path, config) : J2kImage.FromFile(path);
             return image.As<WriteableBitmap>();
         }
 
-        public static WriteableBitmap FromJ2KBytes(byte[] data, J2KDecoderConfiguration config = null)
+        public static WriteableBitmap FromJ2KBytes(byte[] data, J2KDecoderConfiguration? config = null)
         {
             if (data == null) throw new ArgumentNullException(nameof(data));
             var image = config != null ? J2kImage.FromBytes(data, config) : J2kImage.FromBytes(data);
             return image.As<WriteableBitmap>();
         }
 
-        public static WriteableBitmap FromJ2KStream(Stream stream, J2KDecoderConfiguration config = null)
+        public static WriteableBitmap FromJ2KStream(Stream stream, J2KDecoderConfiguration? config = null)
         {
             if (stream == null) throw new ArgumentNullException(nameof(stream));
             var image = config != null ? J2kImage.FromStream(stream, config) : J2kImage.FromStream(stream);

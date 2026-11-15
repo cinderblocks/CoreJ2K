@@ -46,7 +46,7 @@ namespace CoreJ2K.Tests
             // In a real scenario, PktDecoder would be created with HeaderDecoder
             // that contains this PLT data
             
-            return (null, pltData);  // Return null decoder for now, real tests need full setup
+            return (null!, pltData);  // Return null decoder for now, real tests need full setup
         }
 
         #endregion

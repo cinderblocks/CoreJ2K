@@ -79,13 +79,13 @@ namespace CoreJ2K.ImageSharp
         /// <param name="image">The image to encode.</param>
         /// <param name="copyright">Optional copyright text.</param>
         /// <returns>JPEG 2000 encoded data.</returns>
-        public static byte[] EncodeToJ2KHighQuality<TPixel>(this Image<TPixel> image, string copyright = null)
+        public static byte[] EncodeToJ2KHighQuality<TPixel>(this Image<TPixel> image, string? copyright = null)
             where TPixel : unmanaged, IPixel<TPixel>
         {
             var builder = CompleteConfigurationPresets.Photography;
             if (!string.IsNullOrEmpty(copyright))
             {
-                builder.WithCopyright(copyright);
+                builder.WithCopyright(copyright!);
             }
             return image.EncodeToJ2K(builder);
         }
@@ -96,13 +96,13 @@ namespace CoreJ2K.ImageSharp
         /// <param name="image">The image to encode.</param>
         /// <param name="copyright">Optional copyright text.</param>
         /// <returns>JPEG 2000 encoded data.</returns>
-        public static byte[] EncodeToJ2KWeb<TPixel>(this Image<TPixel> image, string copyright = null)
+        public static byte[] EncodeToJ2KWeb<TPixel>(this Image<TPixel> image, string? copyright = null)
             where TPixel : unmanaged, IPixel<TPixel>
         {
             var builder = CompleteConfigurationPresets.Web;
             if (!string.IsNullOrEmpty(copyright))
             {
-                builder.WithCopyright(copyright);
+                builder.WithCopyright(copyright!);
             }
             return image.EncodeToJ2K(builder);
         }
@@ -158,13 +158,13 @@ namespace CoreJ2K.ImageSharp
         /// <param name="image">The image to save.</param>
         /// <param name="path">The file path.</param>
         /// <param name="copyright">Optional copyright text.</param>
-        public static void SaveAsJ2KHighQuality<TPixel>(this Image<TPixel> image, string path, string copyright = null)
+        public static void SaveAsJ2KHighQuality<TPixel>(this Image<TPixel> image, string path, string? copyright = null)
             where TPixel : unmanaged, IPixel<TPixel>
         {
             var builder = CompleteConfigurationPresets.Photography;
             if (!string.IsNullOrEmpty(copyright))
             {
-                builder.WithCopyright(copyright);
+                builder.WithCopyright(copyright!);
             }
             image.SaveAsJ2K(path, builder);
         }
@@ -179,7 +179,7 @@ namespace CoreJ2K.ImageSharp
         /// <param name="path">The file path.</param>
         /// <param name="config">Optional decoder configuration.</param>
         /// <returns>Decoded Image.</returns>
-        public static Image<Rgba32> FromJ2KFile(string path, J2KDecoderConfiguration config = null)
+        public static Image<Rgba32> FromJ2KFile(string path, J2KDecoderConfiguration? config = null)
         {
             if (string.IsNullOrEmpty(path)) throw new ArgumentNullException(nameof(path));
 
@@ -196,7 +196,7 @@ namespace CoreJ2K.ImageSharp
         /// <param name="data">The JPEG 2000 data.</param>
         /// <param name="config">Optional decoder configuration.</param>
         /// <returns>Decoded Image.</returns>
-        public static Image<Rgba32> FromJ2KBytes(byte[] data, J2KDecoderConfiguration config = null)
+        public static Image<Rgba32> FromJ2KBytes(byte[] data, J2KDecoderConfiguration? config = null)
         {
             if (data == null) throw new ArgumentNullException(nameof(data));
 
@@ -213,7 +213,7 @@ namespace CoreJ2K.ImageSharp
         /// <param name="stream">The JPEG 2000 stream.</param>
         /// <param name="config">Optional decoder configuration.</param>
         /// <returns>Decoded Image.</returns>
-        public static Image<Rgba32> FromJ2KStream(Stream stream, J2KDecoderConfiguration config = null)
+        public static Image<Rgba32> FromJ2KStream(Stream stream, J2KDecoderConfiguration? config = null)
         {
             if (stream == null) throw new ArgumentNullException(nameof(stream));
 

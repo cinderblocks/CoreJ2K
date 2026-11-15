@@ -400,7 +400,7 @@ namespace CoreJ2K.Icc.Lut
         private static void standardizeMatrixLineThroughLut(image_DataBlkInt inb, float[] output, int dwInputMaxValue, LookUpTableFP lut)
         {
             int wTemp, j = 0;
-            var inputData = (int[])inb.Data; // input pixel reference
+            var inputData = (int[])inb.Data!; // input pixel reference
             var lutFP = lut.lut;
             for (var y = inb.uly; y < inb.uly + inb.h; ++y)
             {

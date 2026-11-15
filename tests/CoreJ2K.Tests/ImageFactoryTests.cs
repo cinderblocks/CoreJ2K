@@ -15,7 +15,7 @@ namespace CoreJ2K.Tests
             // No creators for object expected => null
             Assert.Null(img);
 
-            Assert.Null(ImageFactory.ToPortableImageSource(null));
+            Assert.Null(ImageFactory.ToPortableImageSource(null!));
         }
 
         [Fact]

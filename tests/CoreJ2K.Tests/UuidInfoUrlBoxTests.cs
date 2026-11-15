@@ -165,8 +165,8 @@ namespace CoreJ2K.Tests
             metadata.AddUuidToInfo(uuid1);
 
             Assert.NotNull(metadata.UuidInfo);
-            Assert.Single(metadata.UuidInfo.UuidList);
-            Assert.Equal(uuid1, metadata.UuidInfo.UuidList[0]);
+            Assert.Single(metadata.UuidInfo!.UuidList);
+            Assert.Equal(uuid1, metadata.UuidInfo!.UuidList[0]);
         }
 
         [Fact]
@@ -179,7 +179,7 @@ namespace CoreJ2K.Tests
             metadata.AddUuidToInfo(uuid1); // Add same UUID again
 
             // Should not add duplicate
-            Assert.Single(metadata.UuidInfo.UuidList);
+            Assert.Single(metadata.UuidInfo!.UuidList);
         }
 
         [Fact]
@@ -192,8 +192,8 @@ namespace CoreJ2K.Tests
 
             Assert.NotNull(metadata.UuidInfo);
             Assert.Equal(url, metadata.UuidInfo.Url);
-            Assert.Equal(1, metadata.UuidInfo.UrlVersion);
-            Assert.Equal(1, metadata.UuidInfo.UrlFlags); // Absolute
+            Assert.Equal(1, metadata.UuidInfo!.UrlVersion);
+            Assert.Equal(1, metadata.UuidInfo!.UrlFlags); // Absolute
         }
 
         [Fact]
@@ -206,8 +206,8 @@ namespace CoreJ2K.Tests
 
             Assert.NotNull(metadata.UuidInfo);
             Assert.Equal(url, metadata.UuidInfo.Url);
-            Assert.Equal(0, metadata.UuidInfo.UrlVersion);
-            Assert.Equal(0, metadata.UuidInfo.UrlFlags); // Relative
+            Assert.Equal(0, metadata.UuidInfo!.UrlVersion);
+            Assert.Equal(0, metadata.UuidInfo!.UrlFlags); // Relative
         }
 
         #endregion
@@ -450,7 +450,7 @@ namespace CoreJ2K.Tests
             var metadata = new J2KMetadata();
             metadata.SetUuidInfoUrl("https://example.com", isAbsolute: true);
 
-            Assert.Equal(1, metadata.UuidInfo.UrlFlags);
+            Assert.Equal(1, metadata.UuidInfo!.UrlFlags);
         }
 
         [Fact]
@@ -459,7 +459,7 @@ namespace CoreJ2K.Tests
             var metadata = new J2KMetadata();
             metadata.SetUuidInfoUrl("/relative/path", isAbsolute: false);
 
-            Assert.Equal(0, metadata.UuidInfo.UrlFlags);
+            Assert.Equal(0, metadata.UuidInfo!.UrlFlags);
         }
 
         [Fact]
@@ -470,7 +470,7 @@ namespace CoreJ2K.Tests
             for (byte version = 0; version < 5; version++)
             {
                 metadata.SetUuidInfoUrl($"https://example.com/v{version}", version: version);
-                Assert.Equal(version, metadata.UuidInfo.UrlVersion);
+                Assert.Equal(version, metadata.UuidInfo!.UrlVersion);
             }
         }
 

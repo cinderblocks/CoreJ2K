@@ -1536,7 +1536,7 @@ namespace CoreJ2K.j2k.entropy.encoder
             int msbp;
             int l;
 
-            data = (int[])cblk.Data;
+            data = (int[])cblk.Data!;
             w = cblk.w;
             h = cblk.h;
 
@@ -1658,7 +1658,7 @@ namespace CoreJ2K.j2k.entropy.encoder
             jstep = sscanw * StdEntropyCoderOptions.STRIPE_HEIGHT / 2 - srcblk.w;
             kstep = dscanw * StdEntropyCoderOptions.STRIPE_HEIGHT - srcblk.w;
             mask = 1 << bp;
-            data = (int[])srcblk.Data;
+            data = (int[])srcblk.Data!;
             nstripes = (srcblk.h + StdEntropyCoderOptions.STRIPE_HEIGHT - 1) / StdEntropyCoderOptions.STRIPE_HEIGHT;
             dist = 0;
             // We use the MSE_LKP_BITS-1 bits below the bit just coded for
@@ -2025,7 +2025,7 @@ namespace CoreJ2K.j2k.entropy.encoder
             jstep = sscanw * StdEntropyCoderOptions.STRIPE_HEIGHT / 2 - srcblk.w;
             kstep = dscanw * StdEntropyCoderOptions.STRIPE_HEIGHT - srcblk.w;
             mask = 1 << bp;
-            data = (int[])srcblk.Data;
+            data = (int[])srcblk.Data!;
             nstripes = (srcblk.h + StdEntropyCoderOptions.STRIPE_HEIGHT - 1) / StdEntropyCoderOptions.STRIPE_HEIGHT;
             dist = 0;
             // We use the MSE_LKP_BITS-1 bits below the bit just coded for
@@ -2378,7 +2378,7 @@ namespace CoreJ2K.j2k.entropy.encoder
             jstep = sscanw * StdEntropyCoderOptions.STRIPE_HEIGHT / 2 - srcblk.w;
             kstep = dscanw * StdEntropyCoderOptions.STRIPE_HEIGHT - srcblk.w;
             mask = 1 << bp;
-            data = (int[])srcblk.Data;
+            data = (int[])srcblk.Data!;
             nstripes = (srcblk.h + StdEntropyCoderOptions.STRIPE_HEIGHT - 1) / StdEntropyCoderOptions.STRIPE_HEIGHT;
             dist = 0;
             // We use the bit just coded plus MSE_LKP_BITS-1 bits below the bit
@@ -2597,7 +2597,7 @@ namespace CoreJ2K.j2k.entropy.encoder
             jstep = sscanw * StdEntropyCoderOptions.STRIPE_HEIGHT / 2 - srcblk.w;
             kstep = dscanw * StdEntropyCoderOptions.STRIPE_HEIGHT - srcblk.w;
             mask = 1 << bp;
-            data = (int[])srcblk.Data;
+            data = (int[])srcblk.Data!;
             nstripes = (srcblk.h + StdEntropyCoderOptions.STRIPE_HEIGHT - 1) / StdEntropyCoderOptions.STRIPE_HEIGHT;
             dist = 0;
             // We use the bit just coded plus MSE_LKP_BITS-1 bits below the bit
@@ -2807,7 +2807,7 @@ namespace CoreJ2K.j2k.entropy.encoder
             jstep = sscanw * StdEntropyCoderOptions.STRIPE_HEIGHT / 2 - srcblk.w;
             kstep = dscanw * StdEntropyCoderOptions.STRIPE_HEIGHT - srcblk.w;
             mask = 1 << bp;
-            data = (int[])srcblk.Data;
+            data = (int[])srcblk.Data!;
             nstripes = (srcblk.h + StdEntropyCoderOptions.STRIPE_HEIGHT - 1) / StdEntropyCoderOptions.STRIPE_HEIGHT;
             dist = 0;
             // We use the MSE_LKP_BITS-1 bits below the bit just coded for

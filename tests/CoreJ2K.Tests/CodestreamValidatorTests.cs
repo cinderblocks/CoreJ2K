@@ -147,7 +147,7 @@ namespace CoreJ2K.Tests
         public void TestNullCodestream()
         {
             var validator = new CodestreamValidator();
-            var result = validator.ValidateCodestream(null);
+            var result = validator.ValidateCodestream(null!);
 
             Assert.False(result);
             Assert.True(validator.HasErrors);

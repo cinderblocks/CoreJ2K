@@ -20,7 +20,7 @@ namespace CoreJ2K.j2k.image.input
         private readonly int rb;
 
         /// <summary>Buffer for the components of each pixel(in the current block) </summary>
-        private int[][] barr;
+        private int[]?[]? barr;
 
         /// <summary>Data block used only to store coordinates of the buffered blocks </summary>
         private readonly DataBlkInt dbi = new DataBlkInt();
@@ -28,7 +28,7 @@ namespace CoreJ2K.j2k.image.input
         /// <summary>Temporary DataBlkInt object (needed when encoder uses floating-point
         /// filters). This avoids allocating new DataBlk at each time 
         /// </summary>
-        private DataBlkInt intBlk;
+        private DataBlkInt? intBlk;
 
         private Image image;
 
@@ -56,7 +56,7 @@ namespace CoreJ2K.j2k.image.input
         public override void Close()
         {
             image.Dispose();
-            image = null;
+            image = null!;
 
             barr = null;
         }
@@ -196,7 +196,7 @@ namespace CoreJ2K.j2k.image.input
                 // ensure per-component arrays are allocated or large enough
                 for (var cc = 0; cc < componentCount; ++cc)
                 {
-                    if (barr[cc] == null || barr[cc].Length < needed)
+                    if (barr[cc] == null || barr[cc]!.Length < needed)
                     {
                         barr[cc] = new int[needed];
                     }
@@ -209,10 +209,10 @@ namespace CoreJ2K.j2k.image.input
                 dbi.h = blk.h;
                 dbi.scanw = blk.w;
 
-                var red = barr[0];
-                var green = barr[1];
-                var blue = barr[2];
-                var alpha = (componentCount > 3) ? barr[3] : null;
+                var red = barr[0]!;
+                var green = barr[1]!;
+                var blue = barr[2]!;
+                var alpha = ((componentCount > 3) ? barr[3] : null)!;
 
                 var bitmap = (Bitmap)image;
                 var pixelFormat = (componentCount == 3) ? PixelFormat.Format24bppRgb : PixelFormat.Format32bppArgb;
@@ -300,7 +300,7 @@ namespace CoreJ2K.j2k.image.input
                 // Set buffer attributes - use typed setter when possible
                 if (blk is DataBlkInt dbiBlk)
                 {
-                    dbiBlk.DataInt = barr[compIndex];
+                    dbiBlk.DataInt = barr[compIndex]!;
                     dbiBlk.offset = 0;
                     dbiBlk.scanw = dbiBlk.w;
                 }
@@ -316,7 +316,7 @@ namespace CoreJ2K.j2k.image.input
                 //Asking for the 2nd or 3rd (or 4th) block component
                 if (blk is DataBlkInt dbiBlk)
                 {
-                    dbiBlk.DataInt = barr[compIndex];
+                    dbiBlk.DataInt = barr[compIndex]!;
                     dbiBlk.offset = (blk.ulx - dbi.ulx) + (blk.uly - dbi.uly) * dbi.scanw;
                     dbiBlk.scanw = dbi.scanw;
                 }
@@ -389,7 +389,7 @@ namespace CoreJ2K.j2k.image.input
                 blk = tmp;
             }
 
-            var bakarr = (int[])blk.Data;
+            var bakarr = (int[]?)blk.Data;
             // Save requested block size
             var ulx = blk.ulx;
             var uly = blk.uly;
@@ -407,7 +407,7 @@ namespace CoreJ2K.j2k.image.input
             {
                 // Requested and returned block buffer are the same size
                 // CONVERSION PROBLEM?
-                Array.Copy((Array)blk.Data, 0, bakarr, 0, w * h);
+                Array.Copy((Array)blk.Data!, 0, bakarr, 0, w * h);
             }
             else
             {
@@ -416,7 +416,7 @@ namespace CoreJ2K.j2k.image.input
                 {
                     // copy line by line
                     // CONVERSION PROBLEM?
-                    Array.Copy((Array)blk.Data, blk.offset + i * blk.scanw, bakarr, i * w, w);
+                    Array.Copy((Array)blk.Data!, blk.offset + i * blk.scanw, bakarr, i * w, w);
                 }
             }
             blk.Data = bakarr;

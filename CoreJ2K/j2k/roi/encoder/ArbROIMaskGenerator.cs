@@ -125,7 +125,7 @@ namespace CoreJ2K.j2k.roi.encoder
             var h = db.h;
             var tilew = sb.w;
             var tileh = sb.h;
-            var maskData = (int[])db.Data;
+            var maskData = (int[])db.Data!;
             int i, j, k, bi, wrap;
 
             // If the ROI mask has not been calculated for this tile and

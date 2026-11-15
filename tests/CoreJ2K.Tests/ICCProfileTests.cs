@@ -80,7 +80,7 @@ namespace CoreJ2K.Tests
         [Fact]
         public void ICCProfileData_Null_IsInvalid()
         {
-            var iccProfile = new ICCProfileData(null);
+            var iccProfile = new ICCProfileData(null!);
 
             Assert.False(iccProfile.IsValid);
         }
@@ -137,7 +137,7 @@ namespace CoreJ2K.Tests
             profileBytes[0] = 0xFF;
 
             // Stored profile should be unchanged
-            Assert.NotEqual(0xFF, metadata.IccProfile.ProfileBytes[0]);
+            Assert.NotEqual(0xFF, metadata.IccProfile!.ProfileBytes![0]);
         }
 
         [Fact]

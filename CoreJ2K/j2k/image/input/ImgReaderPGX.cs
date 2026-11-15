@@ -345,7 +345,7 @@ namespace CoreJ2K.j2k.image.input
             }
 
             // Get data array
-            var barr = (int[])blk.Data;
+            var barr = (int[])blk.Data!;
             if (barr == null || barr.Length < blk.w * blk.h * packBytes)
             {
                 barr = new int[blk.w * blk.h];

@@ -317,7 +317,7 @@ namespace CoreJ2K.j2k.quantization.quantizer
                     return null; // No more code-blocks in current tile for comp.
                 }
                 // Input and output arrays are the same (for "in place" quant.)
-                outarr = (int[])cblk.Data;
+                outarr = (int[])cblk.Data!;
             }
             else
             {
@@ -333,10 +333,10 @@ namespace CoreJ2K.j2k.quantization.quantizer
                     return null; // No more code-blocks in current tile for comp.
                 }
                 this.infblk = infblk; // Save local cache
-                infarr = (float[])infblk.Data;
+                infarr = (float[])infblk.Data!;
                 // Get output data array and check that there is memory to put the
                 // quantized coeffs in
-                outarr = (int[])cblk.Data;
+                outarr = (int[])cblk.Data!;
                 if (outarr == null || outarr.Length < infblk.w * infblk.h)
                 {
                     outarr = new int[infblk.w * infblk.h];

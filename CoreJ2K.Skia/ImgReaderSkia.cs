@@ -18,19 +18,19 @@ namespace CoreJ2K.j2k.image.input
         private const int DC_OFFSET = 128;
 
         /// <summary>Buffer for the components of each pixel(in the current block)</summary>
-        private int[][] barr;
+        private int[]?[]? barr;
 
         /// <summary>Data block used only to store coordinates of the buffered blocks</summary>
         private readonly DataBlkInt dbi = new DataBlkInt();
 
         /// <summary>Temporary DataBlkInt object (needed when encoder uses floating-point
         /// filters). This avoids allocating new DataBlk at each time.</summary>
-        private DataBlkInt intBlk;
+        private DataBlkInt? intBlk;
 
         private SKPixmap image;
 
         /// <summary>The 8-bit copy made of a bitmap whose pixels are not one byte per component, released with the reader.</summary>
-        private SKBitmap converted;
+        private SKBitmap? converted;
 
         public ImgReaderSkia(SKBitmap image)
         {
@@ -125,7 +125,7 @@ namespace CoreJ2K.j2k.image.input
             }
 
             image.Dispose();
-            image = null;
+            image = null!;
             converted?.Dispose();
             converted = null;
         }
@@ -337,10 +337,10 @@ namespace CoreJ2K.j2k.image.input
                 dbi.scanw = dbi.w;
 
                 // component arrays
-                var red = barr[0];
-                var green = nc > 1 ? barr[1] : null;
-                var blue = nc > 2 ? barr[2] : null;
-                var alpha = nc > 3 ? barr[3] : null;
+                var red = barr[0]!;
+                var green = (nc > 1 ? barr[1] : null)!;
+                var blue = (nc > 2 ? barr[2] : null)!;
+                var alpha = (nc > 3 ? barr[3] : null)!;
 
                 // compute swizzle once
                 var swizzle = image.ColorType == SKColorType.Bgra8888
@@ -495,7 +495,7 @@ namespace CoreJ2K.j2k.image.input
                 // Set buffer attributes - use typed setter when possible to avoid runtime casts
                 if (blk is DataBlkInt dbiBlk)
                 {
-                    dbiBlk.DataInt = barr[compIndex];
+                    dbiBlk.DataInt = barr[compIndex]!;
                     dbiBlk.offset = 0;
                     dbiBlk.scanw = dbiBlk.w;
                 }
@@ -511,7 +511,7 @@ namespace CoreJ2K.j2k.image.input
                 //Asking for the 2nd or 3rd (or 4th) block component
                 if (blk is DataBlkInt dbiBlk)
                 {
-                    dbiBlk.DataInt = barr[compIndex];
+                    dbiBlk.DataInt = barr[compIndex]!;
                     dbiBlk.offset = (blk.ulx - dbi.ulx) + (blk.uly - dbi.uly) * dbi.scanw;
                     dbiBlk.scanw = dbi.scanw;
                 }
@@ -573,7 +573,7 @@ namespace CoreJ2K.j2k.image.input
                 blk = tmp;
             }
 
-            var bakarr = (int[])blk.Data;
+            var bakarr = (int[]?)blk.Data;
             // Save requested block size
             var ulx = blk.ulx;
             var uly = blk.uly;
@@ -590,7 +590,7 @@ namespace CoreJ2K.j2k.image.input
             if (blk.offset == 0 && blk.scanw == width)
             {
                 // Requested and returned block buffer are the same size
-                Array.Copy((Array)blk.Data, 0, bakarr, 0, width * height);
+                Array.Copy((Array)blk.Data!, 0, bakarr, 0, width * height);
             }
             else
             {
@@ -598,7 +598,7 @@ namespace CoreJ2K.j2k.image.input
                 for (var i = height - 1; i >= 0; i--)
                 {
                     // copy line by line
-                    Array.Copy((Array)blk.Data, blk.offset + i * blk.scanw, bakarr, i * width, width);
+                    Array.Copy((Array)blk.Data!, blk.offset + i * blk.scanw, bakarr, i * width, width);
                 }
             }
             blk.Data = bakarr;

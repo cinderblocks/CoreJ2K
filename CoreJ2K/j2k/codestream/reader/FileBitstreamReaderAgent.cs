@@ -1126,7 +1126,7 @@ namespace CoreJ2K.j2k.codestream.reader
             var numLayers = ((int)decSpec.nls.GetTileDef(t));
             var nPrec = 1;
             int hlen, plen;
-            string strInfo = printInfo ? $"Tile {TileIdx} (tile-part:{curTilePart}): offset, length, header length\n" : null;
+            string strInfo = printInfo ? $"Tile {TileIdx} (tile-part:{curTilePart}): offset, length, header length\n" : null!;
             var pph = decSpec.pphs.GetBoolTileDef(t);
             for (var l = minlys; l < lye; l++)
             {
@@ -1280,7 +1280,7 @@ namespace CoreJ2K.j2k.codestream.reader
                 }
             }
 
-            string strInfo = printInfo ? $"Tile {TileIdx} (tile-part:{curTilePart}): offset, length, header length\n" : null;
+            string strInfo = printInfo ? $"Tile {TileIdx} (tile-part:{curTilePart}): offset, length, header length\n" : null!;
             var numLayers = ((int)decSpec.nls.GetTileDef(t));
             var pph = decSpec.pphs.GetBoolTileDef(t);
             var nPrec = 1;
@@ -1515,7 +1515,7 @@ namespace CoreJ2K.j2k.codestream.reader
             var status = false;
             var lastByte = firstPackOff[t][curTilePart] + tilePartLen[t][curTilePart] - 1 - tilePartHeadLen[t][curTilePart];
             var numLayers = ((int)decSpec.nls.GetTileDef(t));
-            string strInfo = printInfo ? $"Tile {TileIdx} (tile-part:{curTilePart}): offset, length, header length\n" : null;
+            string strInfo = printInfo ? $"Tile {TileIdx} (tile-part:{curTilePart}): offset, length, header length\n" : null!;
             var pph = decSpec.pphs.GetBoolTileDef(t);
             for (var r = ress; r < rese; r++)
             {
@@ -1770,7 +1770,7 @@ namespace CoreJ2K.j2k.codestream.reader
             var status = false;
             var lastByte = firstPackOff[t][curTilePart] + tilePartLen[t][curTilePart] - 1 - tilePartHeadLen[t][curTilePart];
             var numLayers = ((int)decSpec.nls.GetTileDef(t));
-            string strInfo = printInfo ? $"Tile {TileIdx} (tile-part:{curTilePart}): offset, length, header length\n" : null;
+            string strInfo = printInfo ? $"Tile {TileIdx} (tile-part:{curTilePart}): offset, length, header length\n" : null!;
             var pph = decSpec.pphs.GetBoolTileDef(t);
 
             var y = ty0;
@@ -2026,7 +2026,7 @@ namespace CoreJ2K.j2k.codestream.reader
             var status = false;
             var lastByte = firstPackOff[t][curTilePart] + tilePartLen[t][curTilePart] - 1 - tilePartHeadLen[t][curTilePart];
             var numLayers = ((int)decSpec.nls.GetTileDef(t));
-            string strInfo = printInfo ? $"Tile {TileIdx} (tile-part:{curTilePart}): offset, length, header length\n" : null;
+            string strInfo = printInfo ? $"Tile {TileIdx} (tile-part:{curTilePart}): offset, length, header length\n" : null!;
             var pph = decSpec.pphs.GetBoolTileDef(t);
 
             int x, y;

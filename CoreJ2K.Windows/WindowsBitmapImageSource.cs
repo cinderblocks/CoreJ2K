@@ -32,7 +32,7 @@ namespace CoreJ2K.Util
         #region METHODS
 
 
-        internal static BlkImgDataSrc Create(object imageObject)
+        internal static BlkImgDataSrc? Create(object imageObject)
         {
             return !(imageObject is Bitmap bitmap) ? null : new WindowsBitmapImageSource(bitmap);
         }

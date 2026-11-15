@@ -39,7 +39,7 @@ namespace CoreJ2K.Tests
             var writer = new BinaryWriter(ms);
             
             // Act
-            TLMMarkerWriter.WriteTLM(writer, null);
+            TLMMarkerWriter.WriteTLM(writer, null!);
             
             // Assert
             Assert.Equal(0, ms.Length);

@@ -587,7 +587,7 @@ namespace CoreJ2K.j2k.entropy.decoder
             cblk.h = srcblk.h;
             cblk.offset = 0;
             cblk.scanw = cblk.w;
-            out_data = (int[])cblk.Data;
+            out_data = (int[])cblk.Data!;
 
             if (out_data == null || out_data.Length < srcblk.w * srcblk.h)
             {
@@ -907,7 +907,7 @@ namespace CoreJ2K.j2k.entropy.decoder
             jstep = sscanw * StdEntropyCoderOptions.STRIPE_HEIGHT / 2 - cblk.w;
             kstep = dscanw * StdEntropyCoderOptions.STRIPE_HEIGHT - cblk.w;
             setmask = (int)(((long)3 << bp) >> 1);
-            data = (int[])cblk.Data;
+            data = (int[])cblk.Data!;
             nstripes = (cblk.h + StdEntropyCoderOptions.STRIPE_HEIGHT - 1) / StdEntropyCoderOptions.STRIPE_HEIGHT;
             causal = (options & StdEntropyCoderOptions.OPT_VERT_STR_CAUSAL) != 0;
 
@@ -1189,7 +1189,7 @@ namespace CoreJ2K.j2k.entropy.decoder
             jstep = sscanw * StdEntropyCoderOptions.STRIPE_HEIGHT / 2 - cblk.w;
             kstep = dscanw * StdEntropyCoderOptions.STRIPE_HEIGHT - cblk.w;
             setmask = (int)(((long)3 << bp) >> 1);
-            data = (int[])cblk.Data;
+            data = (int[])cblk.Data!;
             nstripes = (cblk.h + StdEntropyCoderOptions.STRIPE_HEIGHT - 1) / StdEntropyCoderOptions.STRIPE_HEIGHT;
             causal = (localOptions & StdEntropyCoderOptions.OPT_VERT_STR_CAUSAL) != 0;
 
@@ -1461,7 +1461,7 @@ namespace CoreJ2K.j2k.entropy.decoder
             kstep = dscanw * StdEntropyCoderOptions.STRIPE_HEIGHT - cblk.w;
             setmask = (1 << bp) >> 1;
             resetmask = (-1) << (bp + 1);
-            data = (int[])cblk.Data;
+            data = (int[])cblk.Data!;
             nstripes = (cblk.h + StdEntropyCoderOptions.STRIPE_HEIGHT - 1) / StdEntropyCoderOptions.STRIPE_HEIGHT;
 
             // Decode stripe by stripe
@@ -1642,7 +1642,7 @@ namespace CoreJ2K.j2k.entropy.decoder
             kstep = dscanw * StdEntropyCoderOptions.STRIPE_HEIGHT - cblk.w;
             setmask = (1 << bp) >> 1;
             resetmask = (-1) << (bp + 1);
-            data = (int[])cblk.Data;
+            data = (int[])cblk.Data!;
             nstripes = (cblk.h + StdEntropyCoderOptions.STRIPE_HEIGHT - 1) / StdEntropyCoderOptions.STRIPE_HEIGHT;
 
             // Decode stripe by stripe
@@ -1816,7 +1816,7 @@ namespace CoreJ2K.j2k.entropy.decoder
             jstep = sscanw * StdEntropyCoderOptions.STRIPE_HEIGHT / 2 - cblk.w;
             kstep = dscanw * StdEntropyCoderOptions.STRIPE_HEIGHT - cblk.w;
             setmask = (int)(((long)3 << bp) >> 1);
-            data = (int[])cblk.Data;
+            data = (int[])cblk.Data!;
             nstripes = (cblk.h + StdEntropyCoderOptions.STRIPE_HEIGHT - 1) / StdEntropyCoderOptions.STRIPE_HEIGHT;
             causal = (localOptions & StdEntropyCoderOptions.OPT_VERT_STR_CAUSAL) != 0;
 
@@ -2167,7 +2167,7 @@ namespace CoreJ2K.j2k.entropy.decoder
             resetmask = (-1) << (bp);
 
             // Get the data array
-            data = (int[])cblk.Data;
+            data = (int[])cblk.Data!;
 
             // Visit each sample, apply the reset mask to it and add an
             // approximation if significant.

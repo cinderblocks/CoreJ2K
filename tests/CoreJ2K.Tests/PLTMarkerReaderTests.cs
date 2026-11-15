@@ -195,7 +195,7 @@ namespace CoreJ2K.Tests
             
             // Act & Assert
             Assert.Throws<ArgumentNullException>(() => 
-                PLTMarkerReader.ReadPLT(null, pltData, 0));
+                PLTMarkerReader.ReadPLT(null!, pltData, 0));
         }
 
         [Fact]
@@ -206,7 +206,7 @@ namespace CoreJ2K.Tests
             
             // Act & Assert
             Assert.Throws<ArgumentNullException>(() => 
-                PLTMarkerReader.ReadPLT(stream, null, 0));
+                PLTMarkerReader.ReadPLT(stream, null!, 0));
         }
 
         [Fact]
@@ -278,7 +278,7 @@ namespace CoreJ2K.Tests
         public void ValidatePacketLengths_WithNullData_ReturnsFalse()
         {
             // Act
-            var isValid = PLTMarkerReader.ValidatePacketLengths(null, 0);
+            var isValid = PLTMarkerReader.ValidatePacketLengths(null!, 0);
             
             // Assert
             Assert.False(isValid);

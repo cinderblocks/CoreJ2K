@@ -18,14 +18,14 @@ namespace CoreJ2K.j2k.image.input
     /// </summary>
     public sealed class ImgReaderImageSharp : ImgReader
     {
-        private int[][] barr;               // cached component buffers for current block
+        private int[]?[]? barr;               // cached component buffers for current block
         private readonly DataBlkInt dbi = new DataBlkInt(); // tracks cached block rectangle
-        private DataBlkInt intBlk;          // reusable int block wrapper
+        private DataBlkInt? intBlk;          // reusable int block wrapper
 
         private Image image;                // reference to base Image
         private int bitsPerComponent;
         private int componentCount;
-        private Func<int,int,int,int,int,int[]> blockLoader; // loader delegate (x,y,w,h,comps) -> interleaved comps
+        private Func<int,int,int,int,int,int[]> blockLoader = null!; // loader delegate (x,y,w,h,comps) -> interleaved comps
 
         public ImgReaderImageSharp(Image img)
         {
@@ -125,7 +125,7 @@ namespace CoreJ2K.j2k.image.input
         public override void Close()
         {
             image?.Dispose();
-            image = null;
+            image = null!;
             barr = null;
         }
 
@@ -165,7 +165,7 @@ namespace CoreJ2K.j2k.image.input
                 var needed = blk.w * blk.h;
                 for (var c = 0; c < nc; ++c)
                 {
-                    if (barr[c] == null || barr[c].Length < needed) barr[c] = new int[needed];
+                    if (barr[c] == null || barr[c]!.Length < needed) barr[c] = new int[needed];
                 }
 
                 dbi.ulx = blk.ulx; dbi.uly = blk.uly; dbi.w = blk.w; dbi.h = blk.h; dbi.scanw = blk.w;
@@ -180,7 +180,7 @@ namespace CoreJ2K.j2k.image.input
                     var dcOffset = 1 << (bitsPerComponent - 1);
                     for (var c = 0; c < nc; ++c)
                     {
-                        var dest = barr[c];
+                        var dest = barr[c]!;
                         var compOffset = c;
                         for (int i = 0, p = 0; i < needed; ++i, p+=nc)
                         {
@@ -201,7 +201,7 @@ namespace CoreJ2K.j2k.image.input
 
                 if (blk is DataBlkInt dbiBlk)
                 {
-                    dbiBlk.DataInt = barr[compIndex]; dbiBlk.offset = 0; dbiBlk.scanw = dbiBlk.w;
+                    dbiBlk.DataInt = barr[compIndex]!; dbiBlk.offset = 0; dbiBlk.scanw = dbiBlk.w;
                 }
                 else
                 {
@@ -212,7 +212,7 @@ namespace CoreJ2K.j2k.image.input
             {
                 if (blk is DataBlkInt dbiBlk)
                 {
-                    dbiBlk.DataInt = barr[compIndex]; dbiBlk.offset = (blk.ulx - dbi.ulx) + (blk.uly - dbi.uly) * dbi.scanw; dbiBlk.scanw = dbi.scanw;
+                    dbiBlk.DataInt = barr[compIndex]!; dbiBlk.offset = (blk.ulx - dbi.ulx) + (blk.uly - dbi.uly) * dbi.scanw; dbiBlk.scanw = dbi.scanw;
                 }
                 else
                 {
@@ -229,20 +229,20 @@ namespace CoreJ2K.j2k.image.input
             {
                 blk = new DataBlkInt(blk.ulx, blk.uly, blk.w, blk.h);
             }
-            var bak = (int[])blk.Data;
+            var bak = (int[]?)blk.Data;
             var width = blk.w; var height = blk.h;
             blk.Data = null;
             GetInternCompData(blk, c);
             if (bak == null) bak = new int[width * height];
             if (blk.offset == 0 && blk.scanw == width)
             {
-                Array.Copy((int[])blk.Data, 0, bak, 0, width * height);
+                Array.Copy((int[])blk.Data!, 0, bak, 0, width * height);
             }
             else
             {
                 for (var row = 0; row < height; ++row)
                 {
-                    Array.Copy((int[])blk.Data, blk.offset + row * blk.scanw, bak, row * width, width);
+                    Array.Copy((int[])blk.Data!, blk.offset + row * blk.scanw, bak, row * width, width);
                 }
             }
             blk.Data = bak; blk.offset = 0; blk.scanw = blk.w; return blk;
